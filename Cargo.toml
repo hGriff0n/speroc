@@ -1,0 +1,13 @@
+[package]
+
+name = "speroc"
+
+version = "0.1.0"
+
+authors = ["hGriff0n <ghooper96@gmail.com>"]
+
+
+
+[dependencies]
+
+pest = "0.4"
