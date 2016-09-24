@@ -10,4 +10,5 @@ authors = ["hGriff0n <ghooper96@gmail.com>"]
 
 [dependencies]
 
-pest = "0.4"
+oak = "*"
+oak_runtime = "*"

@@ -1,113 +1,52 @@
-#[macro_use]
-extern crate pest;
+#![feature(plugin)]
+#![plugin(oak)]
 
-use pest::prelude::*;
+extern crate oak_runtime;
+use oak_runtime::*;
 
-// http://dragostis.github.io/pest/pest/macro.grammar!.html
-// http://dragostis.github.io/pest/pest/macro.process!.html
-// https://github.com/W4RH4WK/Cleaver/blob/c9e1f1a8fbf3a26ebe1b3d8bad78079f017ed9e0/src/front/pest/mod.rs
+grammar! spero_grammar {
+    //
+    // Language Keywords
+    //
+    boolean = "true" / "false"
+    vcontext = "let" / "def" / "static"
+    keyword = vcontext / "match" / "if" / "else" / "mod" / "use"
 
-/*
-["a"]       - a
-[i"a"]      - a | A
-['a'..'z']  - [a..z]
-a           - <a>
-a ~ b       - <a><b>
-a | b       - <a>|<b>
-a*          - <a>*
-a+          - <a>+
-a?          - <a>?
-&a          - match a no progress
-!a          - match if a doesn't match without progress
-[push(a)]   - matches a and pushes it's captured string on the stack
-[pop()]     - pop from the stack and matches it
-[peek()]    - peeks from the stack
+    multiline = "##" (!"##" .)* "##"
+    comment = "#" (!"\n" .)* "\n"
 
-Precedence climbing
-expression = _{
-    {}
-    rule1               <- has higher precedence than the primary rule
-    rul2 = {< pow }     <- right associativity
-}
-*/
+    variable = ["a-z_"] ["a-zA-Z0-9_"]*
+    type = ["A-Z"] ["a-zA-Z0-9"]*
+    op = ["&="] ["!@#$%^&*?<>[]~`-=+"]*
 
-impl_rdp! {
-    grammar! {
-        // precedence climbing
-        expression = _{ // rule is silent because it's the rule we're matching
-            { ["("] ~ expression ~ [")"] | number | literal } // primary
-        }
+    //
+    // Language Atoms
+    //
 
-        whitespace = _{ [" "] } // whitespce gets run between all rules
+    // Basic Literals
+    decimal = ["0-9"]+
+    hex = "0x" ["0-9a-fA-F"]+
+    bin = "0b" ["0-1"]+
+    float = decimal "." decimal?
+    string = "\"" (!"\"" "\\"? .) "\""
+    character = "'" "\\"? . "'"
 
-        /*
-            Spero Literals
-         */
+    sum = number ("+" number)* > add
+    number = ["0-9"]+ > to_number
 
-        // Number Literals
-        digit = _{ ['0'..'9'] }
-        decimal = @{ ["-"]? ~ digit+ }
-        hex = @{ ["0x"] ~ (digit | ['a'..'f'] | ['A'..'F'])+ }
-        binary = @{ ["b"] ~ ['0'..'1']+ }
-        float = @{ digit+ ~ ["."] ~ digit* }
-        number = _{ hex | binary | float | decimal }
+    use std::str::FromStr;
 
-        // Other Literals
-        str_char = _{ ["\\"]? ~ any }
-        string = { ["\""] ~ (!["\""] ~ str_char)* ~ ["\""] }
-        bools = @{ ["false"] | ["true"] }
-        character = @{ ["'"] ~ str_char ~ ["'"] }       // Why can't I make this atomic ???
-        literal = _{ string | bools | character }
-
-        // ab = @{ a ~ b }                 // There can't be anything between a and b for ab to match (atomic)
-        // atomic = @{ non_atomic }        // Atomic is cascading (rules called by atomics are themselves atomic)
-        // non_atomic = !@{ a ~ b }        // Except if a rule is a non-atomic
-
-        // comment = _{}
-        // whitespace = _{ [" \t\n"] }     // whitespce gets run between all rules
+    fn add(x: u32, rest: Vec<u32>) -> u32 {
+        rest.iter().fold(x, |x, y| x+y)
     }
 
-    process! {
-        parse(&self) -> () { // return an i32 in the end 
-            (&number: decimal) => {
-                println!("Found (Int): {}", number);
-            },
-            (&number: hex) => {
-                println!("Found (Hex): {}", number);
-            },
-            (&number: float) => {
-                println!("Found (Float): {}", number);
-            },
-            (&number: binary) => {
-                println!("Found (Binary): {}", number);
-            },
-            (&string: string) => {
-                println!("Found (String): {}", string);
-            },
-            (&ch: character) => {
-                println!("Found (Char): {}", ch);
-            },
-            (&b: bools) => {
-                println!("Found (Bool): {}", b);
-            }
-        }
+    fn to_number(raw_text: Vec<char>) -> u32 {
+        let text: String = raw_text.into_iter().collect();
+        u32::from_str(&*text).unwrap()
     }
 }
 
 fn main() {
-    println!("");
-
-    let mut parser = Rdp::new(StringInput::new("117.5"));
-    parser.expression();
-    parser.parse();
-
-    let mut parser = Rdp::new(StringInput::new("b0101"));
-    parser.expression();
-    parser.parse();
-
-    let mut parser = Rdp::new(StringInput::new("'a'"));
-    parser.expression();
-    parser.parse();
-
-    println!("");
+    let state = spero_grammar::parse_sum("7+2+1".into_state());
+    println!("{}", state.unwrap_data());
 }
