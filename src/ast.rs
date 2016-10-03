@@ -11,11 +11,6 @@ pub enum LiteralType {
 }
 
 #[derive(Debug)]
-pub enum AtomType {
-    Literal(LiteralType),
-}
-
-#[derive(Debug)]
 pub enum BindingType {
     Variable(String),
     Type(String),
@@ -33,6 +28,13 @@ pub enum Keyword {
 
 #[derive(Debug)]
 pub enum ExprType {
+    Assignment(Keyword, BindingType, bool, Box<ExprType>),
+    Literal(LiteralType),
+    Scope(Vec<ExprType>),
+    Tuple(Vec<ExprType>),
+    Binary(BindingType, Box<ExprType>, Box<ExprType>),
+    FnCall(BindingType, Option<Box<ExprType>>, Option<Box<ExprType>>),
+    ModDecl(Vec<BindingType>),
 }
 
 impl fmt::Display for LiteralType {
@@ -88,6 +90,50 @@ impl fmt::Display for Keyword {
 #[allow(unused_variables)]
 impl fmt::Display for ExprType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            ExprType::Assignment(ref key, ref bind, is_mut, ref val) => {
+                writeln!(f, "Binding ({}, {})", key, is_mut);
+                writeln!(f, "{}", bind);
+                write!(f, "{}", val)
+            },
+            ExprType::Literal(ref literal) => {
+                write!(f, "{}", literal)
+            },
+            ExprType::Scope(ref exprs) => {
+                write!(f, "Scope");
+
+                for expr in exprs {
+                    write!(f, "\n{}", expr);
+                }
+
                 write!(f, "")
+            },
+            ExprType::Tuple(ref exprs) => {
+                write!(f, "Tuple[{}]", exprs.len());
+
+                for expr in exprs {
+                    write!(f, "\n{}", expr);
+                }
+
+                write!(f, "")
+            },
+            ExprType::Binary(ref bind, ref lhs, ref rhs) => {
+                writeln!(f, "Binary Operator {}", bind);
+                writeln!(f, "{}", lhs);
+                write!(f, "{}", rhs)
+            },
+            ExprType::FnCall(ref fun, ref caller, ref args) => {
+                write!(f, "A function call")
+            },
+            ExprType::ModDecl(ref module) => {
+                write!(f, "Module Declaration");
+
+                for piece in module {
+                    write!(f, "\n{}", piece);
+                }
+
+                write!(f, "")
+            }
         }
+    }
 }
