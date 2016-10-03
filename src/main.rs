@@ -123,10 +123,14 @@ fn main() {
 
     println!("");
 
-    let input = "let x = 3";
+    let input = "mod std:io:prin";
 
     match spero_grammar::parse_program(input.into_state()).into_result() {
-        Success(res) => println!("{:?}", res),
+        Success(res) => {
+            for result in &res {
+                println!("{}", result)
+            }
+        },
         _ => println!("Unmatched")
     }
 
