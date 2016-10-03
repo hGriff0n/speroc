@@ -4,7 +4,14 @@
 extern crate oak_runtime;
 use oak_runtime::*;
 
-// Start blog post from here
+/*
+What's different from Pt 0:
+  Starting development of the parser
+  Basic parsing (PEG grammars)
+  How rust and oak interact for compiler development
+    Discussing the language as a tool
+  Recognizing basic literals and other "atoms"
+*/
 
 
 // http://hyc.io/rust-lib/oak/index.html
@@ -12,13 +19,12 @@ grammar! spero_grammar {
     #![show_api]
     multiline = "##" (!"##" .)* "##" -> (^)
     comment = "#" (!"\n" .)* "\n" -> (^)
-    spacing = [" \n\r\t"]* -> (^)
+    spacing = [" \n\r\t"]+ -> (^)                       // 
     ignore = multiline / comment / spacing
 
     //
     // Language Keywords
     //
-
     k_let = "let"
     k_def = "def"
     k_static = "static"
@@ -29,21 +35,17 @@ grammar! spero_grammar {
     b_true = "true"                                 > mk_true
     b_false = "false"                               > mk_false
 
-    vcontext = k_let / k_def / k_static
-    // keyword = vcontext / "match" / "if" / "else" / "mod" / "use"
-
+    //
+    // Language Binding
+    //
     var = ["a-z_"] ["a-zA-Z0-9_"]*                  > mk_binding
     typ = ["A-Z"] ["a-zA-Z0-9"]*                    > mk_binding
     op = ["&=:"]? ["!@#$%^&*?<>|`,/\\-=+"]+         > mk_operator
-    binding = var / typ / op
-    // fn_sig = (<Type_List>) -> <Type>
-    // type_inf = :: <type>
+    binding = (var / typ / op) ignore*
 
     //
     // Language Atoms
     //
-
-    // Basic Literals
     digit = ["0-9"]
     hex = "0x" ["0-9a-fA-F"]+                       > mk_hex_literal
     bin = "0b" ["0-1"]+                             > mk_byte_literal
@@ -51,14 +53,13 @@ grammar! spero_grammar {
     int = digit+                                    > mk_int_literal
     string = "\"" (!"\"" "\\"? .)* "\""             > mk_string_literal
     character = "'" "\\"? . "'"                     > mk_char_literal
-    // tup_expr_list = (expression ignore "," ignore)* expression
-    // tuple = "(" ignore tup_expr_list ignore ")"
+    atom = (b_true / b_false / hex / bin / float / int / string / character) ignore* > run_expr
 
-    atom = (b_true / b_false / hex / bin / float / int / string / character) > run_expr
-    // expression = "{" ignore expression+ "}" / atom ignore
-    expression = atom ignore
-    program = ignore expression+
-    // program = binding
+    //
+    // Language Expressions
+    //
+    expression = (atom / binding)
+    program = ignore* expression+
     
     //
     // Parsing Actions
