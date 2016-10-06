@@ -7,12 +7,19 @@ use oak_runtime::*;
 /*
 What's different from Pt 1
   Converts over to using an AST
-    Why do i need the ast?
+    Explain why an ast is needed for parsing
   Tuples
     Why does "(3, 3 + 3)" not parse with the first grammar ???
       ',' is considered a valid operator
   Fn Calls
+
+  NOTE: Bring in some stuff from pt3 and pt4
+    Maybe move AST into pt4
 */
+
+// TODO: Merge grammar aspects of pt2, pt3, and pt4
+  // Develop the grammar to the point of straining (leave as an exercise?)
+  // Move AST over into pt3 (with the complete grammar)
 
 mod ast;
 

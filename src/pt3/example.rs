@@ -12,20 +12,9 @@ What's different from Pt 2
     Improves tuple support and recognition
       Tuple deconstruction in binding
     Adds pretty printing (don't do more than touch on this)
-*/
 
-// TODO (Pt 4)
-//  Improve the grammar design
-//  Get variables to be recognized as values
-//    Prevent keywords from being accepted as values
-//  Add grammar for dot-flipping
-
-/*
-For Part 4
-  Recognizes variables as values
-  Improved function grammar
-    Take the first argument in a special place
-  Improve AST printing
+    NOTE: Bring in some stuff from pt4
+      Maybe note some difficulties with the current approach
 */
 
 
