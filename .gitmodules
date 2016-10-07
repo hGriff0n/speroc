@@ -1,0 +1,6 @@
+[submodule "dep/catch"]
+	path = dep/catch
+	url = https://github.com/philsquared/Catch.git
+[submodule "dep/pegtl"]
+	path = dep/pegtl
+	url = https://github.com/ColinH/PEGTL
