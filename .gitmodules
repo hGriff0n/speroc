@@ -4,3 +4,6 @@
 [submodule "dep/pegtl"]
 	path = dep/pegtl
 	url = https://github.com/ColinH/PEGTL
+[submodule "dep/cxxopts"]
+	path = dep/cxxopts
+	url = https://github.com/jarro2783/cxxopts
