@@ -9,11 +9,7 @@ namespace spero {
 			#define pstr(x) pegtl_string_t((x))
 
 			// Forward Declarations
-			struct array;
-			struct expr;
-			struct scope;
-			struct atom;
-			struct pattern;
+			struct array; struct expr; struct scope; struct atom; struct pattern;
 
 			// Ignore Characters
 			struct one_line_comment : seq<one<'#'>, until<eolf>> {};
@@ -65,8 +61,8 @@ namespace spero {
 			struct var : seq<ranges<'a', 'z', '_'>, star<ascii::identifier_other>> {};
 			struct typ : seq<range<'A', 'Z'>, star<ascii::identifier_other>> {};
 			struct op : seq<opt<sor<one<'&'>, one<'='>, one<':'>>>,
-				plus<sor<one<'!'>, one<'@'>, one<'#'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
-				one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
+							plus<sor<one<'!'>, one<'@'>, one<'#'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
+				                     one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
 			struct variable : seq<var, ig_s> {};
 			struct name_path : star<sor<var, typ>, one<':'>> {};
 			template<class T> struct qual_name : seq<name_path, T, ig_s> {};
@@ -75,9 +71,12 @@ namespace spero {
 			//
 			// Language Literals
 			//
-			struct hex : seq<pstr("0x"), plus<xdigit>> {};
-			struct bin : seq<pstr("0b"), plus<sor<one<'0'>, one<'1'>>>> {};
-			struct num : seq<plus<digit>, opt<one<'.'>, plus<digit>>> {};
+			struct hex_body : plus<xdigit> {};
+			struct hex : seq<pstr("0x"), hex_body> {};
+			struct bin_body : plus<sor<one<'0'>, one<'1'>>> {};
+			struct bin : seq<pstr("0b"), bin_body> {};
+			struct dec : seq<plus<digit>, one<'.'>, plus<digit>> {};
+			struct num : plus<digit> {};
 			struct str_body : until<one<'"'>, seq<opt<one<'\\'>>, any>> {};
 			struct str : seq<one<'"'>, str_body> {};
 			struct character : seq<one<'\''>, opt<one<'\\'>>, any, one<'\''>> {};
@@ -85,7 +84,7 @@ namespace spero {
 			struct array : seq<obrack, opt<sequ<expr>>, cbrack> {};
 			struct fn_def : sor<scope, seq<pstr("->"), ig_s, sor<seq<type, ig_s, scope>, seq<opt<one<'.'>>, expr>>>> {};
 			struct fn_or_tuple : sor<seq<one<'.'>, expr>, seq<tuple, opt<fn_def>>> {};
-			struct lit : sor<hex, bin, num, str, character, fn_or_tuple> {};
+			struct lit : sor<hex, bin, dec, num, str, character, fn_or_tuple> {};
 
 			//
 			// Language Atoms

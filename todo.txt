@@ -1,0 +1,2 @@
+Work on ast construction
+Produce variant visitor

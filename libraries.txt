@@ -1,0 +1,26 @@
+Logger (reckless, spdlog)
+Benchmarking (Celero)
+Utilities 
+Functional (ftl, cat, Mach7)
+Concurrency (future)
+Assembly
+
+range-v3
+modules
+coroutines
+Better Enums
+Smart Enum
+nytl
+SaferCPlusPlus
+fcppt
+GTpo
+cln
+Eigen
+NTL
+mongocxx
+SqlLite
+sqlpp11
+yaml-cpp
+
+
+ncurses
