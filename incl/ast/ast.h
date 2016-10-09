@@ -33,6 +33,13 @@ namespace spero::compiler::ast {
 		bool val;
 		Bool(bool);
 	};
+	struct Tuple {
+		std::vector<astnode> val;
+
+		template<class T> Tuple(T&& front, T&& end) {
+			std::move(front, end, std::back_inserter(this->val));
+		}
+	};
 
 	// Bindings
 	struct Var {};
@@ -62,6 +69,11 @@ namespace spero::util {
 					[&s](String& str) { s << "String found with val " << str.val << "\n"; },
 					[&s](Char& c) { s << "Char found with val " << c.val << "\n"; },
 					[&s](Bool& b) { s << "Bool found with val " << (b.val ? "true" : "false") << "\n"; },
+					[depth, &s](Tuple& t) {
+						s << "Tuple found of size " << t.val.size() << "\n";
+						for (auto elem : t.val)
+							pretty_print(elem, s, depth + 1);
+					}
 				), lits);
 			},
 			[&s](Sentinel&) {
