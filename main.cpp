@@ -18,30 +18,14 @@ int main(int argc, const char* argv[]) {
 	using namespace spero::parser;
 	//auto opts = spero::cmd::getOptions();
 
-	std::cout << "Finished ";
-
-	auto input = std::string{ "0xf 34.35 '\\n'" };
+	auto input = std::string{ "()" };
 
 	Stack s{};
+	pegtl::parse_string<grammar::program, actions::action>(input, "me", s);
 
-	std::cout << pegtl::parse_string<grammar::program, actions::action>(input, "me", s) << "\n";
+	for (auto elem : s)
+		spero::util::pretty_print(elem, std::cout);
 
-	for (auto elem : s) {
-		using namespace spero::compiler;
-		std::visit(compose(
-			[](litnode& lits) {
-				std::visit(compose(
-					[](ast::Byte& b) { std::cout << "Byte found with val " << b.val << "\n"; },
-					[](ast::Int& i) { std::cout << "Int found with val " << i.val << "\n"; },
-					[](ast::Float& f) { std::cout << "Float found with val " << f.val << "\n"; },
-					[](ast::String& s) { std::cout << "String found with val " << s.val << "\n"; },
-					[](ast::Char& c) { std::cout << "Char found with val " << c.val << "\n"; }
-				), lits);
-			},
-			[](auto&& any) {
-				std::cout << "Unknown element\n"
-			}), elem);
-
-	}
+	std::cout << "Fin";
 	std::cin.get();
 }

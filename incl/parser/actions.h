@@ -3,15 +3,18 @@
 #include "grammar.h"
 #include "ast/ast.h"
 #include "util/string_utils.h"
-#include <vector>
-#include <iostream>
+
+#include <deque>
+#include <algorithm>
 
 #define ACTION(gram, app_def) \
 template<> struct action<grammar::gram> { \
 static void apply(const pegtl::action_input& in, Stack& s) app_def }
 
+#define SENTINEL(gram) ACTION(gram, { s.emplace_back(ast::Sentinel{}); })
+
 namespace spero::parser {
-	using Stack = std::vector<spero::compiler::astnode>;
+	using Stack = std::deque<spero::compiler::astnode>;
 }
 
 namespace spero::parser::actions {
@@ -20,10 +23,12 @@ namespace spero::parser::actions {
 	template<class Rule>
 	struct action : pegtl::nothing<Rule> {};
 
-	ACTION(k_let, {
+	// Sentinel Nodes
+	SENTINEL(obrace);
+	SENTINEL(obrack);
+	SENTINEL(oparen);
 
-	});
-
+	// Literals
 	ACTION(hex_body, {
 		 s.emplace_back(litnode{ ast::Byte{ in.string(), 16 } });
 	});
@@ -42,6 +47,16 @@ namespace spero::parser::actions {
 	ACTION(character, {
 		s.emplace_back(litnode{ ast::Char{ spero::util::escape(in.string())[1] } });
 	});
+	ACTION(b_false, {
+		s.emplace_back(litnode{ ast::Bool{ false } });
+	});
+	ACTION(b_true, {
+		s.emplace_back(litnode{ ast::Bool{ true } });
+	});
+
+	});
 }
 
+#undef ACTION#undef ACTION
 #undef ACTION
+#undef SENTINEL

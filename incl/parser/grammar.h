@@ -7,6 +7,7 @@ namespace spero {
 		namespace grammar {
 			using namespace pegtl;
 			#define pstr(x) pegtl_string_t((x))
+			#define key(x) seq<pstr((x)), plus<ig>>
 
 			// Forward Declarations
 			struct array; struct expr; struct scope; struct atom; struct pattern;
@@ -37,20 +38,18 @@ namespace spero {
 			//
 			// Language Keywords
 			//
-			template<class T>
-			struct key : seq<T, plus<ig>> {};
-			struct k_let : key<pstr("let")> {};
-			struct k_def : key<pstr("def")> {};
-			struct k_static : key<pstr("static")> {};
-			struct k_mut : key<pstr("mut")> {};
-			struct k_mod : key<pstr("mod")> {};
-			struct k_match : key<pstr("match")> {};
-			struct k_if : key<pstr("if")> {};
-			struct k_elsif : key<pstr("elsif")> {};
-			struct k_else : key<pstr("else")> {};
-			struct k_use : key<pstr("use")> {};
-			struct b_false : key<pstr("false")> {};
-			struct b_true : key<pstr("true")> {};
+			struct k_let : key("let") {};
+			struct k_def : key("def") {};
+			struct k_static : key("static") {};
+			struct k_mut : key("mut") {};
+			struct k_mod : key("mod") {};
+			struct k_match : key("match") {};
+			struct k_if : key("if") {};
+			struct k_elsif : key("elsif") {};
+			struct k_else : key("else") {};
+			struct k_use : key("use") {};
+			struct b_false : key("false") {};
+			struct b_true : key("true") {};
 
 			struct vcontext : sor<k_let, k_def, k_static> {};
 			struct keyword : sor<vcontext, k_mut, k_mod, k_match, k_if, k_elsif, k_else, k_use, b_false, b_true> {};
@@ -136,6 +135,7 @@ namespace spero {
 			struct line : sor<mod_dec, expr> {};
 			struct program : seq<ig_s, star<line>, eof> {};
 
+			#undef key
 			#undef pstr
 		}
 	}
