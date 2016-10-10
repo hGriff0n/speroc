@@ -1,2 +1,5 @@
+
+
+Fix the "complete the definition" grammar issue
+  The syntax does not work as-is (see types.spqr)
 Work on ast construction
-Produce variant visitor

@@ -48,11 +48,8 @@ namespace spero {
 			struct k_elsif : key("elsif") {};
 			struct k_else : key("else") {};
 			struct k_use : key("use") {};
-			struct b_false : key("false") {};
-			struct b_true : key("true") {};
-
 			struct vcontext : sor<k_let, k_def, k_static> {};
-			struct keyword : sor<vcontext, k_mut, k_mod, k_match, k_if, k_elsif, k_else, k_use, b_false, b_true> {};
+			struct keyword : sor<vcontext, k_mut, k_mod, k_match, k_if, k_elsif, k_else, k_use> {};
 
 			//
 			// Language Bindings
@@ -79,11 +76,13 @@ namespace spero {
 			struct str_body : until<one<'"'>, seq<opt<one<'\\'>>, any>> {};
 			struct str : seq<one<'"'>, str_body> {};
 			struct character : seq<one<'\''>, opt<one<'\\'>>, any, one<'\''>> {};
+			struct b_false : seq<pstr("false"), not_at<ascii::identifier_other>> {};
+			struct b_true : seq<pstr("true"), not_at<ascii::identifier_other>> {};
 			struct tuple : seq<oparen, opt<sequ<expr>>, cparen> {};
 			struct array : seq<obrack, opt<sequ<expr>>, cbrack> {};
 			struct fn_def : sor<scope, seq<pstr("->"), ig_s, sor<seq<type, ig_s, scope>, seq<opt<one<'.'>>, expr>>>> {};
 			struct fn_or_tuple : sor<seq<one<'.'>, expr>, seq<tuple, opt<fn_def>>> {};
-			struct lit : sor<hex, bin, dec, num, str, character, fn_or_tuple> {};
+			struct lit : sor<hex, bin, dec, num, str, character, b_false, b_true, fn_or_tuple> {};
 
 			//
 			// Language Atoms
@@ -95,7 +94,7 @@ namespace spero {
 			struct pattern : sor<placeholder, var, pat_tuple, seq<typ, opt<pat_tuple>>> {};
 			struct case_stmt : seq<sequ<seq<pattern, ig_s>>, pstr("->"), ig_s, expr> {};
 			struct match_expr : seq<k_match, opt<atom>, obrace, plus<case_stmt>, cbrace> {};
-			struct atom : seq<sor<match_expr, fncall, scope, lit>, ig_s> {};
+			struct atom : seq<sor<match_expr, lit, fncall, scope>, ig_s> {};
 
 			//
 			// Language Decorators

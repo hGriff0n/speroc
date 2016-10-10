@@ -15,16 +15,17 @@
 const size_t issues = pegtl::analyze<spero::parser::grammar::program>();
 
 int main(int argc, const char* argv[]) {
+	using namespace spero;
 	using namespace spero::parser;
 	//auto opts = spero::cmd::getOptions();
 
-	auto input = std::string{ "()" };
+	auto input = "true";
 
 	Stack s{};
 	pegtl::parse_string<grammar::program, actions::action>(input, "me", s);
 
 	for (auto elem : s)
-		spero::util::pretty_print(elem, std::cout);
+		util::pretty_print(elem, std::cout);
 
 	std::cout << "Fin";
 	std::cin.get();

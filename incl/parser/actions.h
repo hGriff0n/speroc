@@ -2,6 +2,7 @@
 
 #include "grammar.h"
 #include "ast/ast.h"
+#include "util/utils.h"
 #include "util/string_utils.h"
 
 #include <deque>
@@ -54,13 +55,10 @@ namespace spero::parser::actions {
 		s.emplace_back(litnode{ ast::Bool{ true } });
 	});
 
+	//Sequences
 	ACTION(tuple, {
 		// Find the location of the sentinel node (representing the '(' at the begining)
-		auto sent = std::find_if(s.rbegin(), s.rend(), [](auto&& elem) {
-			return std::visit(compose(
-				[](ast::Sentinel&) { return true; },
-				[](auto&&) { return false; }), elem);
-		});
+		auto sent = spero::util::findSentinel<ast::Sentinel>(s.rbegin(), s.rend());
 
 		// Move the set of values into the tuple (and create it on the stack)
 		s.emplace_back(litnode{ ast::Tuple{ sent.base(), s.end() } });
@@ -68,6 +66,10 @@ namespace spero::parser::actions {
 		// Then remove the tuple values (and sentinel) from the stack
 		s.erase((sent + 1).base(), s.end() - 1);
 	});
+
+	/*ACTION(program, {
+		s.emplace_back(litnode{ ast::Bool{ true } });
+	});*/
 }
 
 #undef ACTION
