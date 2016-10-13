@@ -1,13 +1,35 @@
 #pragma once
 
+#include "ast/node_defs.h"
+
 #include <optional>
 #include <string>
 #include <vector>
-
-#include "ast/node_defs.h"
+#include <memory>		// using std::shared_ptr as a cycle "breaker"
 
 
 namespace spero::compiler::ast {
+	// Bindings
+	struct BasicName {
+		std::string name;
+		bool is_typ;
+		BasicName(const std::string&);
+	};
+	struct Operator {
+		std::string op;
+		Operator(const std::string&);
+	};
+	struct NamePath {
+		std::vector<BasicName> inter;
+	};
+	struct QualName {
+		NamePath path;
+		BasicName name;
+	};
+	struct Pattern {
+
+	};
+
 	// Literals
 	struct Byte {
 		int val;
@@ -37,14 +59,139 @@ namespace spero::compiler::ast {
 		std::vector<astnode> val;
 
 		template<class T> Tuple(T&& front, T&& end) {
-			std::move(front, end, std::back_inserter(this->val));
+			std::move(front, end, std::back_inserter(val));
 		}
 	};
+	struct Array {
+		std::vector<astnode> val;
 
-	// Bindings
-	struct Var {};
-	struct Op {};
-	struct Type {};
+		template<class T> Array(T&& front, T&& end) {
+			std::move(front, end, std::back_inserter(val));
+		}
+	};
+	struct Type {
+		QualName type;
+		PtrStyling ptr;
+		std::optional<Array> gens;
+		bool mut;
+	}; 
+	struct FnObj {
+		bool forward;
+		std::shared_ptr<astnode> body;
+		std::optional<Tuple> arguments;
+		std::optional<Type> return_type;
+	};
+
+	// Atoms
+	struct FnCall {
+		QualName fm;
+		std::optional<Array> gens;
+		std::optional<Tuple> args;
+	};
+	struct Scope {
+		std::vector<astnode> val;
+
+		template<class T> Scope(T&& front, T&& end) {
+			std::move(front, end, std::back_inserter(val));
+		}
+	};
+	// Error here
+	struct Case {
+		std::vector<Pattern> vars;
+		std::shared_ptr<astnode> expr;
+	};
+	// Error here
+	struct Match {
+		std::shared_ptr<astnode> val;
+		std::vector<Case> cases;
+	};
+
+	// Decorators
+	struct Annotation {
+		BasicName annotation;
+		std::optional<Tuple> args;
+	};
+	struct ModDecl {
+		std::vector<BasicName> modules;
+	};
+	struct TypeTuple {
+		std::vector<Type> types;
+	};
+	struct TypeInfer {
+		std::optional<TypeTuple> fn_args;
+		Type val_type;
+	};
+	struct GenSubtype {
+		SubtypeRelation relation;
+		Type type;
+	};
+	struct GenType {
+		BasicName type_name;
+		Variance variant;
+		std::optional<GenSubtype> subtype;
+	};
+	// Error here
+	struct GenValue {
+		BasicName var_name;
+		std::optional<Type> subtype;
+		std::shared_ptr<astnode> value;
+	};
+	struct GenArray {
+		std::vector<std::variant<GenType, GenValue>> gen_entries;
+	};
+
+	// Assignment
+	struct ADT {
+		BasicName name;
+		std::optional<TypeTuple> accepts;
+	};
+	struct VarAssign {
+		bool mut;
+		// pattern or op
+		std::optional<TypeInfer> inference;
+		std::shared_ptr<astnode> expr;
+	};
+	struct TypeAssign {
+		BasicName type_name;
+		std::optional<GenArray> generics;
+		std::vector<std::variant<ADT, Tuple>> constructors;
+		Scope type_body;
+	};
+	struct Assignment {
+		Keyword visiblity;
+		std::variant<VarAssign, TypeAssign> assignment;
+	};
+
+	// Expressions
+	struct Index {
+		std::shared_ptr<astnode> lhs, rhs;
+		std::optional<TypeInfer> infer;
+	};
+	struct InfixOp {
+		std::shared_ptr<astnode> lhs, rhs;
+		Operator op;
+	};
+	struct Branch {
+		std::shared_ptr<astnode> test, branch;
+	};
+	// Error here
+	struct IfStmt {
+		Branch if_true;
+		std::vector<Branch> elsif_Branches;
+		std::shared_ptr<astnode> else_branch;
+	};
+	struct UsePathElem {
+		std::vector<BasicName> modules;
+	};
+	struct UseImport {
+		BasicName import;
+		std::optional<BasicName> rebind;
+	};
+	struct UseStmt {
+		std::vector<UsePathElem> use_path;
+		std::vector<UseImport> imports;
+		bool import_all;
+	};
 }
 
 namespace spero::util {
@@ -61,27 +208,8 @@ namespace spero::util {
 		buffer(s, depth);
 
 		std::visit(compose(
-			[depth, &s](litnode& lits) {
-				std::visit(compose(
-					[&s](Byte& b) { s << "Byte found with val " << b.val << "\n"; },
-					[&s](Int& i) { s << "Int found with val " << i.val << "\n"; },
-					[&s](Float& f) { s << "Float found with val " << f.val << "\n"; },
-					[&s](String& str) { s << "String found with val " << str.val << "\n"; },
-					[&s](Char& c) { s << "Char found with val " << c.val << "\n"; },
-					[&s](Bool& b) { s << "Bool found with val " << (b.val ? "true" : "false") << "\n"; },
-					[depth, &s](Tuple& t) {
-						s << "Tuple found of size " << t.val.size() << "\n";
-						for (auto elem : t.val)
-							pretty_print(elem, s, depth + 1);
-					}
-				), lits);
-			},
-			[&s](Sentinel&) {
-				s << "A sentinel node still exists in the stack\n";
-			},
-			[&s](Keyword& k) {
-				s << "Keyword: k\n";
-			}), root);
+			[&s](auto&&) { s << "The AST is currently being worked on and will be back shortly\n"; }
+		), root);
 
 		return s;
 	}
