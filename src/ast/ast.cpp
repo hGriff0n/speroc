@@ -4,6 +4,7 @@
 
 namespace spero::compiler::ast {
 
+	// Literals
 	Byte::Byte(const std::string& num, int base) : val{ std::stoi(num, nullptr, base) } {}
 	Int::Int(const std::string& num) : val{ std::stoi(num) } {}
 	Float::Float(const std::string& num) : val{ std::stof(num) } {}
@@ -11,4 +12,8 @@ namespace spero::compiler::ast {
 	Char::Char(char c) : val{ c } {}
 	Bool::Bool(bool b) : val{ b } {}
 	
+	// Bindings
+	BasicName::BasicName(const std::string& name) : name{ name } {}
+	Operator::Operator(const std::string& name) : op{ name } {}
+
 }

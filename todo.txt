@@ -1,5 +1,6 @@
 
-
+Add in annotations to the grammar
 Fix the "complete the definition" grammar issue
   The syntax does not work as-is (see types.spqr)
+Add in some form of loops to spero
 Work on ast construction

@@ -1,4 +1,4 @@
-
+#pragma warning(disable : 4503)
 
 #define CATCH_CPP14_OR_GREATER
 #define CATCH_CONFIG_RUNNER
@@ -17,9 +17,10 @@ const size_t issues = pegtl::analyze<spero::parser::grammar::program>();
 int main(int argc, const char* argv[]) {
 	using namespace spero;
 	using namespace spero::parser;
+	using namespace spero::compiler;
 	//auto opts = spero::cmd::getOptions();
 
-	auto input = "true";
+	auto input = "3 + 3";
 
 	Stack s{};
 	pegtl::parse_string<grammar::program, actions::action>(input, "me", s);

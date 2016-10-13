@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <variant>
 
+// Taken from lambda_utils gist
 namespace spero::util {
 	template <typename... lambda_ts>
 	struct composer_t;
@@ -26,18 +27,7 @@ namespace spero::util {
 
 		using lambda_t::operator();
 		using super_t::operator();
-	};
-
-	template<typename T, typename AST>
-	AST findSentinel(AST&& front, AST&& back) {
-		return std::find_if(front, back, [](auto&& elem) {
-			return std::visit(compose(
-				[](T&) { return true; },
-				[](auto&&) { return false; }
-			), elem);
-		});
-	}
-	
+	};	
 }
 
 template <typename... lambda_ts>
