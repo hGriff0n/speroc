@@ -1,0 +1,112 @@
+//
+// Ignored / Special Characters
+//
+multiline = "##" (!"##" .)* "##"
+comment = "#" (!"\n" .)* "\n"
+whitespace = [" \n\r\t"]+
+ig = multiline / comment / whitespace
+oparen = "(" ig*
+cparen = ")" ig*
+obrack = "[" ig*
+cbrack = "]" ig*
+obrace = "{" ig*
+cbrace = "}" ig*
+placeholder = "_" ig*
+id_other = ["a-zA-Z0-9_"]
+
+//
+// Language Keywords
+//
+k_let = "let" !id_other ig*
+k_def = "def" !id_other ig*
+k_static = "static" !id_other ig*
+k_mut = "mut" !id_other ig*
+k_mod = "mod" !id_other ig*
+k_match = "match" !id_other ig*
+k_if = "if" !id_other ig*
+k_elsif = "elsif" !id_other ig*
+k_else = "else" !id_other ig*
+k_use = "use" !id_other ig*
+keyword = "let" / "def" / "static" / k_mut / k_match / k_if / k_else / k_use / "true" / "false"
+vcontext = k_let / k_def / k_static
+
+//
+// Language Bindings
+//
+var = !keyword ["a-z_"] id_other*
+typ = ["A-Z"] id_other*
+op = ["&=:"]? ["!@#$%^&*?<>|`/\\-=+"]+ ig*
+variable = var ig*
+name_path = (var / typ) ":"
+qual_var = name_path var
+qual_typ = name_path typ
+type_pointer = ["&*"]
+type = qual_typ array? type_pointer? ig*
+varname = qual_var / qual_typ / op
+
+//
+// Language Literals
+//
+hex = "0x" ["0-9a-fA-F"]+
+bin = "0b" ["0-1"]+
+float = ["0-9"]+ "." ["0-9"]+
+num = ["0-9"]+
+string = "\"" (!"\"" "\\"? .)* "\""
+character = "'" "\\"? . "'"
+b_true = "true" !id_other ig*
+b_false = "false" !id_other ig*
+tuple = oparen (expr ("," ig* expr)*)? cparen
+array = obrack (expr ("," ig* expr)*)? cbrack
+fn_rettype = type ig* scope
+fn_oneline = "."? expr
+fn_def = scope / ("->" ig* (fn_rettype / fn_oneline))
+fn_forward = "." expr
+fn_or_tuple = fn_forward / (tuple fn_def?)
+literal = (hex / bin / dec / num / string / fn_or_tuple / fncall / b_false / b_true / array / fn_or_tuple) ig*
+
+//
+// Language Atoms
+//
+fncall = varname array? tuple?
+scope = obrace expr* cbrace
+pat_tuple = oparen pattern ("," ig* pattern)* cparen
+pattern = placeholder / var / pat_tuple / (typ pat_tuple?)
+case_stmt = (pattern ig*) ("," ig* pattern ig*)* "->" expr
+match_stmt = k_match atom? obrace case_stmt+ cbrace
+atom = (match_stmt / literal / fncall / scope) ig*
+
+//
+// Language Statements
+//
+// anexpr = expr / keyword
+// antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
+annotation = "@" var tuple?
+mod_dec = k_mod var (":" var)* ig+
+mut_type = k_mut? type
+type_tuple = oparen mut_type ("," ig* mut_type)* cparen
+inf_fn_type = type_tuple ig* "->" ig*
+infer_type = "::" ig* inf_fn_type? mut_type
+gen_type = typ ["+-"]? ig* (("::"/"!:"/"<"/">") ig* type)?
+gen_val = variable ("::" ig* type)? ("=" ig* expr)?
+generic = obrack gen_part ("," ig* gen_part)* cbrack
+
+//
+// Assignment
+//
+adt_con = typ type_tuple? ig*
+cons = adt_con / tuple
+constructors = (cons ("|" ig* cons)*)?
+var_assign = (pattern / op) inf? "=" ig* k_mut? expr
+type_assign = typ ig* gen? "=" ig* constructors scope
+assign = vcontext (type_assign / var_assign)
+
+// Expressions
+index = atom ("." ig* atom)* inf?
+binary = index (op index)*
+branch = k_if expr expr (k_elsif expr expr)* (k_else expr)?
+use_path = ((var / (obrace variable ("," ig* varaible)* cbrace)) ":")*
+use_elem = (variable ("as" ig* variable)?) / (typ ig* ("as" ig* typ, ig*)?)
+mod_use = k_use use_path ("*" / (obrace use_elem ("," ig* use_elem)* cbrace) / use_elem)
+expr = (mod_use / assign / branch / binary) ig*
+line = mod_dec / expr
+program = ig* line* eof
