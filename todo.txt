@@ -1,6 +1,27 @@
 
-Add in annotations to the grammar
-Fix the "complete the definition" grammar issue
-  The syntax does not work as-is (see types.spqr)
-Add in some form of loops to spero
+Update documentation to reflect recent changes
+
+Fix Spero
+  How is concurrency going to be handled?
+  Figure out the rules and abilities of pointers and manual memory
+  Work on recombining the pattern and binding syntaxes (for simplicity)
+    'mut' placement prevents them from being the same grammar
+    Look into whether ADT decomposition should be allowed in the binding grammar
+  Work on the semantics of wait and yield
+    Find a way to put wait into the grammar so that 'match wait' is legal
+  What about "accidental safe catching"?
+    A function is accidentally left as "unsafe" by the programmer
+    Later-on they specify a section of code as "safe" to catch one "unsafe"
+      By accident this annotation also catches the accidental function
+  Should a yield without an accompianing wait revert to a straight return
+  How can types specify behavior for '()' operator
+
+Fixes Waiting for Other Features
+  In-place modification of containers using for loops/iterators
+    Waiting for: Implementation of standard containers and iterators
+
 Work on ast construction
+
+
+Things I've Learned
+  Alt-click is vs-codes way of ctrl-click in sublime

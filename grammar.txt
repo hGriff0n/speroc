@@ -24,10 +24,22 @@ k_mut = "mut" !id_other ig*
 k_mod = "mod" !id_other ig*
 k_match = "match" !id_other ig*
 k_if = "if" !id_other ig*
+k_do = "do" !id_other ig*
+k_then = "then" !id_other ig*
 k_elsif = "elsif" !id_other ig*
 k_else = "else" !id_other ig*
 k_use = "use" !id_other ig*
-keyword = "let" / "def" / "static" / k_mut / k_match / k_if / k_else / k_use / "true" / "false"
+k_loop = "loop" !id_other ig*
+k_for = "for" !id_other ig*
+k_while = "while" !id_other ig*
+k_break = "break" !id_other ig*
+k_continue = "continue" !id_other ig*
+k_yield = "yield" !id_other ig*
+k_return = "return" !id_other ig*
+k_impl = "impls" !id_other ig*
+k_wait = "wait" !id_other ig*
+keyword = k_let / k_def / k_static / k_mut / k_mod / k_match / k_if / k_do / k_then / k_elsif / k_else
+        / k_use / k_loop / k_for / k_while / k_break / k_continue / k_yield / k_return / k_impl / k_wait
 vcontext = k_let / k_def / k_static
 
 //
@@ -37,12 +49,12 @@ var = !keyword ["a-z_"] id_other*
 typ = ["A-Z"] id_other*
 op = ["&=:"]? ["!@#$%^&*?<>|`/\\-=+"]+ ig*
 variable = var ig*
-name_path = (var / typ) ":"
+name_path = (var ":")* (typ ":")*
 qual_var = name_path var
 qual_typ = name_path typ
 type_pointer = ["&*"]
 type = qual_typ array? type_pointer? ig*
-varname = qual_var / qual_typ / op
+binding = qual_var / qual_typ / op
 
 //
 // Language Literals
@@ -55,25 +67,21 @@ string = "\"" (!"\"" "\\"? .)* "\""
 character = "'" "\\"? . "'"
 b_true = "true" !id_other ig*
 b_false = "false" !id_other ig*
-tuple = oparen (expr ("," ig* expr)*)? cparen
-array = obrack (expr ("," ig* expr)*)? cbrack
+tuple = oparen (expr ("," ig* valexpr)*)? cparen
+array = obrack (expr ("," ig* valexpr)*)? cbrack
 fn_rettype = type ig* scope
-fn_oneline = "."? expr
-fn_def = scope / ("->" ig* (fn_rettype / fn_oneline))
-fn_forward = "." expr
+fn_forward = "." valexpr
+fn_def = "->" ig* (fn_rettype / fn_forward / valexpr)
 fn_or_tuple = fn_forward / (tuple fn_def?)
 literal = (hex / bin / dec / num / string / fn_or_tuple / fncall / b_false / b_true / array / fn_or_tuple) ig*
 
 //
 // Language Atoms
 //
-fncall = varname array? tuple?
+anon_type = "::" tuple? scope
+fncall = binding array? anon_type? (tuple anon_type?)*                  // Initial function followed by any number of anonymous types and chained calls
 scope = obrace expr* cbrace
-pat_tuple = oparen pattern ("," ig* pattern)* cparen
-pattern = placeholder / var / pat_tuple / (typ pat_tuple?)
-case_stmt = (pattern ig*) ("," ig* pattern ig*)* "->" expr
-match_stmt = k_match atom? obrace case_stmt+ cbrace
-atom = (match_stmt / literal / fncall / scope) ig*
+atom = (scope / literal / fncall) ig*
 
 //
 // Language Statements
@@ -87,26 +95,51 @@ type_tuple = oparen mut_type ("," ig* mut_type)* cparen
 inf_fn_type = type_tuple ig* "->" ig*
 infer_type = "::" ig* inf_fn_type? mut_type
 gen_type = typ ["+-"]? ig* (("::"/"!:"/"<"/">") ig* type)?
-gen_val = variable ("::" ig* type)? ("=" ig* expr)?
-generic = obrack gen_part ("," ig* gen_part)* cbrack
+gen_val = variable ("::" ig* type)? ("=" ig* valexpr)?
+gen_part = gen_type / gen_val
+gen = obrack gen_part ("," ig* gen_part)* cbrack
 
 //
 // Assignment
 //
 adt_con = typ type_tuple? ig*
-cons = adt_con / tuple
-constructors = (cons ("|" ig* cons)*)?
-var_assign = (pattern / op) inf? "=" ig* k_mut? expr
-type_assign = typ ig* gen? "=" ig* constructors scope
+constructors = (adt_con "|" ig*)* (tuple / adt_con)?
+var_tuple = oparen var_pattern ("," ig* var_pattern)* cparen
+var_pattern = var / op / var_tuple
+var_assign = var_pattern gen? (inf ("=" ig* valexpr)?) / ("=" ig* valexpr)
+lhs_inher = inf "=" ig*
+rhs_inher = "=" ig* (typ ig* "::" ig*)?
+type_assign = typ !oparen ig* gen? (lhs_inher / rhs_inher) constructors scope
 assign = vcontext (type_assign / var_assign)
+pat_tuple = oparent pattern ("," ig* pattern)* cparen
+pattern = placeholder / (k_mut? var) / (k_mut? pat_tuple) / (typ pat_tuple?)
+
+// Control Flow
+if_core = k_if valexpr
+elses = (k_elsif valexpr k_do? valexpr)* k_else valexpr
+dot_if = if_core elses?
+branch = if_core k_do? valexpr elses?
+loop = k_loop valexpr
+while_core = k_while valexpr
+while_l = while_core k_do? valexpr
+for_core = k_for pattern "in" ig* valexpr
+for_l = for_core k_do? valexpr
+jump_key = k_wait / k_break / k_continue / k_return / k_yield
+jumps = jump_key valexpr?
+case_stmt = (pattern ig*) ("," ig* pattern ig*)* "->" valexpr
+match_stmt = k_match atom obrace case_stmt+ cbrace
+dot_match = k_match obrace cast_stmt+ cbrace
+dot_ctrl = k_loop / jump_key / while_core / dot_match / for_core / (if_core elses?)
 
 // Expressions
-index = atom ("." ig* atom)* inf?
-binary = index (op index)*
-branch = k_if expr expr (k_elsif expr expr)* (k_else expr)?
+index = "&"? atom ("." ig* atom)* (("." dot_ctrl) / inf)?
+range = index (("," ig* index)? ".." ig* index)?
+control = branch / loop / while_l / for_l / match_stmt / range
+valexpr = k_mut? (jumps / (control (op control)*))
 use_path = ((var / (obrace variable ("," ig* varaible)* cbrace)) ":")*
 use_elem = (variable ("as" ig* variable)?) / (typ ig* ("as" ig* typ, ig*)?)
-mod_use = k_use use_path ("*" / (obrace use_elem ("," ig* use_elem)* cbrace) / use_elem)
-expr = (mod_use / assign / branch / binary) ig*
-line = mod_dec / expr
-program = ig* line* eof
+mod_use = k_use use_path ("_" / (obrace use_elem ("," ig* use_elem)* cbrace) / use_elem)
+impl_expr = k_impl qual_typ
+expr = (mod_use / impl_expr / assign / (k_do? valexpr)) ig* (";" ig*)?
+stmt = annotation* (mod_dec / expr)
+program = ig* stmt* eof
