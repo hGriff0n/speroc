@@ -25,7 +25,6 @@ k_mod = "mod" !id_other ig*
 k_match = "match" !id_other ig*
 k_if = "if" !id_other ig*
 k_do = "do" !id_other ig*
-k_then = "then" !id_other ig*
 k_elsif = "elsif" !id_other ig*
 k_else = "else" !id_other ig*
 k_use = "use" !id_other ig*
@@ -38,8 +37,10 @@ k_yield = "yield" !id_other ig*
 k_return = "return" !id_other ig*
 k_impl = "impls" !id_other ig*
 k_wait = "wait" !id_other ig*
-keyword = k_let / k_def / k_static / k_mut / k_mod / k_match / k_if / k_do / k_then / k_elsif / k_else
-        / k_use / k_loop / k_for / k_while / k_break / k_continue / k_yield / k_return / k_impl / k_wait
+b_true = "true" !id_other ig*
+b_false = "false" !id_other ig*
+keyword = vcontext / k_mut / k_mod / k_match / k_if / k_do / k_then / k_elsif / k_else / k_use / k_loop
+		/ k_for / k_while / k_break / k_continue / k_yield / k_return / k_impl / k_wait / b_false / b_true
 vcontext = k_let / k_def / k_static
 
 //
@@ -65,15 +66,13 @@ float = ["0-9"]+ "." ["0-9"]+
 num = ["0-9"]+
 string = "\"" (!"\"" "\\"? .)* "\""
 character = "'" "\\"? . "'"
-b_true = "true" !id_other ig*
-b_false = "false" !id_other ig*
 tuple = oparen (expr ("," ig* valexpr)*)? cparen
 array = obrack (expr ("," ig* valexpr)*)? cbrack
 fn_rettype = type ig* scope
 fn_forward = "." valexpr
 fn_def = "->" ig* (fn_rettype / fn_forward / valexpr)
 fn_or_tuple = fn_forward / (tuple fn_def?)
-literal = (hex / bin / dec / num / string / fn_or_tuple / fncall / b_false / b_true / array / fn_or_tuple) ig*
+literal = (hex / bin / dec / num / string / b_false / b_true / array / fn_or_tuple) ig*
 
 //
 // Language Atoms
@@ -88,7 +87,7 @@ atom = (scope / literal / fncall) ig*
 //
 // anexpr = expr / keyword
 // antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
-annotation = "@" var tuple?
+annotation = "@" var "!"? tuple?										// The '!'? is a temporary measure
 mod_dec = k_mod var (":" var)* ig+
 mut_type = k_mut? type
 type_tuple = oparen mut_type ("," ig* mut_type)* cparen
@@ -127,14 +126,14 @@ for_l = for_core k_do? valexpr
 jump_key = k_wait / k_break / k_continue / k_return / k_yield
 jumps = jump_key valexpr?
 case_stmt = (pattern ig*) ("," ig* pattern ig*)* "->" valexpr
-match_stmt = k_match atom obrace case_stmt+ cbrace
-dot_match = k_match obrace cast_stmt+ cbrace
-dot_ctrl = k_loop / jump_key / while_core / dot_match / for_core / (if_core elses?)
+match_expr = k_match atom obrace case_stmt+ cbrace
+dot_match = k_match obrace case_stmt+ cbrace
+dot_ctrl = k_loop / jump_key / while_core / dot_match / for_core / dot_if
 
 // Expressions
 index = "&"? atom ("." ig* atom)* (("." dot_ctrl) / inf)?
 range = index (("," ig* index)? ".." ig* index)?
-control = branch / loop / while_l / for_l / match_stmt / range
+control = branch / loop / while_l / for_l / match_expr / range
 valexpr = k_mut? (jumps / (control (op control)*))
 use_path = ((var / (obrace variable ("," ig* varaible)* cbrace)) ":")*
 use_elem = (variable ("as" ig* variable)?) / (typ ig* ("as" ig* typ, ig*)?)
