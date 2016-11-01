@@ -7,3 +7,6 @@
 [submodule "dep/cxxopts"]
 	path = dep/cxxopts
 	url = https://github.com/jarro2783/cxxopts
+[submodule "dep/better-enums"]
+	path = dep/better-enums
+	url = https://github.com/aantron/better-enums.git

@@ -46,7 +46,7 @@ vcontext = k_let / k_def / k_static
 //
 // Language Bindings
 //
-var = !keyword ["a-z_"] id_other*
+var = !keyword ["a-z_"] id_other* ("!" !op)?
 typ = ["A-Z"] id_other*
 op = ["&=:"]? ["!@#$%^&*?<>|`/\\-=+"]+ ig*
 variable = var ig*
@@ -66,8 +66,8 @@ float = ["0-9"]+ "." ["0-9"]+
 num = ["0-9"]+
 string = "\"" (!"\"" "\\"? .)* "\""
 character = "'" "\\"? . "'"
-tuple = oparen (expr ("," ig* valexpr)*)? cparen
-array = obrack (expr ("," ig* valexpr)*)? cbrack
+tuple = oparen (valexpr ("," ig* valexpr)*)? cparen
+array = obrack (valexpr ("," ig* valexpr)*)? cbrack
 fn_rettype = type ig* scope
 fn_forward = "." valexpr
 fn_def = "->" ig* (fn_rettype / fn_forward / valexpr)
@@ -78,7 +78,8 @@ literal = (hex / bin / dec / num / string / b_false / b_true / array / fn_or_tup
 // Language Atoms
 //
 anon_type = "::" tuple? scope
-fncall = binding array? anon_type? (tuple anon_type?)*                  // Initial function followed by any number of anonymous types and chained calls
+inst_array = obrack (type / valexpr) ("," ig* (type / valexpr))* cbrack
+fncall = binding inst_array? anon_type? (tuple anon_type?)*                  // Initial function followed by any number of anonymous types and chained calls
 scope = obrace expr* cbrace
 atom = (scope / literal / fncall) ig*
 
@@ -92,7 +93,8 @@ mod_dec = k_mod var (":" var)* ig+
 mut_type = k_mut? type
 type_tuple = oparen mut_type ("," ig* mut_type)* cparen
 inf_fn_type = type_tuple ig* "->" ig*
-infer_type = "::" ig* inf_fn_type? mut_type
+type_signature = inf_fn_type? mut_type
+infer_type = "::" ig* type_signature
 gen_type = typ ["+-"]? ig* (("::"/"!:"/"<"/">") ig* type)?
 gen_val = variable ("::" ig* type)? ("=" ig* valexpr)?
 gen_part = gen_type / gen_val
@@ -105,9 +107,11 @@ adt_con = typ type_tuple? ig*
 constructors = (adt_con "|" ig*)* (tuple / adt_con)?
 var_tuple = oparen var_pattern ("," ig* var_pattern)* cparen
 var_pattern = var / op / var_tuple
-var_assign = var_pattern gen? (inf ("=" ig* valexpr)?) / ("=" ig* valexpr)
-lhs_inher = inf "=" ig*
-rhs_inher = "=" ig* (typ ig* "::" ig*)?
+interface = infer_type
+var_infer = infer_type? "=" ig* valexpr
+var_assign = var_pattern gen? (var_infer / interface)
+lhs_inher = infer_type "=" ig*
+rhs_inher = "=" ig* (type_signature ig* "::" ig*)?
 type_assign = typ !oparen ig* gen? (lhs_inher / rhs_inher) constructors scope
 assign = vcontext (type_assign / var_assign)
 pat_tuple = oparent pattern ("," ig* pattern)* cparen
@@ -134,8 +138,9 @@ dot_ctrl = k_loop / jump_key / while_core / dot_match / for_core / dot_if
 index = "&"? atom ("." ig* atom)* (("." dot_ctrl) / inf)?
 range = index (("," ig* index)? ".." ig* index)?
 control = branch / loop / while_l / for_l / match_expr / range
-valexpr = k_mut? (jumps / (control (op control)*))
-use_path = ((var / (obrace variable ("," ig* varaible)* cbrace)) ":")*
+binary = op control
+valexpr = k_mut? (jumps / (control binary*))
+use_path = ((("_" ig*) / var / (obrace variable ("," ig* varaible)* cbrace)) ":")*
 use_elem = (variable ("as" ig* variable)?) / (typ ig* ("as" ig* typ, ig*)?)
 mod_use = k_use use_path ("_" / (obrace use_elem ("," ig* use_elem)* cbrace) / use_elem)
 impl_expr = k_impl qual_typ
