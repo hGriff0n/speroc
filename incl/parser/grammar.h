@@ -19,6 +19,7 @@ namespace spero::parser::grammar {
 	struct ig : sor<multiline_comment, one_line_comment, whitespace> {};
 	struct ig_s : star<ig> {}; 
 	struct eps : success {};
+	struct opt_eps : eps {};
 
 	// Special Characters
 	template<char ch>
@@ -72,7 +73,7 @@ namespace spero::parser::grammar {
 	// Language Bindings
 	//
 	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
-	struct typ : seq<range<'A', 'Z'>, star<id_other>> {};
+	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
 	struct op : seq<opt<sor<one<'&'>, one<'='>, one<':'>>>,
 					plus<sor<one<'!'>, one<'@'>, one<'#'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
 				                one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
@@ -104,15 +105,17 @@ namespace spero::parser::grammar {
 	struct fn_rettype : seq<type, ig_s, scope> {};
 	struct fn_forward : seq<one<'.'>, valexpr> {};
 	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};
-	struct fn_opt : opt<fn_def> {};
-	struct fn_or_tuple : sor<fn_forward, seq<tuple, fn_opt>> {};
+	template<class Rule>
+	struct arg_tuple : seq<oparen, opt<sequ<valexpr>>, cparen, if_then_else<Rule, eps, opt_eps>> {};
+	struct fn_or_tuple : sor<fn_forward, arg_tuple<fn_def>> {};
 	struct lit : sor<hex, bin, num, str, character, b_false, b_true, array, fn_or_tuple> {};
 
 	//
 	// Language Atoms
 	//
 	struct anon_type : seq<two<':'>, ig_s, opt<tuple>, scope> {};
-	struct fncall : seq<binding, opt<array>, star<tuple, opt<anon_type>>> {};
+	struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};
+	struct fncall : seq<binding, opt<array>, star<arg_tuple<anon_type>>> {};
 	struct scope : seq<obrace, star<expr>, cbrace> {};
 	struct wait_stmt : seq<k_wait, valexpr> {};
 	struct atom : seq<sor<scope, wait_stmt, lit, fncall>, ig_s> {};
@@ -134,13 +137,15 @@ namespace spero::parser::grammar {
 	struct gen_val : seq<variable, opt<pstr("::"), ig_s, type>, opt<one<'='>, ig_s, expr>> {};
 	struct gen_part : sor<gen_type, gen_val> {};
 	struct generic : seq<obrack, sequ<gen_part>, cbrack> {};
+	struct use_path_elem : sor<placeholder, var, seq<obrace, sequ<variable>, cbrace>> {};
+	struct use_path : seq<list<use_path_elem, one<':'>>, one<':'>> {};
+	struct use_elem : sor<seq<variable, opt<pstr("as"), ig_s, variable>>, seq<typ, ig_s, opt<pstr("as"), ig_s, typ, ig_s>>> {};
 
 	//
 	// Assignment Grammar
 	//
 	struct adt_con : seq<typ, opt<type_tuple>, ig_s> {};
-	struct prim_con : seq<tuple> {};
-	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<prim_con, adt_con, eps>> {};
+	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<arg_tuple<eps>, adt_con, eps>> {};
 	struct var_tuple : seq<oparen, opt<sequ<var_pattern>>, cparen> {};
 	struct var_pattern : sor<var, op, var_tuple> {};
 	struct assign_val : seq<one<'='>, ig_s, valexpr> {};
@@ -179,10 +184,7 @@ namespace spero::parser::grammar {
 	struct control : sor<branch, loop, while_l, for_l, match_expr, range> {};
 	struct binary : seq<op, index> {};
 	struct valexpr : seq<opt<k_mut>, sor<jumps, seq<index, star<binary>>>> {};
-	struct use_path_elem : sor<var, seq<obrace, sequ<variable>, cbrace>> {};
-	struct use_path : seq<list<use_path_elem, one<':'>>, one<':'>> {};
-	struct use_elem : sor<seq<variable, opt<pstr("as"), ig_s, variable>>, seq<typ, ig_s, opt<pstr("as"), ig_s, typ, ig_s>>> {};
-	struct mod_use : seq<k_use, opt<use_path>, sor<one<'_'>, opt<obrace, sequ<use_elem>, cbrace>, use_elem>> {};
+	struct mod_use : seq<k_use, opt<use_path>, sor<placeholder, opt<obrace, sequ<use_elem>, cbrace>, use_elem>> {};
 	struct impl_expr : seq<k_impl, qual_name<typ>> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
 	struct stmt : seq<star<annotation>, sor<mod_dec, expr>> {};
