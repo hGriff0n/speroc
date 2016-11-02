@@ -1,109 +1,135 @@
 #pragma once
 
 #include <variant>
+#include <memory>
+#include "enum.h"
 
 namespace spero::compiler::ast {
+	// Organization
+	struct Expr;
+	struct Literal;
+
 	// Literals
+	struct Bool;
 	struct Byte;
-	struct Int;
 	struct Float;
+	struct Int;
 	struct String;
 	struct Char;
-	struct Bool;
-	struct Tuple;
-	struct Array;
-	struct FnObj;
+	struct FnBody;
 
 	// Bindings
-	struct BasicName;
-	struct Operator;
-	struct NamePath;
-	struct QualName;
+	struct BasicBinding;
+	struct QualBinding;
 	struct Type;
-	struct Pattern;		// I'm uncertain I'm going to implement Patterns atm
 
 	// Atoms
+	struct AnonType;
+	struct Sequence;
 	struct FnCall;
-	struct Scope;
-	struct Case;
-	struct Match;
 
-	// Decorators
+	// Language Decorators
 	struct Annotation;
-	struct ModDecl;
 	struct TypeTuple;
-	struct TypeInfer;
-	struct GenSubtype;
-	struct GenType;
-	struct GenValue;
+	struct FullType;
+	struct TypeGeneric;
+	struct ValueGeneric;
 	struct GenArray;
+	struct InstArray;
+	struct Case;
+	struct ImportPathPart;
 
 	// Assignment
-	struct ADT;
+	struct Adt;
+	struct AssignTuple;
+	struct AssignPattern;
+	struct ImportRebind;
+	struct PatternTuple;
+	struct NamedPattern;
+	struct TuplePattern;
+	struct AdtPattern;
+	struct Pattern;
+	struct AssignCore;
 	struct VarAssign;
+	struct Interface;
 	struct TypeAssign;
-	struct Assignment;
 
-	// Expressions
+	// Dot Control
+	struct IfCore;
+	struct WhileCore;
+	struct ForCore;
+	struct LoopCore;
+	struct JmpCore;
+	struct MatchCore;
+
+	// Control
+	struct IfBranch;
+	struct BranchStmt;
+	struct WhileLoop;
+	struct ForLoop;
+	struct Loop;
+	struct Jump;
+	struct Match;
+
+	// Statements
 	struct Index;
-	struct InfixOp;
-	struct IfStmt;
-	struct Branch;			// Construction Node
-	struct UsePath;			// Construction Node
-	struct UsePathElem;		// Construction Node
-	struct UseImport;		// Construction Node
-	struct UseStmt;
+	struct Binary;
+	struct Range;
+	struct Infix;
+	struct ImplExpr;
+	struct ModDec;
+	struct ModImport;
 
-	// Ast Productions
+	// Predefs
+	struct Any {};
 	struct Sentinel {};
-	enum class Keyword {
-		MUT,
-		LET,
-		DEF,
-		STATIC,
-		USE,
-		MOD,
-		MATCH,
-		IF,
-		ELSIF,
-		ELSE,
-	};
-	enum class PtrStyling {
-		POINTER,
-		VIEW,
-		NONE,
-	};
-	enum class Variance {
-		COVARIANT,
-		CONTRAVARIANT,
-		NONE,
-	};
-	enum class SubtypeRelation {
-		IMPLEMENTS,
-		NOT_IMPLEMENTS,
-		SUBTYPE,
-		SUPERTYPE,
-	};
+	BETTER_ENUM(KeywordType, char, LET, DEF, STATIC, MUT, DO,
+		MOD, USE, MATCH, IF, ELSIF, ELSE, WHILE, FOR, LOOP,
+		BREAK, CONT, YIELD, RET, WAIT, IMPL, F_IN);
+	BETTER_ENUM(PtrStyling, char, POINTER, VIEW, DEREF, NONE);
+	BETTER_ENUM(VarianceType, char, COVARIANT, CONTRAVARIANT, INVARIANT, NA);
+	BETTER_ENUM(RelationType, char, IMPLS, NOT_IMPLS, SUBTYPE, SUPERTYPE);
+	BETTER_ENUM(VisibilityType, char, PUBLIC, PROTECTED, PRIVATE, STATIC);
+	BETTER_ENUM(BindingType, char, TYPE, VARIABLE, OPERATOR);
+	BETTER_ENUM(JumpType, char, YIELD, BREAK, WAIT, CONTINUE, RETURN);
+	BETTER_ENUM(SequenceType, char, SCOPE, TUPLE, ARRAY);
 }
 
 namespace spero::compiler {
-	using litnode = std::variant<ast::Byte, ast::Int, ast::Float, ast::FnObj,
-		ast::String, ast::Char, ast::Bool, ast::Tuple, ast::Array>;
+	// Representing non-evaluable nodes that represent bindings
+	using binding = std::variant<
+		ast::BasicBinding, ast::QualBinding, ast::Type
+	>;
 
-	using bindnode = std::variant<ast::BasicName, ast::Operator, ast::Pattern, 
-		ast::QualName, ast::Type>;
+	// Representing non-evaluable nodes that decorate other expressions
+	using decorators = std::variant<
+		ast::Annotation, ast::FullType, ast::TypeGeneric, ast::ValueGeneric,
+		ast::TypeTuple, ast::GenArray, ast::Case, ast::ImportPathPart, ast::InstArray
+	>;
 
-	using atomnode = std::variant<ast::FnCall, ast::Scope, ast::Match>;
+	// Representing non-evaluable nodes that build up assignments
+	using assignment = std::variant<
+		ast::Adt, ast::AssignTuple, ast::AssignPattern, ast::AnonType,
+		ast::ImportRebind, ast::PatternTuple, ast::Pattern, ast::Any,
+		ast::NamedPattern, ast::TuplePattern, ast::AdtPattern
+	>;
 
-	using decnode = std::variant<ast::Annotation, ast::ModDecl, ast::TypeTuple,
-		ast::TypeInfer, ast::GenType, ast::GenValue, ast::GenArray, ast::SubtypeRelation>;
+	// Representing contstruction pieces
+	using con_pieces = std::variant<
+		ast::KeywordType, ast::PtrStyling, ast::VarianceType,
+		ast::RelationType, ast::VisibilityType, ast::Sentinel,
+		ast::BindingType, ast::JumpType, ast::SequenceType
+	>;
 
-	using connode = std::variant<ast::Sentinel, ast::Keyword, ast::PtrStyling, ast::Variance,
-		bool, ast::Branch, ast::UsePathElem, ast::UseImport, ast::NamePath, ast::Case>;
-	
-	using assignnode = std::variant<ast::ADT, ast::VarAssign, ast::TypeAssign, ast::Assignment>;
+	// Representing evaluable nodes
+	using astnode = std::unique_ptr<ast::Expr>;
+		// Literal    = Bool, Byte, Float, Int, String, Char, FnBody
+		// AssignCore = VarAssign, TypeAssign, Interface
+		// Atoms      = Sequence, FnCall
+		// Dot-Cntrl  = IfCore, WhileCore, ForCore, LoopCore, JmpCore, MatchCore
+		// Control    = IfBranch, BranchStmt, WhileLoop, ForLoop, Loop, Jump, Match
+		// Stmts      = Index, Range, Binary, ImplExpr, ModDec, ModImport
 
-	using exprnode = std::variant<ast::Index, ast::InfixOp, ast::IfStmt, ast::UseStmt>;
-
-	using astnode = std::variant<litnode, bindnode, atomnode, decnode, connode, assignnode, exprnode>;
+	// Values that can be pushed on the stack 
+	using StackVals = std::variant<astnode, binding, decorators, assignment, con_pieces>;
 }

@@ -8,207 +8,301 @@
 #include <memory>		// using std::shared_ptr as a cycle "breaker"
 
 
+/*
+ Current problems:
+   FunctionArgument solution is hacky (grammar may be broken too)
+ */
+
 namespace spero::compiler::ast {
+	// Forward Defining
+	struct GenArray {
+		std::vector<std::variant<TypeGeneric, ValueGeneric>> elems;
+	};
+	struct InstArray {
+		std::vector<std::variant<Type, astnode>> elems;
+	};
+
+	//
 	// Bindings
-	struct BasicName {
+	//
+	struct BasicBinding {
 		std::string name;
-		bool is_typ;
-		BasicName(const std::string&);
+		BindingType type;
 	};
-	struct Operator {
-		std::string op;
-		Operator(const std::string&);
+	struct QualBinding {
+		std::vector<BasicBinding> val;
 	};
-	struct NamePath {
-		std::vector<BasicName> inter;
+	struct Type {
+		QualBinding name;
+		GenArray generics;
+		PtrStyling ptr;
+		bool is_mut;
 	};
-	struct QualName {
-		NamePath path;
-		BasicName name;
+	struct TypeTuple {
+		std::vector<FullType> types;
 	};
-	struct Pattern {
+	struct FullType {
+		TypeTuple args;
+		Type val;
+	};
 
+
+	//
+	// Organization
+	//
+	struct Expr {
+		bool is_mut = false;
+		bool deref = false;
+		std::vector<Annotation> annots;
+		std::optional<FullType> type;
 	};
 
+
+	//
 	// Literals
-	struct Byte {
-		int val;
-		Byte(const std::string&, int base);
-	};
-	struct Int {
-		int val;
-		Int(const std::string&);
-	};
-	struct Float {
-		float val;
-		Float(const std::string&);
-	};
-	struct String {
-		std::string val;
-		String(const std::string&);
-	};
-	struct Char {
-		char val;
-		Char(char);
-	};
-	struct Bool {
+	//
+	struct Literal : Expr {};
+	struct Bool : Literal {
 		bool val;
 		Bool(bool);
 	};
-	struct Tuple {
-		std::vector<astnode> val;
-
-		template<class T> Tuple(T&& front, T&& end) {
-			std::move(front, end, std::back_inserter(val));
-		}
+	struct Byte : Literal {
+		unsigned long val;
+		Byte(const std::string&, int);
 	};
-	struct Array {
-		std::vector<astnode> val;
-
-		template<class T> Array(T&& front, T&& end) {
-			std::move(front, end, std::back_inserter(val));
-		}
+	struct Float : Literal {
+		double val;
+		Float(const std::string&);
 	};
-	struct Type {
-		QualName type;
-		PtrStyling ptr;
-		std::optional<Array> gens;
-		bool mut;
-	}; 
-	struct FnObj {
-		bool forward;
-		std::shared_ptr<astnode> body;
-		std::optional<Tuple> arguments;
-		std::optional<Type> return_type;
+	struct Int : Literal {
+		int val;
+		Int(const std::string&);
+	};
+	struct String : Literal {
+		std::string val;
+		String(const std::string&);
+	};
+	struct Char : Literal {
+		char val;
+		Char(char);
+	};
+	// This needs work
+	struct FnArgs {
+		using NamedArg = std::pair<BasicBinding, std::optional<FullType>>;
+		std::vector<std::variant<FullType, NamedArg>> val;
+	};
+	struct FnBody : Expr {			// type = return type
+		FnArgs args;
+		bool is_fwd;
+		astnode body;
 	};
 
+
+	//
 	// Atoms
-	struct FnCall {
-		QualName fm;
-		std::optional<Array> gens;
-		std::optional<Tuple> args;
+	//
+	struct AnonType {
+		std::optional<FnArgs> cons;
+		astnode body;
 	};
-	struct Scope {
-		std::vector<astnode> val;
+	struct Sequence : Expr {
+		std::vector<astnode> vals;
+		SequenceType sequ;
+	};
+	struct FnCall : Expr {
+		QualBinding fn;
+		InstArray generics;
+		std::vector<std::variant<std::unique_ptr<Sequence>, AnonType>> chain;			// Sequence must be a tuple
+	};
 
-		template<class T> Scope(T&& front, T&& end) {
-			std::move(front, end, std::back_inserter(val));
-		}
+
+	//
+	// Language Decorators
+	//
+	struct Annotation {
+		std::string name;
+		bool global;
+		std::unique_ptr<Sequence> args;													// Sequence must be a tuple
 	};
-	// Error here
+	struct TypeGeneric {
+		BasicBinding name;
+		VarianceType variant;
+		RelationType relation;
+		FullType reltype;
+	};
+	struct ValueGeneric {
+		BasicBinding name;
+		FullType type;
+		astnode val;						// Note: optional, null = not given
+	};
 	struct Case {
 		std::vector<Pattern> vars;
-		std::shared_ptr<astnode> expr;
+		astnode val;
 	};
-	// Error here
-	struct Match {
-		std::shared_ptr<astnode> val;
+	struct ImportPathPart {
+		std::variant<Any, std::vector<std::variant<BasicBinding, ImportRebind>>> val;
+	};
+
+
+	//
+	// Assignment
+	//
+	struct ImportRebind {
+		BasicBinding old_name, new_name;
+	};
+	struct PatternTuple {
+		std::vector<Pattern> vals;
+	};
+	struct Adt {
+		BasicBinding name;
+		TypeTuple types;
+	};
+	struct AssignTuple {
+		std::vector<AssignPattern> vars;
+	};
+	struct AssignPattern {
+		std::variant<BasicBinding, AssignTuple> val;
+	};
+	struct NamedPattern {
+		bool is_mut;
+		BasicBinding var;
+	};
+	struct TuplePattern {
+		bool is_mut;
+		PatternTuple vars;
+	};
+	struct AdtPattern {
+		BasicBinding adt;
+		std::optional<PatternTuple> vars;
+	};
+	struct Pattern {
+		std::variant<Any, NamedPattern, TuplePattern, PatternTuple, AdtPattern> val;
+	};
+	struct AssignCore : Expr {
+		VisibilityType vis;
+		GenArray generics;
+		AssignPattern pattern;
+	};
+	struct VarAssign : AssignCore {
+		astnode val;
+	};
+	struct TypeAssign : VarAssign {
+		std::vector<std::variant<Adt, FnArgs>> cons;
+	};
+	struct Interface : AssignCore {};													// type must be a option:some
+
+
+	//
+	// Dot Control
+	//
+	struct IfCore : Expr {
+		astnode body;
+	};
+	struct ForCore : Expr {
+		Pattern vars;
+		astnode generator;
+	};
+	struct JmpCore : Expr {
+		JumpType jmp;
+	};
+	struct MatchCore : Expr {
 		std::vector<Case> cases;
 	};
+	struct LoopCore : Expr {};
+	struct WhileCore : IfCore {};
 
-	// Decorators
-	struct Annotation {
-		BasicName annotation;
-		std::optional<Tuple> args;
+
+	//
+	// Control
+	//
+	struct IfBranch : IfCore {
+		astnode test;
 	};
-	struct ModDecl {
-		std::vector<BasicName> modules;
+	struct BranchStmt : Expr {
+		std::vector<std::unique_ptr<IfBranch>> if_bs;
+		astnode else_b;						// Note: optional, null = not given
 	};
-	struct TypeTuple {
-		std::vector<Type> types;
+	struct WhileLoop : IfBranch {};
+	struct ForLoop : ForCore, IfCore {};
+	struct Loop : IfCore {};
+	struct Jump : JmpCore {
+		astnode expr;						// Note: optional, null = not given
 	};
-	struct TypeInfer {
-		std::optional<TypeTuple> fn_args;
-		Type val_type;
-	};
-	struct GenSubtype {
-		SubtypeRelation relation;
-		Type type;
-	};
-	struct GenType {
-		BasicName type_name;
-		Variance variant;
-		std::optional<GenSubtype> subtype;
-	};
-	// Error here
-	struct GenValue {
-		BasicName var_name;
-		std::optional<Type> subtype;
-		std::shared_ptr<astnode> value;
-	};
-	struct GenArray {
-		std::vector<std::variant<GenType, GenValue>> gen_entries;
+	struct Match : MatchCore {
+		astnode sw_val;
 	};
 
-	// Assignment
-	struct ADT {
-		BasicName name;
-		std::optional<TypeTuple> accepts;
-	};
-	struct VarAssign {
-		bool mut;
-		// pattern or op
-		std::optional<TypeInfer> inference;
-		std::shared_ptr<astnode> expr;
-	};
-	struct TypeAssign {
-		BasicName type_name;
-		std::optional<GenArray> generics;
-		std::vector<std::variant<ADT, Tuple>> constructors;
-		Scope type_body;
-	};
-	struct Assignment {
-		Keyword visiblity;
-		std::variant<VarAssign, TypeAssign> assignment;
-	};
 
-	// Expressions
-	struct Index {
-		std::shared_ptr<astnode> lhs, rhs;
-		std::optional<TypeInfer> infer;
+	// Statements
+	struct Index : Expr {
+		std::vector<astnode> indices;
 	};
-	struct InfixOp {
-		std::shared_ptr<astnode> lhs, rhs;
-		Operator op;
+	struct Infix : Expr {
+		astnode lhs, rhs;
+		BasicBinding op;
 	};
-	struct Branch {
-		std::shared_ptr<astnode> test, branch;
+	struct Range : Expr {
+		astnode start, end;
+		astnode step;						// Note: optional, null = not given
 	};
-	// Error here
-	struct IfStmt {
-		Branch if_true;
-		std::vector<Branch> elsif_Branches;
-		std::shared_ptr<astnode> else_branch;
+	struct ImplExpr : Expr {
+		QualBinding typ;
 	};
-	struct UsePathElem {
-		std::vector<BasicName> modules;
+	struct ModDec : Expr {
+		std::vector<BasicBinding> path;
 	};
-	struct UseImport {
-		BasicName import;
-		std::optional<BasicName> rebind;
-	};
-	struct UseStmt {
-		std::vector<UsePathElem> use_path;
-		std::vector<UseImport> imports;
-		bool import_all;
+	struct ModImport : Expr {
+		std::vector<ImportPathPart> path;
 	};
 }
 
+
 namespace spero::util {
 	template<class Stream>
-	Stream& buffer(Stream& s, int depth) {
-		return s << std::string(depth, ' ');
+	Stream& pretty_print(spero::compiler::astnode& root, Stream& s, int depth = 0) {
+
 	}
 
 	template<class Stream>
-	Stream& pretty_print(spero::compiler::astnode& root, Stream& s, int depth = 0) {
+	Stream& pretty_print(spero::compiler::binding& b, Stream& s, int depth = 0) {
+
+	}
+
+	template<class Stream>
+	Stream& pretty_print(spero::compiler::decorators& d, Stream& s, int depth = 0) {
+
+	}
+
+	template<class Stream>
+	Stream& pretty_print(spero::compiler::assignment& a, Stream& s, int depth = 0) {
+
+	}
+
+	template<class Stream>
+	Stream& pretty_print(spero::compiler::StackVals& root, Stream& s, int depth = 0) {
 		using namespace spero::compiler;
 		using namespace compiler::ast;
 
-		buffer(s, depth);
+		s << std::string(depth, ' ');
 
 		std::visit(compose(
-			[&s](auto&&) { s << "The AST is currently being worked on and will be back shortly\n"; }
+			[&s](astnode& a) { s << "An astnode was found\n"; },
+			[&s](binding& b) { s << "A binding was found\n"; },
+			[&s](decorators& d) { s << "A decorator was found\n"; },
+			[&s](assignment& a) { s << "An assignment piece was found\n"; },
+			[&s](con_pieces& c) {
+				std::visit(compose(
+					[&s](ast::KeywordType& k) { s << "Keyword: " << k << "\n"; },
+					[&s](ast::PtrStyling& p) { s << "Ptr: " << p << "\n"; },
+					[&s](ast::VarianceType& v) { s << "Variance: " << v << "\n"; },
+					[&s](ast::RelationType& r) { s << "Relation: " << r << "\n"; },
+					[&s](ast::VisibilityType& v) { s << "Visibility: " << v << "\n"; },
+					[&s](ast::Sentinel&) { s << "Sentinel\n"; },
+					[&s](ast::BindingType& b) { s << "BindType: " << b << "\n"; },
+					[&s](ast::JumpType& j) { s << "Jump: " << j << "\n"; },
+					[&s](ast::SequenceType& seq) { s << "SeqType: " << seq << "\n"; }
+				), c);
+			}
 		), root);
 
 		return s;
