@@ -7,11 +7,7 @@
 #include <vector>
 #include <memory>		// using std::shared_ptr as a cycle "breaker"
 
-
-/*
- Current problems:
-   FunctionArgument solution is hacky (grammar may be broken too)
- */
+#define PRTY_OUT std::cout
 
 namespace spero::compiler::ast {
 	// Forward Defining
@@ -28,6 +24,8 @@ namespace spero::compiler::ast {
 	struct BasicBinding {
 		std::string name;
 		BindingType type;
+
+		BasicBinding(const std::string&, BindingType);
 	};
 	struct QualBinding {
 		std::vector<BasicBinding> val;
@@ -55,6 +53,8 @@ namespace spero::compiler::ast {
 		bool deref = false;
 		std::vector<Annotation> annots;
 		std::optional<FullType> type;
+
+		virtual std::string pretty_fmt(int = 0);
 	};
 
 
@@ -65,26 +65,38 @@ namespace spero::compiler::ast {
 	struct Bool : Literal {
 		bool val;
 		Bool(bool);
+
+		std::string pretty_fmt(int = 0);
 	};
 	struct Byte : Literal {
 		unsigned long val;
 		Byte(const std::string&, int);
+
+		std::string pretty_fmt(int = 0);
 	};
 	struct Float : Literal {
 		double val;
 		Float(const std::string&);
+
+		std::string pretty_fmt(int = 0);
 	};
 	struct Int : Literal {
 		int val;
 		Int(const std::string&);
+
+		std::string pretty_fmt(int = 0);
 	};
 	struct String : Literal {
 		std::string val;
 		String(const std::string&);
+
+		std::string pretty_fmt(int = 0);
 	};
 	struct Char : Literal {
 		char val;
 		Char(char);
+
+		std::string pretty_fmt(int = 0);
 	};
 	// This needs work
 	struct FnArgs {
@@ -189,7 +201,8 @@ namespace spero::compiler::ast {
 	struct TypeAssign : VarAssign {
 		std::vector<std::variant<Adt, FnArgs>> cons;
 	};
-	struct Interface : AssignCore {};													// type must be a option:some
+	struct Interface : AssignCore {
+	};					// type must be a option:some
 
 
 	//
@@ -208,8 +221,10 @@ namespace spero::compiler::ast {
 	struct MatchCore : Expr {
 		std::vector<Case> cases;
 	};
-	struct LoopCore : Expr {};
-	struct WhileCore : IfCore {};
+	struct LoopCore : Expr {
+	};
+	struct WhileCore : IfCore {
+	};
 
 
 	//
@@ -222,9 +237,12 @@ namespace spero::compiler::ast {
 		std::vector<std::unique_ptr<IfBranch>> if_bs;
 		astnode else_b;						// Note: optional, null = not given
 	};
-	struct WhileLoop : IfBranch {};
-	struct ForLoop : ForCore, IfCore {};
-	struct Loop : IfCore {};
+	struct WhileLoop : IfBranch {
+	};
+	struct ForLoop : ForCore, IfCore {
+	};
+	struct Loop : IfCore {
+	};
 	struct Jump : JmpCore {
 		astnode expr;						// Note: optional, null = not given
 	};
@@ -258,53 +276,80 @@ namespace spero::compiler::ast {
 
 
 namespace spero::util {
-	template<class Stream>
-	Stream& pretty_print(spero::compiler::astnode& root, Stream& s, int depth = 0) {
+	#define PRETTY_PRINT(type) template<class Stream> \
+	Stream& pretty_print(const spero::compiler::type& root, Stream& s, int depth = 0)
 
+	#define PRETTY_PRINT_SCAFF(type) PRETTY_PRINT(type) { return s; }
+
+	// Normal Expressions
+	PRETTY_PRINT(astnode) {
+		return (Stream&)(s << root->pretty_fmt(depth));
 	}
 
-	template<class Stream>
-	Stream& pretty_print(spero::compiler::binding& b, Stream& s, int depth = 0) {
-
+	// Bindings
+	PRETTY_PRINT(ast::BasicBinding) {
+		s << std::string(depth, ' ') << root.name << "(" << root.type << ")";
+		return s;
 	}
+	PRETTY_PRINT_SCAFF(ast::QualBinding)
+	PRETTY_PRINT_SCAFF(ast::Type)
 
-	template<class Stream>
-	Stream& pretty_print(spero::compiler::decorators& d, Stream& s, int depth = 0) {
+	// Decorators
+	PRETTY_PRINT_SCAFF(ast::Annotation)
+	PRETTY_PRINT_SCAFF(ast::FullType)
+	PRETTY_PRINT_SCAFF(ast::TypeGeneric)
+	PRETTY_PRINT_SCAFF(ast::ValueGeneric)
+	PRETTY_PRINT_SCAFF(ast::TypeTuple)
+	PRETTY_PRINT_SCAFF(ast::GenArray)
+	PRETTY_PRINT_SCAFF(ast::Case)
+	PRETTY_PRINT_SCAFF(ast::ImportPathPart)
+	PRETTY_PRINT_SCAFF(ast::InstArray)
 
-	}
+	// Assignment
+	PRETTY_PRINT_SCAFF(ast::Adt)
+	PRETTY_PRINT_SCAFF(ast::AssignTuple)
+	PRETTY_PRINT_SCAFF(ast::AssignPattern)
+	PRETTY_PRINT_SCAFF(ast::AnonType)
+	PRETTY_PRINT_SCAFF(ast::ImportRebind)
+	PRETTY_PRINT_SCAFF(ast::PatternTuple)
+	PRETTY_PRINT_SCAFF(ast::Any)
+	PRETTY_PRINT_SCAFF(ast::NamedPattern)
+	PRETTY_PRINT_SCAFF(ast::TuplePattern)
+	PRETTY_PRINT_SCAFF(ast::AdtPattern)
 
-	template<class Stream>
-	Stream& pretty_print(spero::compiler::assignment& a, Stream& s, int depth = 0) {
-
-	}
-
-	template<class Stream>
-	Stream& pretty_print(spero::compiler::StackVals& root, Stream& s, int depth = 0) {
-		using namespace spero::compiler;
-		using namespace compiler::ast;
-
+	// Construction Pieces
+	PRETTY_PRINT(con_pieces) {
+		using namespace spero::compiler::ast;
 		s << std::string(depth, ' ');
 
 		std::visit(compose(
-			[&s](astnode& a) { s << "An astnode was found\n"; },
-			[&s](binding& b) { s << "A binding was found\n"; },
-			[&s](decorators& d) { s << "A decorator was found\n"; },
-			[&s](assignment& a) { s << "An assignment piece was found\n"; },
-			[&s](con_pieces& c) {
-				std::visit(compose(
-					[&s](ast::KeywordType& k) { s << "Keyword: " << k << "\n"; },
-					[&s](ast::PtrStyling& p) { s << "Ptr: " << p << "\n"; },
-					[&s](ast::VarianceType& v) { s << "Variance: " << v << "\n"; },
-					[&s](ast::RelationType& r) { s << "Relation: " << r << "\n"; },
-					[&s](ast::VisibilityType& v) { s << "Visibility: " << v << "\n"; },
-					[&s](ast::Sentinel&) { s << "Sentinel\n"; },
-					[&s](ast::BindingType& b) { s << "BindType: " << b << "\n"; },
-					[&s](ast::JumpType& j) { s << "Jump: " << j << "\n"; },
-					[&s](ast::SequenceType& seq) { s << "SeqType: " << seq << "\n"; }
-				), c);
+			[&s](const KeywordType& k) { s << "Keyword: " << k; },
+			[&s](const PtrStyling& p) { s << "Ptr: " << p; },
+			[&s](const VarianceType& v) { s << "Variance: " << v; },
+			[&s](const RelationType& r) { s << "Relation: " << r; },
+			[&s](const VisibilityType& v) { s << "Visibility: " << v; },
+			[&s](const Sentinel&) { s << "Sentinel"; },
+			[&s](const BindingType& b) { s << "BindType: " << b; },
+			[&s](const JumpType& j) { s << "Jump: " << j; },
+			[&s](const SequenceType& seq) { s << "SeqType: " << seq; }
+		), root);
+
+		return s;
+	}
+
+	// Stack Values
+	PRETTY_PRINT(StackVals) {
+		std::visit(compose(
+			[&s, depth](const spero::compiler::astnode& a) { pretty_print(a, s, depth); },
+			[&s, depth](const spero::compiler::con_pieces& c) { pretty_print(c, s, depth); },
+			[&s, depth](const auto& v) {
+				std::visit([&s, depth](const auto& elem) { pretty_print(elem, s, depth); }, v);
 			}
 		), root);
 
 		return s;
 	}
+
+	#undef PRETTY_PRINT_SCAFF
+	#undef PRETTY_PRINT
 }

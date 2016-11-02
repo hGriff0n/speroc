@@ -61,8 +61,11 @@ namespace spero::parser::actions {
 //		// Then remove the tuple values (and sentinel) from the stack
 //		s.erase((sent + 1).base(), s.end() - 1);
 //	});
-//
-//	// Bindings
+
+	// Bindings
+	PUSH(var, ast::BasicBinding(in.string(), ast::BindingType::VARIABLE));
+	PUSH(typ, ast::BasicBinding(in.string(), ast::BindingType::TYPE));
+	PUSH(op, ast::BasicBinding(in.string(), ast::BindingType::OPERATOR));
 //	ACTION(name_path_part, {
 //		if (util::at_top<connode, ast::NamePath>(s))
 //			s.back().add(in.string());
@@ -74,11 +77,8 @@ namespace spero::parser::actions {
 //	ACTION(var, { s.emplace_back(ast::BasicName{ in.string() }); });
 //	ACTION(typ, { s.emplace_back(ast::BasicName{ in.string() }); });
 //	ACTION(op, { s.emplace_back(ast::Operator{ in.string() }); });
-//
-//	/*ACTION(program, {
-//		s.emplace_back(ast::Bool{ true });
-//	});*/
-//
+
+
 //	// Atoms
 //	ACTION(scope, {
 //		// Find the location of the sentinel node (representing the '(' at the begining)
@@ -94,5 +94,6 @@ namespace spero::parser::actions {
 //	// Atoms
 }
 
-#undef ACTION
 #undef SENTINEL
+#undef PUSH
+#undef ACTION

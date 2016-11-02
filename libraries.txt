@@ -8,8 +8,6 @@ Assembly
 range-v3
 modules
 coroutines
-Better Enums
-Smart Enum
 nytl
 SaferCPlusPlus
 fcppt
