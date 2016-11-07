@@ -5,63 +5,30 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <memory>		// using std::shared_ptr as a cycle "breaker"
+#include <memory>		// using std::unique_ptr as a cycle "breaker"
 
-#define PRTY_OUT std::cout
 
 namespace spero::compiler::ast {
-	// Forward Defining
-	struct GenArray {
-		std::vector<std::variant<TypeGeneric, ValueGeneric>> elems;
-	};
-	struct InstArray {
-		std::vector<std::variant<Type, astnode>> elems;
+	//
+	// Parent Nodes
+	//
+	struct Token {
 	};
 
-	//
-	// Bindings
-	//
-	struct BasicBinding {
-		std::string name;
-		BindingType type;
+	struct Stmt : Token {
+		std::vector<ptr<Annotation>> anots;
+	};
 
-		BasicBinding(const std::string&, BindingType);
-	};
-	struct QualBinding {
-		std::vector<BasicBinding> val;
-	};
-	struct Type {
-		QualBinding name;
-		GenArray generics;
-		PtrStyling ptr;
+	struct ValExpr : Stmt {
 		bool is_mut;
-	};
-	struct TypeTuple {
-		std::vector<FullType> types;
-	};
-	struct FullType {
-		TypeTuple args;
-		Type val;
-	};
-
-
-	//
-	// Organization
-	//
-	struct Expr {
-		bool is_mut = false;
-		bool deref = false;
-		std::vector<Annotation> annots;
-		std::optional<FullType> type;
-
-		virtual std::string pretty_fmt(int = 0);
+		ptr<Type> type;
 	};
 
 
 	//
 	// Literals
 	//
-	struct Literal : Expr {};
+	struct Literal : ValExpr {};
 	struct Bool : Literal {
 		bool val;
 		Bool(bool);
@@ -98,179 +65,195 @@ namespace spero::compiler::ast {
 
 		std::string pretty_fmt(int = 0);
 	};
-	// This needs work
-	struct FnArgs {
-		using NamedArg = std::pair<BasicBinding, std::optional<FullType>>;
-		std::vector<std::variant<FullType, NamedArg>> val;
+
+
+	//
+	// Bindings
+	//
+	struct BasicBinding : Token {
+		std::string name;
+		BindingType type;
 	};
-	struct FnBody : Expr {			// type = return type
-		FnArgs args;
-		bool is_fwd;
-		astnode body;
+	struct QualBinding : Token {
+		std::vector<ptr<BasicBinding>> val;
+	};
+	
+
+	//
+	// Types
+	//
+	struct Type : Token {
+		size_t id;
+		bool is_mut;
+	};
+	struct BasicType : Type {
+		ptr<BasicBinding> name;
+	};
+	struct GenType : BasicType {
+		GenArray generics;
+		PtrStyling pointer;
+	};
+	struct TupleType : Type {
+		std::vector<ptr<Type>> val;
+	};
+	struct FuncType : Type {
+		ptr<TupleType> args;
+		ptr<Type> ret;
 	};
 
 
 	//
 	// Atoms
 	//
-	struct AnonType {
-		std::optional<FnArgs> cons;
-		astnode body;
+	struct TypeExt : Token {
+		ptr<Sequence> args;				// optional, must be a tuple
+		ptr<Sequence> body;				// must be a scope
 	};
-	struct Sequence : Expr {
+	struct Sequence : ValExpr {
 		std::vector<astnode> vals;
-		SequenceType sequ;
+		SequenceType seq;
 	};
-	struct FnCall : Expr {
-		QualBinding fn;
-		InstArray generics;
-		std::vector<std::variant<std::unique_ptr<Sequence>, AnonType>> chain;			// Sequence must be a tuple
+	struct FnCall : ValExpr {
+		ptr<Token> caller;
+		ptr<TypeExt> anon;			// optional
+		ptr<Sequence> args;			// optional, must be a tuple
+		ptr<Sequence> inst;			// optional, must be an array
 	};
-
-
-	//
-	// Language Decorators
-	//
-	struct Annotation {
-		std::string name;
-		bool global;
-		std::unique_ptr<Sequence> args;													// Sequence must be a tuple
-	};
-	struct TypeGeneric {
-		BasicBinding name;
-		VarianceType variant;
-		RelationType relation;
-		FullType reltype;
-	};
-	struct ValueGeneric {
-		BasicBinding name;
-		FullType type;
-		astnode val;						// Note: optional, null = not given
-	};
-	struct Case {
-		std::vector<Pattern> vars;
-		astnode val;
-	};
-	struct ImportPathPart {
-		std::variant<Any, std::vector<std::variant<BasicBinding, ImportRebind>>> val;
-	};
-
-
-	//
-	// Assignment
-	//
-	struct ImportRebind {
-		BasicBinding old_name, new_name;
-	};
-	struct PatternTuple {
-		std::vector<Pattern> vals;
-	};
-	struct Adt {
-		BasicBinding name;
-		TypeTuple types;
-	};
-	struct AssignTuple {
-		std::vector<AssignPattern> vars;
-	};
-	struct AssignPattern {
-		std::variant<BasicBinding, AssignTuple> val;
-	};
-	struct NamedPattern {
-		bool is_mut;
-		BasicBinding var;
-	};
-	struct TuplePattern {
-		bool is_mut;
-		PatternTuple vars;
-	};
-	struct AdtPattern {
-		BasicBinding adt;
-		std::optional<PatternTuple> vars;
-	};
-	struct Pattern {
-		std::variant<Any, NamedPattern, TuplePattern, PatternTuple, AdtPattern> val;
-	};
-	struct AssignCore : Expr {
-		VisibilityType vis;
-		GenArray generics;
-		AssignPattern pattern;
-	};
-	struct VarAssign : AssignCore {
-		astnode val;
-	};
-	struct TypeAssign : VarAssign {
-		std::vector<std::variant<Adt, FnArgs>> cons;
-	};
-	struct Interface : AssignCore {
-	};					// type must be a option:some
-
-
-	//
-	// Dot Control
-	//
-	struct IfCore : Expr {
+	struct FnBody : ValExpr {
+		bool forward;
+		ptr<Sequence> args;				// optional
+		ptr<Type> ret;
 		astnode body;
 	};
-	struct ForCore : Expr {
-		Pattern vars;
-		astnode generator;
+	struct Range : ValExpr {
+		astnode start, stop;
+		astnode step;						// optional
 	};
-	struct JmpCore : Expr {
-		JumpType jmp;
+
+
+	//
+	// Decorators
+	//
+	struct Annotation : Token {
+		bool global;
+		ptr<BasicBinding> name;
+		ptr<Sequence> args;				// optional, must be a tuple
 	};
-	struct MatchCore : Expr {
-		std::vector<Case> cases;
+	struct GenericPart : Token {
+		ptr<BasicBinding> name;
+		ptr<BasicType> type;
 	};
-	struct LoopCore : Expr {
+	struct TypeGeneric : GenericPart {
+		RelationType rel;
 	};
-	struct WhileCore : IfCore {
+	struct ValueGeneric : GenericPart {
+		astnode val;					// optional
+	};
+	struct Case : Token {
+		std::vector<ptr<Pattern>> vars;
+		astnode expr;
+	};
+	struct ImportPart : Token {
+		std::vector<ptr<ImportPiece>> val;
+	};
+	struct ImportPiece : Token {				// Represents '_'
+	};
+	struct ImportName : ImportPiece {
+		ptr<BasicBinding> old;			// optional
+		ptr<BasicBinding> name;
+	};
+
+
+	//
+	// Assignment Parts
+	//
+	struct Adt : Token {
+		ptr<BasicBinding> name;
+		std::vector<ptr<BasicType>> args;
+	};
+	struct AssignPattern : Token {				// Represents '_'
+	};
+	struct AssignName : AssignPattern {
+		ptr<BasicBinding> var;
+	};
+	struct AssignTuple : AssignPattern {
+		std::vector<ptr<AssignPattern>> vars;
+	};
+	struct Pattern : Token {					// Represents '_'
+		bool is_mut;
+	};
+	struct PTuple : Pattern {			// These two are confusing
+		std::vector<ptr<Pattern>> val;
+	};
+	struct PNamed : Pattern {
+		ptr<BasicBinding> name;
+	};
+	struct PAdt : Pattern {
+		ptr<BasicBinding> name;			// must be a type
+		ptr<PTuple> args;				// can't be false
 	};
 
 
 	//
 	// Control
 	//
-	struct IfBranch : IfCore {
-		astnode test;
+	struct Branch : ValExpr {
+		using IfBranch = std::pair<astnode, astnode>;
+		std::vector<IfBranch> cases;
+		astnode else_branch;				// optional
 	};
-	struct BranchStmt : Expr {
-		std::vector<std::unique_ptr<IfBranch>> if_bs;
-		astnode else_b;						// Note: optional, null = not given
+	struct Loop : ValExpr {
+		astnode body;
 	};
-	struct WhileLoop : IfBranch {
+	struct While : ValExpr {
+		astnode test, body;
 	};
-	struct ForLoop : ForCore, IfCore {
+	struct For : ValExpr {
+		ptr<Pattern> pattern;
+		astnode generator, body;
 	};
-	struct Loop : IfCore {
+	struct Match : ValExpr {
+		astnode switch_val;
+		std::vector<ptr<Case>> cases;
 	};
-	struct Jump : JmpCore {
-		astnode expr;						// Note: optional, null = not given
+	struct Jump : Loop {					// body is optional
+		KeywordType jmp;
 	};
-	struct Match : MatchCore {
-		astnode sw_val;
-	};
+	
 
-
-	// Statements
-	struct Index : Expr {
-		std::vector<astnode> indices;
+	//
+	// Stmts
+	//
+	struct ImplExpr : Stmt {
+		ptr<QualBinding> type;				// Must be a type
 	};
-	struct Infix : Expr {
+	struct ModDec : Stmt {
+		ptr<QualBinding> module;			// Must be a var
+	};
+	struct ModImport : Stmt {
+		std::vector<ptr<ImportPart>> parts;
+	};
+	struct Interface : Stmt {
+		VisibilityType vis;
+		ptr<AssignPattern> binding;
+		GenArray generics;
+		ptr<Type> type;						// optional for subtypes
+	};
+	struct TypeAssign : Interface {
+		std::vector<token> cons;			// Must be an Adt or a Tuple Sequence
+		ptr<Sequence> expr;
+	};
+	struct VarAssign : Interface {
+		astnode expr;
+	};
+	struct Index : Stmt {
+		bool deref;
+		std::vector<astnode> elems;
+		ptr<Type> type;						// optional
+	};
+	struct Infix : Stmt {
 		astnode lhs, rhs;
-		BasicBinding op;
-	};
-	struct Range : Expr {
-		astnode start, end;
-		astnode step;						// Note: optional, null = not given
-	};
-	struct ImplExpr : Expr {
-		QualBinding typ;
-	};
-	struct ModDec : Expr {
-		std::vector<BasicBinding> path;
-	};
-	struct ModImport : Expr {
-		std::vector<ImportPathPart> path;
+		ptr<BasicBinding> op;
 	};
 }
 
@@ -291,7 +274,14 @@ namespace spero::util {
 		s << std::string(depth, ' ') << root.name << "(" << root.type << ")";
 		return s;
 	}
-	PRETTY_PRINT_SCAFF(ast::QualBinding)
+	PRETTY_PRINT(ast::QualBinding) {
+		s << std::string(depth, ' ');
+
+		for (auto binding : root.val) {
+			pretty_print(binding, s, 0) << ":";
+		}
+		return s;
+	}
 	PRETTY_PRINT_SCAFF(ast::Type)
 
 	// Decorators
@@ -299,7 +289,7 @@ namespace spero::util {
 	PRETTY_PRINT_SCAFF(ast::FullType)
 	PRETTY_PRINT_SCAFF(ast::TypeGeneric)
 	PRETTY_PRINT_SCAFF(ast::ValueGeneric)
-	PRETTY_PRINT_SCAFF(ast::TypeTuple)
+	PRETTY_PRINT_SCAFF(ast::TupleType)
 	PRETTY_PRINT_SCAFF(ast::GenArray)
 	PRETTY_PRINT_SCAFF(ast::Case)
 	PRETTY_PRINT_SCAFF(ast::ImportPathPart)
@@ -309,7 +299,7 @@ namespace spero::util {
 	PRETTY_PRINT_SCAFF(ast::Adt)
 	PRETTY_PRINT_SCAFF(ast::AssignTuple)
 	PRETTY_PRINT_SCAFF(ast::AssignPattern)
-	PRETTY_PRINT_SCAFF(ast::AnonType)
+	PRETTY_PRINT_SCAFF(ast::TypeExt)
 	PRETTY_PRINT_SCAFF(ast::ImportRebind)
 	PRETTY_PRINT_SCAFF(ast::PatternTuple)
 	PRETTY_PRINT_SCAFF(ast::Any)
@@ -317,10 +307,9 @@ namespace spero::util {
 	PRETTY_PRINT_SCAFF(ast::TuplePattern)
 	PRETTY_PRINT_SCAFF(ast::AdtPattern)
 
-	// Construction Pieces
-	PRETTY_PRINT(con_pieces) {
+	// Stack Values
+	PRETTY_PRINT(tokens) {
 		using namespace spero::compiler::ast;
-		s << std::string(depth, ' ');
 
 		std::visit(compose(
 			[&s](const KeywordType& k) { s << "Keyword: " << k; },
@@ -332,21 +321,8 @@ namespace spero::util {
 			[&s](const BindingType& b) { s << "BindType: " << b; },
 			[&s](const JumpType& j) { s << "Jump: " << j; },
 			[&s](const SequenceType& seq) { s << "SeqType: " << seq; }
+			[&s, depth](const auto& v) { pretty_print(elem, s, depth); }
 		), root);
-
-		return s;
-	}
-
-	// Stack Values
-	PRETTY_PRINT(StackVals) {
-		std::visit(compose(
-			[&s, depth](const spero::compiler::astnode& a) { pretty_print(a, s, depth); },
-			[&s, depth](const spero::compiler::con_pieces& c) { pretty_print(c, s, depth); },
-			[&s, depth](const auto& v) {
-				std::visit([&s, depth](const auto& elem) { pretty_print(elem, s, depth); }, v);
-			}
-		), root);
-
 		return s;
 	}
 

@@ -79,9 +79,9 @@ literal = (hex / bin / dec / num / string / b_false / b_true / array / fn_or_tup
 //
 anon_type = "::" tuple? scope
 inst_array = obrack (type / valexpr) ("," ig* (type / valexpr))* cbrack
-fncall = binding inst_array? anon_type? (tuple anon_type?)*                  // Initial function followed by any number of anonymous types and chained calls
 scope = obrace expr* cbrace
-atom = (scope / literal / fncall) ig*
+atom = (scope / literal / binding) ig*
+fncall = atom (inst_array? anon_type? tuple)*
 
 //
 // Language Statements
@@ -107,8 +107,8 @@ adt_con = typ type_tuple? ig*
 constructors = (adt_con "|" ig*)* (tuple / adt_con)?
 var_tuple = oparen var_pattern ("," ig* var_pattern)* cparen
 var_pattern = var / op / var_tuple
-interface = infer_type
-var_infer = infer_type? "=" ig* valexpr
+interface = infer_type ("=" ig* valexpr)?
+var_infer = "=" ig* valexpr
 var_assign = var_pattern gen? (var_infer / interface)
 lhs_inher = infer_type "=" ig*
 rhs_inher = "=" ig* (type_signature ig* "::" ig*)?
@@ -128,18 +128,18 @@ while_l = while_core k_do? valexpr
 for_core = k_for pattern "in" ig* valexpr
 for_l = for_core k_do? valexpr
 jump_key = k_wait / k_break / k_continue / k_return / k_yield
-jumps = jump_key valexpr?
-case_stmt = (pattern ig*) ("," ig* pattern ig*)* "->" valexpr
+jump = jump_key valexpr?
+case_stmt = pattern ig* ("," ig* pattern ig*)* "->" valexpr
 match_expr = k_match atom obrace case_stmt+ cbrace
 dot_match = k_match obrace case_stmt+ cbrace
 dot_ctrl = k_loop / jump_key / while_core / dot_match / for_core / dot_if
 
 // Expressions
-index = "&"? atom ("." ig* atom)* (("." dot_ctrl) / inf)?
+index = "&"? fncall ("." ig* fncall)* ("." in_eps dot_ctrl) / (inf? in_eps)
 range = index (("," ig* index)? ".." ig* index)?
-control = branch / loop / while_l / for_l / match_expr / range
-binary = op control
-valexpr = k_mut? (jumps / (control binary*))
+control = branch / loop / while_l / for_l / match_expr / jump / range
+infix = op control
+valexpr = k_mut? (jumps / (control infix*))
 use_path = ((("_" ig*) / var / (obrace variable ("," ig* varaible)* cbrace)) ":")*
 use_elem = (variable ("as" ig* variable)?) / (typ ig* ("as" ig* typ, ig*)?)
 mod_use = k_use use_path ("_" / (obrace use_elem ("," ig* use_elem)* cbrace) / use_elem)

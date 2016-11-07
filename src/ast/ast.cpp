@@ -67,9 +67,17 @@ namespace spero::compiler::ast {
 		return std::string(depth, ' ') + "Bool: " + (val ? "true" : "false");
 	}
 	
-	// Bindings
+	//
+	// BasicBinding
+	//
 	BasicBinding::BasicBinding(const std::string& name, BindingType type) : name{ name }, type{ type } {}
-	//BasicName::BasicName(const std::string& name) : name{ name } {}
-	//Operator::Operator(const std::string& name) : op{ name } {}
+	
+	//
+	// QualBinding
+	//
+	QualBinding::QualBinding(BasicBinding b) { add(b); }
+	void QualBinding::add(BasicBinding b) {
+		val.push_back(b);
+	}
 
 }

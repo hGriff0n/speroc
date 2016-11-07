@@ -105,20 +105,18 @@ namespace spero::parser::grammar {
 	struct fn_rettype : seq<type, ig_s, scope> {};
 	struct fn_forward : seq<one<'.'>, valexpr> {};
 	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};
-	template<class Rule>
-	struct arg_tuple : seq<oparen, opt<sequ<valexpr>>, cparen, if_then_else<Rule, eps, opt_eps>> {};
-	struct fn_or_tuple : sor<fn_forward, arg_tuple<fn_def>> {};
+	struct fn_or_tuple : sor<fn_forward, seq<tuple, opt<fn_def>>> {};
 	struct lit : sor<hex, bin, num, str, character, b_false, b_true, array, fn_or_tuple> {};
 
 	//
 	// Language Atoms
 	//
 	struct anon_type : seq<two<':'>, ig_s, opt<tuple>, scope> {};
-	struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};
-	struct fncall : seq<binding, opt<array>, star<arg_tuple<anon_type>>> {};
+	//struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};
 	struct scope : seq<obrace, star<expr>, cbrace> {};
 	struct wait_stmt : seq<k_wait, valexpr> {};
-	struct atom : seq<sor<scope, wait_stmt, lit, fncall>, ig_s> {};
+	struct atom : seq<sor<scope, wait_stmt, lit, binding>, ig_s> {};
+	struct fncall : seq<atom, star<sor<array, tuple, anon_type>>> {};
 
 	//
 	// Language Decorators
@@ -145,7 +143,7 @@ namespace spero::parser::grammar {
 	// Assignment Grammar
 	//
 	struct adt_con : seq<typ, opt<type_tuple>, ig_s> {};
-	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<arg_tuple<eps>, adt_con, eps>> {};
+	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<tuple, adt_con, eps>> {};
 	struct var_tuple : seq<oparen, opt<sequ<var_pattern>>, cparen> {};
 	struct var_pattern : sor<var, op, var_tuple> {};
 	struct assign_val : seq<one<'='>, ig_s, valexpr> {};
@@ -173,15 +171,17 @@ namespace spero::parser::grammar {
 	struct case_stmt : seq<sequ<seq<pattern, ig_s>>, pstr("->"), ig_s, valexpr> {};
 	struct match_expr : seq<k_match, atom, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};
-	struct dot_ctrl : seq<one<'.'>, sor<k_loop, jump_keys, while_core, dot_match, for_core, dot_if>> {};
+	struct dot_ctrl : sor<k_loop, jump_keys, while_core, dot_match, for_core, dot_if> {};
 
 	//
 	// Language Expressions
 	//
-	struct _index_ : seq<one<'.'>, ig_s, atom> {};
-	struct index : seq<opt<one<'&'>>, atom, star<_index_>, sor<dot_ctrl, inf, eps>> {};
+	struct _index_ : seq<one<'.'>, ig_s, fncall> {};
+	struct in_eps : eps {};
+	struct in_ctrl : seq<one<'.'>, in_eps, dot_ctrl> {};
+	struct index : seq<opt<one<'&'>>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
 	struct range : seq<index, opt<opt<one<','>, ig_s, index>, two<'.'>, ig_s, index>> {};
-	struct control : sor<branch, loop, while_l, for_l, match_expr, range> {};
+	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps, range> {};
 	struct binary : seq<op, index> {};
 	struct valexpr : seq<opt<k_mut>, sor<jumps, seq<index, star<binary>>>> {};
 	struct mod_use : seq<k_use, opt<use_path>, sor<placeholder, opt<obrace, sequ<use_elem>, cbrace>, use_elem>> {};
