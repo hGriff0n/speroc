@@ -1,3 +1,5 @@
 speroc*
 *.dgml
 Debug
+ipch
+*.vcxproj*

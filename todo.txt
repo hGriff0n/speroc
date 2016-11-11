@@ -7,8 +7,6 @@ Fix Spero
   Work on recombining the pattern and binding syntaxes (for simplicity)
     'mut' placement prevents them from being the same grammar
     Look into whether ADT decomposition should be allowed in the binding grammar
-  Work on the semantics of wait and yield
-    Find a way to put wait into the grammar so that 'match wait' is legal
   What about "accidental safe catching"?
     A function is accidentally left as "unsafe" by the programmer
     Later-on they specify a section of code as "safe" to catch one "unsafe"

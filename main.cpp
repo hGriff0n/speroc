@@ -7,26 +7,27 @@
 
 #include <iostream>
 
-#include "pegtl/analyze.hh"
-#include "parser/control.h"
+#include "parser\parser.h"
+
 #include "cmd_line.h"
 #include "util/utils.h"
 
-const size_t issues = pegtl::analyze<spero::parser::grammar::program>();
+const size_t issues = spero::parser::num_issues();
 
 int main(int argc, const char* argv[]) {
+	(void)argc;
+	(void)argv;
+
 	using namespace spero;
 	using namespace spero::parser;
-	using namespace spero::compiler;
 	//auto opts = spero::cmd::getOptions();
 
-	auto input = "3 + 4";
+	auto input = "mod std:util:Array";
 
-	Stack s{};
-	pegtl::parse_string<grammar::program, actions::action>(input, "me", s);
+	auto s = parser::parse(input);
 
-	for (auto it = std::begin(s); it != std::end(s); ++it)
-		util::pretty_print(*it, std::cout) << "\n";
+	for (auto it = std::begin(s); it != std::end(s); ++it);
+		//util::pretty_print(*it, std::cout) << "\n";
 
 	std::cout << issues << " - Fin";
 	std::cin.get();

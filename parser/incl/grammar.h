@@ -17,7 +17,7 @@ namespace spero::parser::grammar {
 	struct multiline_comment : seq<two<'#'>, until<two<'#'>>> {};
 	struct whitespace : plus<space> {};
 	struct ig : sor<multiline_comment, one_line_comment, whitespace> {};
-	struct ig_s : star<ig> {}; 
+	struct ig_s : star<ig> {};
 	struct eps : success {};
 	struct opt_eps : eps {};
 
@@ -75,8 +75,8 @@ namespace spero::parser::grammar {
 	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
 	struct op : seq<opt<sor<one<'&'>, one<'='>, one<':'>>>,
-					plus<sor<one<'!'>, one<'@'>, one<'#'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
-				                one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
+		plus<sor<one<'!'>, one<'@'>, one<'#'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
+		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
 	struct name_path : star<name_path_part> {};

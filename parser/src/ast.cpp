@@ -1,17 +1,17 @@
-#include "ast/ast.h"
-#include "util/utils.h"
+#include "ast.h"
+//#include "util/utils.h"
 
 #include <iterator>
 #include <sstream>
 
-using namespace spero::util;
+//using namespace spero::util;
 
 namespace spero::compiler::ast {
-	std::string Expr::pretty_fmt(int depth) {
+	/*std::string ValExpr::pretty_fmt(int depth) {
 		std::stringstream s;
 		s << std::string(depth, ' ') << "Printing an astnode";
 		return s.str();
-	}
+	}*/
 
 	//
 	// Byte
@@ -66,18 +66,4 @@ namespace spero::compiler::ast {
 	std::string Bool::pretty_fmt(int depth) {
 		return std::string(depth, ' ') + "Bool: " + (val ? "true" : "false");
 	}
-	
-	//
-	// BasicBinding
-	//
-	BasicBinding::BasicBinding(const std::string& name, BindingType type) : name{ name }, type{ type } {}
-	
-	//
-	// QualBinding
-	//
-	QualBinding::QualBinding(BasicBinding b) { add(b); }
-	void QualBinding::add(BasicBinding b) {
-		val.push_back(b);
-	}
-
 }

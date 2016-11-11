@@ -1,10 +1,7 @@
 #pragma once
 
 #include "grammar.h"
-#include "ast/ast.h"
-#include "util/utils.h"
-#include "util/stack_utils.h"
-#include "util/string_utils.h"
+#include "ast.h"
 
 #include <deque>
 #include <algorithm>
@@ -17,7 +14,8 @@ static void apply(const pegtl::action_input& in, Stack& s) app_def }
 #define SENTINEL(gram) PUSH(gram, ast::Sentinel{});
 
 namespace spero::parser {
-	using Stack = std::deque<spero::compiler::StackVals>;
+	using Stack = std::deque<spero::compiler::astnode>;
+	using DecStack = std::deque<spero::compiler::token>;
 }
 
 namespace spero::parser::actions {
@@ -36,8 +34,8 @@ namespace spero::parser::actions {
 	PUSH(bin_body, std::make_unique<ast::Byte>(in.string(), 2));
 	PUSH(integer, std::make_unique<ast::Int>(in.string()));
 	PUSH(dec, std::make_unique<ast::Float>(in.string()));
-	PUSH(str_body, std::make_unique<ast::String>(spero::util::escape(in.string())));
-	PUSH(char_body, std::make_unique<ast::Char>(spero::util::escape(in.string())[0]));
+	//PUSH(str_body, std::make_unique<ast::String>(spero::util::escape(in.string())));
+	//PUSH(char_body, std::make_unique<ast::Char>(spero::util::escape(in.string())[0]));
 	PUSH(b_false, std::make_unique<ast::Bool>(false));
 	PUSH(b_true, std::make_unique<ast::Bool>(true));
 
@@ -63,20 +61,23 @@ namespace spero::parser::actions {
 //	});
 
 	// Bindings
-	PUSH(var, ast::BasicBinding(in.string(), ast::BindingType::VARIABLE));
-	PUSH(typ, ast::BasicBinding(in.string(), ast::BindingType::TYPE));
-	PUSH(op, ast::BasicBinding(in.string(), ast::BindingType::OPERATOR));
-//	ACTION(name_path_part, {
-//		if (util::at_top<connode, ast::NamePath>(s))
-//			s.back().add(in.string());
-//
-//		else
-//			s.emplace_back(ast::NamePath{ in.string() });
-//	});
-//	ACTION(name_path, { s.pop_back(); });		// name_path is a bit too greedy in matching
-//	ACTION(var, { s.emplace_back(ast::BasicName{ in.string() }); });
-//	ACTION(typ, { s.emplace_back(ast::BasicName{ in.string() }); });
-//	ACTION(op, { s.emplace_back(ast::Operator{ in.string() }); });
+	//PUSH_DECR(var, ast::BasicBinding(in.string(), ast::BindingType::VARIABLE));
+	//PUSH_DECR(typ, ast::BasicBinding(in.string(), ast::BindingType::TYPE));
+	//PUSH_DECR(op, ast::BasicBinding(in.string(), ast::BindingType::OPERATOR));
+
+	ACTION(name_path_part, {
+		//d.emplace_back(ast::Sentinel{});
+		/*if (util::is_node<binding>(d.back()) && util::is_node<ast::BasicBinding>(std::get<binding>(d.back()))) {
+			auto prt = std::get<ast::BasicBinding>(std::get<binding>(d.back()));
+			d.pop_back();
+
+			if (util::is_node<binding>(d.back()) && util::is_node<ast::QualBinding>(std::get<binding>(d.back()))) {
+				std::get<ast::QualBinding>(std::get<binding>(d.back())).add(prt);
+			} else {
+				d.emplace_back(ast::QualBinding{ prt });
+			}
+		}*/
+	});
 
 
 //	// Atoms

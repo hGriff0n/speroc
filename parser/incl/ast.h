@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast/node_defs.h"
+#include "node_defs.h"
 
 #include <optional>
 #include <string>
@@ -264,6 +264,7 @@ namespace spero::util {
 
 	#define PRETTY_PRINT_SCAFF(type) PRETTY_PRINT(type) { return s; }
 
+	/*/
 	// Normal Expressions
 	PRETTY_PRINT(astnode) {
 		return (Stream&)(s << root->pretty_fmt(depth));
@@ -325,6 +326,8 @@ namespace spero::util {
 		), root);
 		return s;
 	}
+
+	*/
 
 	#undef PRETTY_PRINT_SCAFF
 	#undef PRETTY_PRINT
