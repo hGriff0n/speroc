@@ -7,74 +7,106 @@
 #include <vector>
 #include <memory>		// using std::unique_ptr as a cycle "breaker"
 
-
 namespace spero::compiler::ast {
+	// Member templates can't be virtual
+	#define PRETTY_PRINT virtual std::string pretty_print(size_t buf=0)
+
 	//
 	// Parent Nodes
 	//
-	struct Token {
-	};
+	struct Ast {
+		Ast();
 
-	struct Stmt : Token {
-		std::vector<ptr<Annotation>> anots;
+		PRETTY_PRINT{ return ""; }
 	};
+	struct Token : Ast {
+		std::variant<KeywordType, PtrStyling, VarianceType, RelationType, VisibilityType, BindingType, UnaryType> val;
 
+		// TODO: Try to get this down to one 'enable_if'd constructor
+		Token(KeywordType);
+		Token(PtrStyling);
+		Token(VarianceType);
+		Token(RelationType);
+		Token(VisibilityType);
+		Token(BindingType);
+		Token(UnaryType);
+	};
+	struct Stmt : Ast {
+		std::vector<ptr<Annotation>> annots;
+
+		Stmt();
+	};
 	struct ValExpr : Stmt {
 		bool is_mut;
+		UnaryType unop = UnaryType::NA;
 		ptr<Type> type;
+
+		ValExpr();
 	};
 
 
 	//
 	// Literals
 	//
-	struct Literal : ValExpr {};
-	struct Bool : Literal {
+	struct Bool : ValExpr {
 		bool val;
 		Bool(bool);
 
-		std::string pretty_fmt(int = 0);
+		// This doesn't print all the inherited stuff yet
+		PRETTY_PRINT{
+			return std::string(buf, ' ') + "Bool: " + (val ? "true" : "false");
+		}
 	};
-	struct Byte : Literal {
+	struct Byte : ValExpr {
 		unsigned long val;
 		Byte(const std::string&, int);
 
-		std::string pretty_fmt(int = 0);
+		PRETTY_PRINT{
+			return std::string(buf, ' ') + "Byte: " + std::to_string(val);
+		}
 	};
-	struct Float : Literal {
+	struct Float : ValExpr {
 		double val;
 		Float(const std::string&);
 
-		std::string pretty_fmt(int = 0);
+		PRETTY_PRINT{
+			return std::string(buf, ' ') + "Float: " + std::to_string(val);
+		}
 	};
-	struct Int : Literal {
+	struct Int : ValExpr {
 		int val;
 		Int(const std::string&);
 
-		std::string pretty_fmt(int = 0);
+		PRETTY_PRINT{
+			return std::string(buf, ' ') + "Int: " + std::to_string(val);
+		}
 	};
-	struct String : Literal {
+	struct String : ValExpr {
 		std::string val;
 		String(const std::string&);
 
-		std::string pretty_fmt(int = 0);
+		PRETTY_PRINT{
+			return std::string(buf, ' ') + "String: " + val;
+		}
 	};
-	struct Char : Literal {
+	struct Char : ValExpr {
 		char val;
 		Char(char);
 
-		std::string pretty_fmt(int = 0);
+		PRETTY_PRINT{
+			return std::string(buf, ' ') + "Char: " + val;
+		}
 	};
 
 
 	//
 	// Bindings
 	//
-	struct BasicBinding : Token {
+	struct BasicBinding : Ast {
 		std::string name;
 		BindingType type;
 	};
-	struct QualBinding : Token {
+	struct QualBinding : Ast {
 		std::vector<ptr<BasicBinding>> val;
 	};
 	
@@ -82,7 +114,7 @@ namespace spero::compiler::ast {
 	//
 	// Types
 	//
-	struct Type : Token {
+	struct Type : Ast {
 		size_t id;
 		bool is_mut;
 	};
@@ -92,6 +124,9 @@ namespace spero::compiler::ast {
 	struct GenType : BasicType {
 		GenArray generics;
 		PtrStyling pointer;
+	};
+	struct InstType : BasicType {
+		ptr<Array> inst;
 	};
 	struct TupleType : Type {
 		std::vector<ptr<Type>> val;
@@ -105,58 +140,63 @@ namespace spero::compiler::ast {
 	//
 	// Atoms
 	//
-	struct TypeExt : Token {
-		ptr<Sequence> args;				// optional, must be a tuple
-		ptr<Sequence> body;				// must be a scope
+	struct TypeExt : Ast {
+		ptr<Tuple> args;				// optional
+		ptr<Block> body;
 	};
 	struct Sequence : ValExpr {
-		std::vector<astnode> vals;
-		SequenceType seq;
+		std::vector<node> vals;
+	};
+	struct Tuple : Sequence {			// must accept values
+	};
+	struct Array : Sequence {
+	};
+	struct Block : Sequence {
 	};
 	struct FnCall : ValExpr {
-		ptr<Token> caller;
-		ptr<TypeExt> anon;			// optional
-		ptr<Sequence> args;			// optional, must be a tuple
-		ptr<Sequence> inst;			// optional, must be an array
+		node caller;
+		ptr<TypeExt> anon;				// optional
+		ptr<Tuple> args;				// optional
+		ptr<Array> inst;				// optional
 	};
 	struct FnBody : ValExpr {
 		bool forward;
-		ptr<Sequence> args;				// optional
-		ptr<Type> ret;
-		astnode body;
+		ptr<Tuple> args;				// null = not known
+		ptr<Type> ret;					// null = not known
+		value body;
 	};
 	struct Range : ValExpr {
-		astnode start, stop;
-		astnode step;						// optional
+		value start, stop;
+		value step;						// optional
 	};
 
 
 	//
 	// Decorators
 	//
-	struct Annotation : Token {
+	struct Annotation : Ast {
 		bool global;
 		ptr<BasicBinding> name;
-		ptr<Sequence> args;				// optional, must be a tuple
+		ptr<Tuple> args;				// optional
 	};
-	struct GenericPart : Token {
+	struct GenericPart : Ast {
 		ptr<BasicBinding> name;
-		ptr<BasicType> type;
+		ptr<Type> type;					// BasicType?
 	};
 	struct TypeGeneric : GenericPart {
 		RelationType rel;
 	};
 	struct ValueGeneric : GenericPart {
-		astnode val;					// optional
+		value val;						// optional
 	};
-	struct Case : Token {
+	struct Case : Ast {
 		std::vector<ptr<Pattern>> vars;
-		astnode expr;
+		value expr;
 	};
-	struct ImportPart : Token {
+	struct ImportPart : Ast {
 		std::vector<ptr<ImportPiece>> val;
 	};
-	struct ImportPiece : Token {				// Represents '_'
+	struct ImportPiece : Ast {			// Represents '_'
 	};
 	struct ImportName : ImportPiece {
 		ptr<BasicBinding> old;			// optional
@@ -167,11 +207,11 @@ namespace spero::compiler::ast {
 	//
 	// Assignment Parts
 	//
-	struct Adt : Token {
+	struct Adt : Ast {
 		ptr<BasicBinding> name;
-		std::vector<ptr<BasicType>> args;
+		std::vector<ptr<Type>> args;
 	};
-	struct AssignPattern : Token {				// Represents '_'
+	struct AssignPattern : Ast {		// Represents '_'
 	};
 	struct AssignName : AssignPattern {
 		ptr<BasicBinding> var;
@@ -179,7 +219,7 @@ namespace spero::compiler::ast {
 	struct AssignTuple : AssignPattern {
 		std::vector<ptr<AssignPattern>> vars;
 	};
-	struct Pattern : Token {					// Represents '_'
+	struct Pattern : Ast {				// Represents '_'
 		bool is_mut;
 	};
 	struct PTuple : Pattern {			// These two are confusing
@@ -198,26 +238,37 @@ namespace spero::compiler::ast {
 	// Control
 	//
 	struct Branch : ValExpr {
-		using IfBranch = std::pair<astnode, astnode>;
+		using IfBranch = std::pair<value, value>;
 		std::vector<IfBranch> cases;
-		astnode else_branch;				// optional
+		value else_branch;				// optional
 	};
 	struct Loop : ValExpr {
-		astnode body;
+		value body;
 	};
 	struct While : ValExpr {
-		astnode test, body;
+		value test, body;
 	};
 	struct For : ValExpr {
 		ptr<Pattern> pattern;
-		astnode generator, body;
+		value generator, body;
 	};
 	struct Match : ValExpr {
-		astnode switch_val;
+		value switch_val;
 		std::vector<ptr<Case>> cases;
 	};
-	struct Jump : Loop {					// body is optional
+	struct Jump : ValExpr {
+		value body;						// optional
 		KeywordType jmp;
+	};
+	struct Wait : Jump {
+	};
+	struct Break : Jump {
+	};
+	struct Continue : Jump {
+	};
+	struct Return : Jump {
+	};
+	struct Yield : Jump {
 	};
 	
 
@@ -225,10 +276,10 @@ namespace spero::compiler::ast {
 	// Stmts
 	//
 	struct ImplExpr : Stmt {
-		ptr<QualBinding> type;				// Must be a type
+		ptr<QualBinding> type;			// Must be a type
 	};
 	struct ModDec : Stmt {
-		ptr<QualBinding> module;			// Must be a var
+		ptr<QualBinding> module;		// Must be a var
 	};
 	struct ModImport : Stmt {
 		std::vector<ptr<ImportPart>> parts;
@@ -237,98 +288,19 @@ namespace spero::compiler::ast {
 		VisibilityType vis;
 		ptr<AssignPattern> binding;
 		GenArray generics;
-		ptr<Type> type;						// optional for subtypes
+		ptr<Type> type;					// optional for subtypes
 	};
-	struct TypeAssign : Interface {
-		std::vector<token> cons;			// Must be an Adt or a Tuple Sequence
-		ptr<Sequence> expr;
+	struct TypeAssign : Interface {		// type = inheritance
+		std::vector<node> cons;			// Must be an Adt or a Tuple Sequence
+		ptr<Block> expr;
 	};
 	struct VarAssign : Interface {
-		astnode expr;
+		value expr;
 	};
-	struct Index : Stmt {
-		bool deref;
-		std::vector<astnode> elems;
-		ptr<Type> type;						// optional
+	struct Index : ValExpr {
+		std::vector<value> elems;
+		ptr<Type> inf;					// optional (null = not known ???)
 	};
-	struct Infix : Stmt {
-		astnode lhs, rhs;
-		ptr<BasicBinding> op;
-	};
-}
 
-
-namespace spero::util {
-	#define PRETTY_PRINT(type) template<class Stream> \
-	Stream& pretty_print(const spero::compiler::type& root, Stream& s, int depth = 0)
-
-	#define PRETTY_PRINT_SCAFF(type) PRETTY_PRINT(type) { return s; }
-
-	/*/
-	// Normal Expressions
-	PRETTY_PRINT(astnode) {
-		return (Stream&)(s << root->pretty_fmt(depth));
-	}
-
-	// Bindings
-	PRETTY_PRINT(ast::BasicBinding) {
-		s << std::string(depth, ' ') << root.name << "(" << root.type << ")";
-		return s;
-	}
-	PRETTY_PRINT(ast::QualBinding) {
-		s << std::string(depth, ' ');
-
-		for (auto binding : root.val) {
-			pretty_print(binding, s, 0) << ":";
-		}
-		return s;
-	}
-	PRETTY_PRINT_SCAFF(ast::Type)
-
-	// Decorators
-	PRETTY_PRINT_SCAFF(ast::Annotation)
-	PRETTY_PRINT_SCAFF(ast::FullType)
-	PRETTY_PRINT_SCAFF(ast::TypeGeneric)
-	PRETTY_PRINT_SCAFF(ast::ValueGeneric)
-	PRETTY_PRINT_SCAFF(ast::TupleType)
-	PRETTY_PRINT_SCAFF(ast::GenArray)
-	PRETTY_PRINT_SCAFF(ast::Case)
-	PRETTY_PRINT_SCAFF(ast::ImportPathPart)
-	PRETTY_PRINT_SCAFF(ast::InstArray)
-
-	// Assignment
-	PRETTY_PRINT_SCAFF(ast::Adt)
-	PRETTY_PRINT_SCAFF(ast::AssignTuple)
-	PRETTY_PRINT_SCAFF(ast::AssignPattern)
-	PRETTY_PRINT_SCAFF(ast::TypeExt)
-	PRETTY_PRINT_SCAFF(ast::ImportRebind)
-	PRETTY_PRINT_SCAFF(ast::PatternTuple)
-	PRETTY_PRINT_SCAFF(ast::Any)
-	PRETTY_PRINT_SCAFF(ast::NamedPattern)
-	PRETTY_PRINT_SCAFF(ast::TuplePattern)
-	PRETTY_PRINT_SCAFF(ast::AdtPattern)
-
-	// Stack Values
-	PRETTY_PRINT(tokens) {
-		using namespace spero::compiler::ast;
-
-		std::visit(compose(
-			[&s](const KeywordType& k) { s << "Keyword: " << k; },
-			[&s](const PtrStyling& p) { s << "Ptr: " << p; },
-			[&s](const VarianceType& v) { s << "Variance: " << v; },
-			[&s](const RelationType& r) { s << "Relation: " << r; },
-			[&s](const VisibilityType& v) { s << "Visibility: " << v; },
-			[&s](const Sentinel&) { s << "Sentinel"; },
-			[&s](const BindingType& b) { s << "BindType: " << b; },
-			[&s](const JumpType& j) { s << "Jump: " << j; },
-			[&s](const SequenceType& seq) { s << "SeqType: " << seq; }
-			[&s, depth](const auto& v) { pretty_print(elem, s, depth); }
-		), root);
-		return s;
-	}
-
-	*/
-
-	#undef PRETTY_PRINT_SCAFF
 	#undef PRETTY_PRINT
 }

@@ -6,7 +6,6 @@
 #include "catch.hpp"
 
 #include <iostream>
-
 #include "parser\parser.h"
 
 #include "cmd_line.h"
@@ -15,19 +14,17 @@
 const size_t issues = spero::parser::num_issues();
 
 int main(int argc, const char* argv[]) {
-	(void)argc;
-	(void)argv;
-
 	using namespace spero;
 	using namespace spero::parser;
 	//auto opts = spero::cmd::getOptions();
 
-	auto input = "mod std:util:Array";
+	auto input = "3";
 
-	auto s = parser::parse(input);
+	//auto s = parser::parse(input);
 
-	for (auto it = std::begin(s); it != std::end(s); ++it);
-		//util::pretty_print(*it, std::cout) << "\n";
+	// marking pretty_print as virtual causes a read access exception ???
+	for (auto&& node : parser::parse(input))
+		std::cout << node->pretty_print(0) << "\n";
 
 	std::cout << issues << " - Fin";
 	std::cin.get();

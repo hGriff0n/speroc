@@ -135,7 +135,8 @@ dot_match = k_match obrace case_stmt+ cbrace
 dot_ctrl = k_loop / jump_key / while_core / dot_match / for_core / dot_if
 
 // Expressions
-index = "&"? fncall ("." ig* fncall)* ("." in_eps dot_ctrl) / (inf? in_eps)
+unary = "&" / "!" / "-"
+index = unary? fncall ("." ig* fncall)* ("." in_eps dot_ctrl) / (inf? in_eps)
 range = index (("," ig* index)? ".." ig* index)?
 control = branch / loop / while_l / for_l / match_expr / jump / range
 infix = op control

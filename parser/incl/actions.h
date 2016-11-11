@@ -2,6 +2,7 @@
 
 #include "grammar.h"
 #include "ast.h"
+#include "utils.h"
 
 #include <deque>
 #include <algorithm>
@@ -10,12 +11,14 @@
 template<> struct action<grammar::gram> { \
 static void apply(const pegtl::action_input& in, Stack& s) app_def }
 
-#define PUSH(gram, val) ACTION(gram, { s.emplace_back((val)); })
-#define SENTINEL(gram) PUSH(gram, ast::Sentinel{});
+#define MK_NODE(gram, val) ACTION(gram, { s.emplace_back((val)); })
+#define PUSH(gram, node, val) ACTION(gram, { s.emplace_back(std::make_unique<node>(val)); })
+#define SENTINEL(gram) MK_NODE(gram, ast::Sentinel{});
+#define TOKEN(gram, val) PUSH(gram, ast::Token, val)
+#define NONE(gram) ACTION(gram, {})
 
 namespace spero::parser {
-	using Stack = std::deque<spero::compiler::astnode>;
-	using DecStack = std::deque<spero::compiler::token>;
+	using Stack = std::deque<spero::compiler::node>;
 }
 
 namespace spero::parser::actions {
@@ -30,71 +33,101 @@ namespace spero::parser::actions {
 	SENTINEL(oparen);
 
 	// Literals
-	PUSH(hex_body, std::make_unique<ast::Byte>(in.string(), 16));
-	PUSH(bin_body, std::make_unique<ast::Byte>(in.string(), 2));
-	PUSH(integer, std::make_unique<ast::Int>(in.string()));
-	PUSH(dec, std::make_unique<ast::Float>(in.string()));
-	//PUSH(str_body, std::make_unique<ast::String>(spero::util::escape(in.string())));
-	//PUSH(char_body, std::make_unique<ast::Char>(spero::util::escape(in.string())[0]));
-	PUSH(b_false, std::make_unique<ast::Bool>(false));
-	PUSH(b_true, std::make_unique<ast::Bool>(true));
+	MK_NODE(hex_body, std::make_unique<ast::Byte>(in.string(), 16));
+	MK_NODE(bin_body, std::make_unique<ast::Byte>(in.string(), 2));
+	PUSH(integer, ast::Int, in.string());
+	PUSH(dec, ast::Float, in.string());
+	PUSH(str_body, ast::String, spero::util::escape(in.string()));
+	PUSH(char_body, ast::Char, spero::util::escape(in.string())[0]);
+	PUSH(b_false, ast::Bool, false);
+	PUSH(b_true, ast::Bool, true);
 
-//	ACTION(tuple, {
-//		// Find the location of the sentinel node (representing the '(' at the begining)
-//		auto sent = spero::util::findFirst<connode, ast::Sentinel>(s.rbegin(), s.rend());
-//
-//		// Move the set of values into the tuple (and create it on the stack)
-//		s.emplace_back(ast::Tuple{ sent.base(), s.end() });
-//
-//		// Then remove the tuple values (and sentinel) from the stack
-//		s.erase((sent + 1).base(), s.end() - 1);
-//	});
-//	ACTION(array, {
-//		// Find the location of the sentinel node (representing the '(' at the begining)
-//		auto sent = spero::util::findFirst<connode, ast::Sentinel>(s.rbegin(), s.rend());
-//
-//		// Move the set of values into the tuple (and create it on the stack)
-//		s.emplace_back(ast::Array{ sent.base(), s.end() });
-//
-//		// Then remove the tuple values (and sentinel) from the stack
-//		s.erase((sent + 1).base(), s.end() - 1);
-//	});
+	// Keywords
+	TOKEN(k_let, ast::VisibilityType::PROTECTED);
+	TOKEN(k_def, ast::VisibilityType::PUBLIC);
+	TOKEN(k_static, ast::VisibilityType::STATIC);
+	TOKEN(k_mut, ast::KeywordType::MUT);
+	TOKEN(k_mod, ast::KeywordType::MOD);
+	TOKEN(k_use, ast::KeywordType::USE);
+	TOKEN(k_match, ast::KeywordType::MATCH);
+	TOKEN(k_if, ast::KeywordType::IF);
+	TOKEN(k_elsif, ast::KeywordType::ELSIF);
+	TOKEN(k_else, ast::KeywordType::ELSE);
+	TOKEN(k_while, ast::KeywordType::WHILE);
+	TOKEN(k_for, ast::KeywordType::FOR);
+	TOKEN(k_break, ast::KeywordType::BREAK);
+	TOKEN(k_continue, ast::KeywordType::CONT);
+	TOKEN(k_yield, ast::KeywordType::YIELD);
+	TOKEN(k_ret, ast::KeywordType::RET);
+	TOKEN(k_wait, ast::KeywordType::WAIT);
+	TOKEN(k_impl, ast::KeywordType::IMPL);
 
-	// Bindings
-	//PUSH_DECR(var, ast::BasicBinding(in.string(), ast::BindingType::VARIABLE));
-	//PUSH_DECR(typ, ast::BasicBinding(in.string(), ast::BindingType::TYPE));
-	//PUSH_DECR(op, ast::BasicBinding(in.string(), ast::BindingType::OPERATOR));
-
-	ACTION(name_path_part, {
-		//d.emplace_back(ast::Sentinel{});
-		/*if (util::is_node<binding>(d.back()) && util::is_node<ast::BasicBinding>(std::get<binding>(d.back()))) {
-			auto prt = std::get<ast::BasicBinding>(std::get<binding>(d.back()));
-			d.pop_back();
-
-			if (util::is_node<binding>(d.back()) && util::is_node<ast::QualBinding>(std::get<binding>(d.back()))) {
-				std::get<ast::QualBinding>(std::get<binding>(d.back())).add(prt);
-			} else {
-				d.emplace_back(ast::QualBinding{ prt });
-			}
-		}*/
-	});
-
-
-//	// Atoms
-//	ACTION(scope, {
-//		// Find the location of the sentinel node (representing the '(' at the begining)
-//		auto sent = spero::util::findFirst<connode, ast::Sentinel>(s.rbegin(), s.rend());
-//
-//		// Move the set of values into the tuple (and create it on the stack)
-//		s.emplace_back(ast::Array{ sent.base(), s.end() });
-//
-//		// Then remove the tuple values (and sentinel) from the stack
-//		s.erase((sent + 1).base(), s.end() - 1); 
-//	});
-//
-//	// Atoms
+	// Placeholders
+	NONE(placeholder);
+	NONE(var);
+	NONE(typ);
+	NONE(op);
+	NONE(name_path_part);
+	NONE(name_path);
+	NONE(qual_name<grammar::typ>);
+	NONE(qual_name<grammar::var>);
+	NONE(typ_gen_inst);
+	NONE(typ_pointer);
+	NONE(type);
+	NONE(tuple);
+	NONE(array);
+	NONE(fn_rettype);
+	NONE(fn_forward);
+	NONE(fn_def);
+	NONE(fn_or_tuple);
+	NONE(anon_type);
+	NONE(scope);
+	NONE(wait_stmt);
+	NONE(fncall);
+	NONE(annotation);
+	NONE(mod_dec);
+	NONE(mut_type);
+	NONE(type_tuple);
+	NONE(inf_fn_args);
+	NONE(inf);
+	NONE(gen_variance);
+	NONE(gen_subtype);
+	NONE(gen_type);
+	NONE(gen_val);
+	NONE(generic);
+	NONE(use_path_elem);
+	NONE(use_path);
+	NONE(use_elem);
+	NONE(adt_con);
+	NONE(var_tuple);
+	NONE(var_pattern);
+	NONE(var_assign);
+	NONE(type_assign);
+	NONE(assign);
+	NONE(pat_tuple);
+	NONE(pattern);
+	NONE(branch);
+	NONE(dot_if);
+	NONE(loop);
+	NONE(while_core);
+	NONE(while_l);
+	NONE(for_core);
+	NONE(for_l);
+	NONE(jumps);
+	NONE(case_stmt);
+	NONE(match_expr);
+	NONE(_index_);
+	NONE(in_eps);
+	NONE(in_ctrl);
+	NONE(unary);
+	NONE(index);
+	NONE(range);
+	NONE(binary);
+	NONE(valexpr);
+	NONE(impl_expr);
 }
 
 #undef SENTINEL
 #undef PUSH
+#undef NONE
 #undef ACTION

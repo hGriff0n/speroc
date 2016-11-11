@@ -2,6 +2,9 @@
 Update documentation to reflect recent changes
 
 Fix Spero
+  Need a better distinction between several semantic/syntactic constructs
+    Inferred typing from analysis vs. syntactic typing
+  Can you write "let _ = 3" ??? (current grammar impl says no)
   How is concurrency going to be handled?
   Figure out the rules and abilities of pointers and manual memory
   Work on recombining the pattern and binding syntaxes (for simplicity)
@@ -17,6 +20,9 @@ Fix Spero
 Fixes Waiting for Other Features
   In-place modification of containers using for loops/iterators
     Waiting for: Implementation of standard containers and iterators
+  I feel the FnCall Node has a bit too much responsibility, especially for anon types
+    Types and Variables (non-calls) and Anonymous Types may benefit from a subtype node
+	  This somewhat depends on analysis and code generation in the future
 
 Work on ast construction
 

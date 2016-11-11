@@ -10,7 +10,7 @@ namespace spero::parser::grammar {
 
 	// Forward Declarations
 	struct array; struct expr; struct scope; struct atom; struct pattern;
-	struct var_pattern; struct valexpr;
+	struct var_pattern; struct valexpr; struct dot_ctrl;
 
 	// Ignore Characters
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
@@ -103,7 +103,7 @@ namespace spero::parser::grammar {
 	struct tuple : seq<oparen, opt<sequ<valexpr>>, cparen> {};
 	struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};
 	struct fn_rettype : seq<type, ig_s, scope> {};
-	struct fn_forward : seq<one<'.'>, valexpr> {};
+	struct fn_forward : seq<one<'.'>, sor<dot_ctrl, valexpr>> {};
 	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};
 	struct fn_or_tuple : sor<fn_forward, seq<tuple, opt<fn_def>>> {};
 	struct lit : sor<hex, bin, num, str, character, b_false, b_true, array, fn_or_tuple> {};
@@ -179,7 +179,8 @@ namespace spero::parser::grammar {
 	struct _index_ : seq<one<'.'>, ig_s, fncall> {};
 	struct in_eps : eps {};
 	struct in_ctrl : seq<one<'.'>, in_eps, dot_ctrl> {};
-	struct index : seq<opt<one<'&'>>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
+	struct unary : sor<one<'&'>, one<'!'>, one<'-'>> {};
+	struct index : seq<opt<unary>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
 	struct range : seq<index, opt<opt<one<','>, ig_s, index>, two<'.'>, ig_s, index>> {};
 	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps, range> {};
 	struct binary : seq<op, index> {};
