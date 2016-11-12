@@ -80,7 +80,7 @@ namespace spero::parser::grammar {
 	struct variable : seq<var, ig_s> {};
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
 	struct name_path : star<name_path_part> {};
-	template<class T> struct qual_name : seq<name_path, T, ig_s> {};
+	template<class T> struct qual_name : seq<name_path, disable<T>, ig_s> {};
 	struct typ_gen_inst : opt<array> {};
 	struct typ_pointer : sor<one<'&'>, one<'*'>, eps> {};
 	struct type : seq<name_path, typ, typ_gen_inst, typ_pointer, ig_s> {};

@@ -6,13 +6,19 @@
 
 #include <deque>
 #include <algorithm>
+#include <iostream>
 
+// Baseline Definitions
 #define ACTION(gram, app_def) \
 template<> struct action<grammar::gram> { \
 static void apply(const pegtl::action_input& in, Stack& s) app_def }
 
+#define INHERIT(gram, base) \
+template<> struct action<grammar::gram> : action<grammar::base> {}
+
+// Specialized Definitions for Common Cases
 #define MK_NODE(gram, val) ACTION(gram, { s.emplace_back((val)); })
-#define PUSH(gram, node, val) ACTION(gram, { s.emplace_back(std::make_unique<node>(val)); })
+#define PUSH(gram, node, val) MK_NODE(gram, std::make_unique<node>(val))
 #define SENTINEL(gram) MK_NODE(gram, ast::Sentinel{});
 #define TOKEN(gram, val) PUSH(gram, ast::Token, val)
 #define NONE(gram) ACTION(gram, {})
@@ -41,6 +47,12 @@ namespace spero::parser::actions {
 	PUSH(char_body, ast::Char, spero::util::escape(in.string())[0]);
 	PUSH(b_false, ast::Bool, false);
 	PUSH(b_true, ast::Bool, true);
+	NONE(tuple);
+	NONE(array);
+	NONE(fn_rettype);
+	NONE(fn_forward);
+	NONE(fn_def);
+	NONE(fn_or_tuple);
 
 	// Keywords
 	TOKEN(k_let, ast::VisibilityType::PROTECTED);
@@ -62,27 +74,34 @@ namespace spero::parser::actions {
 	TOKEN(k_wait, ast::KeywordType::WAIT);
 	TOKEN(k_impl, ast::KeywordType::IMPL);
 
-	// Placeholders
-	NONE(placeholder);
-	NONE(var);
-	NONE(typ);
-	NONE(op);
-	NONE(name_path_part);
-	NONE(name_path);
-	NONE(qual_name<grammar::typ>);
-	NONE(qual_name<grammar::var>);
-	NONE(typ_gen_inst);
-	NONE(typ_pointer);
-	NONE(type);
-	NONE(tuple);
-	NONE(array);
-	NONE(fn_rettype);
-	NONE(fn_forward);
-	NONE(fn_def);
-	NONE(fn_or_tuple);
+	// Bindings
+	MK_NODE(var, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::VARIABLE));
+	MK_NODE(typ, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::TYPE));
+	MK_NODE(op, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR));
+	ACTION(name_path_part, {
+		auto part = util::pop<ast::BasicBinding>(s);
+
+		if (part) {
+			if (util::is_type<ast::QualBinding>(s.back()))
+				dynamic_cast<ast::QualBinding*>(s.back().get())->add(std::move(part));
+
+			else
+				s.emplace_back(std::make_unique<ast::QualBinding>(std::move(part)));
+		} else {
+			// error
+		}
+	});
+	INHERIT(name_path, name_path_part);
+
+	// Atoms
 	NONE(anon_type);
 	NONE(scope);
 	NONE(wait_stmt);
+	// Placeholders
+	NONE(placeholder);
+	NONE(typ_gen_inst);
+	NONE(typ_pointer);
+	NONE(type);
 	NONE(fncall);
 	NONE(annotation);
 	NONE(mod_dec);

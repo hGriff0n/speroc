@@ -9,7 +9,7 @@
 
 namespace spero::compiler::ast {
 	// Member templates can't be virtual
-	#define PRETTY_PRINT virtual std::string pretty_print(size_t buf=0)
+	#define PRETTY_PRINT virtual std::string pretty_print(size_t=0)
 
 	//
 	// Parent Nodes
@@ -17,7 +17,7 @@ namespace spero::compiler::ast {
 	struct Ast {
 		Ast();
 
-		PRETTY_PRINT{ return ""; }
+		PRETTY_PRINT;
 	};
 	struct Token : Ast {
 		std::variant<KeywordType, PtrStyling, VarianceType, RelationType, VisibilityType, BindingType, UnaryType> val;
@@ -52,50 +52,37 @@ namespace spero::compiler::ast {
 		bool val;
 		Bool(bool);
 
-		// This doesn't print all the inherited stuff yet
-		PRETTY_PRINT{
-			return std::string(buf, ' ') + "Bool: " + (val ? "true" : "false");
-		}
+		PRETTY_PRINT;
 	};
 	struct Byte : ValExpr {
 		unsigned long val;
 		Byte(const std::string&, int);
 
-		PRETTY_PRINT{
-			return std::string(buf, ' ') + "Byte: " + std::to_string(val);
-		}
+		PRETTY_PRINT;
 	};
 	struct Float : ValExpr {
 		double val;
 		Float(const std::string&);
 
-		PRETTY_PRINT{
-			return std::string(buf, ' ') + "Float: " + std::to_string(val);
-		}
+		PRETTY_PRINT;
 	};
 	struct Int : ValExpr {
 		int val;
 		Int(const std::string&);
 
-		PRETTY_PRINT{
-			return std::string(buf, ' ') + "Int: " + std::to_string(val);
-		}
+		PRETTY_PRINT;
 	};
 	struct String : ValExpr {
 		std::string val;
 		String(const std::string&);
 
-		PRETTY_PRINT{
-			return std::string(buf, ' ') + "String: " + val;
-		}
+		PRETTY_PRINT;
 	};
 	struct Char : ValExpr {
 		char val;
 		Char(char);
 
-		PRETTY_PRINT{
-			return std::string(buf, ' ') + "Char: " + val;
-		}
+		PRETTY_PRINT;
 	};
 
 
@@ -105,9 +92,16 @@ namespace spero::compiler::ast {
 	struct BasicBinding : Ast {
 		std::string name;
 		BindingType type;
+
+		BasicBinding(std::string, BindingType);
+		PRETTY_PRINT;
 	};
 	struct QualBinding : Ast {
 		std::vector<ptr<BasicBinding>> val;
+
+		QualBinding(ptr<BasicBinding>);
+		void add(ptr<BasicBinding>);
+		PRETTY_PRINT;
 	};
 	
 
@@ -158,6 +152,10 @@ namespace spero::compiler::ast {
 		ptr<TypeExt> anon;				// optional
 		ptr<Tuple> args;				// optional
 		ptr<Array> inst;				// optional
+
+		FnCall(node);
+		FnCall(node, ptr<TypeExt>, ptr<Tuple>, ptr<Array>);
+		PRETTY_PRINT;
 	};
 	struct FnBody : ValExpr {
 		bool forward;
