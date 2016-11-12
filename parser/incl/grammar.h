@@ -116,7 +116,9 @@ namespace spero::parser::grammar {
 	struct scope : seq<obrace, star<expr>, cbrace> {};
 	struct wait_stmt : seq<k_wait, valexpr> {};
 	struct atom : seq<sor<scope, wait_stmt, lit, binding>, ig_s> {};
-	struct fncall : seq<atom, star<sor<array, tuple, anon_type>>> {};
+	struct fnseq : seq<opt<array>, opt<anon_type>, tuple> {};
+	struct fneps : eps {};
+	struct fncall : seq<atom, star<fnseq>, fneps> {};
 
 	//
 	// Language Decorators

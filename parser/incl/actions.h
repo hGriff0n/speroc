@@ -97,12 +97,29 @@ namespace spero::parser::actions {
 	NONE(anon_type);
 	NONE(scope);
 	NONE(wait_stmt);
+	ACTION(fnseq, {
+		// stack: expr, array?, anon_type?, tuple
+		auto args = util::pop<ast::Tuple>(s);
+		auto type = util::pop<ast::TypeExt>(s);
+		auto inst = util::pop<ast::Array>(s);
+		auto caller = util::pop<ast::Ast>(s);
+		
+		s.emplace_back(std::make_unique<ast::FnCall>(std::move(caller), std::move(type), std::move(args), std::move(inst)));
+		// stack: fncall
+	});
+	ACTION(fneps, {
+		// stack: expr | binding
+		auto part = util::pop<ast::QualBinding>(s);
+
+		if (part) s.emplace_back(std::make_unique<ast::FnCall>(std::move(part)));
+		// stack: fncall | expr
+	});
+
 	// Placeholders
 	NONE(placeholder);
 	NONE(typ_gen_inst);
 	NONE(typ_pointer);
 	NONE(type);
-	NONE(fncall);
 	NONE(annotation);
 	NONE(mod_dec);
 	NONE(mut_type);
