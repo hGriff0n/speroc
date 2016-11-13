@@ -71,6 +71,7 @@ namespace spero::parser::actions {
 	TOKEN(k_continue, ast::KeywordType::CONT);
 	TOKEN(k_yield, ast::KeywordType::YIELD);
 	TOKEN(k_ret, ast::KeywordType::RET);
+	TOKEN(k_loop, ast::KeywordType::LOOP);
 	TOKEN(k_wait, ast::KeywordType::WAIT);
 	TOKEN(k_impl, ast::KeywordType::IMPL);
 
@@ -79,24 +80,33 @@ namespace spero::parser::actions {
 	MK_NODE(typ, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::TYPE));
 	MK_NODE(op, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR));
 	ACTION(name_path_part, {
+		// stack: qual? basic
 		auto part = util::pop<ast::BasicBinding>(s);
 
 		if (part) {
-			if (util::is_type<ast::QualBinding>(s.back()))
-				dynamic_cast<ast::QualBinding*>(s.back().get())->add(std::move(part));
+			if (util::at_node<ast::QualBinding>(s))
+				util::view_as<ast::QualBinding>(s.back())->add(std::move(part));
 
 			else
 				s.emplace_back(std::make_unique<ast::QualBinding>(std::move(part)));
 		} else {
 			// error
 		}
+		// stack: qual
 	});
 	INHERIT(name_path, name_path_part);
 
 	// Atoms
 	NONE(anon_type);
 	NONE(scope);
-	NONE(wait_stmt);
+	ACTION(wait_stmt, {
+		// stack: token expr
+		auto expr = util::pop<ast::ValExpr>(s);
+		s.pop_back();
+
+		s.emplace_back(std::make_unique<ast::Wait>(std::move(expr)));
+		// stack: wait
+	});
 	ACTION(fnseq, {
 		// stack: expr, array?, anon_type?, tuple
 		auto args = util::pop<ast::Tuple>(s);
@@ -110,9 +120,72 @@ namespace spero::parser::actions {
 	ACTION(fneps, {
 		// stack: expr | binding
 		auto part = util::pop<ast::QualBinding>(s);
-
 		if (part) s.emplace_back(std::make_unique<ast::FnCall>(std::move(part)));
+		// TODO: Consider a different AST node for this case (variable with no parens)
 		// stack: fncall | expr
+	});
+
+	// Control
+	ACTION(branch, {
+		// stack: (token expr expr)* (token expr)?
+		// stack: branch
+	});
+	ACTION(dot_if, {
+		// stack: expr token expr (token expr expr)* (token expr)?
+		// stack: branch
+	});
+	ACTION(loop, {
+		// stack: token expr
+		auto part = util::pop<ast::ValExpr>(s);
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::Loop>(std::move(part)));
+		// stack: loop
+	});
+	ACTION(dot_loop, {
+		// stack: expr token
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+		action<grammar::loop>::apply(in, s);
+		// stack: loop
+	});
+	ACTION(while_l, {
+		// stack: token expr expr
+		auto body = util::pop<ast::ValExpr>(s);
+		auto test = util::pop<ast::ValExpr>(s);
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::While>(std::move(test), std::move(body)));
+		// stack: while
+	});
+	ACTION(dot_while, {
+		// stack: expr token expr
+		// stack: while
+	});
+	ACTION(for_l, {
+		// stack: token pattern expr expr
+		// stack: for
+	});
+	ACTION(dot_for, {
+		// stack: expr token pattern expr
+		// stack: for
+	});
+	ACTION(jumps, {
+		// stack: token expr?
+		// stack: jump
+	});
+	ACTION(dot_jmp, {
+		// stack: expr token
+		// stack: jump
+	});
+	ACTION(case_stmt, {
+		// stack: (sentinel | case) pattern* expr
+		// stack: case
+	});
+	ACTION(match_expr, {
+		// stack: token expr sentinel case+
+		// stack: match
+	});
+	ACTION(dot_match, {
+		// stack: expr token sentinel case+
+		// stack: match
 	});
 
 	// Placeholders
@@ -142,16 +215,6 @@ namespace spero::parser::actions {
 	NONE(assign);
 	NONE(pat_tuple);
 	NONE(pattern);
-	NONE(branch);
-	NONE(dot_if);
-	NONE(loop);
-	NONE(while_core);
-	NONE(while_l);
-	NONE(for_core);
-	NONE(for_l);
-	NONE(jumps);
-	NONE(case_stmt);
-	NONE(match_expr);
 	NONE(_index_);
 	NONE(in_eps);
 	NONE(in_ctrl);

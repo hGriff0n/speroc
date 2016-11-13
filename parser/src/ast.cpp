@@ -118,7 +118,38 @@ namespace spero::compiler::ast {
 	FnCall::FnCall(node expr, ptr<TypeExt> anon, ptr<Tuple> args, ptr<Array> inst)
 		: caller{ std::move(expr) }, anon{ std::move(anon) }, args{ std::move(args) }, inst{ std::move(inst) } {}
 	PRETTY_PRINT(FnCall) {
-		return "FnCall";
+		std::string buffer(buf++, ' ');
+		std::string ret = buffer + "FnCall\n";
+
+		if (caller) ret += caller->pretty_print(buf++);
+		if (inst) ret += buffer + " Instance Array:\n" + inst->pretty_print(buf + 1);
+		if (anon) ret += buffer + " Anon Extension:\n" + anon->pretty_print(buf + 1);
+		if (args) ret += buffer + " Argument Tuple:\n" + args->pretty_print(buf + 1);
+
+		return ret;
+	}
+
+
+	//
+	// Control
+	//
+	Loop::Loop(value expr) : body{ std::move(expr) } {}
+	PRETTY_PRINT(Loop) {
+		return std::string(buf, ' ') + "Loop\n" + body->pretty_print(buf + 1);
+	}
+
+	While::While(value test, value body) : test{ std::move(test) }, body{ std::move(body) } {}
+	PRETTY_PRINT(While) {
+		return std::string(buf, ' ') + "While\n" + test->pretty_print(buf + 1) + "\n" + body->pretty_print(buf + 1);
+	}
+
+	Jump::Jump(KeywordType jmp, value expr) : jmp{ jmp }, body{ std::move(expr) } {}
+
+	Wait::Wait(value expr) : Jump(KeywordType::WAIT, std::move(expr)) {}
+	PRETTY_PRINT(Wait) {
+		std::string ret(buf++, ' ');
+		ret += "Wait\n";
+		return ret + body->pretty_print(buf);
 	}
 
 	#undef PRETTY_PRINT

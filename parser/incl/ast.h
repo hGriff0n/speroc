@@ -158,6 +158,9 @@ namespace spero::compiler::ast {
 		FnCall(node, ptr<TypeExt>, ptr<Tuple>, ptr<Array>);
 		PRETTY_PRINT;
 	};
+	struct Variable : ValExpr {
+		ptr<QualBinding> var;
+	};
 	struct FnBody : ValExpr {
 		bool forward;
 		ptr<Tuple> args;				// null = not known
@@ -243,9 +246,15 @@ namespace spero::compiler::ast {
 	};
 	struct Loop : ValExpr {
 		value body;
+
+		Loop(value);
+		PRETTY_PRINT;
 	};
 	struct While : ValExpr {
 		value test, body;
+
+		While(value, value);
+		PRETTY_PRINT;
 	};
 	struct For : ValExpr {
 		ptr<Pattern> pattern;
@@ -258,8 +267,13 @@ namespace spero::compiler::ast {
 	struct Jump : ValExpr {
 		value body;						// optional
 		KeywordType jmp;
+
+		Jump(KeywordType, value);
 	};
 	struct Wait : Jump {
+		Wait(value);
+
+		PRETTY_PRINT;
 	};
 	struct Break : Jump {
 	};
