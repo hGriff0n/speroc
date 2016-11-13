@@ -4,7 +4,7 @@
 
 #include <optional>
 #include <string>
-#include <vector>
+#include <deque>
 #include <memory>		// using std::unique_ptr as a cycle "breaker"
 
 namespace spero::compiler::ast {
@@ -33,7 +33,7 @@ namespace spero::compiler::ast {
 		PRETTY_PRINT;
 	};
 	struct Stmt : Ast {
-		std::vector<ptr<Annotation>> annots;
+		std::deque<ptr<Annotation>> annots;
 
 		Stmt();
 	};
@@ -98,7 +98,7 @@ namespace spero::compiler::ast {
 		PRETTY_PRINT;
 	};
 	struct QualBinding : Ast {
-		std::vector<ptr<BasicBinding>> val;
+		std::deque<ptr<BasicBinding>> val;
 
 		QualBinding(ptr<BasicBinding>);
 		void add(ptr<BasicBinding>);
@@ -124,7 +124,7 @@ namespace spero::compiler::ast {
 		ptr<Array> inst;
 	};
 	struct TupleType : Type {
-		std::vector<ptr<Type>> val;
+		std::deque<ptr<Type>> val;
 	};
 	struct FuncType : Type {
 		ptr<TupleType> args;
@@ -140,7 +140,7 @@ namespace spero::compiler::ast {
 		ptr<Block> body;
 	};
 	struct Sequence : ValExpr {
-		std::vector<node> vals;
+		std::deque<node> vals;
 	};
 	struct Tuple : Sequence {			// must accept values
 	};
@@ -192,11 +192,11 @@ namespace spero::compiler::ast {
 		value val;						// optional
 	};
 	struct Case : Ast {
-		std::vector<ptr<Pattern>> vars;
+		std::deque<ptr<Pattern>> vars;
 		value expr;
 	};
 	struct ImportPart : Ast {
-		std::vector<ptr<ImportPiece>> val;
+		std::deque<ptr<ImportPiece>> val;
 	};
 	struct ImportPiece : Ast {			// Represents '_'
 	};
@@ -211,7 +211,7 @@ namespace spero::compiler::ast {
 	//
 	struct Adt : Ast {
 		ptr<BasicBinding> name;
-		std::vector<ptr<Type>> args;
+		std::deque<ptr<Type>> args;
 	};
 	struct AssignPattern : Ast {		// Represents '_'
 	};
@@ -219,13 +219,13 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> var;
 	};
 	struct AssignTuple : AssignPattern {
-		std::vector<ptr<AssignPattern>> vars;
+		std::deque<ptr<AssignPattern>> vars;
 	};
 	struct Pattern : Ast {				// Represents '_'
 		bool is_mut;
 	};
 	struct PTuple : Pattern {			// These two are confusing
-		std::vector<ptr<Pattern>> val;
+		std::deque<ptr<Pattern>> val;
 	};
 	struct PNamed : Pattern {
 		ptr<BasicBinding> name;
@@ -241,7 +241,7 @@ namespace spero::compiler::ast {
 	//
 	struct Branch : ValExpr {
 		using IfBranch = std::pair<value, value>;
-		std::vector<IfBranch> cases;
+		std::deque<IfBranch> cases;
 		value else_branch;				// optional
 	};
 	struct Loop : ValExpr {
@@ -262,7 +262,7 @@ namespace spero::compiler::ast {
 	};
 	struct Match : ValExpr {
 		value switch_val;
-		std::vector<ptr<Case>> cases;
+		std::deque<ptr<Case>> cases;
 	};
 	struct Jump : ValExpr {
 		value body;						// optional
@@ -295,7 +295,7 @@ namespace spero::compiler::ast {
 		ptr<QualBinding> module;		// Must be a var
 	};
 	struct ModImport : Stmt {
-		std::vector<ptr<ImportPart>> parts;
+		std::deque<ptr<ImportPart>> parts;
 	};
 	struct Interface : Stmt {
 		VisibilityType vis;
@@ -304,16 +304,20 @@ namespace spero::compiler::ast {
 		ptr<Type> type;					// optional for subtypes
 	};
 	struct TypeAssign : Interface {		// type = inheritance
-		std::vector<node> cons;			// Must be an Adt or a Tuple Sequence
+		std::deque<node> cons;			// Must be an Adt or a Tuple Sequence
 		ptr<Block> expr;
 	};
 	struct VarAssign : Interface {
 		value expr;
 	};
 	struct Index : ValExpr {
-		std::vector<value> elems;
+		std::deque<value> elems;
 		ptr<Type> inf;					// optional (null = not known ???)
 	};
 
 	#undef PRETTY_PRINT
+}
+
+namespace spero::parser {
+	using Stack = std::deque<spero::compiler::node>;
 }

@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "incl/control.h"
 #include "pegtl/analyze.hh"
 
 namespace spero::parser {

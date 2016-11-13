@@ -23,10 +23,6 @@ template<> struct action<grammar::gram> : action<grammar::base> {}
 #define TOKEN(gram, val) PUSH(gram, ast::Token, val)
 #define NONE(gram) ACTION(gram, {})
 
-namespace spero::parser {
-	using Stack = std::deque<spero::compiler::node>;
-}
-
 namespace spero::parser::actions {
 	using namespace spero::compiler;
 
