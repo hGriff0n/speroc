@@ -18,13 +18,17 @@ int main(int argc, const char* argv[]) {
 	using namespace spero::parser;
 	//auto opts = spero::cmd::getOptions();
 
-	auto input = "3";
+	auto input = "while 3 4";
+
+	// string_view
+	// attributes
+	// std::chrono
 
 	//auto s = parser::parse(input);
 
 	// marking pretty_print as virtual causes a read access exception ???
 	for (auto&& node : parser::parse(input))
-		std::cout << node->pretty_print(0) << "\n";
+		if (node) std::cout << node->pretty_print(0) << "\n";
 
 	std::cout << issues << " - Fin";
 	std::cin.get();

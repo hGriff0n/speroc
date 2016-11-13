@@ -30,6 +30,7 @@ namespace spero::compiler::ast {
 		Token(VisibilityType);
 		Token(BindingType);
 		Token(UnaryType);
+		PRETTY_PRINT;
 	};
 	struct Stmt : Ast {
 		std::vector<ptr<Annotation>> annots;
@@ -103,7 +104,7 @@ namespace spero::compiler::ast {
 		void add(ptr<BasicBinding>);
 		PRETTY_PRINT;
 	};
-	
+
 
 	//
 	// Types

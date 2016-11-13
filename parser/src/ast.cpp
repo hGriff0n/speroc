@@ -19,6 +19,26 @@ namespace spero::compiler::ast {
 	Token::Token(VisibilityType t) : val{ t } {}
 	Token::Token(BindingType t) : val{ t } {}
 	Token::Token(UnaryType t) : val{ t } {}
+
+	PRETTY_PRINT(Token) {
+		if (std::holds_alternative<KeywordType>(val))
+			return std::get<KeywordType>(val)._to_string();
+		else if (std::holds_alternative<PtrStyling>(val))
+			return std::get<PtrStyling>(val)._to_string();
+		else if (std::holds_alternative<VarianceType>(val))
+			return std::get<VarianceType>(val)._to_string();
+		else if (std::holds_alternative<RelationType>(val))
+			return std::get<RelationType>(val)._to_string();
+		else if (std::holds_alternative<VisibilityType>(val))
+			return std::get<VisibilityType>(val)._to_string();
+		else if (std::holds_alternative<BindingType>(val))
+			return std::get<BindingType>(val)._to_string();
+		else if (std::holds_alternative<UnaryType>(val))
+			return std::get<UnaryType>(val)._to_string();
+		else
+			return "Empty";
+	}
+
 	Stmt::Stmt() {}
 	ValExpr::ValExpr() {}
 	PRETTY_PRINT(Ast) {

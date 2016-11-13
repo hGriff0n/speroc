@@ -13,16 +13,16 @@ namespace spero::compiler::ast {
 	struct ValExpr;
 
 	// Literals
-	struct Bool;
-	struct Byte;
-	struct Float;
-	struct Int;
-	struct String;
-	struct Char;
+	struct Bool;				//
+	struct Byte;				//
+	struct Float;				//
+	struct Int;					//
+	struct String;				//
+	struct Char;				//
 
 	// Bindings
-	struct BasicBinding;
-	struct QualBinding;
+	struct BasicBinding;		//
+	struct QualBinding;			//
 
 	// Types
 	struct Type;
@@ -69,9 +69,9 @@ namespace spero::compiler::ast {
 	struct Branch;
 	struct While;
 	struct For;
-	struct Loop;
+	struct Loop;				//
 	struct Jump;
-	struct Wait;
+	struct Wait;				//
 	struct Break;
 	struct Continue;
 	struct Return;

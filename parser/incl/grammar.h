@@ -173,7 +173,11 @@ namespace spero::parser::grammar {
 	struct case_stmt : seq<sequ<seq<pattern, ig_s>>, pstr("->"), ig_s, valexpr> {};
 	struct match_expr : seq<k_match, atom, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};
-	struct dot_ctrl : sor<k_loop, jump_keys, while_core, dot_match, for_core, dot_if> {};
+	struct dot_while : seq<while_core> {};
+	struct dot_for : seq<for_core> {};
+	struct dot_jmp : seq<jump_keys> {};
+	struct dot_loop : seq<k_loop> {};
+	struct dot_ctrl : sor<dot_loop, dot_jmp, dot_while, dot_match, dot_for, dot_if> {};
 
 	//
 	// Language Expressions
@@ -185,8 +189,9 @@ namespace spero::parser::grammar {
 	struct index : seq<opt<unary>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
 	struct range : seq<index, opt<opt<one<','>, ig_s, index>, two<'.'>, ig_s, index>> {};
 	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps, range> {};
-	struct binary : seq<op, index> {};
-	struct valexpr : seq<opt<k_mut>, sor<jumps, seq<index, star<binary>>>> {};
+	struct _binary_ : seq<op, index> {};
+	struct binary : seq<index, star<_binary_>> {};
+	struct valexpr : seq<opt<k_mut>, sor<control, binary>> {};
 	struct mod_use : seq<k_use, opt<use_path>, sor<placeholder, opt<obrace, sequ<use_elem>, cbrace>, use_elem>> {};
 	struct impl_expr : seq<k_impl, qual_name<typ>> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
