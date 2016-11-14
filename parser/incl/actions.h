@@ -133,56 +133,6 @@ namespace spero::parser::actions {
 	});
 
 	// Control
-	/*ACTION(branch, {
-		// stack: (token test body)+ (token body)?
-		auto iter = std::find_if(std::rbegin(s), std::rend(s), [](auto&& node) {
-			auto* ptr = util::view_as<ast::Token>(node);
-
-			if (ptr && std::holds_alternative<ast::KeywordType>(ptr->val))
-				return std::get<ast::KeywordType>(ptr->val)._to_integral() == ast::KeywordType::IF;
-
-			return false;
-		});
-		std::reverse(std::rbegin(s), iter);
-		// stack: IF (body ELSE)? (body test ELSIF)* body test
-
-		auto test = util::pop<ast::ValExpr>(s);
-		auto branch = std::make_unique<ast::Branch>(std::move(test), util::pop<ast::ValExpr>(s));
-
-		 //deque iterator not dereferencable
-
-		std::unique_ptr<ast::Token> key = nullptr;
-		while ((key = util::pop<ast::Token>(s)) &&
-			   std::get<ast::KeywordType>(key->val)._to_integral() == ast::KeywordType::ELSIF) {
-			test = util::pop<ast::ValExpr>(s);
-			branch->addIf(std::move(test), util::pop<ast::ValExpr>(s));
-		}
-
-		if (std::get<ast::KeywordType>(key->val)._to_integral() == ast::KeywordType::ELSE) {
-			branch->addElse(util::pop<ast::ValExpr>(s));
-			s.pop_back();
-		}
-
-		s.push_back(std::move(branch));
-		// stack: branch
-	});
-	ACTION(dot_if, {
-		// stack: body token test (token expr expr)* (token expr)?
-		auto iter = std::find_if(std::rbegin(s), std::rend(s), [](auto&& node) {
-			auto* ptr = util::view_as<ast::Token>(node);
-
-			if (ptr && std::holds_alternative<ast::KeywordType>(ptr->val))
-				return std::get<ast::KeywordType>(ptr->val)._to_integral() == ast::KeywordType::IF;
-
-			return false;
-		});
-
-		// Move the body expression into the correct position
-		std::iter_swap(iter + 1, iter);
-		std::iter_swap(iter, iter - 1);
-		action<grammar::branch>::apply(in, s);
-		// stack: branch
-	});*/
 	ACTION(if_core, {
 		// stack: token test body
 		auto body = util::pop<ast::ValExpr>(s);
