@@ -154,16 +154,23 @@ namespace spero::parser::grammar {
 	struct rhs_inher : seq<one<'='>, ig_s, opt<typ, ig_s, two<':'>, ig_s>> {};
 	struct type_assign : seq<typ, not_at<oparen>, ig_s, opt<generic>, sor<lhs_inher, rhs_inher>, cons, scope> {};
 	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};
-	struct pat_tuple : seq<oparen, sequ<pattern>, one<')'>> {};
-	struct pattern : sor<placeholder, seq<opt<k_mut>, var>, seq<opt<k_mut>, pat_tuple>, seq<typ, opt<pat_tuple>>> {};
+	struct tuple_pat : seq<oparen, sequ<pattern>, one<')'>> {};
+	struct pat_adt : seq<typ, opt<tuple_pat>> {};
+	struct pat_tuple : seq<opt<k_mut>, tuple_pat> {};
+	struct pat_var : seq<opt<k_mut>, var> {};
+	struct pat_any : seq<placeholder> {};
+	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt> {};
 
 	//
 	// Control Flow Grammar
 	//
-	struct if_core : seq<k_if, valexpr> {};
-	struct elses : seq<star<k_elsif, valexpr, opt<k_do>, valexpr>, k_else, valexpr> {};
-	struct dot_if : seq<if_core, opt<elses>> {};
-	struct branch : seq<if_core, opt<k_do>, valexpr, opt<elses>> {};
+	struct if_core : seq<k_if, valexpr, opt<k_do>, valexpr> {};
+	struct if_dot_core : seq<k_if, valexpr> {};
+	struct elsif_rule : seq<k_elsif, valexpr, opt<k_do>, valexpr> {};
+	struct else_rule : seq<k_else, valexpr> {};
+	struct elses : seq<star<elsif_rule>, opt<else_rule>> {};
+	struct dot_if : seq<if_dot_core, elses> {};
+	struct branch : seq<if_core, elses> {};
 	struct loop : seq<k_loop, valexpr> {};
 	struct while_core : seq<k_while, valexpr> {};
 	struct while_l : seq<while_core, opt<k_do>, valexpr> {};
@@ -171,7 +178,7 @@ namespace spero::parser::grammar {
 	struct for_l : seq<for_core, opt<k_do>, valexpr> {};
 	struct jumps : seq<jump_keys, opt<valexpr>> {};
 	struct case_stmt : seq<sequ<seq<pattern, ig_s>>, pstr("->"), ig_s, valexpr> {};
-	struct match_expr : seq<k_match, atom, obrace, plus<case_stmt>, cbrace> {};
+	struct match_expr : seq<k_match, fncall, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_while : seq<while_core> {};
 	struct dot_for : seq<for_core> {};

@@ -75,7 +75,7 @@ namespace spero::compiler::ast {
 	struct Break;
 	struct Continue;
 	struct Return;
-	struct Yield;
+	struct YieldExpr;
 	struct Match;
 
 	// Statements

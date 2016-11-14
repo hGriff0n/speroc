@@ -29,6 +29,7 @@ int main(int argc, const char* argv[]) {
 	// marking pretty_print as virtual causes a read access exception ???
 	for (auto&& node : parser::parse(input))
 		if (node) std::cout << node->pretty_print(0) << "\n";
+		else std::cout << "nullptr\n";
 
 	std::cout << issues << " - Fin";
 	std::cin.get();

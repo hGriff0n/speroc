@@ -194,6 +194,11 @@ namespace spero::compiler::ast {
 	struct Case : Ast {
 		std::deque<ptr<Pattern>> vars;
 		value expr;
+
+		Case(value);
+		void setPattern(std::deque<ptr<Pattern>>&);
+
+		PRETTY_PRINT;	//temp?
 	};
 	struct ImportPart : Ast {
 		std::deque<ptr<ImportPiece>> val;
@@ -222,13 +227,16 @@ namespace spero::compiler::ast {
 		std::deque<ptr<AssignPattern>> vars;
 	};
 	struct Pattern : Ast {				// Represents '_'
-		bool is_mut;
+		bool is_mut = false;
 	};
 	struct PTuple : Pattern {			// These two are confusing
 		std::deque<ptr<Pattern>> val;
 	};
 	struct PNamed : Pattern {
 		ptr<BasicBinding> name;
+
+		PNamed(ptr<BasicBinding>);
+		PRETTY_PRINT;
 	};
 	struct PAdt : Pattern {
 		ptr<BasicBinding> name;			// must be a type
@@ -243,6 +251,12 @@ namespace spero::compiler::ast {
 		using IfBranch = std::pair<value, value>;
 		std::deque<IfBranch> cases;
 		value else_branch;				// optional
+
+		Branch(value, value);
+		void addIf(value, value);
+		void addElse(value);
+
+		PRETTY_PRINT;
 	};
 	struct Loop : ValExpr {
 		value body;
@@ -259,10 +273,16 @@ namespace spero::compiler::ast {
 	struct For : ValExpr {
 		ptr<Pattern> pattern;
 		value generator, body;
+
+		For(ptr<Pattern>, value, value);
+		PRETTY_PRINT;
 	};
 	struct Match : ValExpr {
 		value switch_val;
 		std::deque<ptr<Case>> cases;
+
+		Match(value, std::deque<ptr<Case>>&);
+		PRETTY_PRINT;
 	};
 	struct Jump : ValExpr {
 		value body;						// optional
@@ -272,16 +292,23 @@ namespace spero::compiler::ast {
 	};
 	struct Wait : Jump {
 		Wait(value);
-
 		PRETTY_PRINT;
 	};
 	struct Break : Jump {
+		Break(value);
+		PRETTY_PRINT;
 	};
 	struct Continue : Jump {
+		Continue(value);
+		PRETTY_PRINT;
 	};
 	struct Return : Jump {
+		Return(value);
+		PRETTY_PRINT;
 	};
-	struct Yield : Jump {
+	struct YieldExpr : Jump {
+		YieldExpr(value);
+		PRETTY_PRINT;
 	};
 	
 

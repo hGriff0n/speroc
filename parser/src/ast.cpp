@@ -131,8 +131,42 @@ namespace spero::compiler::ast {
 
 
 	//
+	// Assignment
+	//
+	PNamed::PNamed(ptr<BasicBinding> name) : name{ std::move(name) } {}
+	PRETTY_PRINT(PNamed) {
+		return std::string(buf, ' ') + (is_mut ? "mut" : "") + "PNamed " + name->pretty_print(0);
+	}
+
+
+	//
 	// Control
 	//
+	Branch::Branch(value tst, value body) : else_branch{ nullptr }	 {
+		addIf(std::move(tst), std::move(body));
+	}
+	void Branch::addIf(value tst, value body) {
+		cases.emplace_back(std::make_pair(std::move(tst), std::move(body)));
+	}
+	void Branch::addElse(value body) {
+		else_branch = std::move(body);
+	}
+	PRETTY_PRINT(Branch) {
+		std::string buffer(buf, ' ');
+		auto ret = buffer + "IfBranch";
+
+		size_t idx = 0;
+		for (auto&& branch : cases) {
+			ret += "\n" + buffer + " [" + std::to_string(idx++) + "]:\n"
+				+ branch.first->pretty_print(buf + 2) + "\n" + branch.second->pretty_print(buf + 2);
+		}
+
+		if (else_branch)
+			return ret + "\n" + buffer + " Else\n" + else_branch->pretty_print(buf + 2);
+
+		return ret;
+	}
+
 	Loop::Loop(value expr) : body{ std::move(expr) } {}
 	PRETTY_PRINT(Loop) {
 		return std::string(buf, ' ') + "Loop\n" + body->pretty_print(buf + 1);
@@ -143,13 +177,66 @@ namespace spero::compiler::ast {
 		return std::string(buf, ' ') + "While\n" + test->pretty_print(buf + 1) + "\n" + body->pretty_print(buf + 1);
 	}
 
+	For::For(ptr<Pattern> pt, value gen, value body)
+		: pattern{ std::move(pt) }, generator{ std::move(gen) }, body{ std::move(body) } {}
+	PRETTY_PRINT(For) {
+		std::string ret(buf, ' ');
+		ret += "For " + pattern->pretty_print(0) + "\n";
+		ret += generator->pretty_print(buf + 1) + "\n";
+		return ret + body->pretty_print(buf + 1);
+	}
+
 	Jump::Jump(KeywordType jmp, value expr) : jmp{ jmp }, body{ std::move(expr) } {}
 
 	Wait::Wait(value expr) : Jump(KeywordType::WAIT, std::move(expr)) {}
 	PRETTY_PRINT(Wait) {
-		std::string ret(buf++, ' ');
-		ret += "Wait\n";
-		return ret + body->pretty_print(buf);
+		return std::string(buf, ' ') + "Wait\n" + body->pretty_print(buf + 1);
+	}
+
+	Break::Break(value expr) : Jump(KeywordType::BREAK, std::move(expr)) {}
+	PRETTY_PRINT(Break) {
+		return std::string(buf, ' ') + "Break\n" + body->pretty_print(buf + 1);
+	}
+
+	Continue::Continue(value expr) : Jump(KeywordType::CONT, std::move(expr)) {}
+	PRETTY_PRINT(Continue) {
+		return std::string(buf, ' ') + "Continue\n" + body->pretty_print(buf + 1);
+	}
+
+	Return::Return(value expr) : Jump(KeywordType::RET, std::move(expr)) {}
+	PRETTY_PRINT(Return) {
+		return std::string(buf, ' ') + "Return\n" + body->pretty_print(buf + 1);
+	}
+
+	YieldExpr::YieldExpr(value expr) : Jump(KeywordType::YIELD, std::move(expr)) {}
+	PRETTY_PRINT(YieldExpr) {
+		return std::string(buf, ' ') + "Yield\n" + body->pretty_print(buf + 1);
+	}
+
+	Case::Case(value expr) : expr{ std::move(expr) } {}
+	void Case::setPattern(std::deque<ptr<Pattern>>& v) {
+		vars.swap(v);
+	}
+	PRETTY_PRINT(Case) {
+		std::string buffer(buf, ' ');
+		std::string ret = buffer + "Case\n" + buffer + " Pattern:\n";
+
+		for (auto&& pat : vars)
+			ret += pat->pretty_print(buf + 2) + "\n";
+
+		return ret + expr->pretty_print(buf + 1);
+	}
+
+	Match::Match(value expr, std::deque<ptr<Case>>& cases) : switch_val{ std::move(expr) } {
+		this->cases.swap(cases);
+	}
+	PRETTY_PRINT(Match) {
+		std::string ret(buf, ' ');
+		ret += "Match\n" + switch_val->pretty_print(buf + 1);
+
+		for (auto&& c : cases)
+			ret += "\n" + c->pretty_print(buf + 1);
+		return ret;
 	}
 
 	#undef PRETTY_PRINT

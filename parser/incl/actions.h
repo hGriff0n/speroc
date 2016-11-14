@@ -109,7 +109,7 @@ namespace spero::parser::actions {
 		auto type = util::pop<ast::TypeExt>(s);
 		auto inst = util::pop<ast::Array>(s);
 		auto caller = util::pop<ast::Ast>(s);
-		
+
 		s.emplace_back(std::make_unique<ast::FnCall>(std::move(caller), std::move(type), std::move(args), std::move(inst)));
 		// stack: fncall
 	});
@@ -117,34 +117,119 @@ namespace spero::parser::actions {
 		// stack: expr | binding
 		auto part = util::pop<ast::QualBinding>(s);
 		if (part) s.emplace_back(std::make_unique<ast::FnCall>(std::move(part)));
-		// TODO: Consider a different AST node for this case (variable with no parens)
+		// TODO: Consider pushing a Variale node instead (can add the function consideration in later)
 		// stack: fncall | expr
 	});
 
+	// Assignment
+	ACTION(pat_var, {
+		// stack: mut? var
+		auto pat = std::make_unique<ast::PNamed>(std::move(util::pop<ast::BasicBinding>(s)));
+		auto tkn = util::pop<ast::Token>(s);
+		pat->is_mut = tkn && std::holds_alternative<ast::KeywordType>(tkn->val)
+			&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+		s.push_back(std::move(pat));
+		// stack: pattern
+	});
+
 	// Control
-	ACTION(branch, {
-		// stack: (token expr expr)* (token expr)?
+	/*ACTION(branch, {
+		// stack: (token test body)+ (token body)?
+		auto iter = std::find_if(std::rbegin(s), std::rend(s), [](auto&& node) {
+			auto* ptr = util::view_as<ast::Token>(node);
+
+			if (ptr && std::holds_alternative<ast::KeywordType>(ptr->val))
+				return std::get<ast::KeywordType>(ptr->val)._to_integral() == ast::KeywordType::IF;
+
+			return false;
+		});
+		std::reverse(std::rbegin(s), iter);
+		// stack: IF (body ELSE)? (body test ELSIF)* body test
+
+		auto test = util::pop<ast::ValExpr>(s);
+		auto branch = std::make_unique<ast::Branch>(std::move(test), util::pop<ast::ValExpr>(s));
+
+		 //deque iterator not dereferencable
+
+		std::unique_ptr<ast::Token> key = nullptr;
+		while ((key = util::pop<ast::Token>(s)) &&
+			   std::get<ast::KeywordType>(key->val)._to_integral() == ast::KeywordType::ELSIF) {
+			test = util::pop<ast::ValExpr>(s);
+			branch->addIf(std::move(test), util::pop<ast::ValExpr>(s));
+		}
+
+		if (std::get<ast::KeywordType>(key->val)._to_integral() == ast::KeywordType::ELSE) {
+			branch->addElse(util::pop<ast::ValExpr>(s));
+			s.pop_back();
+		}
+
+		s.push_back(std::move(branch));
 		// stack: branch
 	});
 	ACTION(dot_if, {
-		// stack: expr token expr (token expr expr)* (token expr)?
+		// stack: body token test (token expr expr)* (token expr)?
+		auto iter = std::find_if(std::rbegin(s), std::rend(s), [](auto&& node) {
+			auto* ptr = util::view_as<ast::Token>(node);
+
+			if (ptr && std::holds_alternative<ast::KeywordType>(ptr->val))
+				return std::get<ast::KeywordType>(ptr->val)._to_integral() == ast::KeywordType::IF;
+
+			return false;
+		});
+
+		// Move the body expression into the correct position
+		std::iter_swap(iter + 1, iter);
+		std::iter_swap(iter, iter - 1);
+		action<grammar::branch>::apply(in, s);
+		// stack: branch
+	});*/
+	ACTION(if_core, {
+		// stack: token test body
+		auto body = util::pop<ast::ValExpr>(s);
+		auto test = util::pop<ast::ValExpr>(s);
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::Branch>(std::move(test), std::move(body)));
 		// stack: branch
 	});
+	ACTION(if_dot_core, {
+		// stack: body token test
+		auto iter = std::rbegin(s);
+		std::iter_swap(iter + 2, iter + 1);
+		std::iter_swap(iter, iter + 1);
+		action<grammar::if_core>::apply(in, s);
+		// stack: branch
+	});
+	ACTION(elsif_rule, {
+		// stack: branch token test body
+		auto body = util::pop<ast::ValExpr>(s);
+		auto test = util::pop<ast::ValExpr>(s);
+		s.pop_back();
+		util::view_as<ast::Branch>(s.back())->addIf(std::move(test), std::move(body));
+		// stack: branch
+	});
+	ACTION(else_rule, {
+		// stack: branch token body
+		auto body = util::pop<ast::ValExpr>(s);
+		s.pop_back();
+		util::view_as<ast::Branch>(s.back())->addElse(std::move(body));
+		// stack: branch
+	});
+
 	ACTION(loop, {
-		// stack: token expr
+		// stack: token body
 		auto part = util::pop<ast::ValExpr>(s);
 		s.pop_back();
 		s.emplace_back(std::make_unique<ast::Loop>(std::move(part)));
 		// stack: loop
 	});
 	ACTION(dot_loop, {
-		// stack: expr token
+		// stack: body token
 		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
 		action<grammar::loop>::apply(in, s);
 		// stack: loop
 	});
 	ACTION(while_l, {
-		// stack: token expr expr
+		// stack: token test body
 		auto body = util::pop<ast::ValExpr>(s);
 		auto test = util::pop<ast::ValExpr>(s);
 		s.pop_back();
@@ -152,35 +237,108 @@ namespace spero::parser::actions {
 		// stack: while
 	});
 	ACTION(dot_while, {
-		// stack: expr token expr
+		// stack: body token test
+		auto iter = std::rbegin(s);
+		std::iter_swap(iter + 2, iter + 1);
+		std::iter_swap(iter, iter + 1);
+		action<grammar::while_l>::apply(in, s);
 		// stack: while
 	});
 	ACTION(for_l, {
-		// stack: token pattern expr expr
+		// stack: token pattern generator body
+		auto body = util::pop<ast::ValExpr>(s);
+		auto gen = util::pop<ast::ValExpr>(s);
+		auto pattern = util::pop<ast::Pattern>(s);
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::For>(std::move(pattern), std::move(gen), std::move(body)));
 		// stack: for
 	});
 	ACTION(dot_for, {
-		// stack: expr token pattern expr
+		// stack: body token pattern generator
+		auto iter = std::rbegin(s);
+		std::iter_swap(iter + 3, iter + 2);
+		std::iter_swap(iter + 1, iter + 2);
+		std::iter_swap(iter + 1, iter);
+		action<grammar::for_l>::apply(in, s);
 		// stack: for
 	});
 	ACTION(jumps, {
 		// stack: token expr?
+		auto expr = util::pop<ast::ValExpr>(s);
+		auto tkn = std::get<ast::KeywordType>(util::pop<ast::Token>(s)->val);
+
+		switch (tkn) {
+			case ast::KeywordType::BREAK:
+				s.emplace_back(std::make_unique<ast::Break>(std::move(expr)));
+				break;
+			case ast::KeywordType::CONT:
+				s.emplace_back(std::make_unique<ast::Continue>(std::move(expr)));
+				break;
+			case ast::KeywordType::YIELD:
+				s.emplace_back(std::make_unique<ast::YieldExpr>(std::move(expr)));
+				break;
+			case ast::KeywordType::RET:
+				s.emplace_back(std::make_unique<ast::Return>(std::move(expr)));
+				break;
+			default:
+				break;
+				//error
+		}
 		// stack: jump
 	});
 	ACTION(dot_jmp, {
 		// stack: expr token
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+		action<grammar::jumps>::apply(in, s);
 		// stack: jump
 	});
 	ACTION(case_stmt, {
 		// stack: (sentinel | case) pattern* expr
-		// stack: case
+		auto cas = std::make_unique<ast::Case>(std::move(util::pop<ast::ValExpr>(s)));
+		auto pattern_size = std::find_if(std::rbegin(s), std::rend(s), [](auto&& n) {
+			return !util::is_type<ast::Pattern>(n);
+		}) - std::rbegin(s);
+
+		std::deque<ptr<ast::Pattern>> pattern;
+		for (auto i = 0; i != pattern_size; ++i)
+			pattern.push_front(util::pop<ast::Pattern>(s));
+		
+		cas->setPattern(pattern);
+		s.push_back(std::move(cas));
+		// stack: (sentinel | case) case
 	});
 	ACTION(match_expr, {
 		// stack: token expr sentinel case+
+		std::deque<ptr<ast::Case>> cases;
+		auto num_cases = std::find_if(std::rbegin(s), std::rend(s), [](auto&& n) { return !n; }) - std::rbegin(s);
+
+		for (auto i = 0; i != num_cases; ++i)
+			cases.push_front(util::pop<ast::Case>(s));
+
+		s.pop_back();
+
+		// stack: token expr
+
+		auto match_val = util::pop<ast::ValExpr>(s);
+		s.pop_back();
+
+		s.emplace_back(std::make_unique<ast::Match>(std::move(match_val), cases));
 		// stack: match
 	});
 	ACTION(dot_match, {
 		// stack: expr token sentinel case+
+		std::deque<ptr<ast::Case>> cases;
+		auto num_cases = std::find_if(std::rbegin(s), std::rend(s), [](auto&& n) { return !n; }) - std::rbegin(s);
+
+		for (auto i = 0; i != num_cases; ++i)
+			cases.push_front(util::pop<ast::Case>(s));
+
+		s.pop_back();
+
+		// stack: expr token
+
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::Match>(util::pop<ast::ValExpr>(s), cases));
 		// stack: match
 	});
 
