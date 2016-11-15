@@ -96,8 +96,8 @@ namespace spero::parser::grammar {
 	struct dec : seq<plus<digit>, one<'.'>, plus<digit>> {};
 	struct integer : plus<digit> {};
 	struct num : seq<sor<dec, integer>, ig_s> {};
-	struct str_body : until<one<'"'>, seq<opt<one<'\\'>>, any>> {};
-	struct str : seq<one<'"'>, str_body, ig_s> {};
+	struct str_body : until<at<one<'"'>>, seq<opt<one<'\\'>>, any>> {};
+	struct str : seq<one<'"'>, str_body, one<'"'>, ig_s> {};
 	struct char_body : seq<opt<one<'\\'>>, any> {};
 	struct character : seq<one<'\''>, char_body, one<'\''>, ig_s> {};
 	struct tuple : seq<oparen, opt<sequ<valexpr>>, cparen> {};
@@ -194,11 +194,13 @@ namespace spero::parser::grammar {
 	struct in_ctrl : seq<one<'.'>, in_eps, dot_ctrl> {};
 	struct unary : sor<one<'&'>, one<'!'>, one<'-'>> {};
 	struct index : seq<opt<unary>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
-	struct range : seq<index, opt<opt<one<','>, ig_s, index>, two<'.'>, ig_s, index>> {};
-	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps, range> {};
+	//struct range : seq<opt<one<','>, ig_s, index>, two<'.'>, ig_s, index> {};
+		// this grammar interferes with the sequence grammar on the ',' causing duplicates to exist
+	struct range : seq<two<'.'>, ig_s, index> {};
+	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps> {};
 	struct _binary_ : seq<op, index> {};
-	struct binary : seq<index, star<_binary_>> {};
-	struct valexpr : seq<opt<k_mut>, sor<control, binary>> {};
+	struct bin_range : seq<index, sor<range, star<_binary_>>> {};
+	struct valexpr : seq<opt<k_mut>, sor<control, bin_range>> {};
 	struct mod_use : seq<k_use, opt<use_path>, sor<placeholder, opt<obrace, sequ<use_elem>, cbrace>, use_elem>> {};
 	struct impl_expr : seq<k_impl, qual_name<typ>> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};

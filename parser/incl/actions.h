@@ -125,9 +125,11 @@ namespace spero::parser::actions {
 	ACTION(pat_var, {
 		// stack: mut? var
 		auto pat = std::make_unique<ast::PNamed>(std::move(util::pop<ast::BasicBinding>(s)));
+
 		auto tkn = util::pop<ast::Token>(s);
 		pat->is_mut = tkn && std::holds_alternative<ast::KeywordType>(tkn->val)
 			&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+
 		s.push_back(std::move(pat));
 		// stack: pattern
 	});
@@ -245,12 +247,9 @@ namespace spero::parser::actions {
 	ACTION(case_stmt, {
 		// stack: (sentinel | case) pattern* expr
 		auto cas = std::make_unique<ast::Case>(std::move(util::pop<ast::ValExpr>(s)));
-		auto pattern_size = std::find_if(std::rbegin(s), std::rend(s), [](auto&& n) {
-			return !util::is_type<ast::Pattern>(n);
-		}) - std::rbegin(s);
 
 		std::deque<ptr<ast::Pattern>> pattern;
-		for (auto i = 0; i != pattern_size; ++i)
+		while (util::at_node<ast::Pattern>(s))
 			pattern.push_front(util::pop<ast::Pattern>(s));
 		
 		cas->setPattern(pattern);
@@ -260,9 +259,7 @@ namespace spero::parser::actions {
 	ACTION(match_expr, {
 		// stack: token expr sentinel case+
 		std::deque<ptr<ast::Case>> cases;
-		auto num_cases = std::find_if(std::rbegin(s), std::rend(s), [](auto&& n) { return !n; }) - std::rbegin(s);
-
-		for (auto i = 0; i != num_cases; ++i)
+		while (util::at_node<ast::Case>(s))
 			cases.push_front(util::pop<ast::Case>(s));
 
 		s.pop_back();
@@ -278,9 +275,7 @@ namespace spero::parser::actions {
 	ACTION(dot_match, {
 		// stack: expr token sentinel case+
 		std::deque<ptr<ast::Case>> cases;
-		auto num_cases = std::find_if(std::rbegin(s), std::rend(s), [](auto&& n) { return !n; }) - std::rbegin(s);
-
-		for (auto i = 0; i != num_cases; ++i)
+		while (util::at_node<ast::Case>(s))
 			cases.push_front(util::pop<ast::Case>(s));
 
 		s.pop_back();
@@ -325,7 +320,7 @@ namespace spero::parser::actions {
 	NONE(unary);
 	NONE(index);
 	NONE(range);
-	NONE(binary);
+	//NONE(binary);
 	NONE(valexpr);
 	NONE(impl_expr);
 }

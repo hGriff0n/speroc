@@ -49,36 +49,30 @@ namespace spero::compiler::ast {
 	//
 	// Literals
 	//
-	
 	Byte::Byte(const std::string& num, int base) : val{ std::stoul(num, nullptr, base) } {}
 	PRETTY_PRINT(Byte) {
 		return std::string(buf, ' ') + "Byte: " + std::to_string(val);
 	}
 
-	
 	Int::Int(const std::string& num) : val{ std::stoi(num) } {}
 	PRETTY_PRINT(Int) {
 		return std::string(buf, ' ') + "Int: " + std::to_string(val);
 	}
 
-	
 	Float::Float(const std::string& num) : val{ std::stof(num) } {}
 	PRETTY_PRINT(Float) {
 		return std::string(buf, ' ') + "Float: " + std::to_string(val);
 	}
 
-	
 	String::String(const std::string& str) : val{ str } {}
 	PRETTY_PRINT(String) {
 		return std::string(buf, ' ') + "String: " + val;
 	}
 
-
 	Char::Char(char c) : val{ c } {}
 	PRETTY_PRINT(Char) {
 		return std::string(buf, ' ') + "Char: " + val;
 	}
-
 
 	Bool::Bool(bool b) : val{ b } {}
 	PRETTY_PRINT(Bool) {
