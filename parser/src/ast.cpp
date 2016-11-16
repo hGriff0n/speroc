@@ -164,9 +164,38 @@ namespace spero::compiler::ast {
 	//
 	// Assignment
 	//
+	PRETTY_PRINT(Pattern) {
+		return std::string(buf, ' ') + (is_mut ? "mut " : "") + "Anything (_)";
+	}
+
 	PNamed::PNamed(ptr<BasicBinding> name) : name{ std::move(name) } {}
 	PRETTY_PRINT(PNamed) {
-		return std::string(buf, ' ') + (is_mut ? "mut" : "") + "PNamed " + name->pretty_print(0);
+		return std::string(buf, ' ') + (is_mut ? "mut " : "") + "PNamed " + name->pretty_print(0);
+	}
+
+	PAdt::PAdt(ptr<BasicBinding> name, ptr<PTuple> arg_decom) : name{ std::move(name) }, args{ std::move(arg_decom) } {}
+	PRETTY_PRINT(PAdt) {
+		std::string ret(buf, ' ');
+		ret += (is_mut ? "mut PAdt " : "PAdt ") + name->pretty_print(0);
+
+		if (args)
+			for (auto&& pat : args->val)
+				ret += "\n" + args->pretty_print(buf + 1);
+
+		return ret;
+	}
+
+	PTuple::PTuple(std::deque<ptr<Pattern>>& pats) {
+		val.swap(pats);
+	}
+	PRETTY_PRINT(PTuple) {
+		std::string ret(buf, ' ');
+		ret += (is_mut ? "mut PTuple" : "PTuple");
+
+		for (auto&& pat : val)
+			ret += "\n" + pat->pretty_print(buf + 1);
+		
+		return ret;
 	}
 
 

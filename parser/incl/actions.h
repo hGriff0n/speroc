@@ -34,6 +34,7 @@ namespace spero::parser::actions {
 	SENTINEL(obrack);
 	SENTINEL(oparen);
 
+
 	// Literals
 	MK_NODE(hex_body, std::make_unique<ast::Byte>(in.string(), 16));
 	MK_NODE(bin_body, std::make_unique<ast::Byte>(in.string(), 2));
@@ -68,6 +69,7 @@ namespace spero::parser::actions {
 	NONE(fn_def);
 	NONE(fn_or_tuple);
 
+
 	// Keywords
 	TOKEN(k_let, ast::VisibilityType::PROTECTED);
 	TOKEN(k_def, ast::VisibilityType::PUBLIC);
@@ -89,6 +91,7 @@ namespace spero::parser::actions {
 	TOKEN(k_wait, ast::KeywordType::WAIT);
 	TOKEN(k_impl, ast::KeywordType::IMPL);
 
+
 	// Bindings
 	MK_NODE(var, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::VARIABLE));
 	MK_NODE(typ, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::TYPE));
@@ -108,6 +111,9 @@ namespace spero::parser::actions {
 		// stack: qual
 	});
 	INHERIT(name_path, name_path_part);
+	NONE(typ_gen_inst);
+	NONE(typ_pointer);
+
 
 	// Atoms
 	NONE(anon_type);
@@ -147,7 +153,64 @@ namespace spero::parser::actions {
 		// stack: fncall | expr
 	});
 
+
+	// Decorators
+	NONE(type);
+	NONE(unary);
+	NONE(annotation);
+	NONE(mod_dec);
+	NONE(mut_type);
+	NONE(type_tuple);
+	NONE(inf_fn_args);
+	NONE(inf);
+	NONE(gen_variance);
+	NONE(gen_subtype);
+	NONE(gen_type);
+	NONE(gen_val);
+	NONE(generic);
+	MK_NODE(use_any, std::make_unique<ast::ImportPiece>());
+	NONE(use_path_elem);
+	NONE(use_path);
+	NONE(use_elem);
+
+
 	// Assignment
+	NONE(adt_con);
+	NONE(var_tuple);
+	NONE(var_pattern);
+	NONE(var_assign);
+	NONE(type_assign);
+	NONE(assign);
+	ACTION(tuple_pat, {
+		// stack: sentinel pattern*
+		std::deque<ptr<ast::Pattern>> vals;
+		while (util::at_node<ast::Pattern>(s))
+			vals.push_front(util::pop<ast::Pattern>(s));
+
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::PTuple>(vals));
+		// stack: PTuple
+	});
+	ACTION(pat_tuple, {
+		// stack: mut? PTuple
+		std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+		
+		auto tkn = util::pop<ast::Token>(s);
+		if (tkn)
+			util::view_as<ast::Pattern>(s.back())->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+				&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+
+		else
+			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+		// stack: PTuple
+	});
+	ACTION(pat_adt, {
+		//stack: binding PTuple?
+		auto args = util::pop<ast::PTuple>(s);
+		auto name = util::pop<ast::BasicBinding>(s);
+		s.emplace_back(std::make_unique<ast::PAdt>(std::move(name), std::move(args)));
+		//stack: PAdt
+	});
 	ACTION(pat_var, {
 		// stack: mut? var
 		auto pat = std::make_unique<ast::PNamed>(std::move(util::pop<ast::BasicBinding>(s)));
@@ -159,6 +222,8 @@ namespace spero::parser::actions {
 		s.push_back(std::move(pat));
 		// stack: pattern
 	});
+	MK_NODE(pat_any, std::make_unique<ast::Pattern>());
+
 
 	// Control
 	ACTION(if_core, {
@@ -192,7 +257,6 @@ namespace spero::parser::actions {
 		util::view_as<ast::Branch>(s.back())->addElse(std::move(body));
 		// stack: branch
 	});
-
 	ACTION(loop, {
 		// stack: token body
 		auto part = util::pop<ast::ValExpr>(s);
@@ -313,34 +377,6 @@ namespace spero::parser::actions {
 		// stack: match
 	});
 
-	// Placeholders
-	NONE(placeholder);
-	NONE(typ_gen_inst);
-	NONE(typ_pointer);
-	NONE(type);
-	NONE(annotation);
-	NONE(mod_dec);
-	NONE(mut_type);
-	NONE(type_tuple);
-	NONE(inf_fn_args);
-	NONE(inf);
-	NONE(gen_variance);
-	NONE(gen_subtype);
-	NONE(gen_type);
-	NONE(gen_val);
-	NONE(generic);
-	NONE(use_path_elem);
-	NONE(use_path);
-	NONE(use_elem);
-	NONE(adt_con);
-	NONE(var_tuple);
-	NONE(var_pattern);
-	NONE(var_assign);
-	NONE(type_assign);
-	NONE(assign);
-	NONE(pat_tuple);
-	NONE(pattern);
-	NONE(unary);
 
 	// Expressions
 	NONE(_index_);
@@ -355,10 +391,10 @@ namespace spero::parser::actions {
 		std::deque<node> args;
 		args.push_front(util::pop<ast::Ast>(s));
 		args.push_front(util::pop<ast::Ast>(s));
-		s.emplace_back(std::make_unique<ast::Tuple>(vals));
+		s.emplace_back(std::make_unique<ast::Tuple>(args));
 
 		// stack: op tuple
-		action<grammar::fncall>::apply(in, s);
+		action<grammar::fnseq>::apply(in, s);
 	});
 	NONE(valexpr);
 }

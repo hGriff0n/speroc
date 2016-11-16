@@ -235,9 +235,13 @@ namespace spero::compiler::ast {
 	};
 	struct Pattern : Ast {				// Represents '_'
 		bool is_mut = false;
+		PRETTY_PRINT;
 	};
 	struct PTuple : Pattern {			// These two are confusing
 		std::deque<ptr<Pattern>> val;
+
+		PTuple(std::deque<ptr<Pattern>>&);
+		PRETTY_PRINT;
 	};
 	struct PNamed : Pattern {
 		ptr<BasicBinding> name;
@@ -248,6 +252,9 @@ namespace spero::compiler::ast {
 	struct PAdt : Pattern {
 		ptr<BasicBinding> name;			// must be a type
 		ptr<PTuple> args;				// can't be false
+
+		PAdt(ptr<BasicBinding>, ptr<PTuple>);
+		PRETTY_PRINT;
 	};
 
 

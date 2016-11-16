@@ -67,7 +67,7 @@ namespace spero::parser::grammar {
 	struct b_true : key("true");
 	struct vcontext : sor<k_let, k_def, k_static> {};
 	struct jump_keys : sor<k_break, k_continue, k_ret, k_yield> {};
-	struct keyword : sor<vcontext, jump_keys, k_mut, k_mod, k_use, k_match, k_if, k_elsif, k_else, k_while, k_for, k_loop, k_wait, k_impl, k_in, b_false, b_true> {};
+	struct keyword : sor<vcontext, jump_keys, placeholder, k_mut, k_mod, k_use, k_match, k_if, k_elsif, k_else, k_while, k_for, k_loop, k_wait, k_impl, k_in, b_false, b_true> {};
 
 	//
 	// Language Bindings
@@ -138,7 +138,8 @@ namespace spero::parser::grammar {
 	struct gen_val : seq<variable, opt<pstr("::"), ig_s, type>, opt<one<'='>, ig_s, expr>> {};
 	struct gen_part : sor<gen_type, gen_val> {};
 	struct generic : seq<obrack, sequ<gen_part>, cbrack> {};
-	struct use_path_elem : sor<placeholder, var, seq<obrace, sequ<variable>, cbrace>> {};
+	struct use_any : seq<placeholder> {};
+	struct use_path_elem : sor<use_any, var, seq<obrace, sequ<variable>, cbrace>> {};
 	struct use_path : seq<list<use_path_elem, one<':'>>, one<':'>> {};
 	struct use_elem : sor<seq<variable, opt<pstr("as"), ig_s, variable>>, seq<typ, ig_s, opt<pstr("as"), ig_s, typ, ig_s>>> {};
 
@@ -201,7 +202,7 @@ namespace spero::parser::grammar {
 	struct _binary_ : seq<op, index> {};
 	struct bin_range : seq<index, sor<range, star<_binary_>>> {};
 	struct valexpr : seq<opt<k_mut>, sor<control, bin_range>> {};
-	struct mod_use : seq<k_use, opt<use_path>, sor<placeholder, opt<obrace, sequ<use_elem>, cbrace>, use_elem>> {};
+	struct mod_use : seq<k_use, opt<use_path>, sor<use_any, opt<obrace, sequ<use_elem>, cbrace>, use_elem>> {};
 	struct impl_expr : seq<k_impl, qual_name<typ>> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
 	struct stmt : seq<star<annotation>, sor<mod_dec, expr>> {};
