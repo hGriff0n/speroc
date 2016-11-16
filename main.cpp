@@ -17,7 +17,7 @@ const size_t issues = spero::parser::num_issues();
 template <class Stream>
 Stream& getMultiline(Stream& in, std::string& s) {
 	std::getline(in, s);
-	if (s == "exit") return in;
+	if (s == ":exit") return in;
 
 	std::string tmp{};
 	while (std::getline(in, tmp)) {
@@ -44,8 +44,10 @@ int main(int argc, const char* argv[]) {
 	//"match (3, 4) { mut (x, y) -> 4 y -> 3 }";
 	// I have no clue for this one
 	//"match x { 3 -> "{}" _ -> "X" }
+	//"let x = if true do 3 else 4"
+	//"if true do 3 else 4"
 
-	// PTuple doesn't handle mut correctly
+	// typ rule is getting called twice (from rhs_inher)
 
 	// string_view
 	// attributes
@@ -56,10 +58,14 @@ int main(int argc, const char* argv[]) {
 	std::string input;
 
 	while (getMultiline(std::cin, input)) {
+		if (input == ":exit") break;
+
 		// marking pretty_print as virtual causes a read access exception ???
 		for (auto&& node : parser::parse(input))
 			if (node) std::cout << node->pretty_print(0) << "\n";
 			else std::cout << "nullptr\n";
+
+		std::cout << std::endl;
 	}
 
 	std::cout << issues << " - Fin";

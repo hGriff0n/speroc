@@ -44,6 +44,9 @@ namespace spero::compiler::ast {
 	PRETTY_PRINT(Ast) {
 		return "";
 	}
+	PRETTY_PRINT(ValExpr) {
+		return std::string(buf, ' ') + (is_mut ? "mut " : "");
+	}
 
 
 	//
@@ -51,32 +54,32 @@ namespace spero::compiler::ast {
 	//
 	Byte::Byte(const std::string& num, int base) : val{ std::stoul(num, nullptr, base) } {}
 	PRETTY_PRINT(Byte) {
-		return std::string(buf, ' ') + "Byte: " + std::to_string(val);
+		return ValExpr::pretty_print(buf) + "Byte: " + std::to_string(val);
 	}
 
 	Int::Int(const std::string& num) : val{ std::stoi(num) } {}
 	PRETTY_PRINT(Int) {
-		return std::string(buf, ' ') + "Int: " + std::to_string(val);
+		return ValExpr::pretty_print(buf) + "Int: " + std::to_string(val);
 	}
 
 	Float::Float(const std::string& num) : val{ std::stof(num) } {}
 	PRETTY_PRINT(Float) {
-		return std::string(buf, ' ') + "Float: " + std::to_string(val);
+		return ValExpr::pretty_print(buf) + "Float: " + std::to_string(val);
 	}
 
 	String::String(const std::string& str) : val{ str } {}
 	PRETTY_PRINT(String) {
-		return std::string(buf, ' ') + "String: " + val;
+		return ValExpr::pretty_print(buf) + "String: " + val;
 	}
 
 	Char::Char(char c) : val{ c } {}
 	PRETTY_PRINT(Char) {
-		return std::string(buf, ' ') + "Char: " + val;
+		return ValExpr::pretty_print(buf) + "Char: " + val;
 	}
 
 	Bool::Bool(bool b) : val{ b } {}
 	PRETTY_PRINT(Bool) {
-		return std::string(buf, ' ') + "Bool: " + (val ? "true" : "false");
+		return ValExpr::pretty_print(buf) + "Bool: " + (val ? "true" : "false");
 	}
 
 
@@ -97,11 +100,22 @@ namespace spero::compiler::ast {
 	PRETTY_PRINT(QualBinding) {
 		std::string ret(buf, ' ');
 		ret += "QualBinding";
-		
+
 		for (auto&& b : val)
 			ret += "\n" + b->pretty_print(buf + 1);
 
 		return ret;
+	}
+
+
+	//
+	// Types
+	//
+	Type::Type() {}
+
+	BasicType::BasicType(ptr<BasicBinding> name) : name{ std::move(name) } {}
+	PRETTY_PRINT(BasicType) {
+		return name->pretty_print(buf);
 	}
 
 
@@ -164,6 +178,24 @@ namespace spero::compiler::ast {
 	//
 	// Assignment
 	//
+	AssignName::AssignName(ptr<ast::BasicBinding> name) : var{ std::move(name) } {}
+	PRETTY_PRINT(AssignName) {
+		return var->pretty_print(buf);
+	}
+
+	AssignTuple::AssignTuple(std::deque<ptr<ast::AssignPattern>>& pat) {
+		vars.swap(pat);
+	}
+	PRETTY_PRINT(AssignTuple) {
+		if (vars.size() == 0) return "";
+
+		std::string ret;
+		for (size_t i = 0; i < vars.size() - 1; ++i)
+			ret += vars[i]->pretty_print(buf) + "\n";
+
+		return ret + vars.back()->pretty_print(buf);
+	}
+
 	PRETTY_PRINT(Pattern) {
 		return std::string(buf, ' ') + (is_mut ? "mut " : "") + "Anything (_)";
 	}
@@ -194,10 +226,55 @@ namespace spero::compiler::ast {
 
 		for (auto&& pat : val)
 			ret += "\n" + pat->pretty_print(buf + 1);
-		
+
 		return ret;
 	}
 
+	Adt::Adt(ptr<BasicBinding> name, ptr<TupleType> args) : name{ std::move(name) }, args{ std::move(args) } {}
+	PRETTY_PRINT(Adt) {
+		auto ret = std::string(buf, ' ') + "Adt " + name->pretty_print(0);
+
+		if (args)
+			ret += "\n" + args->pretty_print(buf + 1);
+
+		return ret;
+	}
+
+	Interface::Interface(ptr<AssignPattern> bind, GenArray& gen, ptr<Type> type)
+		: vis{ VisibilityType::PRIVATE }, binding{ std::move(bind) }, type{ std::move(type) } {
+		generics.swap(gen);
+	}
+	void Interface::setVisibility(VisibilityType vis) {
+		this->vis = vis;
+	}
+	PRETTY_PRINT(Interface) {
+		return std::string(buf, ' ') + "Interface";
+	}
+
+	TypeAssign::TypeAssign(ptr<AssignPattern> bind, std::deque<node>& cons, GenArray& gen, ptr<Block> body, ptr<Type> type)
+			: Interface{ std::move(bind), gen, std::move(type) }, body{ std::move(body) } {
+		this->cons.swap(cons);
+	}
+	PRETTY_PRINT(TypeAssign) {
+		auto ret = std::string(buf, ' ') + vis._to_string() + " Assignment (Type)\n";
+		ret += binding->pretty_print(buf + 1);
+
+		if (cons.size()) {
+			ret += "\n" + std::string(buf + 1, ' ') + "Constructors";
+			for (auto&& con : cons)
+				ret += "\n" + con->pretty_print(buf + 2);
+		}
+
+		return ret + "\n" + body->pretty_print(buf + 1);
+	}
+
+	VarAssign::VarAssign(ptr<AssignPattern> bind, GenArray& gen, value val, ptr<Type> type)
+		: Interface{ std::move(bind), gen, std::move(type) }, expr{ std::move(val) } {}
+	PRETTY_PRINT(VarAssign) {
+		auto ret = std::string(buf, ' ') + vis._to_string() + " Assignment (Variable)\n";
+		ret += binding->pretty_print(buf + 1);
+		return ret + "\n" + expr->pretty_print(buf + 1);
+	}
 
 	//
 	// Control

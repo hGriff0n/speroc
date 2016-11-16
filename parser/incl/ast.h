@@ -4,8 +4,6 @@
 
 #include <optional>
 #include <string>
-#include <deque>
-#include <memory>		// using std::unique_ptr as a cycle "breaker"
 
 namespace spero::compiler::ast {
 	// Member templates can't be virtual
@@ -38,11 +36,12 @@ namespace spero::compiler::ast {
 		Stmt();
 	};
 	struct ValExpr : Stmt {
-		bool is_mut;
+		bool is_mut = false;
 		UnaryType unop = UnaryType::NA;
 		ptr<Type> type;
 
 		ValExpr();
+		PRETTY_PRINT;
 	};
 
 
@@ -111,10 +110,15 @@ namespace spero::compiler::ast {
 	//
 	struct Type : Ast {
 		size_t id;
-		bool is_mut;
+		bool is_mut = false;
+
+		Type();
 	};
 	struct BasicType : Type {
 		ptr<BasicBinding> name;
+
+		BasicType(ptr<BasicBinding>);
+		PRETTY_PRINT;
 	};
 	struct GenType : BasicType {
 		GenArray generics;
@@ -223,15 +227,24 @@ namespace spero::compiler::ast {
 	//
 	struct Adt : Ast {
 		ptr<BasicBinding> name;
-		std::deque<ptr<Type>> args;
+		ptr<TupleType> args;
+
+		Adt(ptr<BasicBinding>, ptr<TupleType>);
+		PRETTY_PRINT;
 	};
 	struct AssignPattern : Ast {		// Represents '_'
 	};
 	struct AssignName : AssignPattern {
 		ptr<BasicBinding> var;
+
+		AssignName(ptr<BasicBinding>);
+		PRETTY_PRINT;
 	};
 	struct AssignTuple : AssignPattern {
 		std::deque<ptr<AssignPattern>> vars;
+		
+		AssignTuple(std::deque<ptr<AssignPattern>>&);
+		PRETTY_PRINT;
 	};
 	struct Pattern : Ast {				// Represents '_'
 		bool is_mut = false;
@@ -343,13 +356,23 @@ namespace spero::compiler::ast {
 		ptr<AssignPattern> binding;
 		GenArray generics;
 		ptr<Type> type;					// optional for subtypes
+
+		Interface(ptr<AssignPattern>, GenArray&, ptr<Type>);
+		void setVisibility(VisibilityType);
+		PRETTY_PRINT;
 	};
 	struct TypeAssign : Interface {		// type = inheritance
 		std::deque<node> cons;			// Must be an Adt or a Tuple Sequence
-		ptr<Block> expr;
+		ptr<Block> body;
+
+		TypeAssign(ptr<AssignPattern>, std::deque<node>&, GenArray&, ptr<Block>, ptr<Type>);
+		PRETTY_PRINT;
 	};
-	struct VarAssign : Interface {
+	struct VarAssign : Interface {		// type = inference
 		value expr;
+
+		VarAssign(ptr<AssignPattern>, GenArray&, value, ptr<Type>);
+		PRETTY_PRINT;
 	};
 	struct Index : ValExpr {
 		std::deque<value> elems;

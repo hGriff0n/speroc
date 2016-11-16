@@ -2,7 +2,7 @@
 
 #include <variant>
 #include <memory>
-#include <vector>
+#include <deque>
 #include "enum.h"
 
 namespace spero::compiler::ast {
@@ -114,5 +114,5 @@ namespace spero::compiler {
 		// Control    = IfBranch, BranchStmt, WhileLoop, ForLoop, Loop, Jump, Match
 		// Stmts      = Index, Range, Binary
 
-	using GenArray = std::vector<ptr<ast::GenericPart>>;
+	using GenArray = std::deque<ptr<ast::GenericPart>>;
 }

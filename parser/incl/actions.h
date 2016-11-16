@@ -175,12 +175,23 @@ namespace spero::parser::actions {
 
 
 	// Assignment
-	NONE(adt_con);
-	NONE(var_tuple);
-	NONE(var_pattern);
-	NONE(var_assign);
-	NONE(type_assign);
-	NONE(assign);
+	ACTION(var_tuple, {
+		// stack: sentinel AssignPattern*
+		std::deque<ptr<ast::AssignPattern>> pat;
+		while (util::at_node<ast::AssignPattern>(s))
+			pat.push_front(util::pop<ast::AssignPattern>(s));
+
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::AssignTuple>(pat));
+		// stack: AssignTuple
+	});
+	ACTION(var_pattern, {
+		// stack: binding
+		if (util::at_node<ast::BasicBinding>(s))
+			s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s)));
+		// stack: VarPat
+	});
+	INHERIT(var_type, var_pattern);
 	ACTION(tuple_pat, {
 		// stack: sentinel pattern*
 		std::deque<ptr<ast::Pattern>> vals;
@@ -223,6 +234,73 @@ namespace spero::parser::actions {
 		// stack: pattern
 	});
 	MK_NODE(pat_any, std::make_unique<ast::Pattern>());
+	ACTION(var_assign, {
+		// stack: pattern generic? (inf expr?)|(inf? expr)
+		auto val = util::pop<ast::ValExpr>(s);
+		auto inf = util::pop<ast::Type>(s);
+
+		// Get the generics list
+		GenArray gen;
+		while (util::at_node<ast::GenericPart>(s))
+			gen.push_front(util::pop<ast::GenericPart>(s));
+
+		auto bind = util::pop<ast::AssignPattern>(s);
+
+		if (val)
+			s.emplace_back(std::make_unique<ast::VarAssign>(std::move(bind), gen, std::move(val), std::move(inf)));
+		else
+			s.emplace_back(std::make_unique<ast::Interface>(std::move(bind), gen, std::move(inf)));
+		// stack: VarAssign
+	});
+	template<> struct action<grammar::adt_con> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: binding TupleType?
+			auto args = util::pop<ast::TupleType>(s);
+			auto name = util::pop<ast::BasicBinding>(s);
+			s.emplace_back(std::make_unique<ast::Adt>(std::move(name), std::move(args)));
+			// stack: Adt
+		}
+	};
+	ACTION(rhs_inf, {
+		// stack: binding
+		s.emplace_back(util::pop<ast::BasicBinding>(s));
+		// stack: type
+	});
+	template<> struct action<grammar::type_assign> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: binding generics* inf? (adt|tuple)* scope
+			auto body = util::pop<ast::Block>(s);
+
+			// Get the constructor list
+			std::deque<node> cons;
+			while (util::at_node<ast::Adt>(s) || util::at_node<ast::Tuple>(s))
+				cons.push_front(util::pop<ast::Ast>(s));
+
+			auto inherit = util::pop<ast::Type>(s);
+
+			// Get the generics list
+			GenArray gen;
+			while (util::at_node<ast::GenericPart>(s))
+				gen.push_front(util::pop<ast::GenericPart>(s));
+
+			auto bind = util::pop<ast::AssignPattern>(s);
+			s.emplace_back(std::make_unique<ast::TypeAssign>(std::move(bind), cons, gen, std::move(body), std::move(inherit)));
+			// stack: TypeAssign
+		}
+	};
+	ACTION(assign, {
+		// stack: visibility interface
+		auto assign = util::pop<ast::Interface>(s);
+		auto tkn = util::pop<ast::Token>(s);
+
+		if (tkn && std::holds_alternative<ast::VisibilityType>(tkn->val))
+			assign->setVisibility(std::get<ast::VisibilityType>(tkn->val));
+		else {
+		}
+
+		s.push_back(std::move(assign));
+		// stack: interface
+	});
 
 
 	// Control
@@ -396,7 +474,19 @@ namespace spero::parser::actions {
 		// stack: op tuple
 		action<grammar::fnseq>::apply(in, s);
 	});
-	NONE(valexpr);
+	ACTION(valexpr, {
+		// stack: mut? expr
+		std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+
+		auto tkn = util::pop<ast::Token>(s);
+		if (tkn)
+			util::view_as<ast::ValExpr>(s.back())->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+				&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+
+		else
+			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+		// stack: expr
+	});
 }
 
 #undef SENTINEL

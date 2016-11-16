@@ -147,21 +147,24 @@ namespace spero::parser::grammar {
 	// Assignment Grammar
 	//
 	struct adt_con : seq<typ, opt<type_tuple>, ig_s> {};
-	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<tuple, adt_con, eps>> {};
+	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<tuple, disable<adt_con>, eps>> {};
 	struct var_tuple : seq<oparen, opt<sequ<var_pattern>>, cparen> {};
 	struct var_pattern : sor<var, op, var_tuple> {};
-	struct assign_val : seq<one<'='>, ig_s, valexpr> {};
-	struct var_assign : seq<var_pattern, opt<generic>, sor<seq<inf, opt<assign_val>>, assign_val>> {};
-	struct lhs_inher : seq<inf, one<'='>, ig_s> {};
-	struct rhs_inher : seq<one<'='>, ig_s, opt<typ, ig_s, two<':'>, ig_s>> {};
-	struct type_assign : seq<typ, not_at<oparen>, ig_s, opt<generic>, sor<lhs_inher, rhs_inher>, cons, scope> {};
-	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};
+	struct var_type : seq<typ> {};
 	struct tuple_pat : seq<oparen, sequ<pattern>, one<')'>> {};
 	struct pat_adt : seq<typ, opt<tuple_pat>> {};
 	struct pat_tuple : seq<opt<k_mut>, tuple_pat> {};
 	struct pat_var : seq<opt<k_mut>, var> {};
 	struct pat_any : seq<placeholder> {};
 	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt> {};
+	struct assign_val : seq<one<'='>, ig_s, valexpr> {};
+	struct var_assign : seq<var_pattern, ig_s, opt<generic>, sor<seq<inf, opt<assign_val>>, assign_val>> {};
+	struct lhs_inher : seq<inf, one<'='>, ig_s> {};
+	//struct rhs_inf : seq<typ, ig_s, two<':'>, ig_s> {};
+	struct rhs_inf : if_then<at<typ, ig_s, two<':'>>, seq<typ, ig_s, two<':'>, ig_s>> {};
+	struct rhs_inher : seq<one<'='>, ig_s, opt<rhs_inf>> {};
+	struct type_assign : seq<var_type, not_at<oparen>, ig_s, opt<generic>, sor<lhs_inher, rhs_inher>, cons, scope> {};
+	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};
 
 	//
 	// Control Flow Grammar
