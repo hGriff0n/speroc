@@ -18,7 +18,9 @@ int main(int argc, const char* argv[]) {
 	using namespace spero::parser;
 	//auto opts = spero::cmd::getOptions();
 
-	auto input = "while 3 4";
+	// This isn't working
+	auto input = "([3, true],  { 4 }, \"Hello\")";
+
 
 	// string_view
 	// attributes

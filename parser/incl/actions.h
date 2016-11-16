@@ -43,8 +43,26 @@ namespace spero::parser::actions {
 	PUSH(char_body, ast::Char, spero::util::escape(in.string())[0]);
 	PUSH(b_false, ast::Bool, false);
 	PUSH(b_true, ast::Bool, true);
-	NONE(tuple);
-	NONE(array);
+	ACTION(tuple, {
+		// stack: sentinel vals*
+		std::deque<node> vals;
+		while (util::at_node<ast::Ast>(s))
+			vals.push_front(util::pop<ast::Ast>(s));
+
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::Tuple>(vals));
+		// stack: tuple
+	});
+	ACTION(array, {
+		// stack: sentinel vals*
+		std::deque<node> vals;
+		while (util::at_node<ast::Ast>(s))
+			vals.push_front(util::pop<ast::Ast>(s));
+
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::Array>(vals));
+	// stack: array
+	});
 	NONE(fn_rettype);
 	NONE(fn_forward);
 	NONE(fn_def);
@@ -79,14 +97,13 @@ namespace spero::parser::actions {
 		// stack: qual? basic
 		auto part = util::pop<ast::BasicBinding>(s);
 
+		// Apparently this can be triggered in block ??
 		if (part) {
 			if (util::at_node<ast::QualBinding>(s))
 				util::view_as<ast::QualBinding>(s.back())->add(std::move(part));
 
 			else
 				s.emplace_back(std::make_unique<ast::QualBinding>(std::move(part)));
-		} else {
-			// error
 		}
 		// stack: qual
 	});
@@ -94,7 +111,16 @@ namespace spero::parser::actions {
 
 	// Atoms
 	NONE(anon_type);
-	NONE(scope);
+	ACTION(scope, {
+		// stack: sentinel vals*
+		std::deque<node> vals;
+		while (util::at_node<ast::Ast>(s))
+			vals.push_front(util::pop<ast::Ast>(s));
+
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::Block>(vals));
+		// stack: block
+	});
 	ACTION(wait_stmt, {
 		// stack: token expr
 		auto expr = util::pop<ast::ValExpr>(s);
@@ -314,15 +340,27 @@ namespace spero::parser::actions {
 	NONE(assign);
 	NONE(pat_tuple);
 	NONE(pattern);
+	NONE(unary);
+
+	// Expressions
 	NONE(_index_);
 	NONE(in_eps);
-	NONE(in_ctrl);
-	NONE(unary);
-	NONE(index);
 	NONE(range);
-	//NONE(binary);
-	NONE(valexpr);
 	NONE(impl_expr);
+	ACTION(_binary_, {
+		// stack: expr op expr
+		std::iter_swap(std::rbegin(s) + 2, std::rbegin(s) + 1);
+
+		// push arg tuple onto the stack
+		std::deque<node> args;
+		args.push_front(util::pop<ast::Ast>(s));
+		args.push_front(util::pop<ast::Ast>(s));
+		s.emplace_back(std::make_unique<ast::Tuple>(vals));
+
+		// stack: op tuple
+		action<grammar::fncall>::apply(in, s);
+	});
+	NONE(valexpr);
 }
 
 #undef SENTINEL

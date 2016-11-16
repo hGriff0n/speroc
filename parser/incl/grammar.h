@@ -125,6 +125,7 @@ namespace spero::parser::grammar {
 	//
 	// anexpr = expr / keyword
 	// antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
+	struct unary : sor<one<'&'>, one<'!'>, one<'-'>> {};
 	struct annotation : seq<one<'@'>, var, opt<one<'!'>>, opt<tuple>> {};
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
 	struct mut_type : seq<opt<k_mut>, type> {};
@@ -192,11 +193,10 @@ namespace spero::parser::grammar {
 	struct _index_ : seq<one<'.'>, ig_s, fncall> {};
 	struct in_eps : eps {};
 	struct in_ctrl : seq<one<'.'>, in_eps, dot_ctrl> {};
-	struct unary : sor<one<'&'>, one<'!'>, one<'-'>> {};
 	struct index : seq<opt<unary>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
-	//struct range : seq<opt<one<','>, ig_s, index>, two<'.'>, ig_s, index> {};
+	struct range : seq<opt<two<','>, ig_s, index>, two<'.'>, ig_s, index> {};
 		// this grammar interferes with the sequence grammar on the ',' causing duplicates to exist
-	struct range : seq<two<'.'>, ig_s, index> {};
+	//struct range : seq<two<'.'>, ig_s, index> {};
 	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps> {};
 	struct _binary_ : seq<op, index> {};
 	struct bin_range : seq<index, sor<range, star<_binary_>>> {};

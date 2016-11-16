@@ -123,6 +123,43 @@ namespace spero::compiler::ast {
 		return ret;
 	}
 
+	Sequence::Sequence(std::deque<node>& vals) {
+		this->vals.swap(vals);
+	}
+
+	Tuple::Tuple(std::deque<node>& vals) : Sequence{ vals } {}
+	PRETTY_PRINT(Tuple) {
+		std::string ret(buf, ' ');
+		ret += "Tuple";
+
+		for (auto&& val : vals)
+			ret += "\n" + val->pretty_print(buf + 1);
+
+		return ret;
+	}
+
+	Array::Array(std::deque<node>& vals) : Sequence{ vals } {}
+	PRETTY_PRINT(Array) {
+		std::string ret(buf, ' ');
+		ret += "Array";
+
+		for (auto&& val : vals)
+			ret += "\n" + val->pretty_print(buf + 1);
+
+		return ret;
+	}
+
+	Block::Block(std::deque<node>& vals) : Sequence{ vals } {}
+	PRETTY_PRINT(Block) {
+		std::string ret(buf, ' ');
+		ret += "Block";
+
+		for (auto&& val : vals)
+			ret += "\n" + val->pretty_print(buf + 1);
+
+		return ret;
+	}
+
 
 	//
 	// Assignment

@@ -141,12 +141,19 @@ namespace spero::compiler::ast {
 	};
 	struct Sequence : ValExpr {
 		std::deque<node> vals;
+		Sequence(std::deque<node>&);
 	};
 	struct Tuple : Sequence {			// must accept values
+		Tuple(std::deque<node>&);
+		PRETTY_PRINT;
 	};
 	struct Array : Sequence {
+		Array(std::deque<node>&);
+		PRETTY_PRINT;
 	};
 	struct Block : Sequence {
+		Block(std::deque<node>&);
+		PRETTY_PRINT;
 	};
 	struct FnCall : ValExpr {
 		node caller;
