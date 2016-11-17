@@ -81,9 +81,8 @@ namespace spero::parser::grammar {
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
 	struct name_path : star<name_path_part> {};
 	template<class T> struct qual_name : seq<name_path, disable<T>, ig_s> {};
-	struct typ_gen_inst : opt<array> {};
 	struct typ_pointer : sor<one<'&'>, one<'*'>, eps> {};
-	struct type : seq<name_path, typ, typ_gen_inst, typ_pointer, ig_s> {};
+	struct type : seq<qual_name<typ>, opt<array>, typ_pointer, ig_s> {};
 	struct binding : sor<qual_name<var>, qual_name<typ>, op> {};
 
 	//
@@ -111,7 +110,8 @@ namespace spero::parser::grammar {
 	//
 	// Language Atoms
 	//
-	struct anon_type : seq<two<':'>, ig_s, opt<tuple>, scope> {};
+	struct anon_sep : two<':'> {};
+	struct anon_type : seq<anon_sep, ig_s, opt<tuple>, scope> {};
 	//struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};
 	struct scope : seq<obrace, star<expr>, cbrace> {};
 	struct wait_stmt : seq<k_wait, valexpr> {};
@@ -126,20 +126,24 @@ namespace spero::parser::grammar {
 	// anexpr = expr / keyword
 	// antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
 	struct unary : sor<one<'&'>, one<'!'>, one<'-'>> {};
-	struct annotation : seq<one<'@'>, var, opt<one<'!'>>, opt<tuple>> {};
-	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
+	struct anot_glob : one<'!'> {};
+	struct annotation : seq<one<'@'>, var, opt<anot_glob>, opt<tuple>> {};
+	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};i
 	struct mut_type : seq<opt<k_mut>, type> {};
 	struct type_tuple : seq<oparen, sequ<mut_type>, cparen> {};
 	struct inf_fn_args : opt<type_tuple, ig_s, pstr("->"), ig_s> {};
 	struct inf : seq<pstr("::"), ig_s, inf_fn_args, mut_type> {};
 	struct gen_variance : sor<one<'+'>, one<'-'>, eps> {};
-	struct gen_subtype : seq<sor<pstr("::"), pstr("!:"), one<'>'>, one<'<'>>, ig_s, type> {};
+	struct gen_subrel : sor<pstr("::"), pstr("!:"), one<'>'>, one<'<'>> {};
+	struct gen_subtype : seq<gen_subrel, ig_s, type> {};
 	struct gen_type : seq<typ, gen_variance, ig_s, opt<gen_subtype>> {};
 	struct gen_val : seq<variable, opt<pstr("::"), ig_s, type>, opt<one<'='>, ig_s, expr>> {};
 	struct gen_part : sor<gen_type, gen_val> {};
 	struct generic : seq<obrack, sequ<gen_part>, cbrack> {};
 	struct use_any : seq<placeholder> {};
-	struct use_path_elem : sor<use_any, var, seq<obrace, sequ<variable>, cbrace>> {};
+	struct use_one : seq<var> {};
+	struct use_many : seq<obrace, sequ<variable>, cbrace> {};
+	struct use_path_elem : sor<use_any, use_one, use_many> {};
 	struct use_path : seq<list<use_path_elem, one<':'>>, one<':'>> {};
 	struct use_elem : sor<seq<variable, opt<pstr("as"), ig_s, variable>>, seq<typ, ig_s, opt<pstr("as"), ig_s, typ, ig_s>>> {};
 
@@ -198,9 +202,9 @@ namespace spero::parser::grammar {
 	struct in_eps : eps {};
 	struct in_ctrl : seq<one<'.'>, in_eps, dot_ctrl> {};
 	struct index : seq<opt<unary>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
-	struct range : seq<opt<two<','>, ig_s, index>, two<'.'>, ig_s, index> {};
+	//struct range : seq<opt<two<','>, ig_s, index>, two<'.'>, ig_s, index> {};
 		// this grammar interferes with the sequence grammar on the ',' causing duplicates to exist
-	//struct range : seq<two<'.'>, ig_s, index> {};
+	struct range : seq<two<'.'>, ig_s, index> {};
 	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps> {};
 	struct _binary_ : seq<op, index> {};
 	struct bin_range : seq<index, sor<range, star<_binary_>>> {};

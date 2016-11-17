@@ -113,9 +113,16 @@ namespace spero::compiler::ast {
 	//
 	Type::Type() {}
 
-	BasicType::BasicType(ptr<BasicBinding> name) : name{ std::move(name) } {}
+	BasicType::BasicType(ptr<BasicBinding> name) : name{ std::make_unique<QualBinding>(name) } {}
+	BasicType::BasicType(ptr<QualBinding> name) : name{ std::move(name) } {}
 	PRETTY_PRINT(BasicType) {
 		return name->pretty_print(buf);
+	}
+
+	InstType::InstType(ptr<QualBinding> name, ptr<Array> inst, PtrStyling ptr)
+		: BasicType{ std::move(name) }, inst{ std::move(inst) }, pointer{ ptr } {}
+	PRETTY_PRINT(InstType) {
+		return std::string(buf, ' ') + "Instance Type";
 	}
 
 

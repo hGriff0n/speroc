@@ -33,6 +33,7 @@ namespace spero::parser::actions {
 	SENTINEL(obrace);
 	SENTINEL(obrack);
 	SENTINEL(oparen);
+	SENTINEL(anon_sep);
 
 
 	// Literals
@@ -144,7 +145,14 @@ namespace spero::parser::actions {
 
 
 	// Atoms
-	NONE(anon_type);
+	ACTION(anon_type, {
+		// stack: sentinel tuple? scope
+		auto scp = util::pop<ast::Block>(s);
+		auto tup = util::pop<ast::Tuple>(s);
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::TypeExt>(std::move(tup), ast::move(scp)));
+		// stack: anon
+	});
 	ACTION(scope, {
 		// stack: sentinel vals*
 		std::deque<node> vals;
@@ -183,23 +191,139 @@ namespace spero::parser::actions {
 
 
 	// Decorators
-	NONE(type);
-	NONE(unary);
-	NONE(annotation);
-	NONE(mod_dec);
-	NONE(mut_type);
-	NONE(type_tuple);
-	NONE(inf_fn_args);
-	NONE(inf);
-	NONE(gen_variance);
-	NONE(gen_subtype);
-	NONE(gen_type);
-	NONE(gen_val);
-	NONE(generic);
+	ACTION(type, {
+		// stack: qualname array? ptr
+		auto tkn = util::pop<ast::Token>(s);
+		auto inst = util::pop<ast::Array>(s);
+		auto name = util::pop<ast::QualBinding>(s);
+
+		s.emplace_back(std::make_unique<ast::InstType>(std::move(name), std::move(inst), std::get<ast::PtrStyling>(tkn->val)));
+	});
+	ACTION(unary, {
+		if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::DEREF));
+		else if (in.string() == "!") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NOT));
+		else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
+		else s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
+	});
+	TOKEN(anot_glob, ast::UnaryType::NOT);
+	ACTION(annotation, {
+		// stack: name glob? tuple?
+		auto tup = util::pop<ast::Tuple>(s);
+		auto glob = util::pop<ast::Token>(s);
+		auto name = util::pop<ast::BasicBinding>(s);
+		s.emplace_back(std::make_unique<ast::Annotation>(std::move(name), std::move(tup), glob));
+		// stack: annotation
+	});
+	ACTION(mod_dec, {
+		// stack: KWD var*
+		std::deque<ptr<ast::BasicBinding>> mod;
+		while (util::at_node<ast::BasicBinding>(s))
+			mod.push_front(util::pop<ast::BasicBinding>(s));
+
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::ModDec>(std::make_unique<ast::QualBinding>(mod)));
+		// stack: mod_dec
+	});
+	ACTION(mut_type, {
+		// stack: mut? type
+		auto type = util::pop<ast::Type>(s);
+
+		auto tkn = util::pop<ast::Token>(s);
+		if (tkn)
+			type->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+				&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+
+		s.push_back(std::move(type));
+		// stack: type
+	});
+	ACTION(type_tuple, {
+		// stack: sentinel type*
+		std::deque<ptr<ast::Type>> types;
+		while (util::at_node<ast::Type>(s))
+			types.push_front(util::pop<ast::Type>(s));
+
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::TupleType>(types));
+		// stack: tupletype
+	});
+	ACTION(inf, {
+		// stack: tuple? type
+		auto type = util::pop<ast::Type>(s);
+		if (util::view_as<ast::TupleType>(s))
+			s.emplace_back(std::make_unique<ast::FuncType>(util::pop<ast::TupleType>(s), std::move(type)));
+
+		else
+			s.push_back(std::move(type));
+		// stack: type
+	});
+	ACTION(gen_variance, {
+		if (in.string() == "+") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::COVARIANT));
+		else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::CONTRAVARIANT));
+		else s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::NA));
+	});
+	ACTION(gen_subrel, {
+		if (in.string() == "::") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::IMPLS));
+		else if (in.string() == "!:") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::NOT_IMPLS));
+		else if (in.string() == ">")  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUPERTYPE));
+		else  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUBTYPE));
+	});
+	ACTION(gen_type, {
+		// stack: typ variance? relation? type?
+		auto type = util::pop<ast::Type>(s);
+		auto rel = util::pop<ast::Token>(s);
+		auto var = util::pop<ast::Token>(s);
+		auto name = util::pop<ast::BasicBinding>(s);
+
+		s.emplace_back(std::make_unique<ast::TypeGeneric>(
+			std::move(name), std::move(type),
+			rel ? std::get<ast::RelationType>(rel->val) : ast::RelationType::NA,
+			var ? std::get<ast::VarianceType>(rel->val) : ast::VarianceType::NA
+		));
+		// stack: generic
+	});
+	ACTION(gen_val, {
+		// stack: name type? expr?
+		auto expr = util::pop<ast::ValExpr>(s);
+		auto type = util::pop<ast::Type>(s);
+		auto name = util::pop<ast::BasicBinding>(s);
+		s.emplace_back(std::make_unique<ast::ValueGeneric>(std::move(name), std::move(type), std::move(expr)));
+		// stack: generic
+	});
 	MK_NODE(use_any, std::make_unique<ast::ImportPiece>());
-	NONE(use_path_elem);
-	NONE(use_path);
-	NONE(use_elem);
+	ACTION(use_one, {
+		// stack: var
+		s.emplace_back(std::make_unique<ast::ImportName>(util::pop<ast::BasicBinding>(s)));
+		// stack: ImportName
+	});
+	ACTION(use_many, {
+		// stack: sentinel var*
+		std::deque<ptr<ast::ImportName>> imps;
+		while (util::at_node<ast::BasicBinding>(s))
+			imps.push_front(std::make_node<ast::ImportName>(util::pop<ast::BasicBinding>(s)));
+	
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::ImportGroup>(imps));
+		// stack: ImportGroup
+	});
+	ACTION(use_path, {
+		// stack: MOD imps*
+		std::deque<ptr<ast::ImportPiece>> imps;
+		while (util::at_node<ast::ImportPiece>(s))
+			imps.push_front(util::pop<ast::ImportPiece>(s));
+
+		s.emplace_back(std::make_unique<ast::ImportPart>(imps));
+		// stack: imp_part
+	});
+	ACTION(use_elem, {
+		// stack: (var var?) | (typ typ?)
+		auto bind1 = util::pop<ast::BasicBinding>(s);
+		auto bind2 = util::pop<ast::BasicBinding>(s);
+		if (bind2)
+			s.emplace_back(std::make_unique<ast::ImportName>(std::move(bind2), std::move(bind1)));
+		else
+			s.emplace_back(std::make_unique<ast::ImportName>(std::move(bind1)));
+		// stack: ImportName
+	});
 
 
 	// Assignment
@@ -485,10 +609,37 @@ namespace spero::parser::actions {
 
 
 	// Expressions
-	NONE(_index_);
-	NONE(in_eps);
-	NONE(range);
-	NONE(impl_expr);
+	ACTION(_index_, {
+		// stack: (expr|index) expr
+		auto expr = util::pop<ast::ValExpr>(s);
+		if (util::at_node<ast::Index>(s))
+			util::view_as<ast::Index>(s)->add(std::move(expr));
+		else {
+			auto expr2 = util::pop<ast::ValExpr>(s);
+			s.emplace_back(std::make_unique<ast::Index>(std::move(expr), std::move(expr2)));
+		}
+		// stack: index
+	});
+	ACTION(in_eps, {
+		// stack: index, inf?
+		auto typ = util::pop<ast::Type>(s);
+		util::view_as<ast::Index>(s)->inf = std::move(typ);
+		// stack: index
+	});
+	ACTION(range, {
+		// stack: expr, expr
+		auto stop = util::pop<ast::ValExpr>(s);
+		auto start = util::pop<ast::ValExpr>(s);
+		s.emplace_back(std::make_unique<ast::Range>(std::move(start), std::move(stop)));
+		// stack: range
+	});
+	ACTION(impl_expr, {
+		// stack: IMPL qual
+		auto qual = util::pop<ast::QualBinding>(s);
+		s.pop_back();
+		s.emplace_back(std::make_unique<ast::ImplExpr>(std::move(qual)));
+		// stack: impl
+	});
 	ACTION(_binary_, {
 		// stack: expr op expr
 		std::iter_swap(std::rbegin(s) + 2, std::rbegin(s) + 1);

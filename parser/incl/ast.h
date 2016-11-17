@@ -100,6 +100,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<BasicBinding>> val;
 
 		QualBinding(ptr<BasicBinding>);
+		QualBinding(std::deque<ptr<BasicBinding>>&);
 		void add(ptr<BasicBinding>);
 		PRETTY_PRINT;
 	};
@@ -115,9 +116,10 @@ namespace spero::compiler::ast {
 		Type();
 	};
 	struct BasicType : Type {
-		ptr<BasicBinding> name;
+		ptr<QualBinding> name;
 
 		BasicType(ptr<BasicBinding>);
+		BasicType(ptr<QualBinding>);
 		PRETTY_PRINT;
 	};
 	struct GenType : BasicType {
@@ -126,13 +128,23 @@ namespace spero::compiler::ast {
 	};
 	struct InstType : BasicType {
 		ptr<Array> inst;
+		PtrStyling pointer;
+
+		InstType(ptr<QualBinding>, ptr<Array>, PtrStyling);
+		PRETTY_PRINT;
 	};
 	struct TupleType : Type {
 		std::deque<ptr<Type>> val;
+
+		TupleType(std::deque<ptr<Type>>&);
+		PRETTY_PRINT;
 	};
 	struct FuncType : Type {
 		ptr<TupleType> args;
 		ptr<Type> ret;
+
+		FuncType(ptr<TupleType>, ptr<Type>);
+		PRETTY_PRINT;
 	};
 
 
@@ -142,6 +154,8 @@ namespace spero::compiler::ast {
 	struct TypeExt : Ast {
 		ptr<Tuple> args;				// optional
 		ptr<Block> body;
+
+		TypeExt(ptr<Tuple>, ptr<Block>);
 	};
 	struct Sequence : ValExpr {
 		std::deque<node> vals;
@@ -183,7 +197,9 @@ namespace spero::compiler::ast {
 	};
 	struct Range : ValExpr {
 		value start, stop;
-		value step;						// optional
+		//value step;						// optional
+
+		Range(value, value);
 	};
 
 
@@ -194,16 +210,28 @@ namespace spero::compiler::ast {
 		bool global;
 		ptr<BasicBinding> name;
 		ptr<Tuple> args;				// optional
+
+		Annotation(ptr<BasicBinding>, ptr<Tuple>, bool);
+		PRETTY_PRINT;
 	};
 	struct GenericPart : Ast {
 		ptr<BasicBinding> name;
 		ptr<Type> type;					// BasicType?
+
+		GenericPart(ptr<BasicBinding>, ptr<Type>);
 	};
 	struct TypeGeneric : GenericPart {
 		RelationType rel;
+		VarianceType var;
+
+		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType);
+		PRETTY_PRINT;
 	};
 	struct ValueGeneric : GenericPart {
 		value val;						// optional
+
+		ValueGeneric(ptr<BasicBinding>, ptr<Type>, value);
+		PRETTY_PRINT;
 	};
 	struct Case : Ast {
 		std::deque<ptr<Pattern>> vars;
@@ -216,12 +244,23 @@ namespace spero::compiler::ast {
 	};
 	struct ImportPart : Ast {
 		std::deque<ptr<ImportPiece>> val;
+
+		ImportPart(std::deque<ptr<ImportPiece>>&);
+		void add(ptr<ImportPiece>);
 	};
 	struct ImportPiece : Ast {			// Represents '_'
 	};
 	struct ImportName : ImportPiece {
 		ptr<BasicBinding> old;			// optional
 		ptr<BasicBinding> name;
+
+		ImportName(ptr<BasicBinding>);
+		ImportName(ptr<BasicBinding>, ptr<BasicBinding>);
+	};
+	struct ImportGroup : ImportPiece {
+		std::deque<ptr<ImportName>> imps;
+
+		ImportGroup(std::deque<ptr<ImportName>>&);
 	};
 
 
@@ -347,6 +386,8 @@ namespace spero::compiler::ast {
 	//
 	struct ImplExpr : Stmt {
 		ptr<QualBinding> type;			// Must be a type
+
+		ImplExpr(ptr<QualBinding>);
 	};
 	struct ModDec : Stmt {
 		ptr<QualBinding> module;		// Must be a var
@@ -380,6 +421,9 @@ namespace spero::compiler::ast {
 	struct Index : ValExpr {
 		std::deque<value> elems;
 		ptr<Type> inf;					// optional (null = not known ???)
+
+		Index(value, value);
+		void add(value);
 	};
 
 	#undef PRETTY_PRINT
