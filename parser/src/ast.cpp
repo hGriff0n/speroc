@@ -12,6 +12,10 @@ namespace spero::compiler::ast {
 	// Parent Nodes
 	//
 	Ast::Ast() {}
+	PRETTY_PRINT(Ast) {
+		return "";
+	}
+
 	Token::Token(KeywordType t) : val{ t } {}
 	Token::Token(PtrStyling t) : val{ t } {}
 	Token::Token(VarianceType t) : val{ t } {}
@@ -19,7 +23,6 @@ namespace spero::compiler::ast {
 	Token::Token(VisibilityType t) : val{ t } {}
 	Token::Token(BindingType t) : val{ t } {}
 	Token::Token(UnaryType t) : val{ t } {}
-
 	PRETTY_PRINT(Token) {
 		if (std::holds_alternative<KeywordType>(val))
 			return std::get<KeywordType>(val)._to_string();
@@ -40,10 +43,8 @@ namespace spero::compiler::ast {
 	}
 
 	Stmt::Stmt() {}
+
 	ValExpr::ValExpr() {}
-	PRETTY_PRINT(Ast) {
-		return "";
-	}
 	PRETTY_PRINT(ValExpr) {
 		return std::string(buf, ' ') + (is_mut ? "mut " : "");
 	}
@@ -52,19 +53,24 @@ namespace spero::compiler::ast {
 	//
 	// Literals
 	//
+	Bool::Bool(bool b) : val{ b } {}
+	PRETTY_PRINT(Bool) {
+		return ValExpr::pretty_print(buf) + "Bool: " + (val ? "true" : "false");
+	}
+
 	Byte::Byte(const std::string& num, int base) : val{ std::stoul(num, nullptr, base) } {}
 	PRETTY_PRINT(Byte) {
 		return ValExpr::pretty_print(buf) + "Byte: " + std::to_string(val);
 	}
 
-	Int::Int(const std::string& num) : val{ std::stoi(num) } {}
-	PRETTY_PRINT(Int) {
-		return ValExpr::pretty_print(buf) + "Int: " + std::to_string(val);
-	}
-
 	Float::Float(const std::string& num) : val{ std::stof(num) } {}
 	PRETTY_PRINT(Float) {
 		return ValExpr::pretty_print(buf) + "Float: " + std::to_string(val);
+	}
+
+	Int::Int(const std::string& num) : val{ std::stoi(num) } {}
+	PRETTY_PRINT(Int) {
+		return ValExpr::pretty_print(buf) + "Int: " + std::to_string(val);
 	}
 
 	String::String(const std::string& str) : val{ str } {}
@@ -75,11 +81,6 @@ namespace spero::compiler::ast {
 	Char::Char(char c) : val{ c } {}
 	PRETTY_PRINT(Char) {
 		return ValExpr::pretty_print(buf) + "Char: " + val;
-	}
-
-	Bool::Bool(bool b) : val{ b } {}
-	PRETTY_PRINT(Bool) {
-		return ValExpr::pretty_print(buf) + "Bool: " + (val ? "true" : "false");
 	}
 
 
@@ -93,6 +94,9 @@ namespace spero::compiler::ast {
 
 	QualBinding::QualBinding(ptr<BasicBinding> b) {
 		add(std::move(b));
+	}
+	QualBinding::QualBinding(std::deque<ptr<BasicBinding>>& bs) {
+		val.swap(bs);
 	}
 	void QualBinding::add(ptr<BasicBinding> b) {
 		val.emplace_back(std::move(b));
@@ -113,7 +117,7 @@ namespace spero::compiler::ast {
 	//
 	Type::Type() {}
 
-	BasicType::BasicType(ptr<BasicBinding> name) : name{ std::make_unique<QualBinding>(name) } {}
+	BasicType::BasicType(ptr<BasicBinding> name) : BasicType{ std::make_unique<QualBinding>(std::move(name)) } {}
 	BasicType::BasicType(ptr<QualBinding> name) : name{ std::move(name) } {}
 	PRETTY_PRINT(BasicType) {
 		return name->pretty_print(buf);
@@ -122,27 +126,49 @@ namespace spero::compiler::ast {
 	InstType::InstType(ptr<QualBinding> name, ptr<Array> inst, PtrStyling ptr)
 		: BasicType{ std::move(name) }, inst{ std::move(inst) }, pointer{ ptr } {}
 	PRETTY_PRINT(InstType) {
-		return std::string(buf, ' ') + "Instance Type";
+		auto ret = std::string(buf, ' ') + "Instance Type " + BasicType::pretty_print(0);
+
+		switch (pointer) {
+			case PtrStyling::POINTER:
+				ret += "&"; break;
+			case PtrStyling::VIEW:
+				ret += "*";
+			default: break;
+		}
+
+		if (inst)
+			for (auto&& node : inst->vals)
+				ret += "\n" + node->pretty_print(buf + 1);
+
+		return ret;
+	}
+
+	TupleType::TupleType(std::deque<ptr<Type>>& typs) {
+		val.swap(typs);
+	}
+	PRETTY_PRINT(TupleType) {
+		auto ret = std::string(buf, ' ') + "Type Tuple";
+
+		for (auto&& typ : val)
+			ret += "\n" + typ->pretty_print(buf + 1);
+
+		return ret;
+	}
+
+	FuncType::FuncType(ptr<TupleType> args, ptr<Type> ret) : args{ std::move(args) }, ret{ std::move(ret) } {}
+	PRETTY_PRINT(FuncType) {
+		auto ret = std::string(buf, ' ') + "Function Signature";
+
+		if (args) ret += "\n" + args->pretty_print(buf + 1);
+		if (this->ret) ret += "\n" + this->ret->pretty_print(buf + 1);
+		return ret;
 	}
 
 
 	//
 	// Atoms
 	//
-	FnCall::FnCall(node expr) : FnCall(std::move(expr), nullptr, nullptr, nullptr) {}
-	FnCall::FnCall(node expr, ptr<TypeExt> anon, ptr<Tuple> args, ptr<Array> inst)
-		: caller{ std::move(expr) }, anon{ std::move(anon) }, args{ std::move(args) }, inst{ std::move(inst) } {}
-	PRETTY_PRINT(FnCall) {
-		std::string buffer(buf++, ' ');
-		std::string ret = buffer + "FnCall\n";
-
-		if (caller) ret += caller->pretty_print(buf++);
-		if (inst) ret += buffer + " Instance Array:\n" + inst->pretty_print(buf + 1);
-		if (anon) ret += buffer + " Anon Extension:\n" + anon->pretty_print(buf + 1);
-		if (args) ret += buffer + " Argument Tuple:\n" + args->pretty_print(buf + 1);
-
-		return ret;
-	}
+	TypeExt::TypeExt(ptr<Tuple> cons, ptr<Block> body) : cons{ std::move(cons) }, body{ std::move(body) } {}
 
 	Sequence::Sequence(std::deque<node>& vals) {
 		this->vals.swap(vals);
@@ -181,6 +207,21 @@ namespace spero::compiler::ast {
 		return ret;
 	}
 
+	FnCall::FnCall(node expr) : FnCall(std::move(expr), nullptr, nullptr, nullptr) {}
+	FnCall::FnCall(node expr, ptr<TypeExt> anon, ptr<Tuple> args, ptr<Array> inst)
+		: caller{ std::move(expr) }, anon{ std::move(anon) }, args{ std::move(args) }, inst{ std::move(inst) } {}
+	PRETTY_PRINT(FnCall) {
+		std::string buffer(buf++, ' ');
+		std::string ret = buffer + "FnCall\n";
+
+		if (caller) ret += caller->pretty_print(buf++);
+		if (inst) ret += buffer + " Instance Array:\n" + inst->pretty_print(buf + 1);
+		if (anon) ret += buffer + " Anon Extension:\n" + anon->pretty_print(buf + 1);
+		if (args) ret += buffer + " Argument Tuple:\n" + args->pretty_print(buf + 1);
+
+		return ret;
+	}
+
 	FnBody::FnBody(value body, bool fwd) : body{ std::move(body) }, forward{ fwd } {}
 	PRETTY_PRINT(FnBody) {
 		auto ret = std::string(buf, ' ') + "FnBody" + (forward ? " (forward)" : "");
@@ -194,10 +235,87 @@ namespace spero::compiler::ast {
 		return ret + "\n" + body->pretty_print(buf + 1);
 	}
 
+	Range::Range(value start, value stop) : start{ std::move(start) }, stop{ std::move(stop) } {}
+	PRETTY_PRINT(Range) {
+		return std::string(buf, ' ') + "Range Expression\n" + start->pretty_print(buf + 1) + "\n" + stop->pretty_print(buf + 1);
+	}
+
+
+	//
+	// Decorators
+	//
+	Annotation::Annotation(ptr<BasicBinding> name, ptr<Tuple> args, bool global)
+		: global{ global }, name{ std::move(name) }, args{ std::move(args) } {}
+	PRETTY_PRINT(Annotation) {
+		return "Annotation";
+	}
+
+	GenericPart::GenericPart(ptr<BasicBinding> name, ptr<Type> type) : name{ std::move(name) }, type{ std::move(type) } {}
+
+	TypeGeneric::TypeGeneric(ptr<BasicBinding> name, ptr<Type> type, RelationType rel, VarianceType var)
+		: GenericPart{ std::move(name), std::move(type) }, rel{ rel }, var{ var } {}
+	PRETTY_PRINT(TypeGeneric) {
+		return "TypeGeneric";
+	}
+
+	ValueGeneric::ValueGeneric(ptr<BasicBinding> name, ptr<Type> type, value val)
+		: GenericPart{ std::move(name), std::move(type) }, val{ std::move(val) } {}
+	PRETTY_PRINT(ValueGeneric) {
+		return "ValueGeneric";
+	}
+
+	Case::Case(value val) : expr{ std::move(val) } {}
+	void Case::setPattern(std::deque<ptr<Pattern>>& vars) {
+		this->vars.swap(vars);
+	}
+	PRETTY_PRINT(Case) {
+		auto buffer = std::string(buf, ' ');
+		auto ret = buffer + "Case\n" + buffer + " Pattern:\n";
+
+		for (auto&& pat : vars)
+			ret += pat->pretty_print(buf + 2) + "\n";
+
+		return ret + expr->pretty_print(buf + 1);
+	}
+
+	ImportPart::ImportPart(std::deque<ptr<ImportPiece>>& val) {
+		this->val.swap(val);
+	}
+	void ImportPart::add(ptr<ImportPiece> imp) {
+		val.push_back(std::move(imp));
+	}
+	PRETTY_PRINT(ImportPart) {
+		return "ImportPart";
+	}
+
+	ImportName::ImportName(ptr<BasicBinding> old) : ImportName{ nullptr, std::move(old) } {}
+	ImportName::ImportName(ptr<BasicBinding> old, ptr<BasicBinding> name)
+		: old{ std::move(old) }, name{ std::move(name) } {}
+	PRETTY_PRINT(ImportName) {
+		return "ImportName";
+	}
+
+	ImportGroup::ImportGroup(std::deque<ptr<ImportName>>& group) {
+		imps.swap(group);
+	}
+	PRETTY_PRINT(ImportGroup) {
+		return "ImportGroup";
+	}
+	
 
 	//
 	// Assignment
 	//
+	Adt::Adt(ptr<BasicBinding> name, ptr<TupleType> args) : name{ std::move(name) }, args{ std::move(args) } {}
+	PRETTY_PRINT(Adt) {
+		auto ret = std::string(buf, ' ') + "Adt " + name->pretty_print(0);
+
+		if (args)
+			ret += "\n" + args->pretty_print(buf + 1);
+
+		return ret;
+	}
+
 	AssignName::AssignName(ptr<ast::BasicBinding> name) : var{ std::move(name) } {}
 	PRETTY_PRINT(AssignName) {
 		return var->pretty_print(buf);
@@ -220,23 +338,6 @@ namespace spero::compiler::ast {
 		return std::string(buf, ' ') + (is_mut ? "mut " : "") + "Anything (_)";
 	}
 
-	PNamed::PNamed(ptr<BasicBinding> name) : name{ std::move(name) } {}
-	PRETTY_PRINT(PNamed) {
-		return std::string(buf, ' ') + (is_mut ? "mut " : "") + "PNamed " + name->pretty_print(0);
-	}
-
-	PAdt::PAdt(ptr<BasicBinding> name, ptr<PTuple> arg_decom) : name{ std::move(name) }, args{ std::move(arg_decom) } {}
-	PRETTY_PRINT(PAdt) {
-		std::string ret(buf, ' ');
-		ret += (is_mut ? "mut PAdt " : "PAdt ") + name->pretty_print(0);
-
-		if (args)
-			for (auto&& pat : args->val)
-				ret += "\n" + args->pretty_print(buf + 1);
-
-		return ret;
-	}
-
 	PTuple::PTuple(std::deque<ptr<Pattern>>& pats) {
 		val.swap(pats);
 	}
@@ -250,12 +351,19 @@ namespace spero::compiler::ast {
 		return ret;
 	}
 
-	Adt::Adt(ptr<BasicBinding> name, ptr<TupleType> args) : name{ std::move(name) }, args{ std::move(args) } {}
-	PRETTY_PRINT(Adt) {
-		auto ret = std::string(buf, ' ') + "Adt " + name->pretty_print(0);
+	PNamed::PNamed(ptr<BasicBinding> name) : name{ std::move(name) } {}
+	PRETTY_PRINT(PNamed) {
+		return std::string(buf, ' ') + (is_mut ? "mut " : "") + "PNamed " + name->pretty_print(0);
+	}
+
+	PAdt::PAdt(ptr<BasicBinding> name, ptr<PTuple> arg_decom) : name{ std::move(name) }, args{ std::move(arg_decom) } {}
+	PRETTY_PRINT(PAdt) {
+		std::string ret(buf, ' ');
+		ret += (is_mut ? "mut PAdt " : "PAdt ") + name->pretty_print(0);
 
 		if (args)
-			ret += "\n" + args->pretty_print(buf + 1);
+			for (auto&& pat : args->val)
+				ret += "\n" + args->pretty_print(buf + 1);
 
 		return ret;
 	}
@@ -343,6 +451,18 @@ namespace spero::compiler::ast {
 		return ret + body->pretty_print(buf + 1);
 	}
 
+	Match::Match(value expr, std::deque<ptr<Case>>& cases) : switch_val{ std::move(expr) } {
+		this->cases.swap(cases);
+	}
+	PRETTY_PRINT(Match) {
+		std::string ret(buf, ' ');
+		ret += "Match\n" + switch_val->pretty_print(buf + 1);
+
+		for (auto&& c : cases)
+			ret += "\n" + c->pretty_print(buf + 1);
+		return ret;
+	}
+
 	Jump::Jump(KeywordType jmp, value expr) : jmp{ jmp }, body{ std::move(expr) } {}
 
 	Wait::Wait(value expr) : Jump(KeywordType::WAIT, std::move(expr)) {}
@@ -370,31 +490,38 @@ namespace spero::compiler::ast {
 		return std::string(buf, ' ') + "Yield\n" + body->pretty_print(buf + 1);
 	}
 
-	Case::Case(value expr) : expr{ std::move(expr) } {}
-	void Case::setPattern(std::deque<ptr<Pattern>>& v) {
-		vars.swap(v);
-	}
-	PRETTY_PRINT(Case) {
-		std::string buffer(buf, ' ');
-		std::string ret = buffer + "Case\n" + buffer + " Pattern:\n";
 
-		for (auto&& pat : vars)
-			ret += pat->pretty_print(buf + 2) + "\n";
-
-		return ret + expr->pretty_print(buf + 1);
+	//
+	// Stmts
+	//
+	ImplExpr::ImplExpr(ptr<QualBinding> type) : type{ std::move(type) } {}
+	PRETTY_PRINT(ImplExpr) {
+		return std::string(buf, ' ') + "Implements " + type->pretty_print(0);
 	}
 
-	Match::Match(value expr, std::deque<ptr<Case>>& cases) : switch_val{ std::move(expr) } {
-		this->cases.swap(cases);
+	ModDec::ModDec(ptr<QualBinding> name) : module{ std::move(name) } {}
+	PRETTY_PRINT(ModDec) {
+		return std::string(buf, ' ') + "Module " + module->pretty_print(0);
 	}
-	PRETTY_PRINT(Match) {
-		std::string ret(buf, ' ');
-		ret += "Match\n" + switch_val->pretty_print(buf + 1);
 
-		for (auto&& c : cases)
-			ret += "\n" + c->pretty_print(buf + 1);
-		return ret;
+	ModImport::ModImport(std::deque<ptr<ImportPart>>& imps) {
+		parts.swap(imps);
 	}
+	PRETTY_PRINT(ModImport) {
+		return "Import";
+	}
+
+	Index::Index(value start, value next) {
+		elems.push_back(std::move(start));
+		elems.push_back(std::move(next));
+	}
+	void Index::add(value field) {
+		elems.push_back(std::move(field));
+	}
+	PRETTY_PRINT(Index) {
+		return "Index";
+	}
+
 
 	#undef PRETTY_PRINT
 }

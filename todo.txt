@@ -16,6 +16,7 @@ Fix Spero
   Figure out a better way to handle the duplication between rhs_inher and adt
 	The old grammar causes the type name to be pushed on the stack twice
 	  I fixed this by adding the 'if<at>' rule, but I want to have a more focused rule
+  The dot_ctrl actions don't work when used in a fndefinition
   How is concurrency going to be handled?
   Figure out the rules and abilities of pointers and manual memory
   Work on recombining the pattern and binding syntaxes (for simplicity)

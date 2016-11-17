@@ -6,16 +6,13 @@
 #include <string>
 
 namespace spero::compiler::ast {
-	// Member templates can't be virtual
-	#define PRETTY_PRINT virtual std::string pretty_print(size_t=0)
-
 	//
 	// Parent Nodes
 	//
 	struct Ast {
 		Ast();
 
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Token : Ast {
 		std::variant<KeywordType, PtrStyling, VarianceType, RelationType, VisibilityType, BindingType, UnaryType> val;
@@ -28,7 +25,7 @@ namespace spero::compiler::ast {
 		Token(VisibilityType);
 		Token(BindingType);
 		Token(UnaryType);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Stmt : Ast {
 		std::deque<ptr<Annotation>> annots;
@@ -41,7 +38,7 @@ namespace spero::compiler::ast {
 		ptr<Type> type;
 
 		ValExpr();
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 
 
@@ -52,37 +49,37 @@ namespace spero::compiler::ast {
 		bool val;
 		Bool(bool);
 
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Byte : ValExpr {
 		unsigned long val;
 		Byte(const std::string&, int);
 
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Float : ValExpr {
 		double val;
 		Float(const std::string&);
 
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Int : ValExpr {
 		int val;
 		Int(const std::string&);
 
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct String : ValExpr {
 		std::string val;
 		String(const std::string&);
 
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Char : ValExpr {
 		char val;
 		Char(char);
 
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 
 
@@ -94,7 +91,7 @@ namespace spero::compiler::ast {
 		BindingType type;
 
 		BasicBinding(std::string, BindingType);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct QualBinding : Ast {
 		std::deque<ptr<BasicBinding>> val;
@@ -102,7 +99,7 @@ namespace spero::compiler::ast {
 		QualBinding(ptr<BasicBinding>);
 		QualBinding(std::deque<ptr<BasicBinding>>&);
 		void add(ptr<BasicBinding>);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 
 
@@ -120,8 +117,9 @@ namespace spero::compiler::ast {
 
 		BasicType(ptr<BasicBinding>);
 		BasicType(ptr<QualBinding>);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
+	// NOTE: Unused
 	struct GenType : BasicType {
 		GenArray generics;
 		PtrStyling pointer;
@@ -131,20 +129,20 @@ namespace spero::compiler::ast {
 		PtrStyling pointer;
 
 		InstType(ptr<QualBinding>, ptr<Array>, PtrStyling);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct TupleType : Type {
 		std::deque<ptr<Type>> val;
 
 		TupleType(std::deque<ptr<Type>>&);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct FuncType : Type {
 		ptr<TupleType> args;
 		ptr<Type> ret;
 
 		FuncType(ptr<TupleType>, ptr<Type>);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 
 
@@ -152,7 +150,7 @@ namespace spero::compiler::ast {
 	// Atoms
 	//
 	struct TypeExt : Ast {
-		ptr<Tuple> args;				// optional
+		ptr<Tuple> cons;				// optional
 		ptr<Block> body;
 
 		TypeExt(ptr<Tuple>, ptr<Block>);
@@ -163,15 +161,15 @@ namespace spero::compiler::ast {
 	};
 	struct Tuple : Sequence {			// must accept values
 		Tuple(std::deque<node>&);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Array : Sequence {
 		Array(std::deque<node>&);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Block : Sequence {
 		Block(std::deque<node>&);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct FnCall : ValExpr {
 		node caller;
@@ -181,8 +179,9 @@ namespace spero::compiler::ast {
 
 		FnCall(node);
 		FnCall(node, ptr<TypeExt>, ptr<Tuple>, ptr<Array>);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
+	// NOTE: Not used
 	struct Variable : ValExpr {
 		ptr<QualBinding> var;
 	};
@@ -193,13 +192,14 @@ namespace spero::compiler::ast {
 		value body;
 
 		FnBody(value, bool);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Range : ValExpr {
 		value start, stop;
 		//value step;						// optional
 
 		Range(value, value);
+		virtual std::string pretty_print(size_t = 0);
 	};
 
 
@@ -212,7 +212,7 @@ namespace spero::compiler::ast {
 		ptr<Tuple> args;				// optional
 
 		Annotation(ptr<BasicBinding>, ptr<Tuple>, bool);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct GenericPart : Ast {
 		ptr<BasicBinding> name;
@@ -225,13 +225,13 @@ namespace spero::compiler::ast {
 		VarianceType var;
 
 		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct ValueGeneric : GenericPart {
 		value val;						// optional
 
 		ValueGeneric(ptr<BasicBinding>, ptr<Type>, value);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Case : Ast {
 		std::deque<ptr<Pattern>> vars;
@@ -239,14 +239,14 @@ namespace spero::compiler::ast {
 
 		Case(value);
 		void setPattern(std::deque<ptr<Pattern>>&);
-
-		PRETTY_PRINT;	//temp?
+		virtual std::string pretty_print(size_t=0);	//temp?
 	};
 	struct ImportPart : Ast {
 		std::deque<ptr<ImportPiece>> val;
 
 		ImportPart(std::deque<ptr<ImportPiece>>&);
 		void add(ptr<ImportPiece>);
+		virtual std::string pretty_print(size_t = 0);
 	};
 	struct ImportPiece : Ast {			// Represents '_'
 	};
@@ -256,11 +256,14 @@ namespace spero::compiler::ast {
 
 		ImportName(ptr<BasicBinding>);
 		ImportName(ptr<BasicBinding>, ptr<BasicBinding>);
+		virtual std::string pretty_print(size_t = 0);
+
 	};
 	struct ImportGroup : ImportPiece {
 		std::deque<ptr<ImportName>> imps;
 
 		ImportGroup(std::deque<ptr<ImportName>>&);
+		virtual std::string pretty_print(size_t = 0);
 	};
 
 
@@ -272,7 +275,7 @@ namespace spero::compiler::ast {
 		ptr<TupleType> args;
 
 		Adt(ptr<BasicBinding>, ptr<TupleType>);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct AssignPattern : Ast {		// Represents '_'
 	};
@@ -280,36 +283,59 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> var;
 
 		AssignName(ptr<BasicBinding>);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct AssignTuple : AssignPattern {
 		std::deque<ptr<AssignPattern>> vars;
 		
 		AssignTuple(std::deque<ptr<AssignPattern>>&);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Pattern : Ast {				// Represents '_'
 		bool is_mut = false;
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct PTuple : Pattern {			// These two are confusing
 		std::deque<ptr<Pattern>> val;
 
 		PTuple(std::deque<ptr<Pattern>>&);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct PNamed : Pattern {
 		ptr<BasicBinding> name;
 
 		PNamed(ptr<BasicBinding>);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct PAdt : Pattern {
 		ptr<BasicBinding> name;			// must be a type
 		ptr<PTuple> args;				// can't be false
 
 		PAdt(ptr<BasicBinding>, ptr<PTuple>);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
+	};
+	struct Interface : Stmt {
+		VisibilityType vis;
+		ptr<AssignPattern> binding;
+		GenArray generics;
+		ptr<Type> type;					// optional for subtypes
+
+		Interface(ptr<AssignPattern>, GenArray&, ptr<Type>);
+		void setVisibility(VisibilityType);
+		virtual std::string pretty_print(size_t = 0);
+	};
+	struct TypeAssign : Interface {		// type = inheritance
+		std::deque<node> cons;			// Must be an Adt or a Tuple Sequence
+		ptr<Block> body;
+
+		TypeAssign(ptr<AssignPattern>, std::deque<node>&, GenArray&, ptr<Block>, ptr<Type>);
+		virtual std::string pretty_print(size_t = 0);
+	};
+	struct VarAssign : Interface {		// type = inference
+		value expr;
+
+		VarAssign(ptr<AssignPattern>, GenArray&, value, ptr<Type>);
+		virtual std::string pretty_print(size_t = 0);
 	};
 
 
@@ -325,33 +351,33 @@ namespace spero::compiler::ast {
 		void addIf(value, value);
 		void addElse(value);
 
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Loop : ValExpr {
 		value body;
 
 		Loop(value);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct While : ValExpr {
 		value test, body;
 
 		While(value, value);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct For : ValExpr {
 		ptr<Pattern> pattern;
 		value generator, body;
 
 		For(ptr<Pattern>, value, value);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Match : ValExpr {
 		value switch_val;
 		std::deque<ptr<Case>> cases;
 
 		Match(value, std::deque<ptr<Case>>&);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Jump : ValExpr {
 		value body;						// optional
@@ -361,23 +387,23 @@ namespace spero::compiler::ast {
 	};
 	struct Wait : Jump {
 		Wait(value);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Break : Jump {
 		Break(value);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Continue : Jump {
 		Continue(value);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct Return : Jump {
 		Return(value);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct YieldExpr : Jump {
 		YieldExpr(value);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t=0);
 	};
 	
 
@@ -388,39 +414,19 @@ namespace spero::compiler::ast {
 		ptr<QualBinding> type;			// Must be a type
 
 		ImplExpr(ptr<QualBinding>);
+		virtual std::string pretty_print(size_t = 0);
 	};
 	struct ModDec : Stmt {
 		ptr<QualBinding> module;		// Must be a var
 
 		ModDec(ptr<QualBinding>);
+		virtual std::string pretty_print(size_t = 0);
 	};
 	struct ModImport : Stmt {
 		std::deque<ptr<ImportPart>> parts;
 
 		ModImport(std::deque<ptr<ImportPart>>&);
-	};
-	struct Interface : Stmt {
-		VisibilityType vis;
-		ptr<AssignPattern> binding;
-		GenArray generics;
-		ptr<Type> type;					// optional for subtypes
-
-		Interface(ptr<AssignPattern>, GenArray&, ptr<Type>);
-		void setVisibility(VisibilityType);
-		PRETTY_PRINT;
-	};
-	struct TypeAssign : Interface {		// type = inheritance
-		std::deque<node> cons;			// Must be an Adt or a Tuple Sequence
-		ptr<Block> body;
-
-		TypeAssign(ptr<AssignPattern>, std::deque<node>&, GenArray&, ptr<Block>, ptr<Type>);
-		PRETTY_PRINT;
-	};
-	struct VarAssign : Interface {		// type = inference
-		value expr;
-
-		VarAssign(ptr<AssignPattern>, GenArray&, value, ptr<Type>);
-		PRETTY_PRINT;
+		virtual std::string pretty_print(size_t = 0);
 	};
 	struct Index : ValExpr {
 		std::deque<value> elems;
@@ -428,9 +434,8 @@ namespace spero::compiler::ast {
 
 		Index(value, value);
 		void add(value);
+		virtual std::string pretty_print(size_t = 0);
 	};
-
-	#undef PRETTY_PRINT
 }
 
 namespace spero::parser {

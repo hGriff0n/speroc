@@ -128,7 +128,7 @@ namespace spero::parser::grammar {
 	struct unary : sor<one<'&'>, one<'!'>, one<'-'>> {};
 	struct anot_glob : one<'!'> {};
 	struct annotation : seq<one<'@'>, var, opt<anot_glob>, opt<tuple>> {};
-	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};i
+	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
 	struct mut_type : seq<opt<k_mut>, type> {};
 	struct type_tuple : seq<oparen, sequ<mut_type>, cparen> {};
 	struct inf_fn_args : opt<type_tuple, ig_s, pstr("->"), ig_s> {};
