@@ -391,9 +391,13 @@ namespace spero::compiler::ast {
 	};
 	struct ModDec : Stmt {
 		ptr<QualBinding> module;		// Must be a var
+
+		ModDec(ptr<QualBinding>);
 	};
 	struct ModImport : Stmt {
 		std::deque<ptr<ImportPart>> parts;
+
+		ModImport(std::deque<ptr<ImportPart>>&);
 	};
 	struct Interface : Stmt {
 		VisibilityType vis;

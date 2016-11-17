@@ -8,20 +8,18 @@
 #include <algorithm>
 #include <iostream>
 
-// Baseline Definitions
-#define ACTION(gram, app_def) \
-template<> struct action<grammar::gram> { \
-static void apply(const pegtl::action_input& in, Stack& s) app_def }
-
-#define INHERIT(gram, base) \
-template<> struct action<grammar::gram> : action<grammar::base> {}
 
 // Specialized Definitions for Common Cases
-#define MK_NODE(gram, val) ACTION(gram, { s.emplace_back((val)); })
-#define PUSH(gram, node, val) MK_NODE(gram, std::make_unique<node>(val))
-#define SENTINEL(gram) MK_NODE(gram, ast::Sentinel{});
-#define TOKEN(gram, val) PUSH(gram, ast::Token, val)
-#define NONE(gram) ACTION(gram, {})
+#define SENTINEL(gram) \
+template<> struct action<grammar::gram> {\
+	static void apply(const pegtl::action_input& in, Stack& s) { \
+	s.emplace_back(ast::Sentinel{}); }}
+#define TOKEN(gram, val) \
+template<> struct action<grammar::gram> {\
+	static void apply(const pegtl::action_input& in, Stack& s) { \
+	s.emplace_back(std::make_unique<ast::Token>(val)); }}
+#define INHERIT(gram, base) \
+template<> struct action<grammar::gram> : action<grammar::base> {}
 
 namespace spero::parser::actions {
 	using namespace spero::compiler;
@@ -37,34 +35,70 @@ namespace spero::parser::actions {
 
 
 	// Literals
-	MK_NODE(hex_body, std::make_unique<ast::Byte>(in.string(), 16));
-	MK_NODE(bin_body, std::make_unique<ast::Byte>(in.string(), 2));
-	PUSH(integer, ast::Int, in.string());
-	PUSH(dec, ast::Float, in.string());
-	PUSH(str_body, ast::String, spero::util::escape(in.string()));
-	PUSH(char_body, ast::Char, spero::util::escape(in.string())[0]);
-	PUSH(b_false, ast::Bool, false);
-	PUSH(b_true, ast::Bool, true);
-	ACTION(tuple, {
-		// stack: sentinel vals*
-		std::deque<node> vals;
-		while (util::at_node<ast::Ast>(s))
-			vals.push_front(util::pop<ast::Ast>(s));
+	template<> struct action<grammar::hex_body> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::Byte>(in.string(), 16));
+		}
+	};
+	template<> struct action<grammar::bin_body> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::Byte>(in.string(), 2));
+		}
+	};
+	template<> struct action<grammar::integer> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::Int>(in.string()));
+		}
+	};
+	template<> struct action<grammar::dec> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::Float>(in.string()));
+		}
+	};
+	template<> struct action<grammar::str_body> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::String>(util::escape(in.string())));
+		}
+	};
+	template<> struct action<grammar::char_body> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::Char>(util::escape(in.string())[0]));
+		}
+	};
+	template<> struct action<grammar::b_false> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::Bool>(false));
+		}
+	};
+	template<> struct action<grammar::b_true> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::Bool>(true));
+		}
+	};
+	template<> struct action<grammar::tuple> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel vals*
+			std::deque<node> vals;
+			while (util::at_node<ast::Ast>(s))
+				vals.push_front(util::pop<ast::Ast>(s));
 
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::Tuple>(vals));
-		// stack: tuple
-	});
-	ACTION(array, {
-		// stack: sentinel vals*
-		std::deque<node> vals;
-		while (util::at_node<ast::Ast>(s))
-			vals.push_front(util::pop<ast::Ast>(s));
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::Tuple>(vals));
+			// stack: tuple
+		}
+	};
+	template<> struct action<grammar::array> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel vals*
+			std::deque<node> vals;
+			while (util::at_node<ast::Ast>(s))
+				vals.push_front(util::pop<ast::Ast>(s));
 
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::Array>(vals));
-	// stack: array
-	});
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::Array>(vals));
+			// stack: array
+		}
+	};
 	template<> struct action<grammar::fn_rettype> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: type expr
@@ -74,26 +108,32 @@ namespace spero::parser::actions {
 			// stack: fnbody
 		}
 	};
-	ACTION(fn_forward, {
-		// stack: expr
-		s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), true));
-		// stack: fnbody
-	});
-	ACTION(fn_def, {
-		// stack: fnbody | expr
-		if (!util::at_node<ast::FnBody>(s))
-			s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false));
-		// stack: fnbody
-	});
-	ACTION(fn_or_tuple, {
-		// stack: tuple? fnbody
-		auto fn = util::pop<ast::FnBody>(s);
-		if (fn) {
-			fn->args = std::move(util::pop<ast::Tuple>(s));
-			s.push_back(std::move(fn));
+	template<> struct action<grammar::fn_forward> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: expr
+			s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), true));
+			// stack: fnbody
 		}
-		// stack: tuple | fnbody
-	});
+	};
+	template<> struct action<grammar::fn_def> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: fnbody | expr
+			if (!util::at_node<ast::FnBody>(s))
+				s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false));
+			// stack: fnbody
+		}
+	};
+	template<> struct action<grammar::fn_or_tuple> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: tuple? fnbody
+			auto fn = util::pop<ast::FnBody>(s);
+			if (fn) {
+				fn->args = std::move(util::pop<ast::Tuple>(s));
+				s.push_back(std::move(fn));
+			}
+			// stack: tuple | fnbody
+		}
+	};
 
 
 	// Keywords
@@ -119,291 +159,369 @@ namespace spero::parser::actions {
 
 
 	// Bindings
-	MK_NODE(var, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::VARIABLE));
-	MK_NODE(typ, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::TYPE));
-	MK_NODE(op, std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR));
-	ACTION(name_path_part, {
-		// stack: qual? basic
-		auto part = util::pop<ast::BasicBinding>(s);
-
-		// Apparently this can be triggered in block ??
-		if (part) {
-			if (util::at_node<ast::QualBinding>(s))
-				util::view_as<ast::QualBinding>(s.back())->add(std::move(part));
-
-			else
-				s.emplace_back(std::make_unique<ast::QualBinding>(std::move(part)));
+	template<> struct action<grammar::var> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::VARIABLE))
 		}
-		// stack: qual
-	});
+	};
+	template<> struct action<grammar::typ> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::TYPE));
+		}
+	};
+	template<> struct action<grammar::op> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR));
+		}
+	};
+	template<> struct action<grammar::name_path_part> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: qual? basic
+			auto part = util::pop<ast::BasicBinding>(s);
+
+			// Apparently this can be triggered in block ??
+			if (part) {
+				if (util::at_node<ast::QualBinding>(s))
+					util::view_as<ast::QualBinding>(s.back())->add(std::move(part));
+
+				else
+					s.emplace_back(std::make_unique<ast::QualBinding>(std::move(part)));
+			}
+			// stack: qual
+		}
+	};
 	INHERIT(name_path, name_path_part);
-	ACTION(typ_pointer, {
-		if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::POINTER));
-		else if (in.string() == "*") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::VIEW));
-		else s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::NA));
-	});
+	template<> struct action<grammar::typ_pointer> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::POINTER));
+			else if (in.string() == "*") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::VIEW));
+			else s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::NA));
+		}
+	};
 
 
 	// Atoms
-	ACTION(anon_type, {
-		// stack: sentinel tuple? scope
-		auto scp = util::pop<ast::Block>(s);
-		auto tup = util::pop<ast::Tuple>(s);
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::TypeExt>(std::move(tup), ast::move(scp)));
-		// stack: anon
-	});
-	ACTION(scope, {
-		// stack: sentinel vals*
-		std::deque<node> vals;
-		while (util::at_node<ast::Ast>(s))
-			vals.push_front(util::pop<ast::Ast>(s));
+	template<> struct action<grammar::anon_type> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel tuple? scope
+			auto scp = util::pop<ast::Block>(s);
+			auto tup = util::pop<ast::Tuple>(s);
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::TypeExt>(std::move(tup), ast::move(scp)));
+			// stack: anon
+		}
+	};
+	template<> struct action<grammar::scope> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel vals*
+			std::deque<node> vals;
+			while (util::at_node<ast::Ast>(s))
+				vals.push_front(util::pop<ast::Ast>(s));
 
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::Block>(vals));
-		// stack: block
-	});
-	ACTION(wait_stmt, {
-		// stack: token expr
-		auto expr = util::pop<ast::ValExpr>(s);
-		s.pop_back();
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::Block>(vals));
+			// stack: block
+		}
+	};
+	template<> struct action<grammar::wait_stmt> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token expr
+			auto expr = util::pop<ast::ValExpr>(s);
+			s.pop_back();
 
-		s.emplace_back(std::make_unique<ast::Wait>(std::move(expr)));
-		// stack: wait
-	});
-	ACTION(fnseq, {
-		// stack: expr, array?, anon_type?, tuple
-		auto args = util::pop<ast::Tuple>(s);
-		auto type = util::pop<ast::TypeExt>(s);
-		auto inst = util::pop<ast::Array>(s);
-		auto caller = util::pop<ast::Ast>(s);
+			s.emplace_back(std::make_unique<ast::Wait>(std::move(expr)));
+			// stack: wait
+		}
+	};
+	template<> struct action<grammar::fnseq> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: expr, array?, anon_type?, tuple
+			auto args = util::pop<ast::Tuple>(s);
+			auto type = util::pop<ast::TypeExt>(s);
+			auto inst = util::pop<ast::Array>(s);
+			auto caller = util::pop<ast::Ast>(s);
 
-		s.emplace_back(std::make_unique<ast::FnCall>(std::move(caller), std::move(type), std::move(args), std::move(inst)));
-		// stack: fncall
-	});
-	ACTION(fneps, {
-		// stack: expr | binding
-		auto part = util::pop<ast::QualBinding>(s);
-		if (part) s.emplace_back(std::make_unique<ast::FnCall>(std::move(part)));
-		// TODO: Consider pushing a Variale node instead (can add the function consideration in later)
-		// stack: fncall | expr
-	});
+			s.emplace_back(std::make_unique<ast::FnCall>(std::move(caller), std::move(type), std::move(args), std::move(inst)));
+			// stack: fncall
+		}
+	};
+	template<> struct action<grammar::fneps> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: expr | binding
+			auto part = util::pop<ast::QualBinding>(s);
+			if (part) s.emplace_back(std::make_unique<ast::FnCall>(std::move(part)));
+			// TODO: Consider pushing a Variale node instead (can add the function consideration in later)
+			// stack: fncall | expr
+		}
+	};
 
 
 	// Decorators
-	ACTION(type, {
-		// stack: qualname array? ptr
-		auto tkn = util::pop<ast::Token>(s);
-		auto inst = util::pop<ast::Array>(s);
-		auto name = util::pop<ast::QualBinding>(s);
+	template<> struct action<grammar::type> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: qualname array? ptr
+			auto tkn = util::pop<ast::Token>(s);
+			auto inst = util::pop<ast::Array>(s);
+			auto name = util::pop<ast::QualBinding>(s);
 
-		s.emplace_back(std::make_unique<ast::InstType>(std::move(name), std::move(inst), std::get<ast::PtrStyling>(tkn->val)));
-	});
-	ACTION(unary, {
-		if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::DEREF));
-		else if (in.string() == "!") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NOT));
-		else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
-		else s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
-	});
+			s.emplace_back(std::make_unique<ast::InstType>(std::move(name), std::move(inst), std::get<ast::PtrStyling>(tkn->val)));
+		}
+	};
+	template<> struct action<grammar::unary> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::DEREF));
+			else if (in.string() == "!") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NOT));
+			else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
+			else s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
+		}
+	};
 	TOKEN(anot_glob, ast::UnaryType::NOT);
-	ACTION(annotation, {
-		// stack: name glob? tuple?
-		auto tup = util::pop<ast::Tuple>(s);
-		auto glob = util::pop<ast::Token>(s);
-		auto name = util::pop<ast::BasicBinding>(s);
-		s.emplace_back(std::make_unique<ast::Annotation>(std::move(name), std::move(tup), glob));
-		// stack: annotation
-	});
-	ACTION(mod_dec, {
-		// stack: KWD var*
-		std::deque<ptr<ast::BasicBinding>> mod;
-		while (util::at_node<ast::BasicBinding>(s))
-			mod.push_front(util::pop<ast::BasicBinding>(s));
+	template<> struct action<grammar::annotation> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: name glob? tuple?
+			auto tup = util::pop<ast::Tuple>(s);
+			auto glob = util::pop<ast::Token>(s);
+			auto name = util::pop<ast::BasicBinding>(s);
+			s.emplace_back(std::make_unique<ast::Annotation>(std::move(name), std::move(tup), glob));
+			// stack: annotation
+		}
+	};
+	template<> struct action<grammar::mod_dec> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: KWD var*
+			std::deque<ptr<ast::BasicBinding>> mod;
+			while (util::at_node<ast::BasicBinding>(s))
+				mod.push_front(util::pop<ast::BasicBinding>(s));
 
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::ModDec>(std::make_unique<ast::QualBinding>(mod)));
-		// stack: mod_dec
-	});
-	ACTION(mut_type, {
-		// stack: mut? type
-		auto type = util::pop<ast::Type>(s);
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::ModDec>(std::make_unique<ast::QualBinding>(mod)));
+			// stack: mod_dec
+		}
+	};
+	template<> struct action<grammar::mut_type> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: mut? type
+			auto type = util::pop<ast::Type>(s);
 
-		auto tkn = util::pop<ast::Token>(s);
-		if (tkn)
-			type->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
-				&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+			auto tkn = util::pop<ast::Token>(s);
+			if (tkn)
+				type->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+					&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
 
-		s.push_back(std::move(type));
-		// stack: type
-	});
-	ACTION(type_tuple, {
-		// stack: sentinel type*
-		std::deque<ptr<ast::Type>> types;
-		while (util::at_node<ast::Type>(s))
-			types.push_front(util::pop<ast::Type>(s));
-
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::TupleType>(types));
-		// stack: tupletype
-	});
-	ACTION(inf, {
-		// stack: tuple? type
-		auto type = util::pop<ast::Type>(s);
-		if (util::view_as<ast::TupleType>(s))
-			s.emplace_back(std::make_unique<ast::FuncType>(util::pop<ast::TupleType>(s), std::move(type)));
-
-		else
 			s.push_back(std::move(type));
-		// stack: type
-	});
-	ACTION(gen_variance, {
-		if (in.string() == "+") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::COVARIANT));
-		else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::CONTRAVARIANT));
-		else s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::NA));
-	});
-	ACTION(gen_subrel, {
-		if (in.string() == "::") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::IMPLS));
-		else if (in.string() == "!:") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::NOT_IMPLS));
-		else if (in.string() == ">")  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUPERTYPE));
-		else  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUBTYPE));
-	});
-	ACTION(gen_type, {
-		// stack: typ variance? relation? type?
-		auto type = util::pop<ast::Type>(s);
-		auto rel = util::pop<ast::Token>(s);
-		auto var = util::pop<ast::Token>(s);
-		auto name = util::pop<ast::BasicBinding>(s);
+			// stack: type
+		}
+	};
+	template<> struct action<grammar::type_tuple> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel type*
+			std::deque<ptr<ast::Type>> types;
+			while (util::at_node<ast::Type>(s))
+				types.push_front(util::pop<ast::Type>(s));
 
-		s.emplace_back(std::make_unique<ast::TypeGeneric>(
-			std::move(name), std::move(type),
-			rel ? std::get<ast::RelationType>(rel->val) : ast::RelationType::NA,
-			var ? std::get<ast::VarianceType>(rel->val) : ast::VarianceType::NA
-		));
-		// stack: generic
-	});
-	ACTION(gen_val, {
-		// stack: name type? expr?
-		auto expr = util::pop<ast::ValExpr>(s);
-		auto type = util::pop<ast::Type>(s);
-		auto name = util::pop<ast::BasicBinding>(s);
-		s.emplace_back(std::make_unique<ast::ValueGeneric>(std::move(name), std::move(type), std::move(expr)));
-		// stack: generic
-	});
-	MK_NODE(use_any, std::make_unique<ast::ImportPiece>());
-	ACTION(use_one, {
-		// stack: var
-		s.emplace_back(std::make_unique<ast::ImportName>(util::pop<ast::BasicBinding>(s)));
-		// stack: ImportName
-	});
-	ACTION(use_many, {
-		// stack: sentinel var*
-		std::deque<ptr<ast::ImportName>> imps;
-		while (util::at_node<ast::BasicBinding>(s))
-			imps.push_front(std::make_node<ast::ImportName>(util::pop<ast::BasicBinding>(s)));
-	
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::ImportGroup>(imps));
-		// stack: ImportGroup
-	});
-	ACTION(use_path, {
-		// stack: MOD imps*
-		std::deque<ptr<ast::ImportPiece>> imps;
-		while (util::at_node<ast::ImportPiece>(s))
-			imps.push_front(util::pop<ast::ImportPiece>(s));
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::TupleType>(types));
+			// stack: tupletype
+		}
+	};
+	template<> struct action<grammar::inf> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: tuple? type
+			auto type = util::pop<ast::Type>(s);
+			if (util::view_as<ast::TupleType>(s))
+				s.emplace_back(std::make_unique<ast::FuncType>(util::pop<ast::TupleType>(s), std::move(type)));
 
-		s.emplace_back(std::make_unique<ast::ImportPart>(imps));
-		// stack: imp_part
-	});
-	ACTION(use_elem, {
-		// stack: (var var?) | (typ typ?)
-		auto bind1 = util::pop<ast::BasicBinding>(s);
-		auto bind2 = util::pop<ast::BasicBinding>(s);
-		if (bind2)
-			s.emplace_back(std::make_unique<ast::ImportName>(std::move(bind2), std::move(bind1)));
-		else
-			s.emplace_back(std::make_unique<ast::ImportName>(std::move(bind1)));
-		// stack: ImportName
-	});
+			else
+				s.push_back(std::move(type));
+			// stack: type
+		}
+	};
+	template<> struct action<grammar::gen_variance> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			if (in.string() == "+") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::COVARIANT));
+			else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::CONTRAVARIANT));
+			else s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::NA));
+		}
+	};
+	template<> struct action<grammar::gen_subrel> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			if (in.string() == "::") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::IMPLS));
+			else if (in.string() == "!:") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::NOT_IMPLS));
+			else if (in.string() == ">")  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUPERTYPE));
+			else  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUBTYPE));
+		}
+	};
+	template<> struct action<grammar::gen_type> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: typ variance? relation? type?
+			auto type = util::pop<ast::Type>(s);
+			auto rel = util::pop<ast::Token>(s);
+			auto var = util::pop<ast::Token>(s);
+			auto name = util::pop<ast::BasicBinding>(s);
+
+			s.emplace_back(std::make_unique<ast::TypeGeneric>(
+				std::move(name), std::move(type),
+				rel ? std::get<ast::RelationType>(rel->val) : ast::RelationType::NA,
+				var ? std::get<ast::VarianceType>(rel->val) : ast::VarianceType::NA
+			));
+			// stack: generic
+		}
+	};
+	template<> struct action<grammar::gen_val> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: name type? expr?
+			auto expr = util::pop<ast::ValExpr>(s);
+			auto type = util::pop<ast::Type>(s);
+			auto name = util::pop<ast::BasicBinding>(s);
+			s.emplace_back(std::make_unique<ast::ValueGeneric>(std::move(name), std::move(type), std::move(expr)));
+			// stack: generic
+		}
+	};
+	template<> struct action<grammar::use_any> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::ImportPiece>());
+		}
+	};
+	template<> struct action<grammar::use_one> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: var
+			s.emplace_back(std::make_unique<ast::ImportName>(util::pop<ast::BasicBinding>(s)));
+			// stack: ImportName
+		}
+	};
+	template<> struct action<grammar::use_many> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel var*
+			std::deque<ptr<ast::ImportName>> imps;
+			while (util::at_node<ast::BasicBinding>(s))
+				imps.push_front(std::make_node<ast::ImportName>(util::pop<ast::BasicBinding>(s)));
+		
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::ImportGroup>(imps));
+			// stack: ImportGroup
+		}
+	};
+	template<> struct action<grammar::use_path> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: MOD imps*
+			std::deque<ptr<ast::ImportPiece>> imps;
+			while (util::at_node<ast::ImportPiece>(s))
+				imps.push_front(util::pop<ast::ImportPiece>(s));
+
+			s.emplace_back(std::make_unique<ast::ImportPart>(imps));
+			// stack: imp_part
+		}
+	};
+	template<> struct action<grammar::use_elem> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: (var var?) | (typ typ?)
+			auto bind1 = util::pop<ast::BasicBinding>(s);
+			auto bind2 = util::pop<ast::BasicBinding>(s);
+			if (bind2)
+				s.emplace_back(std::make_unique<ast::ImportName>(std::move(bind2), std::move(bind1)));
+			else
+				s.emplace_back(std::make_unique<ast::ImportName>(std::move(bind1)));
+			// stack: ImportName
+		}
+	};
 
 
 	// Assignment
-	ACTION(var_tuple, {
-		// stack: sentinel AssignPattern*
-		std::deque<ptr<ast::AssignPattern>> pat;
-		while (util::at_node<ast::AssignPattern>(s))
-			pat.push_front(util::pop<ast::AssignPattern>(s));
+	template<> struct action<grammar::var_tuple> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel AssignPattern*
+			std::deque<ptr<ast::AssignPattern>> pat;
+			while (util::at_node<ast::AssignPattern>(s))
+				pat.push_front(util::pop<ast::AssignPattern>(s));
 
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::AssignTuple>(pat));
-		// stack: AssignTuple
-	});
-	ACTION(var_pattern, {
-		// stack: binding
-		if (util::at_node<ast::BasicBinding>(s))
-			s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s)));
-		// stack: VarPat
-	});
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::AssignTuple>(pat));
+			// stack: AssignTuple
+		}
+	};
+	template<> struct action<grammar::var_pattern> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: binding
+			if (util::at_node<ast::BasicBinding>(s))
+				s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s)));
+			// stack: VarPat
+		}
+	};
 	INHERIT(var_type, var_pattern);
-	ACTION(tuple_pat, {
-		// stack: sentinel pattern*
-		std::deque<ptr<ast::Pattern>> vals;
-		while (util::at_node<ast::Pattern>(s))
-			vals.push_front(util::pop<ast::Pattern>(s));
+	template<> struct action<grammar::tuple_pat> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel pattern*
+			std::deque<ptr<ast::Pattern>> vals;
+			while (util::at_node<ast::Pattern>(s))
+				vals.push_front(util::pop<ast::Pattern>(s));
 
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::PTuple>(vals));
-		// stack: PTuple
-	});
-	ACTION(pat_tuple, {
-		// stack: mut? PTuple
-		std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
-		
-		auto tkn = util::pop<ast::Token>(s);
-		if (tkn)
-			util::view_as<ast::Pattern>(s.back())->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::PTuple>(vals));
+			// stack: PTuple
+		}
+	};
+	template<> struct action<grammar::pat_tuple> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: mut? PTuple
+			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+			
+			auto tkn = util::pop<ast::Token>(s);
+			if (tkn)
+				util::view_as<ast::Pattern>(s.back())->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+					&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+
+			else
+				std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+			// stack: PTuple
+		}
+	};
+	template<> struct action<grammar::pat_adt> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			//stack: binding PTuple?
+			auto args = util::pop<ast::PTuple>(s);
+			auto name = util::pop<ast::BasicBinding>(s);
+			s.emplace_back(std::make_unique<ast::PAdt>(std::move(name), std::move(args)));
+			//stack: PAdt
+		}
+	};
+	template<> struct action<grammar::pat_var> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: mut? var
+			auto pat = std::make_unique<ast::PNamed>(std::move(util::pop<ast::BasicBinding>(s)));
+
+			auto tkn = util::pop<ast::Token>(s);
+			pat->is_mut = tkn && std::holds_alternative<ast::KeywordType>(tkn->val)
 				&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
 
-		else
-			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
-		// stack: PTuple
-	});
-	ACTION(pat_adt, {
-		//stack: binding PTuple?
-		auto args = util::pop<ast::PTuple>(s);
-		auto name = util::pop<ast::BasicBinding>(s);
-		s.emplace_back(std::make_unique<ast::PAdt>(std::move(name), std::move(args)));
-		//stack: PAdt
-	});
-	ACTION(pat_var, {
-		// stack: mut? var
-		auto pat = std::make_unique<ast::PNamed>(std::move(util::pop<ast::BasicBinding>(s)));
+			s.push_back(std::move(pat));
+			// stack: pattern
+		}
+	};
+	template<> struct action<grammar::pat_any> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::Pattern>());
+		}
+	};
+	template<> struct action<grammar::var_assign> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: pattern generic? (inf expr?)|(inf? expr)
+			auto val = util::pop<ast::ValExpr>(s);
+			auto inf = util::pop<ast::Type>(s);
 
-		auto tkn = util::pop<ast::Token>(s);
-		pat->is_mut = tkn && std::holds_alternative<ast::KeywordType>(tkn->val)
-			&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+			// Get the generics list
+			GenArray gen;
+			while (util::at_node<ast::GenericPart>(s))
+				gen.push_front(util::pop<ast::GenericPart>(s));
 
-		s.push_back(std::move(pat));
-		// stack: pattern
-	});
-	MK_NODE(pat_any, std::make_unique<ast::Pattern>());
-	ACTION(var_assign, {
-		// stack: pattern generic? (inf expr?)|(inf? expr)
-		auto val = util::pop<ast::ValExpr>(s);
-		auto inf = util::pop<ast::Type>(s);
+			auto bind = util::pop<ast::AssignPattern>(s);
 
-		// Get the generics list
-		GenArray gen;
-		while (util::at_node<ast::GenericPart>(s))
-			gen.push_front(util::pop<ast::GenericPart>(s));
-
-		auto bind = util::pop<ast::AssignPattern>(s);
-
-		if (val)
-			s.emplace_back(std::make_unique<ast::VarAssign>(std::move(bind), gen, std::move(val), std::move(inf)));
-		else
-			s.emplace_back(std::make_unique<ast::Interface>(std::move(bind), gen, std::move(inf)));
-		// stack: VarAssign
-	});
+			if (val)
+				s.emplace_back(std::make_unique<ast::VarAssign>(std::move(bind), gen, std::move(val), std::move(inf)));
+			else
+				s.emplace_back(std::make_unique<ast::Interface>(std::move(bind), gen, std::move(inf)));
+			// stack: VarAssign
+		}
+	};
 	template<> struct action<grammar::adt_con> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: binding TupleType?
@@ -413,11 +531,13 @@ namespace spero::parser::actions {
 			// stack: Adt
 		}
 	};
-	ACTION(rhs_inf, {
-		// stack: binding
-		s.emplace_back(util::pop<ast::BasicBinding>(s));
-		// stack: type
-	});
+	template<> struct action<grammar::rhs_inf> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: binding
+			s.emplace_back(util::pop<ast::BasicBinding>(s));
+			// stack: type
+		}
+	};
 	template<> struct action<grammar::type_assign> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: binding generics* inf? (adt|tuple)* scope
@@ -440,235 +560,277 @@ namespace spero::parser::actions {
 			// stack: TypeAssign
 		}
 	};
-	ACTION(assign, {
-		// stack: visibility interface
-		auto assign = util::pop<ast::Interface>(s);
-		auto tkn = util::pop<ast::Token>(s);
+	template<> struct action<grammar::assign> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: visibility interface
+			auto assign = util::pop<ast::Interface>(s);
+			auto tkn = util::pop<ast::Token>(s);
 
-		if (tkn && std::holds_alternative<ast::VisibilityType>(tkn->val))
-			assign->setVisibility(std::get<ast::VisibilityType>(tkn->val));
-		else {
+			if (tkn && std::holds_alternative<ast::VisibilityType>(tkn->val))
+				assign->setVisibility(std::get<ast::VisibilityType>(tkn->val));
+			else {
+			}
+
+			s.push_back(std::move(assign));
+			// stack: interface
 		}
-
-		s.push_back(std::move(assign));
-		// stack: interface
-	});
+	};
 
 
 	// Control
-	ACTION(if_core, {
-		// stack: token test body
-		auto body = util::pop<ast::ValExpr>(s);
-		auto test = util::pop<ast::ValExpr>(s);
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::Branch>(std::move(test), std::move(body)));
-		// stack: branch
-	});
-	ACTION(if_dot_core, {
-		// stack: body token test
-		auto iter = std::rbegin(s);
-		std::iter_swap(iter + 2, iter + 1);
-		std::iter_swap(iter, iter + 1);
-		action<grammar::if_core>::apply(in, s);
-		// stack: branch
-	});
-	ACTION(elsif_rule, {
-		// stack: branch token test body
-		auto body = util::pop<ast::ValExpr>(s);
-		auto test = util::pop<ast::ValExpr>(s);
-		s.pop_back();
-		util::view_as<ast::Branch>(s.back())->addIf(std::move(test), std::move(body));
-		// stack: branch
-	});
-	ACTION(else_rule, {
-		// stack: branch token body
-		auto body = util::pop<ast::ValExpr>(s);
-		s.pop_back();
-		util::view_as<ast::Branch>(s.back())->addElse(std::move(body));
-		// stack: branch
-	});
-	ACTION(loop, {
-		// stack: token body
-		auto part = util::pop<ast::ValExpr>(s);
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::Loop>(std::move(part)));
-		// stack: loop
-	});
-	ACTION(dot_loop, {
-		// stack: body token
-		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
-		action<grammar::loop>::apply(in, s);
-		// stack: loop
-	});
-	ACTION(while_l, {
-		// stack: token test body
-		auto body = util::pop<ast::ValExpr>(s);
-		auto test = util::pop<ast::ValExpr>(s);
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::While>(std::move(test), std::move(body)));
-		// stack: while
-	});
-	ACTION(dot_while, {
-		// stack: body token test
-		auto iter = std::rbegin(s);
-		std::iter_swap(iter + 2, iter + 1);
-		std::iter_swap(iter, iter + 1);
-		action<grammar::while_l>::apply(in, s);
-		// stack: while
-	});
-	ACTION(for_l, {
-		// stack: token pattern generator body
-		auto body = util::pop<ast::ValExpr>(s);
-		auto gen = util::pop<ast::ValExpr>(s);
-		auto pattern = util::pop<ast::Pattern>(s);
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::For>(std::move(pattern), std::move(gen), std::move(body)));
-		// stack: for
-	});
-	ACTION(dot_for, {
-		// stack: body token pattern generator
-		auto iter = std::rbegin(s);
-		std::iter_swap(iter + 3, iter + 2);
-		std::iter_swap(iter + 1, iter + 2);
-		std::iter_swap(iter + 1, iter);
-		action<grammar::for_l>::apply(in, s);
-		// stack: for
-	});
-	ACTION(jumps, {
-		// stack: token expr?
-		auto expr = util::pop<ast::ValExpr>(s);
-		auto tkn = std::get<ast::KeywordType>(util::pop<ast::Token>(s)->val);
-
-		switch (tkn) {
-			case ast::KeywordType::BREAK:
-				s.emplace_back(std::make_unique<ast::Break>(std::move(expr)));
-				break;
-			case ast::KeywordType::CONT:
-				s.emplace_back(std::make_unique<ast::Continue>(std::move(expr)));
-				break;
-			case ast::KeywordType::YIELD:
-				s.emplace_back(std::make_unique<ast::YieldExpr>(std::move(expr)));
-				break;
-			case ast::KeywordType::RET:
-				s.emplace_back(std::make_unique<ast::Return>(std::move(expr)));
-				break;
-			default:
-				break;
-				//error
+	template<> struct action<grammar::if_core> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token test body
+			auto body = util::pop<ast::ValExpr>(s);
+			auto test = util::pop<ast::ValExpr>(s);
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::Branch>(std::move(test), std::move(body)));
+			// stack: branch
 		}
-		// stack: jump
-	});
-	ACTION(dot_jmp, {
-		// stack: expr token
-		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
-		action<grammar::jumps>::apply(in, s);
-		// stack: jump
-	});
-	ACTION(case_stmt, {
-		// stack: (sentinel | case) pattern* expr
-		auto cas = std::make_unique<ast::Case>(std::move(util::pop<ast::ValExpr>(s)));
+	};
+	template<> struct action<grammar::if_dot_core> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: body token test
+			auto iter = std::rbegin(s);
+			std::iter_swap(iter + 2, iter + 1);
+			std::iter_swap(iter, iter + 1);
+			action<grammar::if_core>::apply(in, s);
+			// stack: branch
+		}
+	};
+	template<> struct action<grammar::elsif_rule> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: branch token test body
+			auto body = util::pop<ast::ValExpr>(s);
+			auto test = util::pop<ast::ValExpr>(s);
+			s.pop_back();
+			util::view_as<ast::Branch>(s.back())->addIf(std::move(test), std::move(body));
+			// stack: branch
+		}
+	};
+	template<> struct action<grammar::else_rule> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: branch token body
+			auto body = util::pop<ast::ValExpr>(s);
+			s.pop_back();
+			util::view_as<ast::Branch>(s.back())->addElse(std::move(body));
+			// stack: branch
+		}
+	};
+	template<> struct action<grammar::loop> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token body
+			auto part = util::pop<ast::ValExpr>(s);
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::Loop>(std::move(part)));
+			// stack: loop
+		}
+	};
+	template<> struct action<grammar::dot_loop> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: body token
+			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+			action<grammar::loop>::apply(in, s);
+			// stack: loop
+		}
+	};
+	template<> struct action<grammar::while_l> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token test body
+			auto body = util::pop<ast::ValExpr>(s);
+			auto test = util::pop<ast::ValExpr>(s);
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::While>(std::move(test), std::move(body)));
+			// stack: while
+		}
+	};
+	template<> struct action<grammar::dot_while> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: body token test
+			auto iter = std::rbegin(s);
+			std::iter_swap(iter + 2, iter + 1);
+			std::iter_swap(iter, iter + 1);
+			action<grammar::while_l>::apply(in, s);
+			// stack: while
+		}
+	};
+	template<> struct action<grammar::for_l> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token pattern generator body
+			auto body = util::pop<ast::ValExpr>(s);
+			auto gen = util::pop<ast::ValExpr>(s);
+			auto pattern = util::pop<ast::Pattern>(s);
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::For>(std::move(pattern), std::move(gen), std::move(body)));
+			// stack: for
+		}
+	};
+	template<> struct action<grammar::dot_for> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: body token pattern generator
+			auto iter = std::rbegin(s);
+			std::iter_swap(iter + 3, iter + 2);
+			std::iter_swap(iter + 1, iter + 2);
+			std::iter_swap(iter + 1, iter);
+			action<grammar::for_l>::apply(in, s);
+			// stack: for
+		}
+	};
+	template<> struct action<grammar::jumps> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token expr?
+			auto expr = util::pop<ast::ValExpr>(s);
+			auto tkn = std::get<ast::KeywordType>(util::pop<ast::Token>(s)->val);
 
-		std::deque<ptr<ast::Pattern>> pattern;
-		while (util::at_node<ast::Pattern>(s))
-			pattern.push_front(util::pop<ast::Pattern>(s));
-		
-		cas->setPattern(pattern);
-		s.push_back(std::move(cas));
-		// stack: (sentinel | case) case
-	});
-	ACTION(match_expr, {
-		// stack: token expr sentinel case+
-		std::deque<ptr<ast::Case>> cases;
-		while (util::at_node<ast::Case>(s))
-			cases.push_front(util::pop<ast::Case>(s));
+			switch (tkn) {
+				case ast::KeywordType::BREAK:
+					s.emplace_back(std::make_unique<ast::Break>(std::move(expr)));
+					break;
+				case ast::KeywordType::CONT:
+					s.emplace_back(std::make_unique<ast::Continue>(std::move(expr)));
+					break;
+				case ast::KeywordType::YIELD:
+					s.emplace_back(std::make_unique<ast::YieldExpr>(std::move(expr)));
+					break;
+				case ast::KeywordType::RET:
+					s.emplace_back(std::make_unique<ast::Return>(std::move(expr)));
+					break;
+				default:
+					break;
+					//error
+			}
+			// stack: jump
+		}
+	};
+	template<> struct action<grammar::dot_jmp> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: expr token
+			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+			action<grammar::jumps>::apply(in, s);
+			// stack: jump
+		}
+	};
+	template<> struct action<grammar::case_stmt> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: (sentinel | case) pattern* expr
+			auto cas = std::make_unique<ast::Case>(std::move(util::pop<ast::ValExpr>(s)));
 
-		s.pop_back();
+			std::deque<ptr<ast::Pattern>> pattern;
+			while (util::at_node<ast::Pattern>(s))
+				pattern.push_front(util::pop<ast::Pattern>(s));
+			
+			cas->setPattern(pattern);
+			s.push_back(std::move(cas));
+			// stack: (sentinel | case) case
+		}
+	};
+	template<> struct action<grammar::match_expr> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token expr sentinel case+
+			std::deque<ptr<ast::Case>> cases;
+			while (util::at_node<ast::Case>(s))
+				cases.push_front(util::pop<ast::Case>(s));
 
-		// stack: token expr
+			s.pop_back();
 
-		auto match_val = util::pop<ast::ValExpr>(s);
-		s.pop_back();
+			// stack: token expr
 
-		s.emplace_back(std::make_unique<ast::Match>(std::move(match_val), cases));
-		// stack: match
-	});
-	ACTION(dot_match, {
-		// stack: expr token sentinel case+
-		std::deque<ptr<ast::Case>> cases;
-		while (util::at_node<ast::Case>(s))
-			cases.push_front(util::pop<ast::Case>(s));
+			auto match_val = util::pop<ast::ValExpr>(s);
+			s.pop_back();
 
-		s.pop_back();
+			s.emplace_back(std::make_unique<ast::Match>(std::move(match_val), cases));
+			// stack: match
+		}
+	};
+	template<> struct action<grammar::dot_match> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: expr token sentinel case+
+			std::deque<ptr<ast::Case>> cases;
+			while (util::at_node<ast::Case>(s))
+				cases.push_front(util::pop<ast::Case>(s));
 
-		// stack: expr token
+			s.pop_back();
 
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::Match>(util::pop<ast::ValExpr>(s), cases));
-		// stack: match
-	});
+			// stack: expr token
+
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::Match>(util::pop<ast::ValExpr>(s), cases));
+			// stack: match
+		}
+	};
 
 
 	// Expressions
-	ACTION(_index_, {
-		// stack: (expr|index) expr
-		auto expr = util::pop<ast::ValExpr>(s);
-		if (util::at_node<ast::Index>(s))
-			util::view_as<ast::Index>(s)->add(std::move(expr));
-		else {
-			auto expr2 = util::pop<ast::ValExpr>(s);
-			s.emplace_back(std::make_unique<ast::Index>(std::move(expr), std::move(expr2)));
+	template<> struct action<grammar::_index_> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: (expr|index) expr
+			auto expr = util::pop<ast::ValExpr>(s);
+			if (util::at_node<ast::Index>(s))
+				util::view_as<ast::Index>(s)->add(std::move(expr));
+			else {
+				auto expr2 = util::pop<ast::ValExpr>(s);
+				s.emplace_back(std::make_unique<ast::Index>(std::move(expr), std::move(expr2)));
+			}
+			// stack: index
 		}
-		// stack: index
-	});
-	ACTION(in_eps, {
-		// stack: index, inf?
-		auto typ = util::pop<ast::Type>(s);
-		util::view_as<ast::Index>(s)->inf = std::move(typ);
-		// stack: index
-	});
-	ACTION(range, {
-		// stack: expr, expr
-		auto stop = util::pop<ast::ValExpr>(s);
-		auto start = util::pop<ast::ValExpr>(s);
-		s.emplace_back(std::make_unique<ast::Range>(std::move(start), std::move(stop)));
-		// stack: range
-	});
-	ACTION(impl_expr, {
-		// stack: IMPL qual
-		auto qual = util::pop<ast::QualBinding>(s);
-		s.pop_back();
-		s.emplace_back(std::make_unique<ast::ImplExpr>(std::move(qual)));
-		// stack: impl
-	});
-	ACTION(_binary_, {
-		// stack: expr op expr
-		std::iter_swap(std::rbegin(s) + 2, std::rbegin(s) + 1);
+	};
+	template<> struct action<grammar::in_eps> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: index, inf?
+			auto typ = util::pop<ast::Type>(s);
+			util::view_as<ast::Index>(s)->inf = std::move(typ);
+			// stack: index
+		}
+	};
+	template<> struct action<grammar::range> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: expr, expr
+			auto stop = util::pop<ast::ValExpr>(s);
+			auto start = util::pop<ast::ValExpr>(s);
+			s.emplace_back(std::make_unique<ast::Range>(std::move(start), std::move(stop)));
+			// stack: range
+		}
+	};
+	template<> struct action<grammar::impl_expr> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: IMPL qual
+			auto qual = util::pop<ast::QualBinding>(s);
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::ImplExpr>(std::move(qual)));
+			// stack: impl
+		}
+	};
+	template<> struct action<grammar::_binary_> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: expr op expr
+			std::iter_swap(std::rbegin(s) + 2, std::rbegin(s) + 1);
 
-		// push arg tuple onto the stack
-		std::deque<node> args;
-		args.push_front(util::pop<ast::Ast>(s));
-		args.push_front(util::pop<ast::Ast>(s));
-		s.emplace_back(std::make_unique<ast::Tuple>(args));
+			// push arg tuple onto the stack
+			std::deque<node> args;
+			args.push_front(util::pop<ast::Ast>(s));
+			args.push_front(util::pop<ast::Ast>(s));
+			s.emplace_back(std::make_unique<ast::Tuple>(args));
 
-		// stack: op tuple
-		action<grammar::fnseq>::apply(in, s);
-	});
-	ACTION(valexpr, {
-		// stack: mut? expr
-		std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
-
-		auto tkn = util::pop<ast::Token>(s);
-		if (tkn)
-			util::view_as<ast::ValExpr>(s.back())->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
-				&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
-
-		else
+			// stack: op tuple
+			action<grammar::fnseq>::apply(in, s);
+		}
+	};
+	template<> struct action<grammar::valexpr> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: mut? expr
 			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
-		// stack: expr
-	});
+
+			auto tkn = util::pop<ast::Token>(s);
+			if (tkn)
+				util::view_as<ast::ValExpr>(s.back())->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+					&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+
+			else
+				std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+			// stack: expr
+		}
+	};
 }
 
 #undef SENTINEL
-#undef PUSH
-#undef NONE
-#undef ACTION
+#undef INHERIT
