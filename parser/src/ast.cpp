@@ -174,6 +174,19 @@ namespace spero::compiler::ast {
 		return ret;
 	}
 
+	FnBody::FnBody(value body, bool fwd) : body{ std::move(body) }, forward{ fwd } {}
+	PRETTY_PRINT(FnBody) {
+		auto ret = std::string(buf, ' ') + "FnBody" + (forward ? " (forward)" : "");
+
+		if (args)
+			ret += "\n" + std::string(buf + 1, ' ') + "Args\n" + args->pretty_print(buf + 2);
+
+		if (this->ret)
+			ret += "\n" + std::string(buf + 1, ' ') + "Returns " + this->ret->pretty_print(0);
+
+		return ret + "\n" + body->pretty_print(buf + 1);
+	}
+
 
 	//
 	// Assignment

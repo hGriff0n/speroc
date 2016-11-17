@@ -64,10 +64,35 @@ namespace spero::parser::actions {
 		s.emplace_back(std::make_unique<ast::Array>(vals));
 	// stack: array
 	});
-	NONE(fn_rettype);
-	NONE(fn_forward);
-	NONE(fn_def);
-	NONE(fn_or_tuple);
+	template<> struct action<grammar::fn_rettype> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: type expr
+			auto fn = std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false);
+			fn->ret = std::move(util::pop<ast::Type>(s));
+			s.push_back(std::move(fn));
+			// stack: fnbody
+		}
+	};
+	ACTION(fn_forward, {
+		// stack: expr
+		s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), true));
+		// stack: fnbody
+	});
+	ACTION(fn_def, {
+		// stack: fnbody | expr
+		if (!util::at_node<ast::FnBody>(s))
+			s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false));
+		// stack: fnbody
+	});
+	ACTION(fn_or_tuple, {
+		// stack: tuple? fnbody
+		auto fn = util::pop<ast::FnBody>(s);
+		if (fn) {
+			fn->args = std::move(util::pop<ast::Tuple>(s));
+			s.push_back(std::move(fn));
+		}
+		// stack: tuple | fnbody
+	});
 
 
 	// Keywords
@@ -111,8 +136,11 @@ namespace spero::parser::actions {
 		// stack: qual
 	});
 	INHERIT(name_path, name_path_part);
-	NONE(typ_gen_inst);
-	NONE(typ_pointer);
+	ACTION(typ_pointer, {
+		if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::POINTER));
+		else if (in.string() == "*") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::VIEW));
+		else s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::NA));
+	});
 
 
 	// Atoms

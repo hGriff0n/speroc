@@ -34,26 +34,27 @@ int main(int argc, const char* argv[]) {
 	using namespace spero::parser;
 	//auto opts = spero::cmd::getOptions();
 
-	// There are several problems with match
+	/*
+	TODO: Current grammar problems
+		"match (3, 4) { (x, y) -> 4; (y) -> 3 }"
+		"match (3, 4) { x, y -> 4 (y) -> 3 }"
+		"match (3, 4) { mut (x, y) -> 4 y -> 3 }"
+		"match x { 3 -> "{}" _ -> "X" }"
+		"let x = if true do 3 else 4"
+		"if true do 3 else 4"
+		"def foo = (x) -> x(3)"
+		"def foo = (x) -> 3.x"
+	*/
 
-	// Adding the statement terminator doesn't help
-	//"match (3, 4) { (x, y) -> 4; (y) -> 3 }";
-	// Tuples can be mistaken for function calls
-	//"match (3, 4) { (x, y) -> 4 (y) -> 3 }";
-	// Tuple grammar doesn't work with mut
-	//"match (3, 4) { mut (x, y) -> 4 y -> 3 }";
-	// I have no clue for this one
-	//"match x { 3 -> "{}" _ -> "X" }
-	//"let x = if true do 3 else 4"
-	//"if true do 3 else 4"
+	// The dot-control actions don't work for function definitions
+		// They will attempt to work with values that aren't there
 
-	// typ rule is getting called twice (from rhs_inher)
-
-	// string_view
-	// attributes
-	// std::chrono
-
-	//auto s = parser::parse(input);
+	/*
+	TODO: Features to look into using
+		string_view
+		attributes
+		std::chrono
+	 */
 
 	std::string input;
 

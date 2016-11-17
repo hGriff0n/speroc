@@ -177,6 +177,9 @@ namespace spero::compiler::ast {
 		ptr<Tuple> args;				// null = not known
 		ptr<Type> ret;					// null = not known
 		value body;
+
+		FnBody(value, bool);
+		PRETTY_PRINT;
 	};
 	struct Range : ValExpr {
 		value start, stop;
