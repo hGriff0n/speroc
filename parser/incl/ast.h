@@ -154,6 +154,7 @@ namespace spero::compiler::ast {
 		ptr<Block> body;
 
 		TypeExt(ptr<Tuple>, ptr<Block>);
+		virtual std::string pretty_print(size_t = 0);
 	};
 	struct Sequence : ValExpr {
 		std::deque<node> vals;
@@ -181,9 +182,11 @@ namespace spero::compiler::ast {
 		FnCall(node, ptr<TypeExt>, ptr<Tuple>, ptr<Array>);
 		virtual std::string pretty_print(size_t=0);
 	};
-	// NOTE: Not used
 	struct Variable : ValExpr {
 		ptr<QualBinding> var;
+
+		Variable(ptr<QualBinding>);
+		virtual std::string pretty_print(size_t=0);
 	};
 	struct FnBody : ValExpr {
 		bool forward;
@@ -443,12 +446,9 @@ namespace spero::parser {
 
 /*
 TODO:
- "for v in 3 4" doesn't parse correctly
- "Int :: { 3 }" crashes
- unary action doesn't run on "!false" or "-3"
  "() -> mut Int { 3 }" doesn't parse as expected
  use doesn't combine as expected
- I'm not sure whether the final step in import is followed
+ not sure whether import is constructed correctly (especially the final steps)
  "3 :: Int" crashes
  "let x :: Int = 3" appears to have no ast effect
  all generics crashes
@@ -458,6 +458,8 @@ TODO:
  "x.match { x -> 4 }" crashes
  "3..5" doesn't parse correctly
  "@mutable 3" doesn't parse as expected
- Annotations aren't attached to expressions
- Improve PrettyPrinting (compact)
+ annotations aren't attached to expressions
+ improve PrettyPrinting (compact)
+ unary action doesn't run on "!false" or "-3"
+   I need to double check the documentation to see where unary operators bind
 */

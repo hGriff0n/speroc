@@ -251,7 +251,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: expr | binding
 			auto part = util::pop<ast::QualBinding>(s);
-			if (part) s.emplace_back(std::make_unique<ast::FnCall>(std::move(part)));
+			if (part) s.emplace_back(std::make_unique<ast::Variable>(std::move(part)));
 			// TODO: Consider pushing a Variale node instead (can add the function consideration in later)
 			// stack: fncall | expr
 		}
@@ -493,8 +493,13 @@ namespace spero::parser::actions {
 			auto pat = std::make_unique<ast::PNamed>(std::move(util::pop<ast::BasicBinding>(s)));
 
 			auto tkn = util::pop<ast::Token>(s);
-			pat->is_mut = tkn && std::holds_alternative<ast::KeywordType>(tkn->val)
-				&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+			if (tkn) {
+				pat->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+					&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+
+				if (!pat->is_mut)
+					s.push_back(std::move(tkn));
+			}
 
 			s.push_back(std::move(pat));
 			// stack: pattern
@@ -779,7 +784,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::in_eps> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: expr inf?
+			// stack: unary? expr inf?
 			auto typ = util::pop<ast::Type>(s);
 			util::view_as<ast::ValExpr>(s.back())->type = std::move(typ);
 			// stack: expr

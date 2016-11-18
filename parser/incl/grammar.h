@@ -115,7 +115,8 @@ namespace spero::parser::grammar {
 	struct scope : seq<obrace, star<expr>, cbrace> {};
 	struct wait_stmt : seq<k_wait, valexpr> {};
 	struct atom : seq<sor<scope, wait_stmt, lit, binding>, ig_s> {};
-	struct fnseq : seq<opt<array>, opt<anon_type>, tuple> {};
+	//struct fnseq : seq<opt<array>, opt<anon_type>, tuple> {};
+	struct fnseq : sor<seq<array, opt<anon_type>, opt<tuple>>, seq<anon_type, opt<tuple>>, tuple> {};
 	struct fneps : eps {};
 	struct fncall : seq<atom, star<fnseq>, fneps> {};
 
@@ -182,7 +183,7 @@ namespace spero::parser::grammar {
 	struct loop : seq<k_loop, valexpr> {};
 	struct while_core : seq<k_while, valexpr> {};
 	struct while_l : seq<while_core, opt<k_do>, valexpr> {};
-	struct for_core : seq<k_for, pattern, k_in, valexpr> {};
+	struct for_core : seq<k_for, pattern, ig_s, k_in, valexpr> {};
 	struct for_l : seq<for_core, opt<k_do>, valexpr> {};
 	struct jumps : seq<jump_keys, opt<valexpr>> {};
 	struct case_stmt : seq<sequ<seq<pattern, ig_s>>, pstr("->"), ig_s, valexpr> {};

@@ -169,6 +169,9 @@ namespace spero::compiler::ast {
 	// Atoms
 	//
 	TypeExt::TypeExt(ptr<Tuple> cons, ptr<Block> body) : cons{ std::move(cons) }, body{ std::move(body) } {}
+	PRETTY_PRINT(TypeExt) {
+		return (cons ? cons->pretty_print(buf) + "\n" : "") + body->pretty_print(buf);
+	}
 
 	Sequence::Sequence(std::deque<node>& vals) {
 		this->vals.swap(vals);
@@ -212,14 +215,19 @@ namespace spero::compiler::ast {
 		: caller{ std::move(expr) }, anon{ std::move(anon) }, args{ std::move(args) }, inst{ std::move(inst) } {}
 	PRETTY_PRINT(FnCall) {
 		std::string buffer(buf++, ' ');
-		std::string ret = buffer + "FnCall\n";
+		auto ret = buffer + "FnCall\n";
 
 		if (caller) ret += caller->pretty_print(buf++);
 		if (inst) ret += "\n" + buffer + " Instance Array:\n" + inst->pretty_print(buf + 1);
-		if (anon) ret += "\n" + buffer + " Anon Extension:\n" + anon->pretty_print(buf + 1);
+		if (anon) ret += "\n" + buffer + " Anon Extension:\n" + anon->pretty_print(buf);
 		if (args) ret += "\n" + buffer + " Argument Tuple:\n" + args->pretty_print(buf + 1);
 
 		return ret;
+	}
+
+	Variable::Variable(ptr<QualBinding> name) : var{ std::move(name) } {}
+	PRETTY_PRINT(Variable) {
+		return std::string(buf, ' ') + "Variable" + var->pretty_print(1);
 	}
 
 	FnBody::FnBody(value body, bool fwd) : body{ std::move(body) }, forward{ fwd } {}
