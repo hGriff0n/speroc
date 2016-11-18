@@ -306,9 +306,13 @@ namespace spero::parser::actions {
 			auto type = util::pop<ast::Type>(s);
 
 			auto tkn = util::pop<ast::Token>(s);
-			if (tkn)
+			if (tkn) {
 				type->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
 					&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
+
+				if (!type->is_mut)
+					s.push_back(std::move(tkn));
+			}
 
 			s.push_back(std::move(type));
 			// stack: type
@@ -469,11 +473,16 @@ namespace spero::parser::actions {
 			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
 			
 			auto tkn = util::pop<ast::Token>(s);
-			if (tkn)
-				util::view_as<ast::Pattern>(s.back())->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+			if (tkn) {
+				auto* pat = util::view_as<ast::Pattern>(s.back());
+				pat->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
 					&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
 
-			else
+				if (!pat->is_mut) {
+					s.push_back(std::move(tkn));
+					std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+				}
+			} else
 				std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
 			// stack: PTuple
 		}
