@@ -770,17 +770,17 @@ namespace spero::parser::actions {
 				util::view_as<ast::Index>(s.back())->add(std::move(expr));
 			else {
 				auto expr2 = util::pop<ast::ValExpr>(s);
-				s.emplace_back(std::make_unique<ast::Index>(std::move(expr), std::move(expr2)));
+				s.emplace_back(std::make_unique<ast::Index>(std::move(expr2), std::move(expr)));
 			}
 			// stack: index
 		}
 	};
 	template<> struct action<grammar::in_eps> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: index, inf?
+			// stack: expr inf?
 			auto typ = util::pop<ast::Type>(s);
-			util::view_as<ast::Index>(s.back())->inf = std::move(typ);
-			// stack: index
+			util::view_as<ast::ValExpr>(s.back())->type = std::move(typ);
+			// stack: expr
 		}
 	};
 	template<> struct action<grammar::range> {

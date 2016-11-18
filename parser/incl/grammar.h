@@ -80,10 +80,9 @@ namespace spero::parser::grammar {
 	struct variable : seq<var, ig_s> {};
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
 	struct name_path : star<name_path_part> {};
-	template<class T> struct qual_name : seq<name_path, disable<T>, ig_s> {};
 	struct typ_pointer : sor<one<'&'>, one<'*'>, eps> {};
-	struct type : seq<qual_name<typ>, opt<array>, typ_pointer, ig_s> {};
-	struct binding : sor<qual_name<var>, qual_name<typ>, op> {};
+	struct type : seq<name_path, disable<typ>, ig_s, opt<array>, typ_pointer, ig_s> {};
+	struct binding : sor<seq<name_path, disable<sor<var, typ>>, ig_s>, op> {};
 
 	//
 	// Language Literals
@@ -210,7 +209,7 @@ namespace spero::parser::grammar {
 	struct bin_range : seq<index, sor<range, star<_binary_>>> {};
 	struct valexpr : seq<opt<k_mut>, sor<control, bin_range>> {};
 	struct mod_use : seq<k_use, opt<use_path>, sor<use_any, opt<obrace, sequ<use_elem>, cbrace>, use_elem>> {};
-	struct impl_expr : seq<k_impl, qual_name<typ>> {};
+	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
 	struct stmt : seq<star<annotation>, sor<mod_dec, expr>> {};
 	struct program : seq<ig_s, star<stmt>, eof> {};

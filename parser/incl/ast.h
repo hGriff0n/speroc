@@ -35,7 +35,7 @@ namespace spero::compiler::ast {
 	struct ValExpr : Stmt {
 		bool is_mut = false;
 		UnaryType unop = UnaryType::NA;
-		ptr<Type> type;
+		ptr<Type> type;						// inference
 
 		ValExpr();
 		virtual std::string pretty_print(size_t=0);
@@ -430,7 +430,6 @@ namespace spero::compiler::ast {
 	};
 	struct Index : ValExpr {
 		std::deque<value> elems;
-		ptr<Type> inf;					// optional (null = not known ???)
 
 		Index(value, value);
 		void add(value);
@@ -441,3 +440,29 @@ namespace spero::compiler::ast {
 namespace spero::parser {
 	using Stack = std::deque<spero::compiler::node>;
 }
+
+/*
+TODO:
+ "+" crashes
+ "wait 3" crashes
+ "Int :: { 3 }" crashes
+ unary action doesn't run on "!false" or "-3"
+ "() -> mut Int { 3 }" doesn't parse as expected
+ use doesn't combine as expected
+ I'm not sure whether the final step in import is followed
+ "3 :: Int" crashes
+ "let x :: Int = 3" appears to have no ast effect
+ all generics crashes
+ some work on constructors/arguments with variables needed
+ "if true 3" crashes
+ "loop 3" crashes
+ "while 3 4" crashes
+ "for v in 3 4" doesn't parse correctly
+ "break 3" crashes
+ check desirability of "match x { 3 -> 3 }"
+ "match x { x -> 4; mut (x, y) -> 5 }" doesn't parse correctly
+ "x.match { x -> 4 }" crashes
+ "3..5" doesn't parse correctly
+ "@mutable" doesn't parse as expected
+ Improve PrettyPrinting (compact)
+*/

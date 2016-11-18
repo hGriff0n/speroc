@@ -62,7 +62,9 @@ int main(int argc, const char* argv[]) {
 		if (input == ":exit") break;
 
 		// marking pretty_print as virtual causes a read access exception ???
-		for (auto&& node : parser::parse(input))
+		auto res = parser::parse(input);
+		//for (auto&& node : parser::parse(input))
+		for (auto&& node : res)
 			if (node) std::cout << node->pretty_print(0) << "\n";
 			else std::cout << "nullptr\n";
 

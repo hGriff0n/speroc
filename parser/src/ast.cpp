@@ -126,7 +126,7 @@ namespace spero::compiler::ast {
 	InstType::InstType(ptr<QualBinding> name, ptr<Array> inst, PtrStyling ptr)
 		: BasicType{ std::move(name) }, inst{ std::move(inst) }, pointer{ ptr } {}
 	PRETTY_PRINT(InstType) {
-		auto ret = std::string(buf, ' ') + "Instance Type " + BasicType::pretty_print(0);
+		auto ret = std::string(buf, ' ') + "Instance Type\n" + BasicType::pretty_print(buf + 1);
 
 		switch (pointer) {
 			case PtrStyling::POINTER:
@@ -138,7 +138,7 @@ namespace spero::compiler::ast {
 
 		if (inst)
 			for (auto&& node : inst->vals)
-				ret += "\n" + node->pretty_print(buf + 1);
+				ret += "\n" + node->pretty_print(buf + 2);
 
 		return ret;
 	}
@@ -215,9 +215,9 @@ namespace spero::compiler::ast {
 		std::string ret = buffer + "FnCall\n";
 
 		if (caller) ret += caller->pretty_print(buf++);
-		if (inst) ret += buffer + " Instance Array:\n" + inst->pretty_print(buf + 1);
-		if (anon) ret += buffer + " Anon Extension:\n" + anon->pretty_print(buf + 1);
-		if (args) ret += buffer + " Argument Tuple:\n" + args->pretty_print(buf + 1);
+		if (inst) ret += "\n" + buffer + " Instance Array:\n" + inst->pretty_print(buf + 1);
+		if (anon) ret += "\n" + buffer + " Anon Extension:\n" + anon->pretty_print(buf + 1);
+		if (args) ret += "\n" + buffer + " Argument Tuple:\n" + args->pretty_print(buf + 1);
 
 		return ret;
 	}
@@ -225,12 +225,12 @@ namespace spero::compiler::ast {
 	FnBody::FnBody(value body, bool fwd) : body{ std::move(body) }, forward{ fwd } {}
 	PRETTY_PRINT(FnBody) {
 		auto ret = std::string(buf, ' ') + "FnBody" + (forward ? " (forward)" : "");
-
+		
 		if (args)
 			ret += "\n" + std::string(buf + 1, ' ') + "Args\n" + args->pretty_print(buf + 2);
 
 		if (this->ret)
-			ret += "\n" + std::string(buf + 1, ' ') + "Returns " + this->ret->pretty_print(0);
+			ret += "\n" + std::string(buf + 1, ' ') + "Returns\n" + this->ret->pretty_print(buf + 2);
 
 		return ret + "\n" + body->pretty_print(buf + 1);
 	}
@@ -247,7 +247,13 @@ namespace spero::compiler::ast {
 	Annotation::Annotation(ptr<BasicBinding> name, ptr<Tuple> args, bool global)
 		: global{ global }, name{ std::move(name) }, args{ std::move(args) } {}
 	PRETTY_PRINT(Annotation) {
-		return "Annotation";
+		auto ret = std::string(buf, ' ') + "Annotation " + name->pretty_print(0) + (global ? "!" : "");
+
+		if (args)
+			for (auto&& node : args->vals)
+				ret += "\n" + node->pretty_print(buf + 1);
+
+		return ret;
 	}
 
 	GenericPart::GenericPart(ptr<BasicBinding> name, ptr<Type> type) : name{ std::move(name) }, type{ std::move(type) } {}
@@ -255,13 +261,30 @@ namespace spero::compiler::ast {
 	TypeGeneric::TypeGeneric(ptr<BasicBinding> name, ptr<Type> type, RelationType rel, VarianceType var)
 		: GenericPart{ std::move(name), std::move(type) }, rel{ rel }, var{ var } {}
 	PRETTY_PRINT(TypeGeneric) {
-		return "TypeGeneric";
+		auto ret = std::string(buf, ' ') + "TypeGeneric" + name->pretty_print(1);
+
+		switch (var) {
+			case VarianceType::COVARIANT: ret += "+";
+				break;
+			case VarianceType::CONTRAVARIANT: ret += "-";
+			default: break;
+		}
+
+		if (type)
+			ret += "\n" + std::string(buf, ' ') + " Relation (" + rel._to_string() + ")\n" + type->pretty_print(buf + 2);
+
+		return ret;
 	}
 
 	ValueGeneric::ValueGeneric(ptr<BasicBinding> name, ptr<Type> type, value val)
 		: GenericPart{ std::move(name), std::move(type) }, val{ std::move(val) } {}
 	PRETTY_PRINT(ValueGeneric) {
-		return "ValueGeneric";
+		auto ret = std::string(buf, ' ') + "ValueGeneric\n" + type->pretty_print(buf + 1);
+		
+		if (val)
+			ret += "\n" + std::string(buf + 1, ' ') + "Default Value\n" + val->pretty_print(buf + 2);
+
+		return ret;
 	}
 
 	Case::Case(value val) : expr{ std::move(val) } {}
@@ -285,21 +308,39 @@ namespace spero::compiler::ast {
 		val.push_back(std::move(imp));
 	}
 	PRETTY_PRINT(ImportPart) {
-		return "ImportPart";
+		auto ret = std::string(buf, ' ') + "ImportPart";
+
+		for (auto&& node : val)
+			ret += "\n" + node->pretty_print(buf + 1);
+		
+		return ret;
 	}
 
 	ImportName::ImportName(ptr<BasicBinding> old) : ImportName{ nullptr, std::move(old) } {}
 	ImportName::ImportName(ptr<BasicBinding> old, ptr<BasicBinding> name)
 		: old{ std::move(old) }, name{ std::move(name) } {}
 	PRETTY_PRINT(ImportName) {
-		return "ImportName";
+		auto ret = std::string(buf, ' ') + "Import";
+
+		if (old)
+			ret += "Rebind\n" + old->pretty_print(buf + 1) + "\n" + name->pretty_print(buf + 1);
+
+		else
+			ret += "Named" + name->pretty_print(1);
+
+		return ret;
 	}
 
 	ImportGroup::ImportGroup(std::deque<ptr<ImportName>>& group) {
 		imps.swap(group);
 	}
 	PRETTY_PRINT(ImportGroup) {
-		return "ImportGroup";
+		auto ret = std::string(buf, ' ') + "ImportGroup";
+
+		for (auto&& node : imps)
+			ret += "\n" + node->pretty_print(buf + 1);
+
+		return ret;
 	}
 	
 
@@ -508,7 +549,11 @@ namespace spero::compiler::ast {
 		parts.swap(imps);
 	}
 	PRETTY_PRINT(ModImport) {
-		return "Import";
+		auto ret = std::string(buf, ' ') + "Import Stmt";
+
+		for (auto&& p : parts) ret += "\n" + p->pretty_print(buf + 1);
+
+		return ret;
 	}
 
 	Index::Index(value start, value next) {
@@ -519,7 +564,11 @@ namespace spero::compiler::ast {
 		elems.push_back(std::move(field));
 	}
 	PRETTY_PRINT(Index) {
-		return "Index";
+		auto ret = std::string(buf, ' ') + "Index Sequence";
+
+		for (auto&& elem : elems) ret += "\n" + elem->pretty_print(buf + 1);
+
+		return ret;
 	}
 
 
