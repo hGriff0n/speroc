@@ -443,8 +443,7 @@ namespace spero::parser {
 
 /*
 TODO:
- "+" crashes
- "wait 3" crashes
+ "for v in 3 4" doesn't parse correctly
  "Int :: { 3 }" crashes
  unary action doesn't run on "!false" or "-3"
  "() -> mut Int { 3 }" doesn't parse as expected
@@ -454,15 +453,11 @@ TODO:
  "let x :: Int = 3" appears to have no ast effect
  all generics crashes
  some work on constructors/arguments with variables needed
- "if true 3" crashes
- "loop 3" crashes
- "while 3 4" crashes
- "for v in 3 4" doesn't parse correctly
- "break 3" crashes
  check desirability of "match x { 3 -> 3 }"
  "match x { x -> 4; mut (x, y) -> 5 }" doesn't parse correctly
  "x.match { x -> 4 }" crashes
  "3..5" doesn't parse correctly
- "@mutable" doesn't parse as expected
+ "@mutable 3" doesn't parse as expected
+ Annotations aren't attached to expressions
  Improve PrettyPrinting (compact)
 */

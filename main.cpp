@@ -17,7 +17,7 @@ const size_t issues = spero::parser::num_issues();
 template <class Stream>
 Stream& getMultiline(Stream& in, std::string& s) {
 	std::getline(in, s);
-	if (s == ":exit") return in;
+	if (s == ":q") return in;
 
 	std::string tmp{};
 	while (std::getline(in, tmp)) {
@@ -59,7 +59,7 @@ int main(int argc, const char* argv[]) {
 	std::string input;
 
 	while (getMultiline(std::cin, input)) {
-		if (input == ":exit") break;
+		if (input == ":q") break;
 
 		// marking pretty_print as virtual causes a read access exception ???
 		auto res = parser::parse(input);

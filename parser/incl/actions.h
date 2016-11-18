@@ -171,7 +171,9 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::op> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR));
+			s.emplace_back(std::make_unique<ast::QualBinding>(
+				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR)
+			));
 		}
 	};
 	template<> struct action<grammar::name_path_part> {
@@ -822,11 +824,17 @@ namespace spero::parser::actions {
 			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
 
 			auto tkn = util::pop<ast::Token>(s);
-			if (tkn)
-				util::view_as<ast::ValExpr>(s.back())->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
+			if (tkn) {
+				auto* expr = util::view_as<ast::ValExpr>(s.back());
+				expr->is_mut = std::holds_alternative<ast::KeywordType>(tkn->val)
 					&& std::get<ast::KeywordType>(tkn->val)._to_integral() == ast::KeywordType::MUT;
 
-			else
+				if (!expr->is_mut) {
+					s.push_back(std::move(tkn));
+					std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+				}
+
+			} else
 				std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
 			// stack: expr
 		}
