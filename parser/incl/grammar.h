@@ -82,6 +82,7 @@ namespace spero::parser::grammar {
 	struct name_path : star<name_path_part> {};
 	struct typ_pointer : sor<one<'&'>, one<'*'>, eps> {};
 	struct type : seq<name_path, disable<typ>, ig_s, opt<array>, typ_pointer, ig_s> {};
+	struct mut_type : seq<opt<k_mut>, type> {};
 	struct binding : sor<seq<name_path, disable<sor<var, typ>>, ig_s>, op> {};
 
 	//
@@ -100,7 +101,7 @@ namespace spero::parser::grammar {
 	struct character : seq<one<'\''>, char_body, one<'\''>, ig_s> {};
 	struct tuple : seq<oparen, opt<sequ<valexpr>>, cparen> {};
 	struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};
-	struct fn_rettype : seq<type, ig_s, scope> {};
+	struct fn_rettype : if_then<at<mut_type>, seq<mut_type, ig_s, scope>> {};
 	struct fn_forward : seq<one<'.'>, sor<dot_ctrl, valexpr>> {};
 	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};
 	struct fn_or_tuple : sor<fn_forward, seq<tuple, opt<fn_def>>> {};
@@ -129,7 +130,6 @@ namespace spero::parser::grammar {
 	struct anot_glob : one<'!'> {};
 	struct annotation : seq<one<'@'>, var, opt<anot_glob>, opt<tuple>> {};
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
-	struct mut_type : seq<opt<k_mut>, type> {};
 	struct type_tuple : seq<oparen, sequ<mut_type>, cparen> {};
 	struct inf_fn_args : opt<type_tuple, ig_s, pstr("->"), ig_s> {};
 	struct inf : seq<pstr("::"), ig_s, inf_fn_args, mut_type> {};
@@ -159,7 +159,7 @@ namespace spero::parser::grammar {
 	struct var_type : seq<typ> {};
 	struct tuple_pat : seq<oparen, sequ<pattern>, one<')'>> {};
 	struct pat_adt : seq<typ, opt<tuple_pat>> {};
-	struct pat_tuple : seq<opt<k_mut>, tuple_pat> {};
+	struct pat_tuple : seq<opt<disable<k_mut>>, tuple_pat> {};
 	struct pat_var : seq<opt<k_mut>, var> {};
 	struct pat_any : seq<placeholder> {};
 	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt> {};

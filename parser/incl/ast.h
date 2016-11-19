@@ -441,13 +441,10 @@ namespace spero::parser {
 
 /*
 TODO:
- "match x { x -> 4; mut (x, y) -> 5 }" crashes
-   Match::switch_val == nullptr ?
  "def foo = (x :: Int) -> x + 3" crashes
    "def foo = (x) -> x + 3" parses correctly
  "let x :: Int = 3" does not appear in PrettyPrinting
    It is applied correctly (same with 3 :: Int)
- "() -> mut Int { 3 }" doesn't parse as expected
  some work on constructors/arguments with variables needed
  check desirability of "match x { 3 -> 3 }"
    as simple as adding a 'PatternLit' rule
@@ -456,6 +453,8 @@ TODO:
  rework PrettyPrinting
    consistent way of displaying annotations
  reduce the lookahead needed to parse import statements
+ can I remove 'forward function' as a normal literal
+   it's really only useful within assignment contexts anyways
  improve PrettyPrinting (compact)
    fncall argument tuple duplicates tuple
  unary action doesn't run on "!false" or "-3"
