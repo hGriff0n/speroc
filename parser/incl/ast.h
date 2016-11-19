@@ -245,14 +245,8 @@ namespace spero::compiler::ast {
 		void setPattern(std::deque<ptr<Pattern>>&);
 		virtual std::string pretty_print(size_t=0);	//temp?
 	};
-	struct ImportPart : Ast {
-		std::deque<ptr<ImportPiece>> val;
-
-		ImportPart(std::deque<ptr<ImportPiece>>&);
-		void add(ptr<ImportPiece>);
-		virtual std::string pretty_print(size_t = 0);
-	};
 	struct ImportPiece : Ast {			// Represents '_'
+		virtual std::string pretty_print(size_t = 0);
 	};
 	struct ImportName : ImportPiece {
 		ptr<BasicBinding> old;			// optional
@@ -264,9 +258,9 @@ namespace spero::compiler::ast {
 
 	};
 	struct ImportGroup : ImportPiece {
-		std::deque<ptr<ImportName>> imps;
+		std::deque<ptr<ImportPiece>> imps;
 
-		ImportGroup(std::deque<ptr<ImportName>>&);
+		ImportGroup(std::deque<ptr<ImportPiece>>&);
 		virtual std::string pretty_print(size_t = 0);
 	};
 
@@ -427,9 +421,9 @@ namespace spero::compiler::ast {
 		virtual std::string pretty_print(size_t = 0);
 	};
 	struct ModImport : Stmt {
-		std::deque<ptr<ImportPart>> parts;
+		std::deque<ptr<ImportPiece>> parts;
 
-		ModImport(std::deque<ptr<ImportPart>>&);
+		ModImport(std::deque<ptr<ImportPiece>>&);
 		virtual std::string pretty_print(size_t = 0);
 	};
 	struct Index : ValExpr {
@@ -447,18 +441,21 @@ namespace spero::parser {
 
 /*
 TODO:
- use doesn't combine as expected
- interface pretty_printing isn't implemented
- "match x { x -> 4; mut (x, y) -> 5 }" doesn't parse correctly
-	the ';' isn't at the end of valexpr, it's at the end of expr (it's ending the parse of match)
+ "match x { x -> 4; mut (x, y) -> 5 }" crashes
+   Match::switch_val == nullptr ?
+ "def foo = (x :: Int) -> x + 3" crashes
+   "def foo = (x) -> x + 3" parses correctly
  "let x :: Int = 3" does not appear in PrettyPrinting
    It is applied correctly (same with 3 :: Int)
  "() -> mut Int { 3 }" doesn't parse as expected
  some work on constructors/arguments with variables needed
  check desirability of "match x { 3 -> 3 }"
- global annotations shouldn't be assigned
+   as simple as adding a 'PatternLit' rule
+ check desireability of "match x { x :: Int -> 3 }"
+ global annotations shouldn't be assigned to statements
  rework PrettyPrinting
    consistent way of displaying annotations
+ reduce the lookahead needed to parse import statements
  improve PrettyPrinting (compact)
    fncall argument tuple duplicates tuple
  unary action doesn't run on "!false" or "-3"

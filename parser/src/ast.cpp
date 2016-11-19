@@ -319,19 +319,8 @@ namespace spero::compiler::ast {
 		return ret + expr->pretty_print(buf + 1);
 	}
 
-	ImportPart::ImportPart(std::deque<ptr<ImportPiece>>& val) {
-		this->val.swap(val);
-	}
-	void ImportPart::add(ptr<ImportPiece> imp) {
-		val.push_back(std::move(imp));
-	}
-	PRETTY_PRINT(ImportPart) {
-		auto ret = std::string(buf, ' ') + "ImportPart";
-
-		for (auto&& node : val)
-			ret += "\n" + node->pretty_print(buf + 1);
-		
-		return ret;
+	PRETTY_PRINT(ImportPiece) {
+		return std::string(buf, ' ') + "Import Any";
 	}
 
 	ImportName::ImportName(ptr<BasicBinding> old) : ImportName{ nullptr, std::move(old) } {}
@@ -349,7 +338,7 @@ namespace spero::compiler::ast {
 		return ret;
 	}
 
-	ImportGroup::ImportGroup(std::deque<ptr<ImportName>>& group) {
+	ImportGroup::ImportGroup(std::deque<ptr<ImportPiece>>& group) {
 		imps.swap(group);
 	}
 	PRETTY_PRINT(ImportGroup) {
@@ -435,7 +424,8 @@ namespace spero::compiler::ast {
 		this->vis = vis;
 	}
 	PRETTY_PRINT(Interface) {
-		return std::string(buf, ' ') + "Interface";
+		return std::string(buf, ' ') + vis._to_string() + " Interface"
+			+ binding->pretty_print(1) + "\n" + type->pretty_print(buf + 1);
 	}
 
 	TypeAssign::TypeAssign(ptr<AssignPattern> bind, std::deque<node>& cons, GenArray& gen, ptr<Block> body, ptr<Type> type)
@@ -576,7 +566,7 @@ namespace spero::compiler::ast {
 		return std::string(buf, ' ') + "Module " + module->pretty_print(0);
 	}
 
-	ModImport::ModImport(std::deque<ptr<ImportPart>>& imps) {
+	ModImport::ModImport(std::deque<ptr<ImportPiece>>& imps) {
 		parts.swap(imps);
 	}
 	PRETTY_PRINT(ModImport) {

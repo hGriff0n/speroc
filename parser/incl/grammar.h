@@ -142,10 +142,12 @@ namespace spero::parser::grammar {
 	struct generic : seq<obrack, sequ<gen_part>, cbrack> {};
 	struct use_any : seq<placeholder> {};
 	struct use_one : seq<var> {};
-	struct use_many : seq<obrace, sequ<variable>, cbrace> {};
-	struct use_path_elem : sor<use_any, use_one, use_many> {};
-	struct use_path : seq<list<use_path_elem, one<':'>>, one<':'>> {};
-	struct use_elem : sor<seq<variable, opt<pstr("as"), ig_s, variable>>, seq<typ, ig_s, opt<pstr("as"), ig_s, typ, ig_s>>> {};
+	struct use_many : seq<obrace, sequ<use_one>, one<'}'>> {};
+	struct use_path_elem : sor<use_one, use_any, use_many> {};
+	struct use_path : if_then<at<use_path_elem, one<':'>>, seq<use_path_elem, one<':'>>> {};
+	struct use_rebind : sor<seq<var, ig_s, opt<pstr("as"), ig_s, var, ig_s>>, seq<typ, ig_s, opt<pstr("as"), ig_s, typ, ig_s>>> {};
+	struct use_fin_many : seq<obrace, sequ<use_rebind>, cbrace> {};
+	struct use_fin_elem : sor<use_rebind, use_any, use_fin_many> {};
 
 	//
 	// Assignment Grammar
@@ -208,8 +210,17 @@ namespace spero::parser::grammar {
 	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps> {};
 	struct _binary_ : seq<op, index> {};
 	struct bin_range : seq<index, sor<range, star<_binary_>>> {};
-	struct valexpr : seq<opt<k_mut>, sor<control, bin_range>> {};
-	struct mod_use : seq<k_use, opt<use_path>, sor<use_any, opt<obrace, sequ<use_elem>, cbrace>, use_elem>> {};
+	struct valexpr : seq<opt<k_mut>, sor<control, bin_range>, ig_s, opt<one<';'>, ig_s>> {};
+	struct mod_use : seq<k_use, star<use_path>, use_fin_elem> {};
+	// there's a reduce conflict here with groups (:{ is a valid production for both sides and isn't as restricted)
+		/* Possible Solution:
+			I don't want to allow "use std:{io, util}:{println as puts, Array as Set}
+			So have use_path be made only of use_one, use_any
+			If a '{' is encountered
+			  Run through the 'use_many' rule
+			  If a 'use_rebind' is encountered, finish parse and end
+			  else allow use_any
+		*/
 	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
 	struct stmt : seq<star<annotation, ig_s>, sor<mod_dec, expr>> {};

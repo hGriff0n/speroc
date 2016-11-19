@@ -385,11 +385,6 @@ namespace spero::parser::actions {
 			// stack: generic
 		}
 	};
-	template<> struct action<grammar::use_any> {
-		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::ImportPiece>());
-		}
-	};
 	template<> struct action<grammar::use_one> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: var
@@ -397,42 +392,33 @@ namespace spero::parser::actions {
 			// stack: ImportName
 		}
 	};
-	// TODO: Is this grammar wrong?
+	template<> struct action<grammar::use_any> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::ImportPiece>());
+		}
+	};
 	template<> struct action<grammar::use_many> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: sentinel var*
-			std::deque<ptr<ast::ImportName>> imps;
-			while (util::at_node<ast::BasicBinding>(s))
-				imps.push_front(std::make_unique<ast::ImportName>(util::pop<ast::BasicBinding>(s)));
-		
+			// stack: sentinel ImportName*
+			std::deque<ptr<ast::ImportPiece>> imps;
+			while (util::at_node<ast::ImportPiece>(s))
+				imps.push_front(util::pop<ast::ImportPiece>(s));
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::ImportGroup>(imps));
 			// stack: ImportGroup
 		}
 	};
-	template<> struct action<grammar::use_path> {
-		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: MOD imps*
-			std::deque<ptr<ast::ImportPiece>> imps;
-			while (util::at_node<ast::ImportPiece>(s))
-				imps.push_front(util::pop<ast::ImportPiece>(s));
-
-			s.emplace_back(std::make_unique<ast::ImportPart>(imps));
-			// stack: imp_part
-		}
-	};
-	template<> struct action<grammar::use_elem> {
+	template<> struct action<grammar::use_rebind> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: (var var?) | (typ typ?)
-			auto bind1 = util::pop<ast::BasicBinding>(s);
-			auto bind2 = util::pop<ast::BasicBinding>(s);
-			if (bind2)
-				s.emplace_back(std::make_unique<ast::ImportName>(std::move(bind2), std::move(bind1)));
-			else
-				s.emplace_back(std::make_unique<ast::ImportName>(std::move(bind1)));
-			// stack: ImportName
+			auto name = util::pop<ast::BasicBinding>(s);
+			auto old = util::pop<ast::BasicBinding>(s);
+
+			s.emplace_back(std::make_unique<ast::ImportName>(std::move(old), std::move(name)));
+			// staack: ImportName
 		}
 	};
+	INHERIT(use_fin_many, use_many);
 
 
 	// Assignment
@@ -822,6 +808,17 @@ namespace spero::parser::actions {
 			// stack: impl
 		}
 	};
+	template<> struct action<grammar::mod_use> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: USE imp*
+			std::deque<ptr<ast::ImportPiece>> imps;
+			while (util::at_node<ast::ImportPiece>(s))
+				imps.push_front(util::pop<ast::ImportPiece>(s));
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::ModImport>(imps));
+			// stack: Import
+		}
+	};
 	template<> struct action<grammar::_binary_> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: expr op expr
@@ -858,7 +855,6 @@ namespace spero::parser::actions {
 			// stack: expr
 		}
 	};
-
 	template<> struct action<grammar::stmt> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: annot* stmt
