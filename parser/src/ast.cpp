@@ -287,7 +287,10 @@ namespace spero::compiler::ast {
 	ValueGeneric::ValueGeneric(ptr<BasicBinding> name, ptr<Type> type, value val)
 		: GenericPart{ std::move(name), std::move(type) }, val{ std::move(val) } {}
 	PRETTY_PRINT(ValueGeneric) {
-		auto ret = std::string(buf, ' ') + "ValueGeneric\n" + type->pretty_print(buf + 1);
+		auto ret = std::string(buf, ' ') + "ValueGeneric" + name->pretty_print(1);
+			
+		if (type)
+			ret += "\n" + type->pretty_print(buf + 1);
 		
 		if (val)
 			ret += "\n" + std::string(buf + 1, ' ') + "Default Value\n" + val->pretty_print(buf + 2);
@@ -436,6 +439,12 @@ namespace spero::compiler::ast {
 		auto ret = std::string(buf, ' ') + vis._to_string() + " Assignment (Type)\n";
 		ret += binding->pretty_print(buf + 1);
 
+		if (generics.size()) {
+			ret += "\n" + std::string(buf + 1, ' ') + "Generics";
+
+			for (auto&& g : generics) ret += "\n" + g->pretty_print(buf + 2);
+		}
+
 		if (cons.size()) {
 			ret += "\n" + std::string(buf + 1, ' ') + "Constructors";
 			for (auto&& con : cons)
@@ -450,6 +459,13 @@ namespace spero::compiler::ast {
 	PRETTY_PRINT(VarAssign) {
 		auto ret = std::string(buf, ' ') + vis._to_string() + " Assignment (Variable)\n";
 		ret += binding->pretty_print(buf + 1);
+
+		if (generics.size()) {
+			ret += "\n" + std::string(buf + 1, ' ') + "Generics";
+
+			for (auto&& g : generics) ret += "\n" + g->pretty_print(buf + 2);
+		}
+
 		return ret + "\n" + expr->pretty_print(buf + 1);
 	}
 

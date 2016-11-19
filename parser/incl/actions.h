@@ -359,16 +359,18 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::gen_type> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: typ variance? relation? type?
+			// stack: typ variance? (relation type)?
 			auto type = util::pop<ast::Type>(s);
-			auto rel = util::pop<ast::Token>(s);
+			auto rel = (type ? util::pop<ast::Token>(s) : nullptr);
 			auto var = util::pop<ast::Token>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
 
+			auto rel_val = rel ? std::get<ast::RelationType>(rel->val) : ast::RelationType::NA;
+			auto var_val = var ? std::get<ast::VarianceType>(var->val) : ast::VarianceType::NA;
+
 			s.emplace_back(std::make_unique<ast::TypeGeneric>(
 				std::move(name), std::move(type),
-				rel ? std::get<ast::RelationType>(rel->val) : ast::RelationType::NA,
-				var ? std::get<ast::VarianceType>(rel->val) : ast::VarianceType::NA
+				rel_val, var_val
 			));
 			// stack: generic
 		}
@@ -529,6 +531,7 @@ namespace spero::parser::actions {
 			GenArray gen;
 			while (util::at_node<ast::GenericPart>(s))
 				gen.push_front(util::pop<ast::GenericPart>(s));
+			if (gen.size()) s.pop_back();
 
 			auto bind = util::pop<ast::AssignPattern>(s);
 
@@ -571,6 +574,7 @@ namespace spero::parser::actions {
 			GenArray gen;
 			while (util::at_node<ast::GenericPart>(s))
 				gen.push_front(util::pop<ast::GenericPart>(s));
+			if (gen.size()) s.pop_back();
 
 			auto bind = util::pop<ast::AssignPattern>(s);
 			s.emplace_back(std::make_unique<ast::TypeAssign>(std::move(bind), cons, gen, std::move(body), std::move(inherit)));

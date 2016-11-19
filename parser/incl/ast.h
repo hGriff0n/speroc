@@ -451,10 +451,9 @@ TODO:
 	"3.{.5}" -> index
  "let x :: Int = 3" does not appear in PrettyPrinting
    It is applied correctly (same with 3 :: Int)
- all generics crashes
  "() -> mut Int { 3 }" doesn't parse as expected
  use doesn't combine as expected
- not sure whether import is constructed correctly (especially the final steps)
+ interface pretty_printing isn't implemented
  some work on constructors/arguments with variables needed
  check desirability of "match x { 3 -> 3 }"
  "match x { x -> 4; mut (x, y) -> 5 }" doesn't parse correctly
@@ -462,6 +461,8 @@ TODO:
  "@mutable 3" doesn't parse as expected
  annotations aren't attached to expressions
  improve PrettyPrinting (compact)
+   fncall argument tuple duplicates tuple
  unary action doesn't run on "!false" or "-3"
    I need to double check the documentation to see where unary operators bind
+ need to add error conditions and recognition into the language (that's the control part)
 */
