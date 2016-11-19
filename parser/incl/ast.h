@@ -31,6 +31,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<Annotation>> annots;
 
 		Stmt();
+		virtual std::string pretty_print(size_t = 0);
 	};
 	struct ValExpr : Stmt {
 		bool is_mut = false;
@@ -446,20 +447,21 @@ namespace spero::parser {
 
 /*
 TODO:
+ use doesn't combine as expected
+ interface pretty_printing isn't implemented
+ "match x { x -> 4; mut (x, y) -> 5 }" doesn't parse correctly
+	the ';' isn't at the end of valexpr, it's at the end of expr (it's ending the parse of match)
  "3..5" doesn't parse correctly
     grammar -> index range
 	"3.{.5}" -> index
  "let x :: Int = 3" does not appear in PrettyPrinting
    It is applied correctly (same with 3 :: Int)
  "() -> mut Int { 3 }" doesn't parse as expected
- use doesn't combine as expected
- interface pretty_printing isn't implemented
  some work on constructors/arguments with variables needed
  check desirability of "match x { 3 -> 3 }"
- "match x { x -> 4; mut (x, y) -> 5 }" doesn't parse correctly
- "x.match { x -> 4 }" crashes
- "@mutable 3" doesn't parse as expected
- annotations aren't attached to expressions
+ global annotations shouldn't be assigned
+ rework PrettyPrinting
+   consistent way of displaying annotations
  improve PrettyPrinting (compact)
    fncall argument tuple duplicates tuple
  unary action doesn't run on "!false" or "-3"

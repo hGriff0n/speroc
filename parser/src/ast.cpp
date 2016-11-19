@@ -43,6 +43,13 @@ namespace spero::compiler::ast {
 	}
 
 	Stmt::Stmt() {}
+	PRETTY_PRINT(Stmt) {
+		if (annots.size() == 0) return "";
+
+		auto ret = std::string(buf, ' ') + "Annotations:";
+		for (auto&& anot : annots) ret += "\n" + anot->pretty_print(buf + 1);
+		return ret;
+	}
 
 	ValExpr::ValExpr() {}
 	PRETTY_PRINT(ValExpr) {

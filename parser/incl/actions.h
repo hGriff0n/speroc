@@ -858,6 +858,19 @@ namespace spero::parser::actions {
 			// stack: expr
 		}
 	};
+
+	template<> struct action<grammar::stmt> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: annot* stmt
+			auto stmt = util::pop<ast::Stmt>(s);
+
+			while (util::at_node<ast::Annotation>(s))
+				stmt->annots.push_front(util::pop<ast::Annotation>(s));
+
+			s.push_back(std::move(stmt));
+			// stack: stmt
+		}
+	};
 }
 
 #undef SENTINEL
