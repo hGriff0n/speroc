@@ -451,9 +451,6 @@ TODO:
  interface pretty_printing isn't implemented
  "match x { x -> 4; mut (x, y) -> 5 }" doesn't parse correctly
 	the ';' isn't at the end of valexpr, it's at the end of expr (it's ending the parse of match)
- "3..5" doesn't parse correctly
-    grammar -> index range
-	"3.{.5}" -> index
  "let x :: Int = 3" does not appear in PrettyPrinting
    It is applied correctly (same with 3 :: Int)
  "() -> mut Int { 3 }" doesn't parse as expected

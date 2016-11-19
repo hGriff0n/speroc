@@ -198,7 +198,7 @@ namespace spero::parser::grammar {
 	//
 	// Language Expressions
 	//
-	struct _index_ : seq<one<'.'>, ig_s, fncall> {};
+	struct _index_ : if_then<not_at<two<'.'>>, seq<one<'.'>, ig_s, fncall>> {};
 	struct in_eps : eps {};
 	struct in_ctrl : seq<one<'.'>, in_eps, dot_ctrl> {};
 	struct index : seq<opt<unary>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
