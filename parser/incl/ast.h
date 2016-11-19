@@ -446,17 +446,19 @@ namespace spero::parser {
 
 /*
 TODO:
+ "3..5" doesn't parse correctly
+    grammar -> index range
+	"3.{.5}" -> index
+ "let x :: Int = 3" does not appear in PrettyPrinting
+   It is applied correctly (same with 3 :: Int)
+ all generics crashes
  "() -> mut Int { 3 }" doesn't parse as expected
  use doesn't combine as expected
  not sure whether import is constructed correctly (especially the final steps)
- "3 :: Int" crashes
- "let x :: Int = 3" appears to have no ast effect
- all generics crashes
  some work on constructors/arguments with variables needed
  check desirability of "match x { 3 -> 3 }"
  "match x { x -> 4; mut (x, y) -> 5 }" doesn't parse correctly
  "x.match { x -> 4 }" crashes
- "3..5" doesn't parse correctly
  "@mutable 3" doesn't parse as expected
  annotations aren't attached to expressions
  improve PrettyPrinting (compact)

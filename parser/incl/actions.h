@@ -793,8 +793,9 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::in_eps> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: unary? expr inf?
+			// stack: unary? expr (sentinel inf)?			NOTE: sentinel coming from anon_sep production
 			auto typ = util::pop<ast::Type>(s);
+			if (typ) s.pop_back();
 			util::view_as<ast::ValExpr>(s.back())->type = std::move(typ);
 			// stack: expr
 		}
