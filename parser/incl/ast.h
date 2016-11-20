@@ -441,8 +441,6 @@ namespace spero::parser {
 
 /*
 TODO:
- "def foo = (x :: Int) -> x + 3" crashes
-   "def foo = (x) -> x + 3" parses correctly
  "let x :: Int = 3" does not appear in PrettyPrinting
    It is applied correctly (same with 3 :: Int)
  some work on constructors/arguments with variables needed

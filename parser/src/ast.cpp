@@ -433,7 +433,7 @@ namespace spero::compiler::ast {
 		this->cons.swap(cons);
 	}
 	PRETTY_PRINT(TypeAssign) {
-		auto ret = std::string(buf, ' ') + vis._to_string() + " Assignment (Type)\n";
+		auto ret = std::string(buf, ' ') + vis._to_string() + " Assignment\n";
 		ret += binding->pretty_print(buf + 1);
 
 		if (generics.size()) {
@@ -454,7 +454,7 @@ namespace spero::compiler::ast {
 	VarAssign::VarAssign(ptr<AssignPattern> bind, GenArray& gen, value val, ptr<Type> type)
 		: Interface{ std::move(bind), gen, std::move(type) }, expr{ std::move(val) } {}
 	PRETTY_PRINT(VarAssign) {
-		auto ret = std::string(buf, ' ') + vis._to_string() + " Assignment (Variable)\n";
+		auto ret = std::string(buf, ' ') + vis._to_string() + " Assignment\n";
 		ret += binding->pretty_print(buf + 1);
 
 		if (generics.size()) {

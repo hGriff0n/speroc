@@ -192,7 +192,26 @@ namespace spero::parser::actions {
 			// stack: qual
 		}
 	};
-	INHERIT(name_path, name_path_part);
+	SENTINEL(name_eps);
+	template<> struct action<grammar::name_path> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel qual? basic
+			auto part = util::pop<ast::BasicBinding>(s);
+
+			// Apparently this can be triggered in block ??
+			if (part) {
+				if (util::at_node<ast::QualBinding>(s))
+					util::view_as<ast::QualBinding>(s.back())->add(std::move(part));
+
+				else
+					s.emplace_back(std::make_unique<ast::QualBinding>(std::move(part)));
+			}
+
+			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+			s.pop_back();
+			// stack: qual
+		}
+	};
 	template<> struct action<grammar::typ_pointer> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::POINTER));
@@ -249,10 +268,15 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::fneps> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: expr | binding
+			// stack: expr | binding sentinel?
+			bool sentinel_on_top = !util::view_as<ast::Ast>(s.back());
+			if (sentinel_on_top) s.pop_back();
+
 			auto part = util::pop<ast::QualBinding>(s);
-			if (part) s.emplace_back(std::make_unique<ast::Variable>(std::move(part)));
-			// TODO: Consider pushing a Variale node instead (can add the function consideration in later)
+			if (part && part->val.back()->type._to_integral() != ast::BindingType::OPERATOR)
+				s.emplace_back(std::make_unique<ast::Variable>(std::move(part)));
+
+			if (sentinel_on_top) s.emplace_back(ast::Sentinel{});
 			// stack: fncall | expr
 		}
 	};

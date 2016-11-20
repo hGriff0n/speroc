@@ -79,7 +79,8 @@ namespace spero::parser::grammar {
 		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
-	struct name_path : star<name_path_part> {};
+	struct name_eps : seq<eps> {};
+	struct name_path : seq<name_eps, star<name_path_part>> {};
 	struct typ_pointer : sor<one<'&'>, one<'*'>, eps> {};
 	struct type : seq<name_path, disable<typ>, ig_s, opt<array>, typ_pointer, ig_s> {};
 	struct mut_type : seq<opt<k_mut>, type> {};
@@ -116,7 +117,6 @@ namespace spero::parser::grammar {
 	struct scope : seq<obrace, star<expr>, cbrace> {};
 	struct wait_stmt : seq<k_wait, valexpr> {};
 	struct atom : seq<sor<scope, wait_stmt, lit, binding>, ig_s> {};
-	//struct fnseq : seq<opt<array>, opt<anon_type>, tuple> {};
 	struct fnseq : sor<seq<array, opt<anon_type>, opt<tuple>>, seq<anon_type, opt<tuple>>, tuple> {};
 	struct fneps : eps {};
 	struct fncall : seq<atom, star<fnseq>, fneps> {};
