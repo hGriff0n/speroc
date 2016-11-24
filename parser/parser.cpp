@@ -21,6 +21,24 @@ namespace spero::parser {
 		return std::move(s);
 	}
 
+	Stack parseFile(std::string file) {
+		// Setup parsing state
+		Stack s{};
+		s.emplace_back(compiler::ast::Sentinel{});
+
+		// Perform parse run
+		pegtl::file_parser{ file }.parse<grammar::program, actions::action>(s);
+
+		// Remove Sentinel nodes (currently only removes the first, any others are parser errors)
+		s.pop_front();
+
+		// Put an empty node on the stack if nothing was parsed (ie. empty input)
+		if (s.size() == 0) s.emplace_back(std::make_unique<compiler::ast::Ast>());
+
+		// Return completed ast (for now ast stack)
+		return std::move(s);
+	}
+
 	size_t num_issues() {
 		return pegtl::analyze<grammar::program>();
 	}

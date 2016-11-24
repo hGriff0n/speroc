@@ -61,9 +61,15 @@ int main(int argc, const char* argv[]) {
 	while (getMultiline(std::cin, input)) {
 		if (input == ":q") break;
 
-		// marking pretty_print as virtual causes a read access exception ???
-		auto res = parser::parse(input);
-		//for (auto&& node : parser::parse(input))
+		spero::parser::Stack res;
+
+		if (input.substr(0, 2) == ":l") {
+			res = parser::parseFile(input.substr(3));
+			//res = parser::parse(findFile(input.substr(3), "spr", "spqr"));
+
+		} else
+			res = parser::parse(input);
+
 		for (auto&& node : res)
 			if (node) std::cout << node->pretty_print(0) << "\n";
 			else std::cout << "nullptr\n";

@@ -4,6 +4,7 @@
 
 namespace spero::parser {
 	Stack parse(std::string);
+	Stack parseFile(std::string);
 	//parse_file
 
 	size_t num_issues();
