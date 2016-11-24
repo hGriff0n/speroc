@@ -1,17 +1,12 @@
 #pragma once
 
-#include "ast/atoms.h"
-#include "ast/control.h"
-#include "ast/decor.h"
-#include "ast/literals.h"
-#include "ast/names.h"
-#include "ast/stmts.h"
-#include "ast/types.h"
-
-
-namespace spero::parser {
-	using Stack = std::deque<spero::compiler::ptr<spero::compiler::ast::Ast>>;
-}
+#include "atoms.h"
+#include "control.h"
+#include "decor.h"
+#include "literals.h"
+#include "names.h"
+#include "stmts.h"
+#include "types.h"
 
 /*
 TODO:

@@ -1,12 +1,10 @@
 #pragma once
 
 #include "grammar.h"
-#include "ast.h"
+#include "ast/all.h"
 #include "utils.h"
 
-#include <deque>
 #include <algorithm>
-#include <iostream>
 
 
 // Specialized Definitions for Common Cases
@@ -171,7 +169,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::op> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::QualBinding>(
+			s.emplace_back(std::make_unique<ast::QualifiedBinding>(
 				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR)
 			));
 		}
@@ -183,11 +181,11 @@ namespace spero::parser::actions {
 
 			// Apparently this can be triggered in block ??
 			if (part) {
-				if (util::at_node<ast::QualBinding>(s))
-					util::view_as<ast::QualBinding>(s.back())->add(std::move(part));
+				if (util::at_node<ast::QualifiedBinding>(s))
+					util::view_as<ast::QualifiedBinding>(s.back())->parts.emplace_back(std::move(part));
 
 				else
-					s.emplace_back(std::make_unique<ast::QualBinding>(std::move(part)));
+					s.emplace_back(std::make_unique<ast::QualifiedBinding>(std::move(part)));
 			}
 			// stack: qual
 		}
@@ -200,11 +198,11 @@ namespace spero::parser::actions {
 
 			// Apparently this can be triggered in block ??
 			if (part) {
-				if (util::at_node<ast::QualBinding>(s))
-					util::view_as<ast::QualBinding>(s.back())->add(std::move(part));
+				if (util::at_node<ast::QualifiedBinding>(s))
+					util::view_as<ast::QualifiedBinding>(s.back())->parts.emplace_back(std::move(part));
 
 				else
-					s.emplace_back(std::make_unique<ast::QualBinding>(std::move(part)));
+					s.emplace_back(std::make_unique<ast::QualifiedBinding>(std::move(part)));
 			}
 
 			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
@@ -228,7 +226,7 @@ namespace spero::parser::actions {
 			auto scp = util::pop<ast::Block>(s);
 			auto tup = util::pop<ast::Tuple>(s);
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::TypeExt>(std::move(tup), std::move(scp)));
+			s.emplace_back(std::make_unique<ast::TypeExtension>(std::move(tup), std::move(scp)));
 			// stack: anon
 		}
 	};
@@ -258,7 +256,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: expr, array?, anon_type?, tuple
 			auto args = util::pop<ast::Tuple>(s);
-			auto type = util::pop<ast::TypeExt>(s);
+			auto type = util::pop<ast::TypeExtension>(s);
 			auto inst = util::pop<ast::Array>(s);
 			auto caller = util::pop<ast::Ast>(s);
 
@@ -272,9 +270,9 @@ namespace spero::parser::actions {
 			bool sentinel_on_top = !util::view_as<ast::Ast>(s.back());
 			if (sentinel_on_top) s.pop_back();
 
-			auto part = util::pop<ast::QualBinding>(s);
-			if (part && part->val.back()->type._to_integral() != ast::BindingType::OPERATOR)
-				s.emplace_back(std::make_unique<ast::Variable>(std::move(part)));
+			auto name = util::pop<ast::QualifiedBinding>(s);
+			if (name && name->parts.back()->type._to_integral() != ast::BindingType::OPERATOR)
+				s.emplace_back(std::make_unique<ast::Variable>(std::move(name)));
 
 			if (sentinel_on_top) s.emplace_back(ast::Sentinel{});
 			// stack: fncall | expr
@@ -288,9 +286,9 @@ namespace spero::parser::actions {
 			// stack: qualname array? ptr
 			auto tkn = util::pop<ast::Token>(s);
 			auto inst = util::pop<ast::Array>(s);
-			auto name = util::pop<ast::QualBinding>(s);
+			auto name = util::pop<ast::QualifiedBinding>(s);
 
-			s.emplace_back(std::make_unique<ast::InstType>(std::move(name), std::move(inst), std::get<ast::PtrStyling>(tkn->val)));
+			s.emplace_back(std::make_unique<ast::InstType>(std::move(name), std::move(inst), std::get<ast::PtrStyling>(tkn->value)));
 		}
 	};
 	template<> struct action<grammar::unary> {
@@ -320,7 +318,7 @@ namespace spero::parser::actions {
 				mod.push_front(util::pop<ast::BasicBinding>(s));
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::ModDec>(std::make_unique<ast::QualBinding>(mod)));
+			s.emplace_back(std::make_unique<ast::ModDec>(std::make_unique<ast::QualifiedBinding>(mod)));
 			// stack: mod_dec
 		}
 	};
@@ -711,7 +709,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: token expr?
 			auto expr = util::pop<ast::ValExpr>(s);
-			auto tkn = std::get<ast::KeywordType>(util::pop<ast::Token>(s)->val);
+			auto tkn = std::get<ast::KeywordType>(util::pop<ast::Token>(s)->value);
 
 			switch (tkn) {
 				case ast::KeywordType::BREAK:
@@ -738,6 +736,7 @@ namespace spero::parser::actions {
 			// stack: expr token
 			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
 			action<grammar::jumps>::apply(in, s);
+			int i = "Hello";
 			// stack: jump
 		}
 	};
@@ -750,7 +749,7 @@ namespace spero::parser::actions {
 			while (util::at_node<ast::Pattern>(s))
 				pattern.push_front(util::pop<ast::Pattern>(s));
 			
-			cas->setPattern(pattern);
+			cas->vars.swap(pattern);
 			s.push_back(std::move(cas));
 			// stack: (sentinel | case) case
 		}
@@ -826,7 +825,7 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::impl_expr> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: IMPL qual
-			auto qual = util::pop<ast::QualBinding>(s);
+			auto qual = util::pop<ast::QualifiedBinding>(s);
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::ImplExpr>(std::move(qual)));
 			// stack: impl

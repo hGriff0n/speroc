@@ -30,7 +30,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Tuple : Sequence<ValExpr> {
 		Tuple(std::deque<ptr<ValExpr>>&);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -43,7 +43,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Array : Sequence<ValExpr> {
 		Array(std::deque<ptr<ValExpr>>&);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -56,7 +56,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Block : Sequence<Ast> {
 		Block(std::deque<ptr<Ast>>&);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -74,7 +74,7 @@ namespace spero::compiler::ast {
 		ptr<Block> body;
 
 		TypeExtension(ptr<Tuple>, ptr<Block>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -96,7 +96,7 @@ namespace spero::compiler::ast {
 		std::optional<ptr<Array>> inst;
 
 		FnCall(ptr<Ast>, ptr<TypeExtension>, ptr<Tuple>, ptr<Array>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -115,6 +115,6 @@ namespace spero::compiler::ast {
 		std::optional<ptr<ValExpr>> step;
 
 		Range(ptr<ValExpr>, ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 }

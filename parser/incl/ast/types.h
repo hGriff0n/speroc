@@ -4,6 +4,14 @@
 
 namespace spero::compiler::ast {
 	/*
+	 * Forward Declarations
+	 */
+	struct Array;
+	struct BasicBinding;
+	struct QualifiedBinding;
+
+
+	/*
 	 * Base class for all type nodes
 	 *
 	 * Extends: Ast
@@ -39,7 +47,7 @@ namespace spero::compiler::ast {
 		
 		BasicType(ptr<BasicBinding>, PtrStyling=PtrStyling::NA);
 		BasicType(ptr<QualifiedBinding>, PtrStyling = PtrStyling::NA);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -55,7 +63,7 @@ namespace spero::compiler::ast {
 		ptr<Array> inst;
 
 		GenericType(ptr<QualifiedBinding>, ptr<Array>, PtrStyling);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 	
@@ -71,7 +79,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<Type>> elems;
 
 		TupleType(std::deque<ptr<Type>>&);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -89,6 +97,6 @@ namespace spero::compiler::ast {
 		ptr<Type> ret;
 
 		FunctionType(ptr<TupleType>, ptr<Type>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 }

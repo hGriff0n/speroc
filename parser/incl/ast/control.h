@@ -5,6 +5,13 @@
 
 namespace spero::compiler::ast {
 	/*
+	 * Forward Declarations
+	 */
+	struct Pattern;
+	struct Case;
+
+
+	/*
 	 * Represents a sequence of branching constructs
 	 *
 	 * Extends: ValExpr
@@ -23,7 +30,7 @@ namespace spero::compiler::ast {
 		void addBranch(ptr<ValExpr>, ptr<ValExpr>);
 		void addBranch(ptr<ValExpr>);
 
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 	/*
@@ -38,7 +45,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> body;
 
 		Loop(ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -55,7 +62,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> test, body;
 
 		While(ptr<ValExpr>, ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -74,7 +81,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> generator, body;
 
 		For(ptr<Pattern>, ptr<ValExpr>, ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -92,7 +99,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<Case>> cases;
 
 		Match(ptr<ValExpr>, std::deque<ptr<Case>>&);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -119,7 +126,7 @@ namespace spero::compiler::ast {
 	*/
 	struct Wait : Jump {
 		Wait(ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -130,7 +137,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Break : Jump {
 		Break(ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -141,7 +148,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Continue : Jump {
 		Continue(ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -152,7 +159,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Return : Jump {
 		Return(ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -163,6 +170,6 @@ namespace spero::compiler::ast {
 	 */
 	struct YieldRet : Jump {
 		YieldRet(ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 }

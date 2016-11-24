@@ -4,6 +4,13 @@
 
 namespace spero::compiler::ast {
 	/*
+	 * Forward Declarations
+	 */
+	struct Tuple;
+	struct Type;
+
+
+	/*
 	 * Represents a known boolean constant
 	 *
 	 * Extends: ValExpr
@@ -15,7 +22,7 @@ namespace spero::compiler::ast {
 		bool val;
 		Bool(bool);
 
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -31,7 +38,7 @@ namespace spero::compiler::ast {
 		unsigned long val;
 		Byte(std::string, int);
 
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -47,7 +54,7 @@ namespace spero::compiler::ast {
 		double val;
 		Float(std::string);
 
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -63,7 +70,7 @@ namespace spero::compiler::ast {
 		long val;
 		Byte(std::string);
 
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -79,7 +86,7 @@ namespace spero::compiler::ast {
 		std::string val;
 		String(std::string);
 
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -95,7 +102,7 @@ namespace spero::compiler::ast {
 		char val;
 		Char(char);
 
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -117,6 +124,6 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> body;
 
 		FnBody(ptr<ValExpr>, bool);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 }

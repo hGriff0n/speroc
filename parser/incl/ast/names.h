@@ -20,7 +20,7 @@ namespace spero::compiler::ast {
 		BindingType type;
 
 		BasicBinding(std::string, BindingType);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -38,7 +38,7 @@ namespace spero::compiler::ast {
 		QualifiedBinding(ptr<BasicBinding>);
 		QualifiedBinding(std::deque<BasicBinding>&);
 
-		virtual IoStream prettyPrint(size_t = 0);
+		virtual OutStream prettyPrint(size_t = 0);
 	};
 
 
@@ -54,7 +54,7 @@ namespace spero::compiler::ast {
 		ptr<QualifiedBinding> name;
 
 		Variable(ptr<QualifiedBinding>);
-		virtual IoStream pretty_print(IoStream, size_t = 0);
+		virtual OutStream pretty_print(OutStream, size_t = 0);
 	};
 
 
@@ -82,7 +82,7 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> var;
 
 		AssignName(ptr<BasicBinding>);
-		virtual IoStream prettyPrint(IoStream);
+		virtual OutStream prettyPrint(OutStream);
 	};
 
 
@@ -98,7 +98,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<AssignPattern>> vars;
 
 		AssignTuple(std::deque<ptr<AssignPattern>>&);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -113,7 +113,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Pattern : Ast {
 		bool is_mut = false;
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -129,7 +129,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<Pattern>> ptns;
 
 		PTuple(std::deque<ptr<Pattern>>&);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 	
@@ -145,7 +145,7 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> name;
 
 		PNamed(std::deque<ptr<Pattern>>&);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -163,7 +163,7 @@ namespace spero::compiler::ast {
 		// Note: assert(name.type == BindingType::TYPE);
 
 		PAdt(ptr<BasicBinding>, ptr<PTuple>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -180,6 +180,6 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> value;
 
 		PVal(ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 }

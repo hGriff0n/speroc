@@ -2,22 +2,44 @@
 
 #include "node_defs.h"
 #include <variant>
+#include <memory>
+#include <deque>
+#include "enum.h"
 
 #include <iostream>
 
-namespace spero::compiler::ast {
+namespace spero::compiler {
+	template<class T>
+	using ptr = std::unique_ptr<T>;
+
+
 	// Bring in dependency on iostream (TODO: Find a better way to handle this)
-	using IoStream = std::ostream&;
+	using OutStream = std::ostream&;
 
 	/*
-	 * Templates to check if a variant could hold a T
-	 */
+	* Templates to check if a variant could hold a T
+	*/
 	template<class T, class V>
 	struct can_hold : std::is_same<T, V> {};
 
 	template<class T, class... V>
 	struct can_hold<T, std::variant<V...>> : std::disjunction<std::is_same<T, V>...> {};
+}
 
+namespace spero::compiler::ast {
+	/*
+	 * Enums and other basic types
+	 */
+	using Sentinel = nullptr_t;
+	BETTER_ENUM(KeywordType, char, LET, DEF, STATIC, MUT, DO,
+				MOD, USE, MATCH, IF, ELSIF, ELSE, WHILE, FOR, LOOP,
+				BREAK, CONT, YIELD, RET, WAIT, IMPL, F_IN);
+	BETTER_ENUM(PtrStyling, char, POINTER, VIEW, NA);
+	BETTER_ENUM(VarianceType, char, COVARIANT, CONTRAVARIANT, INVARIANT, NA);
+	BETTER_ENUM(RelationType, char, IMPLS, NOT_IMPLS, SUBTYPE, SUPERTYPE, NA);
+	BETTER_ENUM(VisibilityType, char, PUBLIC, PROTECTED, PRIVATE, STATIC);
+	BETTER_ENUM(BindingType, char, TYPE, VARIABLE, OPERATOR);
+	BETTER_ENUM(UnaryType, char, DEREF, NOT, MINUS, NA);
 
 
 	/*
@@ -29,7 +51,7 @@ namespace spero::compiler::ast {
 	struct Ast {
 		Ast();
 
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -48,7 +70,7 @@ namespace spero::compiler::ast {
 		template<class T, class = std::enable_if_t<can_hold<T, token_type>::value>>
 		Token(T val) : value{ val } {}
 
-		IoStream prettyPrint(IoStream, size_t = 0) final;
+		OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -65,7 +87,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<Annotation>> annots;
 
 		Stmt();
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 	
@@ -88,6 +110,10 @@ namespace spero::compiler::ast {
 		ptr<Type> type;
 
 		ValExpr();
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
+}
+
+namespace spero::parser {
+	using Stack = std::deque<compiler::ptr<compiler::ast::Ast>>;
 }

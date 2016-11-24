@@ -5,6 +5,19 @@
 
 namespace spero::compiler::ast {
 	/*
+	 * Forward Declaration
+	 */
+	struct AssignPattern;
+	struct QualifiedBinding;
+	struct Type;
+	struct GenericPart;
+	struct Block;
+	struct ImportPiece;
+
+	using GenArray = std::deque<ptr<GenericPart>>;
+
+
+	/*
 	 * Base case for handling assignment statements
 	 *   Instance also handles interface specification
 	 *
@@ -23,7 +36,7 @@ namespace spero::compiler::ast {
 		std::optional<ptr<Type>> type;
 
 		Interface(ptr<AssignPattern>, GenArray&, ptr<Type>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 	
@@ -42,7 +55,7 @@ namespace spero::compiler::ast {
 		ptr<Block> body;
 
 		TypeAssign(ptr<AssignPattern>, std::deque<ptr<Ast>>&, GenArray&, ptr<Block>, ptr<Type>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 	
@@ -59,7 +72,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> expr;						// must be a FnBody if name is a Operator
 
 		VarAssign(ptr<AssignPattern>, GenArray&, ptr<ValExpr>, ptr<Type>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -75,7 +88,7 @@ namespace spero::compiler::ast {
 		ptr<QualifiedBinding> type;
 
 		ImplExpr(ptr<QualifiedBinding>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -91,7 +104,7 @@ namespace spero::compiler::ast {
 		ptr<QualifiedBinding> module;
 
 		ModDec(ptr<QualifiedBinding>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -107,7 +120,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<ImportPiece>> parts;
 
 		ModImport(std::deque<ptr<ImportPiece>>&);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
 
@@ -123,6 +136,6 @@ namespace spero::compiler::ast {
 		std::deque<ptr<ValExpr>> elems;
 
 		Index(ptr<ValExpr>, ptr<ValExpr>);
-		virtual IoStream prettyPrint(IoStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 }
