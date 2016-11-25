@@ -19,8 +19,8 @@ namespace spero::compiler::ast {
 		// TODO: assert else not filled
 		else_branch = std::move(body);
 	}
-	OutStream Branch::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& Branch::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.Branch";
 	}
 
 
@@ -28,8 +28,8 @@ namespace spero::compiler::ast {
 	 * ast::Loop
 	 */
 	Loop::Loop(ptr<ValExpr> b) : body{ std::move(b) } {}
-	OutStream Loop::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& Loop::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.Loop";
 	}
 
 
@@ -37,8 +37,8 @@ namespace spero::compiler::ast {
 	 * ast::While
 	 */
 	While::While(ptr<ValExpr> test, ptr<ValExpr> body) : test{ std::move(test) }, body{ std::move(body) } {}
-	OutStream While::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& While::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.While";
 	}
 
 
@@ -46,8 +46,8 @@ namespace spero::compiler::ast {
 	 * ast::For
 	 */
 	For::For(ptr<Pattern> p, ptr<ValExpr> g, ptr<ValExpr> b) : pattern{ std::move(p) }, generator{ std::move(g) }, body{ std::move(b) } {}
-	OutStream For::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& For::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.For";
 	}
 
 
@@ -55,8 +55,8 @@ namespace spero::compiler::ast {
 	 * ast::Match
 	 */
 	Match::Match(ptr<ValExpr> s, std::deque<ptr<Case>> cs) : switch_expr{ std::move(s) }, cases{ std::move(cs) } {}
-	OutStream Match::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& Match::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.Match";
 	}
 
 
@@ -71,8 +71,8 @@ namespace spero::compiler::ast {
 	 * ast::Wait
 	 */
 	Wait::Wait(ptr<ValExpr> e) : Jump{ KeywordType::WAIT, std::move(e) } {}
-	OutStream Wait::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& Wait::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.Wait";
 	}
 
 
@@ -80,8 +80,8 @@ namespace spero::compiler::ast {
 	 * ast::Break
 	 */
 	Break::Break(ptr<ValExpr> e) : Jump{ KeywordType::BREAK, std::move(e) } {}
-	OutStream Break::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& Break::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.Break";
 	}
 
 
@@ -89,8 +89,8 @@ namespace spero::compiler::ast {
 	 * ast::Continue
 	 */
 	Continue::Continue(ptr<ValExpr> e) : Jump{ KeywordType::CONT, std::move(e) } {}
-	OutStream Continue::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& Continue::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.Continue";
 	}
 
 
@@ -98,8 +98,8 @@ namespace spero::compiler::ast {
 	 * ast::Return
 	 */
 	Return::Return(ptr<ValExpr> e) : Jump{ KeywordType::RET, std::move(e) } {}
-	OutStream Return::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& Return::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.Return";
 	}
 
 
@@ -107,8 +107,8 @@ namespace spero::compiler::ast {
 	 * ast::YieldRet
 	 */
 	YieldRet::YieldRet(ptr<ValExpr> e) : Jump{ KeywordType::YIELD, std::move(e) } {}
-	OutStream YieldRet::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& YieldRet::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.Yield";
 	}
 
 }

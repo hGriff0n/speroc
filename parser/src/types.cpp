@@ -16,8 +16,8 @@ namespace spero::compiler::ast {
 	 */
 	BasicType::BasicType(ptr<BasicBinding> b, PtrStyling p) : BasicType{ std::make_unique<QualifiedBinding>(std::move(b)), p } {}
 	BasicType::BasicType(ptr<QualifiedBinding> b, PtrStyling p) : name{ std::move(b) }, pointer{ p } {}
-	OutStream BasicType::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& BasicType::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.BasicType";
 	}
 
 
@@ -25,7 +25,17 @@ namespace spero::compiler::ast {
 	 * ast::GenericType
 	 */
 	GenericType::GenericType(ptr<QualifiedBinding> b, ptr<Array> a, PtrStyling p) : BasicType{ std::move(b), p }, inst{ std::move(a) } {}
-	OutStream GenericType::prettyPrint(OutStream s, size_t buf) {
+	OutStream& GenericType::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		s << std::string(buf, ' ') << context << "ast.GenericType \"";
+		name->prettyPrint(s, 0) << "\" (ptr=" << pointer._to_string() << ")";
+
+		if (inst && inst->exprs.size()) {
+			s << " [\n";
+			for (auto&& e : inst->exprs)
+				e->prettyPrint(s, buf + 1) << "\n";
+			s << std::string(buf, ' ') << "]";
+		}
+
 		return s;
 	}
 
@@ -34,8 +44,8 @@ namespace spero::compiler::ast {
 	 * ast::TupleType
 	 */
 	TupleType::TupleType(std::deque<ptr<Type>> ts) : elems{ std::move(ts) } {}
-	OutStream TupleType::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& TupleType::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.TupleType";
 	}
 
 
@@ -43,8 +53,8 @@ namespace spero::compiler::ast {
 	 * ast::FunctionType
 	 */
 	FunctionType::FunctionType(ptr<TupleType> as, ptr<Type> r) : args{ std::move(as) }, ret{ std::move(r) } {}
-	OutStream FunctionType::prettyPrint(OutStream s, size_t buf) {
-		return s;
+	OutStream& FunctionType::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.FunctionType";
 	}
 
 }

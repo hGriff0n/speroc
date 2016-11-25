@@ -10,12 +10,12 @@
 
 /*
 TODO:
+ "{3}" produces nullptr, empty Block
  Move ast into subfolder
-   Implement better pretty printing
    Determine whether std::optional<ptr<T>> is a good pattern
    Ensure that everything works
- "let x :: Int = 3" does not appear in PrettyPrinting
-   It is applied correctly (same with 3 :: Int)
+ Ensure correct construction of generic instantiation
+  "3 :: Array[Int]" -> "Array [ ast.Variable ]" in prettyPrint
  some work on constructors/arguments with variables needed
  check desirability of "match x { 3 -> 3 }"
    as simple as adding a 'PatternLit' rule
