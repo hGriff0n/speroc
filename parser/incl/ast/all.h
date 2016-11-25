@@ -34,4 +34,6 @@ TODO:
  unary action doesn't run on "!false" or "-3"
    I need to double check the documentation to see where unary operators bind
  need to add error conditions and recognition into the language (that's the control part)
+ need to add in operator precedence
+   consider changing case to have a PTuple instead of a deque of ptr<Pattern>
 */
