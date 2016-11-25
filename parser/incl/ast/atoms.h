@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ast.h"
-#include <optional>
 
 namespace spero::compiler::ast {
 	/*
@@ -70,7 +69,7 @@ namespace spero::compiler::ast {
 	 *   body - the type's body
 	 */
 	struct TypeExtension : Ast {
-		std::optional<ptr<Tuple>> cons;
+		ptr<Tuple> cons;
 		ptr<Block> body;
 
 		TypeExtension(ptr<Block>);
@@ -92,9 +91,9 @@ namespace spero::compiler::ast {
 	 */
 	struct FnCall : ValExpr {
 		ptr<Ast> caller;
-		std::optional<ptr<TypeExtension>> anon;
-		std::optional<ptr<Tuple>> args;
-		std::optional<ptr<Array>> inst;
+		ptr<TypeExtension> anon;
+		ptr<Tuple> args;
+		ptr<Array> inst;
 
 		FnCall(ptr<Ast>, ptr<TypeExtension>, ptr<Tuple>, ptr<Array>);
 		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
@@ -113,7 +112,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Range : ValExpr {
 		ptr<ValExpr> start, stop;
-		std::optional<ptr<ValExpr>> step;
+		ptr<ValExpr> step;
 
 		Range(ptr<ValExpr>, ptr<ValExpr>);
 		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;

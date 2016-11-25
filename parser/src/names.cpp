@@ -20,7 +20,7 @@ namespace spero::compiler::ast {
 	}
 	QualifiedBinding::QualifiedBinding(std::deque<ptr<BasicBinding>> ps) : parts{ std::move(ps) } {}
 	OutStream& QualifiedBinding::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << parts.front()->name;
+		s << std::string(buf, ' ') << context << "ast.QualifiedBinding " << parts.front()->name;
 
 		for (auto p = std::begin(parts) + 1; p != std::end(parts); ++p)
 			s << ":" << p->get()->name;

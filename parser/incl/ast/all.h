@@ -10,7 +10,11 @@
 
 /*
 TODO:
+ Consider splitting context into pre and post production
  "{3}" produces nullptr, empty Block
+	"[3]" and "(3)" work just fine
+ "abs(-3) :: Float" crashes
+   "abs(-2)" also crashes (the error is in the -)
  Move ast into subfolder
    Determine whether std::optional<ptr<T>> is a good pattern
    Ensure that everything works
