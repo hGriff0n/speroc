@@ -62,7 +62,6 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::ImportName
 	 */
-	ImportName::ImportName(ptr<BasicBinding> n) : name{ std::move(n) }, old_name{} {}
 	ImportName::ImportName(ptr<BasicBinding> n, ptr<BasicBinding> o) : name{ std::move(n) }, old_name{ std::move(o) } {}
 	OutStream& ImportName::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		return s << std::string(buf, ' ') << context << "ast.ImportName";

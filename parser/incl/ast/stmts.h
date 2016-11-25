@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ast.h"
-#include <optional>
 
 namespace spero::compiler::ast {
 	/*
@@ -32,7 +31,7 @@ namespace spero::compiler::ast {
 		VisibilityType vis;
 		ptr<AssignPattern> name;
 		GenArray generics;
-		std::optional<ptr<Type>> type;
+		ptr<Type> type;
 
 		Interface(ptr<AssignPattern>, GenArray, ptr<Type>);
 		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "");

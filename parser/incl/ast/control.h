@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ast.h"
-#include <optional>
 
 namespace spero::compiler::ast {
 	/*
@@ -24,7 +23,7 @@ namespace spero::compiler::ast {
 		using Pair = std::pair<ptr<ValExpr>, ptr<ValExpr>>;
 
 		std::deque<Pair> if_branches;
-		std::optional<ptr<ValExpr>> else_branch;
+		ptr<ValExpr> else_branch;
 
 		Branch(ptr<ValExpr>, ptr<ValExpr>);
 		void addBranch(ptr<ValExpr>, ptr<ValExpr>);
@@ -113,11 +112,10 @@ namespace spero::compiler::ast {
 	 *   jmp - keyword to distinguish jump bodies [deprecated]
 	 */
 	struct Jump : ValExpr {
-		std::optional<ptr<ValExpr>> expr;
+		ptr<ValExpr> expr;
 		KeywordType jmp;
 
-		Jump(KeywordType);
-		Jump(KeywordType, ptr<ValExpr>);
+		Jump(KeywordType, ptr<ValExpr> = nullptr);
 	};
 
 	/*

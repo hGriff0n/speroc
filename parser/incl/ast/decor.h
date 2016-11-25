@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ast.h"
-#include <optional>
 
 namespace spero::compiler::ast {
 	/*
@@ -33,7 +32,7 @@ namespace spero::compiler::ast {
 	struct Annotation : Ast {
 		bool global;
 		ptr<BasicBinding> name;
-		std::optional<ptr<Tuple>> args;
+		ptr<Tuple> args;
 
 		Annotation(ptr<BasicBinding>, ptr<Tuple>, bool);
 		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
@@ -85,7 +84,7 @@ namespace spero::compiler::ast {
 	 *   value - default value for the generic field if none is provided or inferrable
 	 */
 	struct ValueGeneric : GenericPart {
-		std::optional<ptr<ValExpr>> value;
+		ptr<ValExpr> value;
 
 		ValueGeneric(ptr<BasicBinding>, ptr<Type>, ptr<ValExpr>);
 		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
@@ -134,10 +133,9 @@ namespace spero::compiler::ast {
 	 */
 	struct ImportName : ImportPiece {
 		ptr<BasicBinding> name;
-		std::optional<ptr<BasicBinding>> old_name;
+		ptr<BasicBinding> old_name;
 
-		ImportName(ptr<BasicBinding>);
-		ImportName(ptr<BasicBinding>, ptr<BasicBinding>);
+		ImportName(ptr<BasicBinding>, ptr<BasicBinding> = nullptr);
 		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
 	};
 

@@ -8,7 +8,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Branch
 	 */
-	Branch::Branch(ptr<ValExpr> test, ptr<ValExpr> body) : else_branch{} {
+	Branch::Branch(ptr<ValExpr> test, ptr<ValExpr> body) : else_branch{nullptr} {
 		addBranch(std::move(test), std::move(body));
 	}
 	void Branch::addBranch(ptr<ValExpr> test, ptr<ValExpr> body) {
@@ -63,7 +63,6 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Jump
 	 */
-	Jump::Jump(KeywordType k) : expr{}, jmp{ k } {}
 	Jump::Jump(KeywordType k, ptr<ValExpr> e) : expr{ std::move(e) }, jmp{ k } {}
 
 
