@@ -76,7 +76,12 @@ namespace spero::compiler::ast {
 	 */
 	FnBody::FnBody(ptr<ValExpr> b, bool f) : forward{ f }, body{ std::move(b) } {}
 	OutStream& FnBody::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.FnBody";
+		s << std::string(buf, ' ') << context << "ast.FnBody (fwd=" << (forward ? "true, " : "false, ");
+		ValExpr::prettyPrint(s, 0);
+
+		if (ret) ret->prettyPrint(s << '\n', buf + 2, "returns=");
+		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
+		return body->prettyPrint(s << '\n', buf + 2, "expr=");
 	}
 
 }

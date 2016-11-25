@@ -8,7 +8,7 @@ namespace spero::compiler::ast {
 	 */
 	BasicBinding::BasicBinding(std::string n, BindingType t) : name{ std::move(n) }, type{ t } {}
 	OutStream& BasicBinding::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.BasicBinding";
+		return s << std::string(buf, ' ') << context << "ast.BasicBinding (var=" << name << ", type=" << type._to_string() << ")";
 	}
 
 
@@ -34,7 +34,9 @@ namespace spero::compiler::ast {
 	 */
 	Variable::Variable(ptr<QualifiedBinding> n) : name{ std::move(n) } {}
 	OutStream& Variable::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.Variable";
+		s << std::string(buf, ' ') << context << "ast.Variable (";
+		ValExpr::prettyPrint(s, 0);
+		return name->prettyPrint(s << "\n", buf + 2, "name=");
 	}
 
 
@@ -43,7 +45,7 @@ namespace spero::compiler::ast {
 	 */
 	AssignName::AssignName(ptr<BasicBinding> n) : var{ std::move(n) } {}
 	OutStream& AssignName::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.AssignName";
+		return var->prettyPrint(s, buf, context);
 	}
 
 
@@ -52,7 +54,10 @@ namespace spero::compiler::ast {
 	 */
 	AssignTuple::AssignTuple(std::deque<ptr<AssignPattern>> vs) : vars{ std::move(vs) } {}
 	OutStream& AssignTuple::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.AssignTuple";
+		s << std::string(buf, ' ') << context << "ast.AssignTuple" << vars.size() << "(\n";
+		for (auto&& var : vars)
+			var->prettyPrint(s, buf + 2) << '\n';
+		return s << std::string(buf, ' ') << ')';
 	}
 
 
@@ -60,7 +65,7 @@ namespace spero::compiler::ast {
 	 * ast::Pattern
 	 */
 	OutStream& Pattern::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.Pattern";
+		return s << std::string(buf, ' ') << context << "ast.Pattern (_)";
 	}
 
 
@@ -69,7 +74,10 @@ namespace spero::compiler::ast {
 	 */
 	PTuple::PTuple(std::deque<ptr<Pattern>> ps) : ptns{ std::move(ps) } {}
 	OutStream& PTuple::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.PTuple";
+		s << std::string(buf, ' ') << context << "ast.PTuple" << ptns.size() << "(\n";
+		for (auto&& p : ptns)
+			p->prettyPrint(s, buf + 2) << '\n';
+		return s << std::string(buf, ' ') << ')';
 	}
 
 
@@ -78,7 +86,8 @@ namespace spero::compiler::ast {
 	 */
 	PNamed::PNamed(ptr<BasicBinding> n) : name{ std::move(n) } {}
 	OutStream& PNamed::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.PNamed";
+		s << std::string(buf, ' ') << context << "ast.PNamed";
+		return name->prettyPrint(s, 1);
 	}
 
 
@@ -87,7 +96,9 @@ namespace spero::compiler::ast {
 	 */
 	PAdt::PAdt(ptr<BasicBinding> n, ptr<PTuple> as) : PNamed{ std::move(n) }, args{ std::move(as) } {}
 	OutStream& PAdt::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.PAdt";
+		s << std::string(buf, ' ') << context << "ast.PAdt";
+		name->prettyPrint(s, 1, "(type=") << ")\n";
+		return args->prettyPrint(s, buf + 2);
 	}
 
 
@@ -96,7 +107,7 @@ namespace spero::compiler::ast {
 	 */
 	PVal::PVal(ptr<ValExpr> v) : value{ std::move(v) } {}
 	OutStream& PVal::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.PVal";
+		return s << std::string(buf, ' ') << context << "ast.PVal [deprecated]";
 	}
 
 }

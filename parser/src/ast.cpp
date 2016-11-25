@@ -52,7 +52,7 @@ namespace spero::compiler::ast {
 	Stmt::Stmt() {}
 	OutStream& Stmt::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		for (auto&& a : annots)
-			a->prettyPrint(s << "\n", buf + 2);
+			a->prettyPrint(s << '\n', buf + 2);
 
 		return s;
 	}
@@ -66,7 +66,7 @@ namespace spero::compiler::ast {
 		s << "mut=" << is_mut << ", op=" << unop._to_string() << ")";
 
 		if (type)
-			type->prettyPrint(s << "\n", buf + 2, "type=");
+			type->prettyPrint(s << '\n', buf + 2, "type=");
 
 		return Stmt::prettyPrint(s, buf);
 	}

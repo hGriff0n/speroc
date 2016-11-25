@@ -21,7 +21,7 @@ namespace spero::compiler::ast {
 		bool val;
 		Bool(bool);
 
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -37,7 +37,7 @@ namespace spero::compiler::ast {
 		unsigned long val;
 		Byte(std::string, int);
 
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -53,7 +53,7 @@ namespace spero::compiler::ast {
 		double val;
 		Float(std::string);
 
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -69,7 +69,7 @@ namespace spero::compiler::ast {
 		long val;
 		Int(std::string);
 
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -85,7 +85,7 @@ namespace spero::compiler::ast {
 		std::string val;
 		String(std::string);
 
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -101,7 +101,7 @@ namespace spero::compiler::ast {
 		char val;
 		Char(char);
 
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "");
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
 
@@ -123,6 +123,6 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> body;
 
 		FnBody(ptr<ValExpr>, bool);
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "");
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 }

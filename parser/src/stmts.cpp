@@ -22,8 +22,8 @@ namespace spero::compiler::ast {
 	TypeAssign::TypeAssign(ptr<AssignPattern> n, std::deque<ptr<Ast>> cs, GenArray gs, ptr<Block> b, ptr<Type> t)
 		: Interface{ std::move(n), std::move(gs), std::move(t) }, cons{ std::move(cs) }, body{ std::move(b) } {}
 	OutStream& TypeAssign::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.TypeAssign (vis=" << vis._to_string() << ", var=";
-		name->prettyPrint(s, 0) << ")";
+		s << std::string(buf, ' ') << context << "ast.TypeAssign (vis=" << vis._to_string() << ")\n";
+		name->prettyPrint(s, buf + 2, "var=");
 		return s;
 	}
 
@@ -34,9 +34,9 @@ namespace spero::compiler::ast {
 	VarAssign::VarAssign(ptr<AssignPattern> n, GenArray gs, ptr<ValExpr> v, ptr<Type> t)
 		: Interface{ std::move(n), std::move(gs), std::move(t) }, expr{ std::move(v) } {}
 	OutStream& VarAssign::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.VarAssign (vis=" << vis._to_string() << ", var=";
-		name->prettyPrint(s, 0) << ")\n";
-		expr->prettyPrint(s, buf + 2, "value=");
+		s << std::string(buf, ' ') << context << "ast.VarAssign (vis=" << vis._to_string() << ")\n";
+		name->prettyPrint(s, buf + 2, "var=");
+		expr->prettyPrint(s << '\n', buf + 2, "value=");
 		return s;
 	}
 

@@ -34,7 +34,7 @@ namespace spero::compiler::ast {
 		ptr<Type> type;
 
 		Interface(ptr<AssignPattern>, GenArray, ptr<Type>);
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "");
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
 	
@@ -53,7 +53,7 @@ namespace spero::compiler::ast {
 		ptr<Block> body;
 
 		TypeAssign(ptr<AssignPattern>, std::deque<ptr<Ast>>, GenArray, ptr<Block>, ptr<Type>);
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 	
@@ -70,7 +70,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> expr;						// must be a FnBody if name is a Operator
 
 		VarAssign(ptr<AssignPattern>, GenArray, ptr<ValExpr>, ptr<Type>);
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -86,7 +86,7 @@ namespace spero::compiler::ast {
 		ptr<QualifiedBinding> type;
 
 		ImplExpr(ptr<QualifiedBinding>);
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -102,7 +102,7 @@ namespace spero::compiler::ast {
 		ptr<QualifiedBinding> module;
 
 		ModDec(ptr<QualifiedBinding>);
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -118,7 +118,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<ImportPiece>> parts;
 
 		ModImport(std::deque<ptr<ImportPiece>>);
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -134,6 +134,6 @@ namespace spero::compiler::ast {
 		std::deque<ptr<ValExpr>> elems;
 
 		Index(ptr<ValExpr>, ptr<ValExpr>);
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 }

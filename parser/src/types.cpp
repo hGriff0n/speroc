@@ -32,7 +32,7 @@ namespace spero::compiler::ast {
 		if (inst && inst->exprs.size()) {
 			s << " [\n";
 			for (auto&& e : inst->exprs)
-				e->prettyPrint(s, buf + 1) << "\n";
+				e->prettyPrint(s, buf + 1) << '\n';
 			s << std::string(buf, ' ') << "]";
 		}
 

@@ -53,7 +53,7 @@ namespace spero::compiler::ast {
 	struct Ast {
 		Ast();
 
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "");
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
 
@@ -79,7 +79,7 @@ namespace spero::compiler::ast {
 		Token(BindingType);
 		Token(UnaryType);
 
-		OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "") final;
+		OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
 
@@ -96,7 +96,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<Annotation>> annots;
 
 		Stmt();
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "");
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
 	
@@ -119,7 +119,7 @@ namespace spero::compiler::ast {
 		ptr<Type> type;
 
 		ValExpr();
-		virtual OutStream& prettyPrint(OutStream&, size_t = 0, std::string = "");
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 }
 

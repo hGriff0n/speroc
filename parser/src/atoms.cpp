@@ -11,8 +11,8 @@ namespace spero::compiler::ast {
 		// TODO: Need to differentiate Tuple, Array, and Block in prettyPrinting
 		s << std::string(buf, ' ') << context << "ast.Tuple" << exprs.size() << " (";
 		for (auto&& e : exprs)
-			e->prettyPrint(s << "\n", buf + 2) << ",";
-		return s << "\n" << std::string(buf, ' ') << ")";
+			e->prettyPrint(s << '\n', buf + 2) << ",";
+		return s << '\n' << std::string(buf, ' ') << ")";
 	}
 
 	
@@ -23,8 +23,8 @@ namespace spero::compiler::ast {
 	OutStream& Array::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Array [type=, size=" << exprs.size() << "] [";
 		for (auto&& e : exprs)
-			e->prettyPrint(s << "\n", buf + 2) << ",";
-		return s << "\n" << std::string(buf, ' ') << "]";
+			e->prettyPrint(s << '\n', buf + 2) << ",";
+		return s << '\n' << std::string(buf, ' ') << "]";
 	}
 
 
@@ -36,8 +36,8 @@ namespace spero::compiler::ast {
 		// TODO: value(Block) == value(Block.last), I want to add some special output
 		s << std::string(buf, ' ') << context << "ast.Block (size=" << exprs.size() << ") {";
 		for (auto&& e : exprs)
-			e->prettyPrint(s << "\n", buf + 2);
-		return s << "\n" << std::string(buf, ' ') << "}";
+			e->prettyPrint(s << '\n', buf + 2);
+		return s << '\n' << std::string(buf, ' ') << "}";
 	}
 
 
@@ -48,8 +48,8 @@ namespace spero::compiler::ast {
 	TypeExtension::TypeExtension(ptr<Tuple> c, ptr<Block> b) : cons{ std::move(c) }, body{ std::move(b) } {}
 	OutStream& TypeExtension::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.TypeExtension";
-		if (cons) cons->prettyPrint(s << "\n", buf + 2, "cons=");
-		return body->prettyPrint(s << "\n", buf + 2, "type=");
+		if (cons) cons->prettyPrint(s << '\n', buf + 2, "cons=");
+		return body->prettyPrint(s << '\n', buf + 2, "type=");
 	}
 
 
@@ -61,12 +61,12 @@ namespace spero::compiler::ast {
 	OutStream& FnCall::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.FnCall (anon="
 			<< (bool)anon << ", args=" << (bool)args << ", inst=" << (bool)inst << ", ";
-		ValExpr::prettyPrint(s) << "\n";
+		ValExpr::prettyPrint(s, 0) << '\n';
 		caller->prettyPrint(s, buf + 2, "caller=");
 
-		if (anon) anon->prettyPrint(s << "\n", buf + 2, "anon=");
-		if (args) args->prettyPrint(s << "\n", buf + 2, "args=");
-		if (inst) inst->prettyPrint(s << "\n", buf + 2, "inst=");
+		if (anon) anon->prettyPrint(s << '\n', buf + 2, "anon=");
+		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
+		if (inst) inst->prettyPrint(s << '\n', buf + 2, "inst=");
 		return s;
 	}
 
@@ -77,11 +77,11 @@ namespace spero::compiler::ast {
 	Range::Range(ptr<ValExpr> start, ptr<ValExpr> stop) : start{ std::move(start) }, stop{ std::move(stop) }, step{ nullptr } {}
 	OutStream& Range::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Range (";
-		ValExpr::prettyPrint(s);
+		ValExpr::prettyPrint(s, 0);
 
-		start->prettyPrint(s << "\n", buf + 2, "start=");
-		if (step) step->prettyPrint(s << "\n", buf + 2, "step=");
-		stop->prettyPrint(s << "\n", buf + 2, "stop=");
+		start->prettyPrint(s << '\n', buf + 2, "start=");
+		if (step) step->prettyPrint(s << '\n', buf + 2, "step=");
+		stop->prettyPrint(s << '\n', buf + 2, "stop=");
 		return s;
 	}
 
