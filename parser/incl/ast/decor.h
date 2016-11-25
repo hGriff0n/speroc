@@ -9,6 +9,7 @@ namespace spero::compiler::ast {
 	struct Tuple;
 	struct TupleType;
 	struct Pattern;
+	struct PTuple;
 	struct BasicBinding;
 
 
@@ -101,11 +102,11 @@ namespace spero::compiler::ast {
 	 *   expr - the expression to run on match success
 	 */
 	struct Case : ValExpr {
-		std::deque<ptr<Pattern>> vars;
+		ptr<PTuple> vars;
 		ptr<ValExpr> expr;
 
 		Case(ptr<ValExpr>);
-		Case(std::deque<ptr<Pattern>>, ptr<ValExpr>);
+		Case(ptr<PTuple>, ptr<ValExpr>);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 

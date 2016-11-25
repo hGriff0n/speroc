@@ -17,7 +17,8 @@ namespace spero::compiler::ast {
 	BasicType::BasicType(ptr<BasicBinding> b, PtrStyling p) : BasicType{ std::make_unique<QualifiedBinding>(std::move(b)), p } {}
 	BasicType::BasicType(ptr<QualifiedBinding> b, PtrStyling p) : name{ std::move(b) }, pointer{ p } {}
 	OutStream& BasicType::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.BasicType";
+		s << std::string(buf, ' ') << context << "ast.BasicType \"";
+		return name->prettyPrint(s, 0) << "\" (ptr=" << pointer._to_string() << ")";
 	}
 
 
@@ -45,7 +46,12 @@ namespace spero::compiler::ast {
 	 */
 	TupleType::TupleType(std::deque<ptr<Type>> ts) : elems{ std::move(ts) } {}
 	OutStream& TupleType::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.TupleType";
+		s << std::string(buf, ' ') << context << "ast.TupleType" << elems.size() << "(";
+
+		for (auto&& t : elems)
+			t->prettyPrint(s << '\n', buf + 2);
+
+		return s << '\n' << std::string(buf, ' ') << ')';
 	}
 
 
@@ -54,7 +60,10 @@ namespace spero::compiler::ast {
 	 */
 	FunctionType::FunctionType(ptr<TupleType> as, ptr<Type> r) : args{ std::move(as) }, ret{ std::move(r) } {}
 	OutStream& FunctionType::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.FunctionType";
+		s << std::string(buf, ' ') << context << "ast.FunctionType";
+
+		args->prettyPrint(s << '\n', buf + 2, "args=");
+		return ret->prettyPrint(s << '\n', buf + 2, "ret=");
 	}
 
 }

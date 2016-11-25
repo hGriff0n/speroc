@@ -22,9 +22,30 @@ namespace spero::compiler::ast {
 	TypeAssign::TypeAssign(ptr<AssignPattern> n, std::deque<ptr<Ast>> cs, GenArray gs, ptr<Block> b, ptr<Type> t)
 		: Interface{ std::move(n), std::move(gs), std::move(t) }, cons{ std::move(cs) }, body{ std::move(b) } {}
 	OutStream& TypeAssign::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.TypeAssign (vis=" << vis._to_string() << ")\n";
-		name->prettyPrint(s, buf + 2, "var=");
-		return s;
+		s << std::string(buf, ' ') << context << "ast.TypeAssign (vis=" << vis._to_string() << ')';
+		name->prettyPrint(s << '\n', buf + 2, "var=");
+
+		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+
+		if (generics.size()) {
+			s << '\n' << std::string(buf + 2, ' ') << "Generic Typing (size=" << generics.size() << ") [";
+
+			for (auto&& g : generics)
+				g->prettyPrint(s << '\n', buf + 4);
+
+			s << '\n' << std::string(buf + 2, ' ') << ']';
+		}
+
+		if (cons.size()) {
+			s << '\n' << std::string(buf + 2, ' ') << "Constructor List (size=" << cons.size() << ") [";
+
+			for (auto&& con : cons)
+				con->prettyPrint(s << '\n', buf + 4);
+
+			s << '\n' << std::string(buf + 2, ' ') << ']';
+		}
+
+		return body->prettyPrint(s << '\n', buf + 2, "body=");
 	}
 
 
@@ -34,10 +55,20 @@ namespace spero::compiler::ast {
 	VarAssign::VarAssign(ptr<AssignPattern> n, GenArray gs, ptr<ValExpr> v, ptr<Type> t)
 		: Interface{ std::move(n), std::move(gs), std::move(t) }, expr{ std::move(v) } {}
 	OutStream& VarAssign::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.VarAssign (vis=" << vis._to_string() << ")\n";
-		name->prettyPrint(s, buf + 2, "var=");
-		expr->prettyPrint(s << '\n', buf + 2, "value=");
-		return s;
+		s << std::string(buf, ' ') << context << "ast.VarAssign (vis=" << vis._to_string() << ')';
+		name->prettyPrint(s << '\n', buf + 2, "var=");
+		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+
+		if (generics.size()) {
+			s << '\n' << std::string(buf + 2, ' ') << "Generic Typing (size=" << generics.size() << ") [";
+
+			for (auto&& g : generics)
+				g->prettyPrint(s << '\n', buf + 4);
+
+			s << '\n' << std::string(buf + 2, ' ') << ']';
+		}
+
+		return expr->prettyPrint(s << '\n', buf + 2, "value=");
 	}
 
 
@@ -46,7 +77,9 @@ namespace spero::compiler::ast {
 	 */
 	ImplExpr::ImplExpr(ptr<QualifiedBinding> t) : type{ std::move(t) } {}
 	OutStream& ImplExpr::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.ImplExpr";
+		s << std::string(buf, ' ') << context << "ast.ImplExpr (type=";
+		type->prettyPrint(s, 0) << ')';
+		return Stmt::prettyPrint(s, buf + 2);
 	}
 
 
@@ -55,7 +88,9 @@ namespace spero::compiler::ast {
 	 */
 	ModDec::ModDec(ptr<QualifiedBinding> v) : module{ std::move(v) } {}
 	OutStream& ModDec::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.ModDec";
+		s << std::string(buf, ' ') << context << "ast.ModuleDec (module=";
+		module->prettyPrint(s, 0) << ')';
+		return Stmt::prettyPrint(s, buf + 2);
 	}
 
 
@@ -64,7 +99,13 @@ namespace spero::compiler::ast {
 	 */
 	ModImport::ModImport(std::deque<ptr<ImportPiece>> ps) : parts{ std::move(ps) } {}
 	OutStream& ModImport::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.ModImport";
+		s << std::string(buf, ' ') << context << "ast.ModImport";
+		Stmt::prettyPrint(s, buf + 2);
+
+		for (auto&& p : parts)
+			p->prettyPrint(s << '\n', buf + 2);
+
+		return s;
 	}
 
 
@@ -76,7 +117,13 @@ namespace spero::compiler::ast {
 		elems.push_back(std::move(r));
 	}
 	OutStream& Index::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.Index";
+		s << std::string(buf, ' ') << context << "ast.IndexSequence (";
+		ValExpr::prettyPrint(s, 0);
+
+		for (auto&& e : elems)
+			e->prettyPrint(s << '\n', buf + 2, "idx=");
+
+		return s;
 	}
 
 }

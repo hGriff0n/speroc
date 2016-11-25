@@ -65,7 +65,7 @@ namespace spero::compiler::ast {
 	 * ast::Pattern
 	 */
 	OutStream& Pattern::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.Pattern (_)";
+		return s << std::string(buf, ' ') << context << "ast.PatternAny (_)";
 	}
 
 

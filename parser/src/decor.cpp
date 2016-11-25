@@ -11,7 +11,11 @@ namespace spero::compiler::ast {
 	 */
 	Annotation::Annotation(ptr<BasicBinding> n, ptr<Tuple> t, bool g) : name{ std::move(n) }, args{ std::move(t) }, global{ g } {}
 	OutStream& Annotation::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.Annotation";
+		s << std::string(buf, ' ') << context << "ast.Annotation name=";
+		name->prettyPrint(s, 0);
+
+		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
+		return s;
 	}
 
 
@@ -27,7 +31,10 @@ namespace spero::compiler::ast {
 	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, VarianceType var)
 		: GenericPart{ std::move(b), std::move(t) }, rel{ rel }, var{ var } {}
 	OutStream& TypeGeneric::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.TypeGeneric";
+		s << std::string(buf, ' ') << context << "ast.TypeGeneric (rel=" << rel._to_string() << ", var=" << var._to_string() << ')';
+		name->prettyPrint(s << '\n', buf + 2, "binding=");
+		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+		return s;
 	}
 
 
@@ -37,17 +44,23 @@ namespace spero::compiler::ast {
 	ValueGeneric::ValueGeneric(ptr<BasicBinding> b, ptr<Type> t, ptr<ValExpr> v)
 		: GenericPart{ std::move(b), std::move(t) }, value{ std::move(v) } {}
 	OutStream& ValueGeneric::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.ValueGeneric";
+		s << std::string(buf, ' ') << context << "ast.ValueGeneric (type=" << (type != nullptr) << ", val=" << (value != nullptr) << ')';
+		name->prettyPrint(s << '\n', buf + 2, "binding=");
+		if (value) value->prettyPrint(s << '\n', buf + 2, "def=");
+		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+		return s;
 	}
 
 
 	/*
 	 * ast::Case
 	 */
-	Case::Case(ptr<ValExpr> e) : expr{ std::move(e) } {}
-	Case::Case(std::deque<ptr<Pattern>> vs, ptr<ValExpr> e) : vars{ std::move(vs) }, expr{ std::move(e) } {}
+	Case::Case(ptr<ValExpr> e) : Case{ nullptr, std::move(e) } {}
+	Case::Case(ptr<PTuple> vs, ptr<ValExpr> e) : vars{ std::move(vs) }, expr{ std::move(e) } {}
 	OutStream& Case::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.Case";
+		s << std::string(buf, ' ') << context << "ast.Case";
+		vars->prettyPrint(s << '\n', buf + 2, "pattern=");
+		return expr->prettyPrint(s << '\n', buf + 2, "expr=");
 	}
 
 
@@ -55,7 +68,7 @@ namespace spero::compiler::ast {
 	 * ast::ImporPiece
 	 */
 	OutStream& ImportPiece::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.ImportPiece";
+		return s << std::string(buf, ' ') << context << "ast.ImportAny (_)";
 	}
 
 
@@ -64,7 +77,12 @@ namespace spero::compiler::ast {
 	 */
 	ImportName::ImportName(ptr<BasicBinding> n, ptr<BasicBinding> o) : name{ std::move(n) }, old_name{ std::move(o) } {}
 	OutStream& ImportName::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.ImportName";
+		s << std::string(buf, ' ') << context << "ast.ImportName (rebind=" << (old_name != nullptr) << ',';
+
+		(old_name ? old_name : name)->prettyPrint(s, 1, "name=") << ')';
+		if (old_name) name->prettyPrint(s << '\n', buf + 2, "as=");
+
+		return s;
 	}
 
 
@@ -73,7 +91,12 @@ namespace spero::compiler::ast {
 	 */
 	ImportGroup::ImportGroup(std::deque<ptr<ImportPiece>> is) : imps{ std::move(is) } {}
 	OutStream& ImportGroup::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.ImportGroup";
+		s << std::string(buf, ' ') << context << "ast.ImportGroup (size=" << imps.size() << ')';
+
+		for (auto&& imp : imps)
+			imp->prettyPrint(s << '\n', buf + 2);
+
+		return s;
 	}
 
 
@@ -82,7 +105,11 @@ namespace spero::compiler::ast {
 	 */
 	Adt::Adt(ptr<BasicBinding> n, ptr<TupleType> t) : name{ std::move(n) }, args{ std::move(t) } {}
 	OutStream& Adt::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.Adt";
+		s << std::string(buf, ' ') << context << "ast.Adt (name=";
+		name->prettyPrint(s, 0) << ")";
+
+		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
+		return s;
 	}
 
 }

@@ -13,10 +13,15 @@ TODO:
  Implement and Improve prettyPrinting
    check the displaying of annotations once functions are added
    Consider splitting context into pre and post production
+ "use std:io" throws an exception (prints correctly)
+   "use std:io:_" doesn't have the error
+   "use std:io:{println, getln}" does
  "{3}" produces nullptr, empty Block
 	"[3]" and "(3)" work just fine (something is wrong with `action<grammar::scope>`)
  "abs(-3) :: Float" crashes
    "abs(-2)" also crashes (the error is in the -)
+ "foo :: (Int, Int) -> Int" crashes
+   "foo :: (Int)" also crashes
  Ensure correct construction of generic instantiation
   "3 :: Array[Int]" -> "Array [ ast.Variable ]" in prettyPrint
  "while 3 < x x = 3" produces nullptr
@@ -36,4 +41,5 @@ TODO:
  need to add error conditions and recognition into the language (that's the control part)
  need to add in operator precedence
    consider changing case to have a PTuple instead of a deque of ptr<Pattern>
+ tuple printing on size=0 can be improved
 */

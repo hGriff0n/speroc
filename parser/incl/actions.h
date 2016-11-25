@@ -742,14 +742,19 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::case_stmt> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: (sentinel | case) pattern* expr
-			auto cas = std::make_unique<ast::Case>(std::move(util::pop<ast::ValExpr>(s)));
+			auto expr = util::pop<ast::ValExpr>(s);
 
 			std::deque<ptr<ast::Pattern>> pattern;
 			while (util::at_node<ast::Pattern>(s))
 				pattern.push_front(util::pop<ast::Pattern>(s));
 			
-			cas->vars.swap(pattern);
-			s.push_back(std::move(cas));
+			ptr<ast::PTuple> pt;
+			if (pattern.size() == 1 && util::is_type<ast::PTuple>(pattern.back()))
+				pt = util::dyn_cast<ast::PTuple>(std::move(pattern.back()));
+			else
+				pt = std::make_unique<ast::PTuple>(std::move(pattern));
+			
+			s.emplace_back(std::make_unique<ast::Case>(std::move(pt), std::move(expr)));
 			// stack: (sentinel | case) case
 		}
 	};
