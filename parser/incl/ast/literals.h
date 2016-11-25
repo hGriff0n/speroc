@@ -7,7 +7,6 @@ namespace spero::compiler::ast {
 	 * Forward Declarations
 	 */
 	struct Tuple;
-	struct Type;
 
 
 	/*
@@ -22,7 +21,7 @@ namespace spero::compiler::ast {
 		bool val;
 		Bool(bool);
 
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -38,7 +37,7 @@ namespace spero::compiler::ast {
 		unsigned long val;
 		Byte(std::string, int);
 
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -54,7 +53,7 @@ namespace spero::compiler::ast {
 		double val;
 		Float(std::string);
 
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -68,9 +67,9 @@ namespace spero::compiler::ast {
 	 */
 	struct Int : ValExpr {
 		long val;
-		Byte(std::string);
+		Int(std::string);
 
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -86,7 +85,7 @@ namespace spero::compiler::ast {
 		std::string val;
 		String(std::string);
 
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 

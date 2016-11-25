@@ -20,7 +20,7 @@ namespace spero::compiler::ast {
 		BindingType type;
 
 		BasicBinding(std::string, BindingType);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -33,12 +33,12 @@ namespace spero::compiler::ast {
 	 *   parts - a collection of BasicBindings that constructs the QualBinding
 	 */
 	struct QualifiedBinding : Ast {
-		std::deque<BasicBinding> parts;
+		std::deque<ptr<BasicBinding>> parts;
 
 		QualifiedBinding(ptr<BasicBinding>);
-		QualifiedBinding(std::deque<BasicBinding>&);
+		QualifiedBinding(std::deque<ptr<BasicBinding>>);
 
-		virtual OutStream prettyPrint(size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -54,7 +54,7 @@ namespace spero::compiler::ast {
 		ptr<QualifiedBinding> name;
 
 		Variable(ptr<QualifiedBinding>);
-		virtual OutStream pretty_print(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -82,7 +82,7 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> var;
 
 		AssignName(ptr<BasicBinding>);
-		virtual OutStream prettyPrint(OutStream);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -97,8 +97,8 @@ namespace spero::compiler::ast {
 	struct AssignTuple : AssignPattern {
 		std::deque<ptr<AssignPattern>> vars;
 
-		AssignTuple(std::deque<ptr<AssignPattern>>&);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		AssignTuple(std::deque<ptr<AssignPattern>>);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -128,8 +128,8 @@ namespace spero::compiler::ast {
 	struct PTuple : Pattern {
 		std::deque<ptr<Pattern>> ptns;
 
-		PTuple(std::deque<ptr<Pattern>>&);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		PTuple(std::deque<ptr<Pattern>>);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 	
@@ -144,7 +144,7 @@ namespace spero::compiler::ast {
 	struct PNamed : Pattern {
 		ptr<BasicBinding> name;
 
-		PNamed(std::deque<ptr<Pattern>>&);
+		PNamed(ptr<BasicBinding>);
 		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
@@ -163,7 +163,7 @@ namespace spero::compiler::ast {
 		// Note: assert(name.type == BindingType::TYPE);
 
 		PAdt(ptr<BasicBinding>, ptr<PTuple>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -180,6 +180,6 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> value;
 
 		PVal(ptr<ValExpr>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 }

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "node_defs.h"
 #include <variant>
 #include <memory>
 #include <deque>
@@ -40,6 +39,8 @@ namespace spero::compiler::ast {
 	BETTER_ENUM(VisibilityType, char, PUBLIC, PROTECTED, PRIVATE, STATIC);
 	BETTER_ENUM(BindingType, char, TYPE, VARIABLE, OPERATOR);
 	BETTER_ENUM(UnaryType, char, DEREF, NOT, MINUS, NA);
+	struct Annotation;
+	struct Type;
 
 
 	/*
@@ -67,8 +68,15 @@ namespace spero::compiler::ast {
 		using token_type = std::variant<KeywordType, PtrStyling, VarianceType, RelationType, VisibilityType, BindingType, UnaryType>;
 		token_type value;
 
-		template<class T, class = std::enable_if_t<can_hold<T, token_type>::value>>
-		Token(T val) : value{ val } {}
+		//template<class T, class = std::enable_if_t<can_hold<T, token_type>::value>>
+		//Token(const T val) : value{ val } {}
+		Token(KeywordType);
+		Token(PtrStyling);
+		Token(VarianceType);
+		Token(RelationType);
+		Token(VisibilityType);
+		Token(BindingType);
+		Token(UnaryType);
 
 		OutStream prettyPrint(OutStream, size_t = 0) final;
 	};

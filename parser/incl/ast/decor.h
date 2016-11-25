@@ -7,16 +7,16 @@ namespace spero::compiler::ast {
 	/*
 	 * Forward Declarations
 	 */
-	struct BasicBinding;
 	struct Tuple;
-	struct Type;
 	struct TupleType;
 	struct Pattern;
+	struct BasicBinding;
 
 
 	// Initial look at splitting global annotations into a separate ast class
 	struct GlobalAnnotation : Ast {};
 	struct LocalAnnotation : GlobalAnnotation {};
+
 
 	/*
 	 * Represents an annotation instance
@@ -36,6 +36,7 @@ namespace spero::compiler::ast {
 		std::optional<ptr<Tuple>> args;
 
 		Annotation(ptr<BasicBinding>, ptr<Tuple>, bool);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -71,7 +72,7 @@ namespace spero::compiler::ast {
 		VarianceType var;
 
 		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -87,7 +88,7 @@ namespace spero::compiler::ast {
 		std::optional<ptr<ValExpr>> value;
 
 		ValueGeneric(ptr<BasicBinding>, ptr<Type>, ptr<ValExpr>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -105,7 +106,8 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> expr;
 
 		Case(ptr<ValExpr>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		Case(std::deque<ptr<Pattern>>, ptr<ValExpr>);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -136,7 +138,7 @@ namespace spero::compiler::ast {
 
 		ImportName(ptr<BasicBinding>);
 		ImportName(ptr<BasicBinding>, ptr<BasicBinding>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -151,8 +153,8 @@ namespace spero::compiler::ast {
 	struct ImportGroup : ImportPiece {
 		std::deque<ptr<ImportPiece>> imps;
 
-		ImportGroup(std::deque<ptr<ImportPiece>>&);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		ImportGroup(std::deque<ptr<ImportPiece>>);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -170,6 +172,6 @@ namespace spero::compiler::ast {
 		ptr<TupleType> args;
 
 		Adt(ptr<BasicBinding>, ptr<TupleType>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 }

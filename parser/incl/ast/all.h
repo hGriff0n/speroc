@@ -12,7 +12,8 @@
 TODO:
  Move ast into subfolder
    Implement better pretty printing
-   Convert actions over to using the new ast
+   Determine whether std::optional<ptr<T>> is a good pattern
+   Ensure that everything works
  "let x :: Int = 3" does not appear in PrettyPrinting
    It is applied correctly (same with 3 :: Int)
  some work on constructors/arguments with variables needed

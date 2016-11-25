@@ -12,18 +12,18 @@ namespace spero::compiler::ast {
 
 
 	/*
-	 * Base class for all type nodes
-	 *
-	 * Extends: Ast
-	 *   Reuses `prettyPrint` definition
-	 *
-	 * Exports:
-	 *   id - type id, assigned during analysis
-	 *   is_mut - flag whether values of the type are  mutable
-	 *
-	 * TODO:
-	 *   Need to have a better handle on type id assignment and usage across the ast in the future
-	 */
+	* Base class for all type nodes
+	*
+	* Extends: Ast
+	*   Reuses `prettyPrint` definition
+	*
+	* Exports:
+	*   id - type id, assigned during analysis
+	*   is_mut - flag whether values of the type are  mutable
+	*
+	* TODO:
+	*   Need to have a better handle on type id assignment and usage across the ast in the future
+	*/
 	struct Type : Ast {
 		size_t id;
 		bool is_mut = false;
@@ -59,11 +59,11 @@ namespace spero::compiler::ast {
 	 * Exports:
 	 *   inst - an array of generic parameters
 	 */
-	struct GenericType : Type {
+	struct GenericType : BasicType {
 		ptr<Array> inst;
 
 		GenericType(ptr<QualifiedBinding>, ptr<Array>, PtrStyling);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 	
@@ -78,7 +78,7 @@ namespace spero::compiler::ast {
 	struct TupleType : Type {
 		std::deque<ptr<Type>> elems;
 
-		TupleType(std::deque<ptr<Type>>&);
+		TupleType(std::deque<ptr<Type>>);
 		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
@@ -97,6 +97,6 @@ namespace spero::compiler::ast {
 		ptr<Type> ret;
 
 		FunctionType(ptr<TupleType>, ptr<Type>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 }

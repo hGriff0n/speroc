@@ -9,9 +9,8 @@ namespace spero::compiler::ast {
 	 */
 	struct AssignPattern;
 	struct QualifiedBinding;
-	struct Type;
-	struct GenericPart;
 	struct Block;
+	struct GenericPart;
 	struct ImportPiece;
 
 	using GenArray = std::deque<ptr<GenericPart>>;
@@ -35,7 +34,7 @@ namespace spero::compiler::ast {
 		GenArray generics;
 		std::optional<ptr<Type>> type;
 
-		Interface(ptr<AssignPattern>, GenArray&, ptr<Type>);
+		Interface(ptr<AssignPattern>, GenArray, ptr<Type>);
 		virtual OutStream prettyPrint(OutStream, size_t = 0);
 	};
 
@@ -54,8 +53,8 @@ namespace spero::compiler::ast {
 		std::deque<ptr<Ast>> cons;				// must be Adt or Tuple, only one Tuple allowed
 		ptr<Block> body;
 
-		TypeAssign(ptr<AssignPattern>, std::deque<ptr<Ast>>&, GenArray&, ptr<Block>, ptr<Type>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		TypeAssign(ptr<AssignPattern>, std::deque<ptr<Ast>>, GenArray, ptr<Block>, ptr<Type>);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 	
@@ -71,8 +70,8 @@ namespace spero::compiler::ast {
 	struct VarAssign : Interface {
 		ptr<ValExpr> expr;						// must be a FnBody if name is a Operator
 
-		VarAssign(ptr<AssignPattern>, GenArray&, ptr<ValExpr>, ptr<Type>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		VarAssign(ptr<AssignPattern>, GenArray, ptr<ValExpr>, ptr<Type>);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -88,7 +87,7 @@ namespace spero::compiler::ast {
 		ptr<QualifiedBinding> type;
 
 		ImplExpr(ptr<QualifiedBinding>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -104,7 +103,7 @@ namespace spero::compiler::ast {
 		ptr<QualifiedBinding> module;
 
 		ModDec(ptr<QualifiedBinding>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -119,8 +118,8 @@ namespace spero::compiler::ast {
 	struct ModImport : Stmt {
 		std::deque<ptr<ImportPiece>> parts;
 
-		ModImport(std::deque<ptr<ImportPiece>>&);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		ModImport(std::deque<ptr<ImportPiece>>);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 
 
@@ -136,6 +135,6 @@ namespace spero::compiler::ast {
 		std::deque<ptr<ValExpr>> elems;
 
 		Index(ptr<ValExpr>, ptr<ValExpr>);
-		virtual OutStream prettyPrint(OutStream, size_t = 0);
+		virtual OutStream prettyPrint(OutStream, size_t = 0) final;
 	};
 }

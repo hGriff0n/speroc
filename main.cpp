@@ -71,7 +71,7 @@ int main(int argc, const char* argv[]) {
 			res = parser::parse(input);
 
 		for (auto&& node : res)
-			if (node) std::cout << node->pretty_print(0) << "\n";
+			if (node) node->prettyPrint(std::cout, 0) << "\n";
 			else std::cout << "nullptr\n";
 
 		std::cout << std::endl;
