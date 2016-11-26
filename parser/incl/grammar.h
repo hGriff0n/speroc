@@ -10,7 +10,8 @@ namespace spero::parser::grammar {
 
 	// Forward Declarations
 	struct array; struct expr; struct scope; struct atom; struct pattern;
-	struct var_pattern; struct valexpr; struct dot_ctrl; struct mut_type;
+	struct var_pattern; struct valexpr; struct dot_ctrl; struct inf_fn_type;
+	struct mut_type;
 
 	// Ignore Characters
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
@@ -129,10 +130,11 @@ namespace spero::parser::grammar {
 	struct anot_glob : one<'!'> {};
 	struct annotation : seq<one<'@'>, var, opt<anot_glob>, opt<tuple>> {};
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
-	struct type_tuple : seq<oparen, sequ<mut_type>, cparen> {};
 	struct mut_type : seq<opt<k_mut>, type> {};		// mut_type doesn't match type tuples
-	struct inf_fn_type : seq<type_tuple, opt<ig_s, pstr("->"), ig_s, sor<mut_type, type_tuple>>> {};
-	struct inf : seq<pstr("::"), ig_s, sor<inf_fn_type, mut_type>> {};
+	struct inf_type : sor<mut_type, inf_fn_type> {};
+	struct type_tuple : seq<oparen, sequ<inf_type>, cparen> {};
+	struct inf_fn_type : seq<type_tuple, opt<ig_s, pstr("->"), ig_s, inf_type>> {};
+	struct inf : seq<pstr("::"), ig_s, inf_type> {};
 	struct gen_variance : sor<one<'+'>, one<'-'>, eps> {};
 	struct gen_subrel : sor<pstr("::"), pstr("!:"), one<'>'>, one<'<'>> {};
 	struct gen_subtype : seq<gen_subrel, ig_s, type> {};

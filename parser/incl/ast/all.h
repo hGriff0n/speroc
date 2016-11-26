@@ -12,13 +12,13 @@
 TODO:
  "match (3, 4) { x, y -> 4 (y) -> 3 }"
    "4 (y)" interpreted as a function call
+ "def Option[T] = None | Some(T) { def get = () -> self.match { Some(v) -> v }
+	def or = (v :: T) -> self.match { None -> v; Some(val) -> val } }" crashes
+		doesn't crash if you remove the second definition
 
  language questions:
    settle on desireability of some match constructs
      "match x { x :: Int -> 3 }"
-   figure out how to type a function that returns a function
-     "(T) -> (T) -> T" vs. "(T) -> ((T) -> T)"
-	   note: both crash the parser
 
  parser improvements:
    reduce the lookahead needed to parse import statements

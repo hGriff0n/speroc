@@ -356,19 +356,17 @@ namespace spero::parser::actions {
 			// stack: tupletype
 		}
 	};
-	template<> struct action<grammar::inf> {
+	template<> struct action<grammar::inf_fn_type> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: tuple? type
-			auto type = util::pop<ast::Type>(s);
-			if (util::view_as<ast::TupleType>(s.back()))
-				s.emplace_back(std::make_unique<ast::FunctionType>(util::pop<ast::TupleType>(s), std::move(type)));
+			// stack: tuple type
+			auto ret = util::pop<ast::Type>(s);
+			auto args = util::pop<ast::TupleType>(s);
 
-			else {
-				// TODO: Change to accomodate possible parse pathing with anon_type
-
-				s.push_back(std::move(type));
-			}
-			// stack: type
+			if (args)
+				s.emplace_back(std::make_unique<ast::FunctionType>(std::move(args), std::move(ret)));
+			else
+				s.emplace_back(std::move(ret));
+			// stack: fntype
 		}
 	};
 	template<> struct action<grammar::gen_variance> {
