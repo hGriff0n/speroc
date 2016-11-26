@@ -168,6 +168,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::op> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
+			// Produce a qualified binding because operators aren't included in name_path
 			s.emplace_back(std::make_unique<ast::QualifiedBinding>(
 				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR)
 			));
@@ -272,8 +273,9 @@ namespace spero::parser::actions {
 			if (sentinel_on_top) s.pop_back();
 
 			auto name = util::pop<ast::QualifiedBinding>(s);
-			if (name && name->parts.back()->type._to_integral() != ast::BindingType::OPERATOR)
+			if (name)
 				s.emplace_back(std::make_unique<ast::Variable>(std::move(name)));
+
 
 			if (sentinel_on_top) s.emplace_back(ast::Sentinel{});
 			// stack: fncall | expr
@@ -461,7 +463,7 @@ namespace spero::parser::actions {
 			// stack: AssignTuple
 		}
 	};
-	template<> struct action<grammar::var_pattern> {
+	template<> struct action<grammar::var_type> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: binding
 			if (util::at_node<ast::BasicBinding>(s))
@@ -469,7 +471,19 @@ namespace spero::parser::actions {
 			// stack: VarPat
 		}
 	};
-	INHERIT(var_type, var_pattern);
+	template<> struct action<grammar::var_pattern> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: binding
+			if (util::at_node<ast::BasicBinding>(s))
+				s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s)));
+
+			if (util::at_node<ast::QualifiedBinding>(s) && util::view_as<ast::QualifiedBinding>(s.back())->parts.back()->type == +ast::BindingType::OPERATOR) {
+				auto op = util::pop<ast::QualifiedBinding>(s);
+				s.emplace_back(std::make_unique<ast::AssignName>(std::move(op->parts.back())));
+			}
+			// stack: VarPat
+		}
+	};
 	template<> struct action<grammar::tuple_pat> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: sentinel pattern*

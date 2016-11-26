@@ -148,7 +148,7 @@ namespace spero::compiler::ast {
 	 *
 	 * [deprecated] - meant to be used to resolve anon_type - type_tuple clases
 	 */
-	//struct AnonSepSentinel : Ast {};
+	//struct AnonTypeSeperator : Ast {};
 }
 
 namespace spero::parser {

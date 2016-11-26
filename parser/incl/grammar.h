@@ -74,7 +74,7 @@ namespace spero::parser::grammar {
 	//
 	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
-	struct op : seq<opt<sor<one<'&'>, one<'='>, one<':'>>>,
+	struct op : seq<opt<sor<one<'&'>, two<':'>, one<':'>>>,
 		plus<sor<one<'!'>, one<'@'>, one<'#'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
 		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
