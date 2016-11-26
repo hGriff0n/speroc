@@ -14,9 +14,10 @@ TODO:
    "4 (y)" interpreted as a function call
  Ensure correct construction of generic instantiation
   "3 :: Array[Int]" -> "Array [ ast.Variable ]" in prettyPrint
- "--3" crashes
  "x = 3" produces nullptr
    action<op> isn't being called
+ re-enable "::" syntax for anon_types
+   note "::" -> inf isn't triggered
  changed anon_type marker to ":::" due to interference with type inference (I want to change this back)
    constructor was succeeding leaving a tuple on the stack, inf rule didn't modify the tuple
  how to type a function that returns a function
@@ -34,5 +35,4 @@ TODO:
    it's really only useful within assignment contexts anyways
  need to add error conditions and recognition into the language (that's the control part)
  need to add in operator precedence
- tuple printing on size=0 can be improved
 */

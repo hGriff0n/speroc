@@ -117,4 +117,18 @@ namespace spero::compiler::ast {
 		Range(ptr<ValExpr>, ptr<ValExpr>);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
+
+
+	/*
+	 * Handles chaining of unary applications
+	 *
+	 * Extends: ValExpr
+	 */
+	struct UnaryApp : ValExpr {
+		UnaryType op;
+		ptr<ValExpr> expr;
+
+		UnaryApp(ptr<ValExpr>, UnaryType);
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
+	};
 }

@@ -135,7 +135,7 @@ namespace spero::compiler::ast {
 	 */
 	struct ValExpr : Stmt {
 		bool is_mut = false;
-		UnaryType unop = UnaryType::NA;
+		//UnaryType unop;
 		ptr<Type> type;
 
 		ValExpr();

@@ -62,7 +62,7 @@ namespace spero::compiler::ast {
 	 */
 	ValExpr::ValExpr() {}
 	OutStream& ValExpr::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << "mut=" << is_mut << ", op=" << unop._to_string() << ")";
+		s << "mut=" << is_mut << ')';
 
 		if (type)
 			type->prettyPrint(s << '\n', buf + 2, "type=");

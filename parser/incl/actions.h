@@ -815,16 +815,22 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::un_eps> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: unary? expr
-			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
-			auto tkn = util::pop<ast::Token>(s);
+			// stack: unary* expr
+			auto expr = util::pop<ast::ValExpr>(s);
 
-			if (tkn) {
-				if (std::holds_alternative<ast::UnaryType>(tkn->value))
-					util::view_as<ast::ValExpr>(s.back())->unop = std::get<ast::UnaryType>(tkn->value);
+			while (util::at_node<ast::Token>(s)) {
+				auto tkn = util::pop<ast::Token>(s);
+				
+				if (std::holds_alternative<ast::UnaryType>(tkn->value)) {
+					expr = std::make_unique<ast::UnaryApp>(std::move(expr), std::get<ast::UnaryType>(tkn->value));
 
-			} else
-				std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+				} else {
+					s.emplace_back(std::move(tkn));
+					break;
+				}
+			}
+
+			s.emplace_back(std::move(expr));
 			// stack: expr
 		}
 	};
@@ -832,7 +838,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: expr inf?
 			auto typ = util::pop<ast::Type>(s);
-			//if (typ) s.pop_back();		NOTE: Removes sentinel from anon_sep production (from time where anon_sep="::")
+			//if (typ) s.pop_back();		// NOTE: Removes sentinel from anon_sep production (from time where anon_sep="::")
 			util::view_as<ast::ValExpr>(s.back())->type = std::move(typ);
 			// stack: expr
 		}

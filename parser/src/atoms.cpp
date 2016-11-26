@@ -92,4 +92,16 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
+
+	/*
+	 * ast::UnApp
+	 */
+	UnaryApp::UnaryApp(ptr<ValExpr> e, UnaryType t) : op{ t }, expr{ std::move(e) } {}
+	OutStream& UnaryApp::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		s << std::string(buf, ' ') << context << "ast.UnaryApp (op=" << op._to_string();
+		ValExpr::prettyPrint(s << ", ", buf);
+
+		return expr->prettyPrint(s << '\n', buf + 2, "expr=");
+	}
+
 }
