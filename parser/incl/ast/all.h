@@ -10,9 +10,6 @@
 
 /*
 TODO:
- "use std:io" throws an exception (prints correctly)
-   "use std:io:_" doesn't have the error
-   "use std:io:{println, getln}" does
  "abs(-3)" crashes
   "-3.abs" doesn't crash
  "foo :: (Int, Int) -> Int" crashes

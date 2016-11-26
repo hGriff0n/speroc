@@ -77,10 +77,10 @@ namespace spero::compiler::ast {
 	 */
 	ImportName::ImportName(ptr<BasicBinding> n, ptr<BasicBinding> o) : name{ std::move(n) }, old_name{ std::move(o) } {}
 	OutStream& ImportName::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.ImportName (rebind=" << (old_name != nullptr) << ',';
+		s << std::string(buf, ' ') << context << "ast.ImportName (";
 
-		(old_name ? old_name : name)->prettyPrint(s, 1, "name=") << ')';
-		if (old_name) name->prettyPrint(s << '\n', buf + 2, "as=");
+		(old_name ? old_name : name)->prettyPrint(s, 0, "name=") << ')';
+		if (old_name) name->prettyPrint(s << '\n', buf + 2, "rebind=");
 
 		return s;
 	}

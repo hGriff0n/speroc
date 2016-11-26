@@ -438,7 +438,7 @@ namespace spero::parser::actions {
 			auto name = util::pop<ast::BasicBinding>(s);
 			auto old = util::pop<ast::BasicBinding>(s);
 
-			s.emplace_back(std::make_unique<ast::ImportName>(std::move(old), std::move(name)));
+			s.emplace_back(std::make_unique<ast::ImportName>(std::move(name), std::move(old)));
 			// staack: ImportName
 		}
 	};
