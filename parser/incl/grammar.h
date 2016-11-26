@@ -110,7 +110,7 @@ namespace spero::parser::grammar {
 	//
 	// Language Atoms
 	//
-	struct anon_sep : two<':'> {};
+	struct anon_sep : seq<pstr(":::")> {};
 	struct anon_type : seq<anon_sep, ig_s, opt<tuple>, scope> {};
 	//struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};
 	struct scope : seq<obrace, star<expr>, cbrace> {};

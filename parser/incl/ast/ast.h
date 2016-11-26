@@ -119,7 +119,7 @@ namespace spero::compiler::ast {
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
-	
+
 	/*
 	 * Basic class to handle Spero statements that produce a value
 	 *
@@ -141,6 +141,14 @@ namespace spero::compiler::ast {
 		ValExpr();
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
+
+
+	/*
+	 * Simple sentinel for handling anon_type failure
+	 *
+	 * [deprecated] - meant to be used to resolve anon_type - type_tuple clases
+	 */
+	//struct AnonSepSentinel : Ast {};
 }
 
 namespace spero::parser {

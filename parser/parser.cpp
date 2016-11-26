@@ -9,7 +9,7 @@ namespace spero::parser {
 		s.emplace_back(compiler::ast::Sentinel{});
 
 		// Perform parse run
-		pegtl::parse_string<grammar::program, actions::action>(input, "me", s);
+		pegtl::parse_string<grammar::program, actions::action, control::control>(input, "me", s);
 
 		// Remove Sentinel nodes (currently only removes the first, any others are parser errors)
 		s.pop_front();
@@ -27,7 +27,7 @@ namespace spero::parser {
 		s.emplace_back(compiler::ast::Sentinel{});
 
 		// Perform parse run
-		pegtl::file_parser{ file }.parse<grammar::program, actions::action>(s);
+		pegtl::file_parser{ file }.parse<grammar::program, actions::action, control::control>(s);
 
 		// Remove Sentinel nodes (currently only removes the first, any others are parser errors)
 		s.pop_front();

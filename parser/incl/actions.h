@@ -29,7 +29,6 @@ namespace spero::parser::actions {
 	SENTINEL(obrace);
 	SENTINEL(obrack);
 	SENTINEL(oparen);
-	SENTINEL(anon_sep);
 
 
 	// Literals
@@ -221,6 +220,7 @@ namespace spero::parser::actions {
 
 
 	// Atoms
+	SENTINEL(anon_sep);
 	template<> struct action<grammar::anon_type> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: sentinel tuple? scope
@@ -332,7 +332,7 @@ namespace spero::parser::actions {
 			auto tkn = util::pop<ast::Token>(s);
 			if (tkn) {
 				type->is_mut = std::holds_alternative<ast::KeywordType>(tkn->value)
-					&& std::get<ast::KeywordType>(tkn->value)._to_integral() == ast::KeywordType::MUT;
+					&& std::get<ast::KeywordType>(tkn->value) == +ast::KeywordType::MUT;
 
 				if (!type->is_mut)
 					s.push_back(std::move(tkn));
@@ -361,8 +361,11 @@ namespace spero::parser::actions {
 			if (util::view_as<ast::TupleType>(s.back()))
 				s.emplace_back(std::make_unique<ast::FunctionType>(util::pop<ast::TupleType>(s), std::move(type)));
 
-			else
+			else {
+				// TODO: Change to accomodate possible parse pathing with anon_type
+
 				s.push_back(std::move(type));
+			}
 			// stack: type
 		}
 	};
@@ -488,7 +491,7 @@ namespace spero::parser::actions {
 			if (tkn) {
 				auto* pat = util::view_as<ast::Pattern>(s.back());
 				pat->is_mut = std::holds_alternative<ast::KeywordType>(tkn->value)
-					&& std::get<ast::KeywordType>(tkn->value)._to_integral() == ast::KeywordType::MUT;
+					&& std::get<ast::KeywordType>(tkn->value) == +ast::KeywordType::MUT;
 
 				if (!pat->is_mut) {
 					s.push_back(std::move(tkn));
@@ -516,7 +519,7 @@ namespace spero::parser::actions {
 			auto tkn = util::pop<ast::Token>(s);
 			if (tkn) {
 				pat->is_mut = std::holds_alternative<ast::KeywordType>(tkn->value)
-					&& std::get<ast::KeywordType>(tkn->value)._to_integral() == ast::KeywordType::MUT;
+					&& std::get<ast::KeywordType>(tkn->value) == +ast::KeywordType::MUT;
 
 				if (!pat->is_mut)
 					s.push_back(std::move(tkn));
@@ -827,9 +830,9 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::in_eps> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: expr (sentinel inf)?			NOTE: sentinel coming from anon_sep production
+			// stack: expr inf?
 			auto typ = util::pop<ast::Type>(s);
-			if (typ) s.pop_back();
+			//if (typ) s.pop_back();		NOTE: Removes sentinel from anon_sep production (from time where anon_sep="::")
 			util::view_as<ast::ValExpr>(s.back())->type = std::move(typ);
 			// stack: expr
 		}
@@ -887,7 +890,7 @@ namespace spero::parser::actions {
 			if (tkn) {
 				auto* expr = util::view_as<ast::ValExpr>(s.back());
 				expr->is_mut = std::holds_alternative<ast::KeywordType>(tkn->value)
-					&& std::get<ast::KeywordType>(tkn->value)._to_integral() == ast::KeywordType::MUT;
+					&& std::get<ast::KeywordType>(tkn->value) == +ast::KeywordType::MUT;
 
 				if (!expr->is_mut) {
 					s.push_back(std::move(tkn));

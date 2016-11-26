@@ -10,9 +10,6 @@
 
 /*
 TODO:
- "foo :: (Int)" crashes
-   stack at fneps rule: nullptr Variable{"foo"} nullptr nullptr Binding{"Int"}
-     everything after "foo" should not be there
  "match (3, 4) { x, y -> 4 (y) -> 3 }"
    "4 (y)" interpreted as a function call
  Ensure correct construction of generic instantiation
@@ -20,8 +17,11 @@ TODO:
  "--3" crashes
  "x = 3" produces nullptr
    action<op> isn't being called
+ changed anon_type marker to ":::" due to interference with type inference (I want to change this back)
+   constructor was succeeding leaving a tuple on the stack, inf rule didn't modify the tuple
  how to type a function that returns a function
    "(T) -> (T) -> T" doesn't work well
+   "(T) -> ((T) -> T)" doesn't work either
  need to differentiate between Array/Tuple/Block
    bring out the details that are important to each node
  some work on constructors/arguments with variables needed
