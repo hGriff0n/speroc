@@ -10,18 +10,18 @@
 
 /*
 TODO:
- "abs(-3)" crashes
-  "-3.abs" doesn't crash
- "foo :: (Int, Int) -> Int" crashes
-   "foo :: (Int)" also crashes
+ "foo :: (Int)" crashes
+   stack at fneps rule: nullptr Variable{"foo"} nullptr nullptr Binding{"Int"}
+     everything after "foo" should not be there
  "match (3, 4) { x, y -> 4 (y) -> 3 }"
    "4 (y)" interpreted as a function call
- "def Foo = (x :: Int) { }" crashes
-   "def Foo = None {}" and "def Foo = Some(Int) {}" don't crash
  Ensure correct construction of generic instantiation
   "3 :: Array[Int]" -> "Array [ ast.Variable ]" in prettyPrint
+ "--3" crashes
  "x = 3" produces nullptr
    action<op> isn't being called
+ how to type a function that returns a function
+   "(T) -> (T) -> T" doesn't work well
  need to differentiate between Array/Tuple/Block
    bring out the details that are important to each node
  some work on constructors/arguments with variables needed

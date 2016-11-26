@@ -10,7 +10,7 @@ namespace spero::parser::grammar {
 
 	// Forward Declarations
 	struct array; struct expr; struct scope; struct atom; struct pattern;
-	struct var_pattern; struct valexpr; struct dot_ctrl;
+	struct var_pattern; struct valexpr; struct dot_ctrl; struct mut_type;
 
 	// Ignore Characters
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
@@ -83,7 +83,6 @@ namespace spero::parser::grammar {
 	struct name_path : seq<name_eps, star<name_path_part>> {};
 	struct typ_pointer : sor<one<'&'>, one<'*'>, eps> {};
 	struct type : seq<name_path, disable<typ>, ig_s, opt<array>, typ_pointer, ig_s> {};
-	struct mut_type : seq<opt<k_mut>, type> {};
 	struct binding : sor<seq<name_path, disable<sor<var, typ>>, ig_s>, op> {};
 
 	//
@@ -131,8 +130,9 @@ namespace spero::parser::grammar {
 	struct annotation : seq<one<'@'>, var, opt<anot_glob>, opt<tuple>> {};
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
 	struct type_tuple : seq<oparen, sequ<mut_type>, cparen> {};
-	struct inf_fn_args : opt<type_tuple, ig_s, pstr("->"), ig_s> {};
-	struct inf : seq<pstr("::"), ig_s, inf_fn_args, mut_type> {};
+	struct mut_type : seq<opt<k_mut>, type> {};		// mut_type doesn't match type tuples
+	struct inf_fn_type : seq<type_tuple, opt<ig_s, pstr("->"), ig_s, sor<mut_type, type_tuple>>> {};
+	struct inf : seq<pstr("::"), ig_s, sor<inf_fn_type, mut_type>> {};
 	struct gen_variance : sor<one<'+'>, one<'-'>, eps> {};
 	struct gen_subrel : sor<pstr("::"), pstr("!:"), one<'>'>, one<'<'>> {};
 	struct gen_subtype : seq<gen_subrel, ig_s, type> {};
