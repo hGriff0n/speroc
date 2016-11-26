@@ -161,8 +161,9 @@ namespace spero::parser::grammar {
 	struct pat_adt : seq<typ, opt<tuple_pat>> {};
 	struct pat_tuple : seq<opt<disable<k_mut>>, tuple_pat> {};
 	struct pat_var : seq<opt<k_mut>, var> {};
+	struct pat_val : seq<lit> {};
 	struct pat_any : seq<placeholder> {};
-	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt> {};
+	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt, pat_val> {};
 	struct assign_val : seq<one<'='>, ig_s, valexpr> {};
 	struct var_assign : seq<var_pattern, ig_s, opt<generic>, sor<seq<inf, opt<assign_val>>, assign_val>> {};
 	struct lhs_inher : seq<inf, one<'='>, ig_s> {};

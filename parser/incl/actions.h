@@ -548,6 +548,11 @@ namespace spero::parser::actions {
 			s.emplace_back(std::make_unique<ast::Pattern>());
 		}
 	};
+	template<> struct action<grammar::pat_val> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::PVal>(util::pop<ast::ValExpr>(s)));
+		}
+	};
 	template<> struct action<grammar::var_assign> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: pattern generic? (inf expr?)|(inf? expr)
