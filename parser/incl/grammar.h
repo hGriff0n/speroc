@@ -10,7 +10,7 @@ namespace spero::parser::grammar {
 
 	// Forward Declarations
 	struct array; struct expr; struct scope; struct atom; struct pattern;
-	struct var_pattern; struct valexpr; struct dot_ctrl;
+	struct var_pattern; struct valexpr; struct dot_ctrl; struct mut_type;
 
 	// Ignore Characters
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
@@ -74,7 +74,7 @@ namespace spero::parser::grammar {
 	//
 	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
-	struct op : seq<opt<sor<one<'&'>, one<'='>, one<':'>>>,
+	struct op : seq<opt<sor<one<'&'>, two<':'>, one<':'>>>,
 		plus<sor<one<'!'>, one<'@'>, one<'#'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
 		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
@@ -83,7 +83,6 @@ namespace spero::parser::grammar {
 	struct name_path : seq<name_eps, star<name_path_part>> {};
 	struct typ_pointer : sor<one<'&'>, one<'*'>, eps> {};
 	struct type : seq<name_path, disable<typ>, ig_s, opt<array>, typ_pointer, ig_s> {};
-	struct mut_type : seq<opt<k_mut>, type> {};
 	struct binding : sor<seq<name_path, disable<sor<var, typ>>, ig_s>, op> {};
 
 	//
@@ -111,7 +110,7 @@ namespace spero::parser::grammar {
 	//
 	// Language Atoms
 	//
-	struct anon_sep : two<':'> {};
+	struct anon_sep : seq<pstr(":::")> {};
 	struct anon_type : seq<anon_sep, ig_s, opt<tuple>, scope> {};
 	//struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};
 	struct scope : seq<obrace, star<expr>, cbrace> {};
@@ -131,8 +130,9 @@ namespace spero::parser::grammar {
 	struct annotation : seq<one<'@'>, var, opt<anot_glob>, opt<tuple>> {};
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
 	struct type_tuple : seq<oparen, sequ<mut_type>, cparen> {};
-	struct inf_fn_args : opt<type_tuple, ig_s, pstr("->"), ig_s> {};
-	struct inf : seq<pstr("::"), ig_s, inf_fn_args, mut_type> {};
+	struct mut_type : seq<opt<k_mut>, type> {};		// mut_type doesn't match type tuples
+	struct inf_fn_type : seq<type_tuple, opt<ig_s, pstr("->"), ig_s, sor<mut_type, type_tuple>>> {};
+	struct inf : seq<pstr("::"), ig_s, sor<inf_fn_type, mut_type>> {};
 	struct gen_variance : sor<one<'+'>, one<'-'>, eps> {};
 	struct gen_subrel : sor<pstr("::"), pstr("!:"), one<'>'>, one<'<'>> {};
 	struct gen_subtype : seq<gen_subrel, ig_s, type> {};
@@ -161,8 +161,9 @@ namespace spero::parser::grammar {
 	struct pat_adt : seq<typ, opt<tuple_pat>> {};
 	struct pat_tuple : seq<opt<disable<k_mut>>, tuple_pat> {};
 	struct pat_var : seq<opt<k_mut>, var> {};
+	struct pat_val : seq<lit> {};
 	struct pat_any : seq<placeholder> {};
-	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt> {};
+	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt, pat_val> {};
 	struct assign_val : seq<one<'='>, ig_s, valexpr> {};
 	struct var_assign : seq<var_pattern, ig_s, opt<generic>, sor<seq<inf, opt<assign_val>>, assign_val>> {};
 	struct lhs_inher : seq<inf, one<'='>, ig_s> {};
@@ -202,8 +203,9 @@ namespace spero::parser::grammar {
 	//
 	struct _index_ : if_then<not_at<two<'.'>>, seq<one<'.'>, ig_s, fncall>> {};
 	struct in_eps : eps {};
+	struct un_eps : eps {};
 	struct in_ctrl : seq<one<'.'>, in_eps, dot_ctrl> {};
-	struct index : seq<opt<unary>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
+	struct index : seq<star<unary>, fncall, star<_index_>, un_eps, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
 	//struct range : seq<opt<two<','>, ig_s, index>, two<'.'>, ig_s, index> {};
 		// this grammar interferes with the sequence grammar on the ',' causing duplicates to exist
 	struct range : seq<two<'.'>, ig_s, index> {};

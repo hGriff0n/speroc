@@ -1,6 +1,6 @@
 #pragma once
 
-#include "incl/ast.h"
+#include "incl/ast/all.h"
 
 namespace spero::parser {
 	Stack parse(std::string);
