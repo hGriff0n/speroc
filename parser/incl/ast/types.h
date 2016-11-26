@@ -10,27 +10,6 @@ namespace spero::compiler::ast {
 	struct BasicBinding;
 	struct QualifiedBinding;
 
-
-	/*
-	* Base class for all type nodes
-	*
-	* Extends: Ast
-	*   Reuses `prettyPrint` definition
-	*
-	* Exports:
-	*   id - type id, assigned during analysis
-	*   is_mut - flag whether values of the type are  mutable
-	*
-	* TODO:
-	*   Need to have a better handle on type id assignment and usage across the ast in the future
-	*/
-	struct Type : Ast {
-		size_t id;
-		bool is_mut = false;
-
-		Type();
-	};
-
 	
 	/*
 	 * Basic instance class for type nodes

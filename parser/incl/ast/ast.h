@@ -41,7 +41,6 @@ namespace spero::compiler::ast {
 	BETTER_ENUM(BindingType, char, TYPE, VARIABLE, OPERATOR);
 	BETTER_ENUM(UnaryType, char, DEREF, NOT, MINUS, NA);
 	struct Annotation;
-	struct Type;
 
 
 	/*
@@ -80,6 +79,27 @@ namespace spero::compiler::ast {
 		Token(UnaryType);
 
 		OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
+	};
+
+
+	/*
+	* Base class for all type nodes
+	*
+	* Extends: Ast
+	*   Reuses `prettyPrint` definition
+	*
+	* Exports:
+	*   id - type id, assigned during analysis
+	*   is_mut - flag whether values of the type are  mutable
+	*
+	* TODO:
+	*   Need to have a better handle on type id assignment and usage across the ast in the future
+	*/
+	struct Type : Ast {
+		size_t id;
+		bool is_mut = false;
+
+		Type();
 	};
 
 

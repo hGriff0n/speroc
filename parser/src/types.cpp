@@ -1,7 +1,7 @@
-//#include "ast/types.h"
-//#include "ast/names.h"
-//#include "ast/atoms.h"
-#include "ast/all.h"
+#include "ast/types.h"
+#include "ast/names.h"
+#include "ast/atoms.h"
+#include "ast/decor.h"
 
 namespace spero::compiler::ast {
 	
