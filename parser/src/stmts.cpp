@@ -11,7 +11,21 @@ namespace spero::compiler::ast {
 	Interface::Interface(ptr<AssignPattern> n, GenArray gs, ptr<Type> t)
 		: vis{ VisibilityType::PRIVATE }, name{ std::move(n) }, generics{ std::move(gs) }, type{ std::move(t) } {}
 	OutStream& Interface::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.Interface";
+		s << std::string(buf, ' ') << context << "ast.Interface (vis=" << vis._to_string() << ')';
+		name->prettyPrint(s << '\n', buf + 2, "var=");
+
+		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+
+		if (generics.size()) {
+			s << '\n' << std::string(buf + 2, ' ') << "Generic Typing (size=" << generics.size() << ") [";
+
+			for (auto&& g : generics)
+				g->prettyPrint(s << '\n', buf + 4);
+
+			s << '\n' << std::string(buf + 2, ' ') << ']';
+		}
+
+		return s;
 	}
 
 
@@ -117,7 +131,7 @@ namespace spero::compiler::ast {
 	}
 	OutStream& Index::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.IndexSequence (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		for (auto&& e : elems)
 			e->prettyPrint(s << '\n', buf + 2, "idx=");

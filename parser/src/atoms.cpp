@@ -68,7 +68,7 @@ namespace spero::compiler::ast {
 	OutStream& FnCall::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.FnCall (anon="
 			<< (bool)anon << ", args=" << (bool)args << ", inst=" << (bool)inst << ", ";
-		ValExpr::prettyPrint(s, 0) << '\n';
+		ValExpr::prettyPrint(s, buf) << '\n';
 		caller->prettyPrint(s, buf + 2, "caller=");
 
 		if (anon) anon->prettyPrint(s << '\n', buf + 2, "anon=");
@@ -84,7 +84,7 @@ namespace spero::compiler::ast {
 	Range::Range(ptr<ValExpr> start, ptr<ValExpr> stop) : start{ std::move(start) }, stop{ std::move(stop) }, step{ nullptr } {}
 	OutStream& Range::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Range (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		start->prettyPrint(s << '\n', buf + 2, "start=");
 		if (step) step->prettyPrint(s << '\n', buf + 2, "step=");

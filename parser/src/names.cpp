@@ -36,7 +36,7 @@ namespace spero::compiler::ast {
 	Variable::Variable(ptr<QualifiedBinding> n) : name{ std::move(n) } {}
 	OutStream& Variable::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Variable (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 		return name->prettyPrint(s << "\n", buf + 2, "name=");
 	}
 

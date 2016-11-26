@@ -21,7 +21,7 @@ namespace spero::compiler::ast {
 	}
 	OutStream& Branch::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Branch (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		size_t cnt = 0;
 		for (auto& branch : if_branches) {
@@ -41,7 +41,7 @@ namespace spero::compiler::ast {
 	Loop::Loop(ptr<ValExpr> b) : body{ std::move(b) } {}
 	OutStream& Loop::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Loop (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 		return body->prettyPrint(s << '\n', buf + 2, "body=");
 	}
 
@@ -52,7 +52,7 @@ namespace spero::compiler::ast {
 	While::While(ptr<ValExpr> test, ptr<ValExpr> body) : test{ std::move(test) }, body{ std::move(body) } {}
 	OutStream& While::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.While (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 		test->prettyPrint(s << '\n', buf + 2, "cond=");
 		return body->prettyPrint(s << '\n', buf + 2, "body=");
 	}
@@ -64,7 +64,7 @@ namespace spero::compiler::ast {
 	For::For(ptr<Pattern> p, ptr<ValExpr> g, ptr<ValExpr> b) : pattern{ std::move(p) }, generator{ std::move(g) }, body{ std::move(b) } {}
 	OutStream& For::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.For (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		pattern->prettyPrint(s << '\n', buf + 2, "vars=");
 		generator->prettyPrint(s << '\n', buf + 2, "in=");
@@ -78,7 +78,7 @@ namespace spero::compiler::ast {
 	Match::Match(ptr<ValExpr> s, std::deque<ptr<Case>> cs) : switch_expr{ std::move(s) }, cases{ std::move(cs) } {}
 	OutStream& Match::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Match (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		switch_expr->prettyPrint(s << '\n', buf + 2, "switch=");
 
@@ -101,7 +101,7 @@ namespace spero::compiler::ast {
 	Wait::Wait(ptr<ValExpr> e) : Jump{ KeywordType::WAIT, std::move(e) } {}
 	OutStream& Wait::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Wait (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
 		return s;
@@ -114,7 +114,7 @@ namespace spero::compiler::ast {
 	Break::Break(ptr<ValExpr> e) : Jump{ KeywordType::BREAK, std::move(e) } {}
 	OutStream& Break::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Break (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
 		return s;
@@ -127,7 +127,7 @@ namespace spero::compiler::ast {
 	Continue::Continue(ptr<ValExpr> e) : Jump{ KeywordType::CONT, std::move(e) } {}
 	OutStream& Continue::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Continue (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
 		return s;
@@ -140,7 +140,7 @@ namespace spero::compiler::ast {
 	Return::Return(ptr<ValExpr> e) : Jump{ KeywordType::RET, std::move(e) } {}
 	OutStream& Return::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Return (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
 		return s;
@@ -153,7 +153,7 @@ namespace spero::compiler::ast {
 	YieldRet::YieldRet(ptr<ValExpr> e) : Jump{ KeywordType::YIELD, std::move(e) } {}
 	OutStream& YieldRet::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Yield (";
-		ValExpr::prettyPrint(s, 0);
+		ValExpr::prettyPrint(s, buf);
 
 		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
 		return s;
