@@ -202,8 +202,9 @@ namespace spero::parser::grammar {
 	//
 	struct _index_ : if_then<not_at<two<'.'>>, seq<one<'.'>, ig_s, fncall>> {};
 	struct in_eps : eps {};
+	struct un_eps : eps {};
 	struct in_ctrl : seq<one<'.'>, in_eps, dot_ctrl> {};
-	struct index : seq<opt<unary>, fncall, star<_index_>, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
+	struct index : seq<opt<unary>, fncall, star<_index_>, un_eps, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
 	//struct range : seq<opt<two<','>, ig_s, index>, two<'.'>, ig_s, index> {};
 		// this grammar interferes with the sequence grammar on the ',' causing duplicates to exist
 	struct range : seq<two<'.'>, ig_s, index> {};

@@ -12,7 +12,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Tuple" << exprs.size() << " (";
 		for (auto&& e : exprs)
 			e->prettyPrint(s << '\n', buf + 2) << ",";
-		return s << '\n' << std::string(buf, ' ') << ")";
+
+		if (exprs.size()) s << '\n' << std::string(buf, ' ');
+		return s << ')';
 	}
 
 	
@@ -21,10 +23,12 @@ namespace spero::compiler::ast {
 	 */
 	Array::Array(std::deque<ptr<ValExpr>> vals) : Sequence{ std::move(vals) } {}
 	OutStream& Array::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.Array [type=, size=" << exprs.size() << "] [";
+		s << std::string(buf, ' ') << context << "ast.Array" << exprs.size() << " [type={}] [";
 		for (auto&& e : exprs)
 			e->prettyPrint(s << '\n', buf + 2) << ",";
-		return s << '\n' << std::string(buf, ' ') << "]";
+
+		if (exprs.size()) s << '\n' << std::string(buf, ' ');
+		return s << ']';
 	}
 
 
@@ -37,7 +41,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Block (size=" << exprs.size() << ") {";
 		for (auto&& e : exprs)
 			e->prettyPrint(s << '\n', buf + 2);
-		return s << '\n' << std::string(buf, ' ') << "}";
+
+		if (exprs.size()) s << '\n' << std::string(buf, ' ');
+		return s << '}';
 	}
 
 

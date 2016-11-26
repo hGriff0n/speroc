@@ -205,7 +205,8 @@ namespace spero::parser::actions {
 					s.emplace_back(std::make_unique<ast::QualifiedBinding>(std::move(part)));
 			}
 
-			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+			if (util::view_as<ast::Ast>(s.back()))
+				std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
 			s.pop_back();
 			// stack: qual
 		}
@@ -293,9 +294,10 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::unary> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::DEREF));
-			else if (in.string() == "!") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NOT));
-			else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
+			auto un_c = in.string()[0];
+			if (un_c == '&') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::DEREF));
+			else if (un_c == '!') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NOT));
+			else if (un_c == '-') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::MINUS));
 			else s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
 		}
 	};
@@ -808,9 +810,24 @@ namespace spero::parser::actions {
 			// stack: index
 		}
 	};
+	template<> struct action<grammar::un_eps> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: unary? expr
+			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+			auto tkn = util::pop<ast::Token>(s);
+
+			if (tkn) {
+				if (std::holds_alternative<ast::UnaryType>(tkn->value))
+					util::view_as<ast::ValExpr>(s.back())->unop = std::get<ast::UnaryType>(tkn->value);
+
+			} else
+				std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+			// stack: expr
+		}
+	};
 	template<> struct action<grammar::in_eps> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: unary? expr (sentinel inf)?			NOTE: sentinel coming from anon_sep production
+			// stack: expr (sentinel inf)?			NOTE: sentinel coming from anon_sep production
 			auto typ = util::pop<ast::Type>(s);
 			if (typ) s.pop_back();
 			util::view_as<ast::ValExpr>(s.back())->type = std::move(typ);

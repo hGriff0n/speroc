@@ -74,7 +74,7 @@ namespace spero::compiler::ast {
 	 */
 	PTuple::PTuple(std::deque<ptr<Pattern>> ps) : ptns{ std::move(ps) } {}
 	OutStream& PTuple::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.PTuple" << ptns.size() << "(\n";
+		s << std::string(buf, ' ') << context << "ast.PTuple" << ptns.size() << " (mut=" << is_mut << ") (\n";
 		for (auto&& p : ptns)
 			p->prettyPrint(s, buf + 2) << '\n';
 		return s << std::string(buf, ' ') << ')';
@@ -86,7 +86,7 @@ namespace spero::compiler::ast {
 	 */
 	PNamed::PNamed(ptr<BasicBinding> n) : name{ std::move(n) } {}
 	OutStream& PNamed::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.PNamed";
+		s << std::string(buf, ' ') << context << "ast.PNamed (mut=" << is_mut << ')';
 		return name->prettyPrint(s, 1);
 	}
 

@@ -10,22 +10,21 @@
 
 /*
 TODO:
- Implement and Improve prettyPrinting
-   check the displaying of annotations once functions are added
-   Consider splitting context into pre and post production
  "use std:io" throws an exception (prints correctly)
    "use std:io:_" doesn't have the error
    "use std:io:{println, getln}" does
- "{3}" produces nullptr, empty Block
-	"[3]" and "(3)" work just fine (something is wrong with `action<grammar::scope>`)
- "abs(-3) :: Float" crashes
-   "abs(-2)" also crashes (the error is in the -)
+ "abs(-3)" crashes
+  "-3.abs" doesn't crash
  "foo :: (Int, Int) -> Int" crashes
    "foo :: (Int)" also crashes
+ "match (3, 4) { x, y -> 4 (y) -> 3 }"
+   "4 (y)" interpreted as a function call
+ "def Foo = (x :: Int) { }" crashes
+   "def Foo = None {}" and "def Foo = Some(Int) {}" don't crash
  Ensure correct construction of generic instantiation
   "3 :: Array[Int]" -> "Array [ ast.Variable ]" in prettyPrint
- "while 3 < x x = 3" produces nullptr
-   the 'x =' triggers the issue
+ "x = 3" produces nullptr
+   action<op> isn't being called
  need to differentiate between Array/Tuple/Block
    bring out the details that are important to each node
  some work on constructors/arguments with variables needed
@@ -36,10 +35,7 @@ TODO:
  reduce the lookahead needed to parse import statements
  can I remove 'forward function' as a normal literal
    it's really only useful within assignment contexts anyways
- unary action doesn't run on "!false" or "-3"
-   I need to double check the documentation to see where unary operators bind
  need to add error conditions and recognition into the language (that's the control part)
  need to add in operator precedence
-   consider changing case to have a PTuple instead of a deque of ptr<Pattern>
  tuple printing on size=0 can be improved
 */

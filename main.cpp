@@ -36,14 +36,8 @@ int main(int argc, const char* argv[]) {
 
 	/*
 	TODO: Current grammar problems
-		"match (3, 4) { (x, y) -> 4; (y) -> 3 }"
-		"match (3, 4) { x, y -> 4 (y) -> 3 }"
-		"match (3, 4) { mut (x, y) -> 4 y -> 3 }"
-		"match x { 3 -> "{}" _ -> "X" }"
-		"let x = if true do 3 else 4"
-		"if true do 3 else 4"
-		"def foo = (x) -> x(3)"
-		"def foo = (x) -> 3.x"
+		"match (3, 4) { x, y -> 4 (y) -> 3 }"			"4 (y)" interpreted as a function call
+		"match x { 3 -> "{}" _ -> "X" }"				"3" does not match a pattern
 	*/
 
 	// The dot-control actions don't work for function definitions
