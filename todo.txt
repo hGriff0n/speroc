@@ -1,7 +1,5 @@
 
 todo:
- add in operator precedence rules
-   use scala rules for now (might just restrict precedence to language operators, all other are lowest)
  add in error recognition to the parser
  update documentation
  work on blog posts
@@ -26,18 +24,9 @@ todo:
      changed to ":::" due to interference with type inference
      note: 'action<inf>' isn't triggered with "::"
 	 could remove the optional tuple (this would allow me to remove the ast_seperator too)
-   fix the annotation system so that global annotations aren't assigned to statements
    fncall node may have too much responsibility
    need to determine a distinction between semantic and syntactic typing in the ast
      depends in large part based on how I'm representing types internally
-
- grammar improvements:
-   fix dot_ctrl operations in regards to function forwarding
-     might need to add them in first
-	 current definitions will attempt to work with values that aren't there
-   add in operator precedence
-     first determine operator precedence
-	   scala uses the first character in the operator (https://github.com/ghik/opinionated-scala/wiki/Methods-and-operators)
 
  prettyPrinting improvements:
    "3 :: Array[Int]" has a wierd output buffering

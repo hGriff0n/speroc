@@ -903,6 +903,42 @@ namespace spero::parser::actions {
 		}
 	};
 
+	// Operator Precedence
+	template<> struct action<grammar::op_prec_1> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// Produce a qualified binding because operators aren't included in name_path
+			s.emplace_back(std::make_unique<ast::QualifiedBinding>(
+				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR)
+			));
+		}
+	};
+	INHERIT(op_prec_2, op_prec_1);
+	INHERIT(op_prec_3, op_prec_1);
+	INHERIT(op_prec_4, op_prec_1);
+	INHERIT(op_prec_5, op_prec_1);
+	INHERIT(op_prec_6, op_prec_1);
+	INHERIT(op_prec_7, op_prec_1);
+	template<> struct action<grammar::_binary_prec_1> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: expr op expr -> op expr expr
+			std::iter_swap(std::rbegin(s) + 2, std::rbegin(s) + 1);
+
+			// push arg tuple onto the stack
+			std::deque<ptr<ast::ValExpr>> args;
+			args.push_front(util::pop<ast::ValExpr>(s));
+			args.push_front(util::pop<ast::ValExpr>(s));
+			s.emplace_back(std::make_unique<ast::Tuple>(std::move(args)));
+
+			// stack: op tuple
+			action<grammar::fnseq>::apply(in, s);
+		}
+	};
+	INHERIT(_binary_prec_2, _binary_prec_1);
+	INHERIT(_binary_prec_3, _binary_prec_1);
+	INHERIT(_binary_prec_4, _binary_prec_1);
+	INHERIT(_binary_prec_5, _binary_prec_1);
+	INHERIT(_binary_prec_6, _binary_prec_1);
+	INHERIT(_binary_prec_7, _binary_prec_1);
 
 	// Expressions
 	template<> struct action<grammar::_index_> {
@@ -948,7 +984,7 @@ namespace spero::parser::actions {
 			// stack: expr
 		}
 	};
-	template<> struct action<grammar::range> {
+	template<> struct action<grammar::_range_> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: expr, expr
 			auto stop = util::pop<ast::ValExpr>(s);
@@ -975,21 +1011,6 @@ namespace spero::parser::actions {
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::ModImport>(std::move(imps)));
 			// stack: Import
-		}
-	};
-	template<> struct action<grammar::_binary_> {
-		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: expr op expr -> op expr expr
-			std::iter_swap(std::rbegin(s) + 2, std::rbegin(s) + 1);
-
-			// push arg tuple onto the stack
-			std::deque<ptr<ast::ValExpr>> args;
-			args.push_front(util::pop<ast::ValExpr>(s));
-			args.push_front(util::pop<ast::ValExpr>(s));
-			s.emplace_back(std::make_unique<ast::Tuple>(std::move(args)));
-
-			// stack: op tuple
-			action<grammar::fnseq>::apply(in, s);
 		}
 	};
 	template<> struct action<grammar::valexpr> {

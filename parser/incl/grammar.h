@@ -11,7 +11,7 @@ namespace spero::parser::grammar {
 	// Forward Declarations
 	struct array; struct expr; struct scope; struct atom; struct pattern;
 	struct var_pattern; struct valexpr; struct fn_dot_ctrl; struct inf_fn_type;
-	struct mut_type; struct con_tuple;
+	struct mut_type; struct con_tuple; struct range;
 
 	// Ignore Characters
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
@@ -75,9 +75,9 @@ namespace spero::parser::grammar {
 	//
 	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
-	struct op : seq<opt<sor<one<'&'>, one<'!'>, one<'@'>, two<':'>, one<':'>>>,
-		plus<sor<one<'!'>, one<'@'>, one<'#'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
-		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
+	struct op_characters : sor<one<'!'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
+		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'+'>> {};
+	struct op : seq<sor<one<'&'>, one<'!'>, two<':'>, one<':'>, eps>, plus<op_characters>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
 	struct name_eps : seq<eps> {};
@@ -208,6 +208,32 @@ namespace spero::parser::grammar {
 	struct fn_dot_ctrl : sor<fn_dot_loop, fn_dot_jmp, fn_dot_while, fn_dot_match, fn_dot_for, fn_dot_if> {};
 
 	//
+	// Binary Operator Precedence
+	//
+	struct op_prec_1 : seq<opt<one<'&'>>, sor<one<'$'>, one<'?'>, one<'`'>, one<'\\'>>, star<op_characters>> {};
+	struct _binary_prec_1 : seq<op_prec_1, ig_s, range> {};
+	struct binary_prec_1 : seq<range, star<_binary_prec_1>> {};
+	struct op_prec_2 : seq<opt<one<'&'>>, sor<one<'/'>, one<'%'>, one<'*'>>, star<op_characters>> {};
+	struct _binary_prec_2 : seq<op_prec_2, ig_s, binary_prec_1> {};
+	struct binary_prec_2 : seq<binary_prec_1, star<_binary_prec_2>> {};
+	struct op_prec_3 : seq<opt<one<'&'>>, sor<one<'+'>, one<'-'>>, star<op_characters>> {};
+	struct _binary_prec_3 : seq<op_prec_3, ig_s, binary_prec_2> {};
+	struct binary_prec_3 : seq<binary_prec_2, star<_binary_prec_3>> {};
+	struct op_prec_4 : seq<opt<one<'&'>>, sor<seq<one<'!'>, plus<op_characters>>, seq<one<'='>, star<op_characters>>>> {};
+	struct _binary_prec_4 : seq<op_prec_4, ig_s, binary_prec_3> {};
+	struct binary_prec_4 : seq<binary_prec_3, star<_binary_prec_4>> {};
+	struct op_prec_5 : seq<opt<one<'&'>>, sor<one<'&'>, one<'<'>, one<'>'>>, star<op_characters>> {};
+	struct _binary_prec_5 : seq<op_prec_5, ig_s, binary_prec_4> {};
+	struct binary_prec_5 : seq<binary_prec_4, star<_binary_prec_5>> {};
+	struct op_prec_6 : seq<opt<one<'&'>>, one<'^'>, star<op_characters>> {};
+	struct _binary_prec_6 : seq<op_prec_6, ig_s, binary_prec_5> {};
+	struct binary_prec_6 : seq<binary_prec_5, star<_binary_prec_6>> {};
+	struct op_prec_7 : seq<opt<one<'&'>>, one<'|'>, star<op_characters>> {};
+	struct _binary_prec_7 : seq<op_prec_7, ig_s, binary_prec_6> {};
+	struct binary_prec_7 : seq<binary_prec_6, star<_binary_prec_7>> {};
+	struct binary : seq<binary_prec_7> {};
+
+	//
 	// Language Expressions
 	//
 	struct _index_ : if_then<not_at<two<'.'>>, seq<one<'.'>, ig_s, fncall>> {};
@@ -217,11 +243,10 @@ namespace spero::parser::grammar {
 	struct index : seq<star<unary>, fncall, star<_index_>, un_eps, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
 	//struct range : seq<opt<two<','>, ig_s, index>, two<'.'>, ig_s, index> {};
 		// this grammar interferes with the sequence grammar on the ',' causing duplicates to exist
-	struct range : seq<two<'.'>, ig_s, index> {};
+	struct _range_ : seq<two<'.'>, ig_s, index> {};
+	struct range : seq<index, opt<_range_>> {};
 	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps> {};
-	struct _binary_ : seq<op, index> {};
-	struct bin_range : seq<index, sor<range, star<_binary_>>> {};
-	struct valexpr : seq<opt<k_mut>, sor<control, bin_range>, ig_s, opt<one<';'>, ig_s>> {};
+	struct valexpr : seq<opt<k_mut>, sor<control, binary>, ig_s, opt<one<';'>, ig_s>> {};
 	struct mod_use : seq<k_use, star<sor<use_one, use_any>, one<':'>>, use_final> {};
 	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
