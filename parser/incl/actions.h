@@ -445,7 +445,6 @@ namespace spero::parser::actions {
 			// staack: ImportName
 		}
 	};
-	INHERIT(use_fin_many, use_many);
 
 
 	// Assignment

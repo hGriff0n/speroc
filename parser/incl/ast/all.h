@@ -14,11 +14,11 @@ TODO:
    "4 (y)" interpreted as a function call
 
  language questions:
-   settle on desireability of some match constructs
+   find ways to add restrictions to match pattern
      "match x { x :: Int -> 3 }"
+	 need way to match on condition
 
  parser improvements:
-   reduce the lookahead needed to parse import statements
    add in error conditions and recognition to the language
    re-enable "::" syntax for anonymous types
      changed to ":::" due to interference with type inference
@@ -29,6 +29,7 @@ TODO:
  grammar improvements:
    add in operator precedence
      first determine operator precedence
+	   scala uses the first character in the operator (https://github.com/ghik/opinionated-scala/wiki/Methods-and-operators)
    rework constructors to be more restrictive
 
  prettyPrinting improvements:
