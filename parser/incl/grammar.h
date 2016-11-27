@@ -75,7 +75,7 @@ namespace spero::parser::grammar {
 	//
 	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
-	struct op : seq<opt<sor<one<'&'>, two<':'>, one<':'>>>,
+	struct op : seq<opt<sor<one<'&'>, one<'!'>, one<'@'>, two<':'>, one<':'>>>,
 		plus<sor<one<'!'>, one<'@'>, one<'#'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
 		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'-'>, one<'+'>>>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
@@ -127,8 +127,8 @@ namespace spero::parser::grammar {
 	// anexpr = expr / keyword
 	// antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
 	struct unary : sor<one<'&'>, one<'!'>, one<'-'>> {};
-	struct anot_glob : one<'!'> {};
-	struct annotation : seq<one<'@'>, var, opt<anot_glob>, opt<tuple>> {};
+	struct annotation : seq<one<'@'>, var, not_at<one<'!'>>, opt<tuple>> {};
+	struct global_annotation : seq<one<'@'>, disable<var>, one<'!'>, opt<tuple>> {};
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
 	struct mut_type : seq<opt<k_mut>, type> {};		// mut_type doesn't match type tuples
 	struct inf_type : sor<mut_type, inf_fn_type> {};
@@ -217,7 +217,7 @@ namespace spero::parser::grammar {
 	struct mod_use : seq<k_use, star<sor<use_one, use_any>, one<':'>>, use_final> {};
 	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
-	struct stmt : seq<star<annotation, ig_s>, sor<mod_dec, expr>> {};
+	struct stmt : seq<star<annotation, ig_s>, sor<global_annotation, mod_dec, expr>> {};
 	struct program : seq<ig_s, star<stmt>, eof> {};
 
 	#undef key

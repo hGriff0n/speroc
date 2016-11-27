@@ -303,14 +303,23 @@ namespace spero::parser::actions {
 			else s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
 		}
 	};
-	TOKEN(anot_glob, ast::UnaryType::NOT);
 	template<> struct action<grammar::annotation> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: name glob? tuple?
 			auto tup = util::pop<ast::Tuple>(s);
-			auto glob = util::pop<ast::Token>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
-			s.emplace_back(std::make_unique<ast::Annotation>(std::move(name), std::move(tup), glob != nullptr));
+
+			s.emplace_back(std::make_unique<ast::Annotation>(std::move(name), std::move(tup)));
+			// stack: annotation
+		}
+	};
+	template<> struct action<grammar::global_annotation> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: name glob? tuple?
+			auto tup = util::pop<ast::Tuple>(s);
+			auto name = util::pop<ast::BasicBinding>(s);
+
+			s.emplace_back(std::make_unique<ast::GlobalAnnotation>(std::move(name), std::move(tup)));
 			// stack: annotation
 		}
 	};
@@ -951,6 +960,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: annot* stmt
 			auto stmt = util::pop<ast::Stmt>(s);
+			if (!stmt) return;
 
 			while (util::at_node<ast::Annotation>(s))
 				stmt->annots.push_front(util::pop<ast::Annotation>(s));

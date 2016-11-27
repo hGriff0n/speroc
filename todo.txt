@@ -1,42 +1,58 @@
 
-Update documentation to reflect recent changes
+todo:
+ add in error recognition to the parser
+ add in operator precedence rules
+ fix dot_ctrl operations in function forwarding
+ update documentation
+ work on blog posts
+  
+"match (3, 4) { x, y -> 4 (y) -> 3 }"
+   "4 (y)" interpreted as a function call "->" should be an error
+
+ language questions:
+   update documentation to reflect the current language
+     need to delve back into the more "design" parts of the language
+   add ability to restrict match patterns
+     "x :: Int" would only match int values, "x" would match anything
+	 need way to match on conditions (ala "x if x < 3 -> ..." )
+   figure out how concurrency is going to be handled
+   should a yield without a wait equate to a straight return ???
+   determine sugaring operations
+      behavior for '()' operations
+	    scala uses apply and update
+
+ parser improvements:
+   re-enable "::" syntax for anonymous types
+     changed to ":::" due to interference with type inference
+     note: 'action<inf>' isn't triggered with "::"
+	 could remove the optional tuple (this would allow me to remove the ast_seperator too)
+   fix the annotation system so that global annotations aren't assigned to statements
+   fncall node may have too much responsibility
+   need to determine a distinction between semantic and syntactic typing in the ast
+     depends in large part based on how I'm representing types internally
+
+ grammar improvements:
+   fix dot_ctrl operations in regards to function forwarding
+     might need to add them in first
+	 current definitions will attempt to work with values that aren't there
+   add in operator precedence
+     first determine operator precedence
+	   scala uses the first character in the operator (https://github.com/ghik/opinionated-scala/wiki/Methods-and-operators)
+
+ prettyPrinting improvements:
+   "3 :: Array[Int]" has a wierd output buffering
+   annotations could use some improvement
 
 Fix Spero
-  Need a better distinction between several semantic/syntactic constructs in the AST
-    Inferred typing from analysis vs. syntactic typing
-  Can you write "let _ = 3" ??? (current grammar impl says no)
-  "wait wait break continue;" is a valid construct in the grammar
-    Stems from the same rule that allows "loop match wait 3 { x -> "{}".println(x) }"
   Range grammar interfered with sequence grammar on the ',' (step)
-    I've changed it to 2 commas,  but I want to find a way to re-add it
-  Action<name_path_part> can be triggered on anything
-  Add in operator associativity and precedence rules
-  Double check that the use grammar correctly implements the mod use
-  Fix the issues with match (as in 'main.cpp')
   Figure out a better way to handle the duplication between rhs_inher and adt
 	The old grammar causes the type name to be pushed on the stack twice
 	  I fixed this by adding the 'if<at>' rule, but I want to have a more focused rule
-  The dot_ctrl actions don't work when used in a fndefinition
-  How is concurrency going to be handled?
   Figure out the rules and abilities of pointers and manual memory
-  Work on recombining the pattern and binding syntaxes (for simplicity)
-    'mut' placement prevents them from being the same grammar
-    Look into whether ADT decomposition should be allowed in the binding grammar
-  What about "accidental safe catching"?
-    A function is accidentally left as "unsafe" by the programmer
-    Later-on they specify a section of code as "safe" to catch one "unsafe"
-      By accident this annotation also catches the accidental function
-  Should a yield without an accompianing wait revert to a straight return
-  How can types specify behavior for '()' operator
 
 Fixes Waiting for Other Features
   In-place modification of containers using for loops/iterators
     Waiting for: Implementation of standard containers and iterators
-  I feel the FnCall Node has a bit too much responsibility, especially for anon types
-    Types and Variables (non-calls) and Anonymous Types may benefit from a subtype node
-	  This somewhat depends on analysis and code generation in the future
-
-Work on ast construction
 
 
 Things I've Learned

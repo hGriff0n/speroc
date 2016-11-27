@@ -13,9 +13,22 @@ namespace spero::compiler::ast {
 	struct BasicBinding;
 
 
-	// Initial look at splitting global annotations into a separate ast class
-	struct GlobalAnnotation : Ast {};
-	struct LocalAnnotation : GlobalAnnotation {};
+	/*
+	 * Represents a globally applied annotation
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   name - binding that the annotation is associated to
+	 *   args - arguments provided to the annotation
+	 */
+	struct GlobalAnnotation : Ast {
+		ptr<BasicBinding> name;
+		ptr<Tuple> args;
+
+		GlobalAnnotation(ptr<BasicBinding>, ptr<Tuple>);
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
+	};
 
 
 	/*
@@ -31,11 +44,10 @@ namespace spero::compiler::ast {
 	 * TODO: Split into global and local annotation classes (Global annotations are statements themselves)
 	 */
 	struct Annotation : Ast {
-		bool global;
 		ptr<BasicBinding> name;
 		ptr<Tuple> args;
 
-		Annotation(ptr<BasicBinding>, ptr<Tuple>, bool);
+		Annotation(ptr<BasicBinding>, ptr<Tuple>);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 

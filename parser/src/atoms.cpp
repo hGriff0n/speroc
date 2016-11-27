@@ -38,7 +38,6 @@ namespace spero::compiler::ast {
 	 */
 	Block::Block(std::deque<ptr<Ast>> es) : Sequence{ std::move(es) } {}
 	OutStream& Block::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		// TODO: value(Block) == value(Block.last), I want to add some special output
 		s << std::string(buf, ' ') << context << "ast.Block (size=" << exprs.size() << ") {";
 		for (auto&& e : exprs)
 			e->prettyPrint(s << '\n', buf + 2);

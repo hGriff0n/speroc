@@ -5,6 +5,7 @@
 namespace spero::parser {
 	Stack parse(std::string input) {
 		// Setup parsing state
+
 		Stack s{};
 		s.emplace_back(compiler::ast::Sentinel{});
 

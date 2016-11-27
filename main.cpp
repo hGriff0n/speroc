@@ -11,7 +11,8 @@
 #include "cmd_line.h"
 #include "util/utils.h"
 
-const size_t issues = spero::parser::num_issues();
+// Big performance hiy
+//const size_t issues = spero::parser::num_issues();
 
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input (to simplify multiline repl testing)
 template <class Stream>
@@ -33,15 +34,6 @@ int main(int argc, const char* argv[]) {
 	using namespace spero;
 	using namespace spero::parser;
 	//auto opts = spero::cmd::getOptions();
-
-	/*
-	TODO: Current grammar problems
-		"match (3, 4) { x, y -> 4 (y) -> 3 }"			"4 (y)" interpreted as a function call
-		"match x { 3 -> "{}" _ -> "X" }"				"3" does not match a pattern
-	*/
-
-	// The dot-control actions don't work for function definitions
-		// They will attempt to work with values that aren't there
 
 	/*
 	TODO: Features to look into using
@@ -71,6 +63,6 @@ int main(int argc, const char* argv[]) {
 		std::cout << std::endl;
 	}
 
-	std::cout << issues << " - Fin";
-	std::cin.get();
+	//std::cout << issues << " - Fin";
+	//std::cin.get();
 }

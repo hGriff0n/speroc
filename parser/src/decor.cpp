@@ -6,9 +6,22 @@
 namespace spero::compiler::ast {
 
 	/*
+	 * ast::GlobalAnnotation
+	 */
+	GlobalAnnotation::GlobalAnnotation(ptr<BasicBinding> n, ptr<Tuple> t) : name{ std::move(n) }, args{ std::move(t) } {}
+	OutStream& GlobalAnnotation::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		s << std::string(buf, ' ') << context << "ast.GlobalAnnotation name=";
+		name->prettyPrint(s, 0);
+
+		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
+		return s;
+	}
+
+
+	/*
 	 * ast::Annotation
 	 */
-	Annotation::Annotation(ptr<BasicBinding> n, ptr<Tuple> t, bool g) : name{ std::move(n) }, args{ std::move(t) }, global{ g } {}
+	Annotation::Annotation(ptr<BasicBinding> n, ptr<Tuple> t) : name{ std::move(n) }, args{ std::move(t) } {}
 	OutStream& Annotation::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Annotation name=";
 		name->prettyPrint(s, 0);
