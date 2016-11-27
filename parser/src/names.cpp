@@ -98,8 +98,9 @@ namespace spero::compiler::ast {
 	PAdt::PAdt(ptr<BasicBinding> n, ptr<PTuple> as) : PNamed{ std::move(n) }, args{ std::move(as) } {}
 	OutStream& PAdt::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.PAdt";
-		name->prettyPrint(s, 1, "(type=") << ")\n";
-		return args->prettyPrint(s, buf + 2);
+		name->prettyPrint(s, 1, "(type=") << ')';
+		if (args) args->prettyPrint(s << '\n', buf + 2);
+		return s;
 	}
 
 
@@ -108,7 +109,8 @@ namespace spero::compiler::ast {
 	 */
 	PVal::PVal(ptr<ValExpr> v) : value{ std::move(v) } {}
 	OutStream& PVal::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		return s << std::string(buf, ' ') << context << "ast.PVal [deprecated]";
+		s << std::string(buf, ' ') << context << "ast.PVal";
+		return value->prettyPrint(s, 1, "(val=") << ')';
 	}
 
 }

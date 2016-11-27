@@ -12,9 +12,6 @@
 TODO:
  "match (3, 4) { x, y -> 4 (y) -> 3 }"
    "4 (y)" interpreted as a function call
- "def Option[T] = None | Some(T) { def get = () -> self.match { Some(v) -> v }
-	def or = (v :: T) -> self.match { None -> v; Some(val) -> val } }" crashes
-		doesn't crash if you remove the second definition
 
  language questions:
    settle on desireability of some match constructs
