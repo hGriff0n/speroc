@@ -18,6 +18,13 @@ todo:
    determine sugaring operations
       behavior for '()' operations
 	    scala uses apply and update
+   figure out the translation of operators fully
+     especially for '&' and '=', given they have special meanings in some conditions
+	   maybe make special ast nodes to represent them
+	   scala handling of '=' at the end (using "l += r")
+	     if no matching definition "+=" for can be found
+		   statement translates to "l = +(l, r)"
+		 otherwise translates to "+=(l, r)"
 
  parser improvements:
    re-enable "::" syntax for anonymous types

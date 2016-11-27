@@ -76,8 +76,8 @@ namespace spero::parser::grammar {
 	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
 	struct op_characters : sor<one<'!'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
-		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'+'>> {};
-	struct op : seq<sor<one<'&'>, one<'!'>, two<':'>, one<':'>, eps>, plus<op_characters>, ig_s> {};
+		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'+'>, one<'~'>> {};
+	struct op : seq<sor<one<'&'>, one<'~'>, one<'!'>, two<':'>, one<':'>, eps>, plus<op_characters>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
 	struct name_eps : seq<eps> {};
@@ -126,7 +126,7 @@ namespace spero::parser::grammar {
 	//
 	// anexpr = expr / keyword
 	// antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
-	struct unary : sor<one<'&'>, one<'!'>, one<'-'>> {};
+	struct unary : sor<one<'&'>, one<'!'>, one<'-'>, one<'~'>> {};
 	struct annotation : seq<one<'@'>, var, not_at<one<'!'>>, opt<tuple>> {};
 	struct global_annotation : seq<one<'@'>, disable<var>, one<'!'>, opt<tuple>> {};
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};

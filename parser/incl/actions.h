@@ -300,6 +300,7 @@ namespace spero::parser::actions {
 			if (un_c == '&') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::DEREF));
 			else if (un_c == '!') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NOT));
 			else if (un_c == '-') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::MINUS));
+			else if (un_c == '~') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::RESERVED));
 			else s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
 		}
 	};

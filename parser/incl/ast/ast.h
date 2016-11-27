@@ -39,7 +39,7 @@ namespace spero::compiler::ast {
 	BETTER_ENUM(RelationType, char, IMPLS, NOT_IMPLS, SUBTYPE, SUPERTYPE, NA);
 	BETTER_ENUM(VisibilityType, char, PUBLIC, PROTECTED, PRIVATE, STATIC);
 	BETTER_ENUM(BindingType, char, TYPE, VARIABLE, OPERATOR);
-	BETTER_ENUM(UnaryType, char, DEREF, NOT, MINUS, NA);
+	BETTER_ENUM(UnaryType, char, DEREF, NOT, MINUS, RESERVED, NA);
 	struct Annotation;
 
 
