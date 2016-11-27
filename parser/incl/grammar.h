@@ -11,7 +11,7 @@ namespace spero::parser::grammar {
 	// Forward Declarations
 	struct array; struct expr; struct scope; struct atom; struct pattern;
 	struct var_pattern; struct valexpr; struct dot_ctrl; struct inf_fn_type;
-	struct mut_type;
+	struct mut_type; struct con_tuple;
 
 	// Ignore Characters
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
@@ -112,7 +112,7 @@ namespace spero::parser::grammar {
 	// Language Atoms
 	//
 	struct anon_sep : seq<pstr(":::")> {};
-	struct anon_type : seq<anon_sep, ig_s, opt<tuple>, scope> {};
+	struct anon_type : seq<anon_sep, ig_s, opt<con_tuple>, scope> {};
 	//struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};
 	struct scope : seq<obrace, star<expr>, cbrace> {};
 	struct wait_stmt : seq<k_wait, valexpr> {};
@@ -152,7 +152,9 @@ namespace spero::parser::grammar {
 	// Assignment Grammar
 	//
 	struct adt_con : seq<typ, opt<type_tuple>, ig_s> {};
-	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<tuple, disable<adt_con>, eps>> {};
+	struct named_arg : seq<var, ig_s, opt<inf>> {};
+	struct con_tuple : seq<oparen, opt<sequ<named_arg>>, cparen> {};
+	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<con_tuple, disable<adt_con>, eps>> {};
 	struct var_tuple : seq<oparen, opt<sequ<var_pattern>>, cparen> {};
 	struct var_pattern : sor<var, op, var_tuple> {};
 	struct var_type : seq<typ> {};

@@ -23,6 +23,7 @@ TODO:
    re-enable "::" syntax for anonymous types
      changed to ":::" due to interference with type inference
      note: 'action<inf>' isn't triggered with "::"
+	 could remove the optional tuple (this would allow me to remove the ast_seperator too)
    fix the annotation system so that global annotations aren't assigned to statements
    profile parser performance
 
@@ -30,7 +31,6 @@ TODO:
    add in operator precedence
      first determine operator precedence
 	   scala uses the first character in the operator (https://github.com/ghik/opinionated-scala/wiki/Methods-and-operators)
-   rework constructors to be more restrictive
 
  prettyPrinting improvements:
    differentiate Array/Block/Tuple more

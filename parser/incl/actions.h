@@ -580,6 +580,29 @@ namespace spero::parser::actions {
 			// stack: Adt
 		}
 	};
+	template<> struct action<grammar::named_arg> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: var type?
+			auto type = util::pop<ast::Type>(s);
+			auto var = util::pop<ast::BasicBinding>(s);
+
+			s.emplace_back(std::make_unique<ast::Variable>(std::make_unique<ast::QualifiedBinding>(std::move(var))));
+			util::view_as<ast::ValExpr>(s.back())->type = std::move(type);
+			// stack: variable
+		}
+	};
+	template<> struct action<grammar::con_tuple> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: sentinel variable*
+			std::deque<ptr<ast::ValExpr>> vals;
+			while (util::at_node<ast::Variable>(s))
+				vals.push_front(util::pop<ast::ValExpr>(s));
+
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::Tuple>(std::move(vals)));
+			// stack: tuple
+		}
+	};
 	template<> struct action<grammar::rhs_inf> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: binding
