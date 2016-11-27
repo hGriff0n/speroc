@@ -10,7 +10,7 @@ namespace spero::parser::grammar {
 
 	// Forward Declarations
 	struct array; struct expr; struct scope; struct atom; struct pattern;
-	struct var_pattern; struct valexpr; struct dot_ctrl; struct inf_fn_type;
+	struct var_pattern; struct valexpr; struct fn_dot_ctrl; struct inf_fn_type;
 	struct mut_type; struct con_tuple;
 
 	// Ignore Characters
@@ -103,7 +103,7 @@ namespace spero::parser::grammar {
 	struct tuple : seq<oparen, opt<sequ<valexpr>>, cparen> {};
 	struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};
 	struct fn_rettype : if_then<at<mut_type>, seq<mut_type, ig_s, scope>> {};
-	struct fn_forward : seq<one<'.'>, sor<dot_ctrl, valexpr>> {};
+	struct fn_forward : seq<one<'.'>, sor<fn_dot_ctrl, valexpr>> {};
 	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};
 	struct fn_or_tuple : sor<fn_forward, seq<tuple, opt<fn_def>>> {};
 	struct lit : sor<hex, bin, num, str, character, b_false, b_true, array, fn_or_tuple> {};
@@ -179,10 +179,10 @@ namespace spero::parser::grammar {
 	//
 	struct if_core : seq<k_if, valexpr, opt<k_do>, valexpr> {};
 	struct if_dot_core : seq<k_if, valexpr> {};
+	struct fn_if_core : seq<k_if, valexpr> {};
 	struct elsif_rule : seq<k_elsif, valexpr, opt<k_do>, valexpr> {};
 	struct else_rule : seq<k_else, valexpr> {};
 	struct elses : seq<star<elsif_rule>, opt<else_rule>> {};
-	struct dot_if : seq<if_dot_core, elses> {};
 	struct branch : seq<if_core, elses> {};
 	struct loop : seq<k_loop, valexpr> {};
 	struct while_core : seq<k_while, valexpr> {};
@@ -197,7 +197,15 @@ namespace spero::parser::grammar {
 	struct dot_for : seq<for_core> {};
 	struct dot_jmp : seq<jump_keys> {};
 	struct dot_loop : seq<k_loop> {};
+	struct dot_if : seq<if_dot_core, elses> {};
 	struct dot_ctrl : sor<dot_loop, dot_jmp, dot_while, dot_match, dot_for, dot_if> {};
+	struct fn_dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};
+	struct fn_dot_while : seq<while_core> {};
+	struct fn_dot_for : seq<for_core> {};
+	struct fn_dot_jmp : seq<jump_keys> {};
+	struct fn_dot_loop : seq<k_loop> {};
+	struct fn_dot_if : seq<fn_if_core, elses> {};
+	struct fn_dot_ctrl : sor<fn_dot_loop, fn_dot_jmp, fn_dot_while, fn_dot_match, fn_dot_for, fn_dot_if> {};
 
 	//
 	// Language Expressions

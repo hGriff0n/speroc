@@ -124,4 +124,13 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
+
+	/*
+	 * ast::Future
+	 */
+	Future::Future(bool f) : forwarded_from_fn{ f } {}
+	OutStream& Future::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.FutureValue (fwd=" << forwarded_from_fn << ')';
+	}
+
 }

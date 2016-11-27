@@ -1,8 +1,8 @@
 
 todo:
- add in error recognition to the parser
  add in operator precedence rules
- fix dot_ctrl operations in function forwarding
+   use scala rules for now (might just restrict precedence to language operators, all other are lowest)
+ add in error recognition to the parser
  update documentation
  work on blog posts
   

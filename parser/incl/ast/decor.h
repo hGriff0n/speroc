@@ -185,4 +185,22 @@ namespace spero::compiler::ast {
 		Adt(ptr<BasicBinding>, ptr<TupleType>);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
+
+
+	/*
+	 * Represents a value which will be provided in future analysis stages
+	 *   mainly used for function forwarding to dot_control structures
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Expors:
+	 *   forwarded_from_fn - flag for whether the Future was created to represent a forwarded argument
+	 */
+	struct Future : ValExpr {
+		bool forwarded_from_fn;
+
+		Future(bool);
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
+	};
+
 }

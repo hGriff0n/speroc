@@ -675,7 +675,7 @@ namespace spero::parser::actions {
 			// stack: body token test
 			auto iter = std::rbegin(s);
 			std::iter_swap(iter + 2, iter + 1);
-			std::iter_swap(iter, iter + 1);
+			std::iter_swap(iter + 1, iter);
 			action<grammar::if_core>::apply(in, s);
 			// stack: branch
 		}
@@ -699,6 +699,14 @@ namespace spero::parser::actions {
 			// stack: branch
 		}
 	};
+	template<> struct action<grammar::fn_if_core> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token test
+			s.emplace_back(std::make_unique<ast::Future>(true));
+			action<grammar::if_core>::apply(in, s);
+			// stack: branch
+		}
+	};
 	template<> struct action<grammar::loop> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: token body
@@ -713,6 +721,14 @@ namespace spero::parser::actions {
 			// stack: body token
 			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
 			action<grammar::loop>::apply(in, s);
+			// stack: loop
+		}
+	};
+	template<> struct action<grammar::fn_dot_loop> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token
+			s.pop_back();
+			s.emplace_back(std::make_unique<ast::Loop>(std::make_unique<ast::Future>(true)));
 			// stack: loop
 		}
 	};
@@ -736,6 +752,14 @@ namespace spero::parser::actions {
 			// stack: while
 		}
 	};
+	template<> struct action<grammar::fn_dot_while> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token test
+			s.emplace_back(std::make_unique<ast::Future>(true));
+			action<grammar::while_l>::apply(in, s);
+			// stack: while
+		}
+	};
 	template<> struct action<grammar::for_l> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: token pattern generator body
@@ -751,9 +775,17 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: body token pattern generator
 			auto iter = std::rbegin(s);
-			std::iter_swap(iter + 3, iter + 2);
-			std::iter_swap(iter + 1, iter + 2);
-			std::iter_swap(iter + 1, iter);
+			std::iter_swap(iter + 3, iter + 2);			// stack: token body pattern generator
+			std::iter_swap(iter + 2, iter + 1);			// stack: token pattern body generator
+			std::iter_swap(iter + 1, iter);				// stack: token pattern generator body
+			action<grammar::for_l>::apply(in, s);
+			// stack: for
+		}
+	};
+	template<> struct action<grammar::fn_dot_for> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token pattern generator
+			s.emplace_back(std::make_unique<ast::Future>(true));
 			action<grammar::for_l>::apply(in, s);
 			// stack: for
 		}
@@ -788,6 +820,14 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: expr token
 			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+			action<grammar::jumps>::apply(in, s);
+			// stack: jump
+		}
+	};
+	template<> struct action<grammar::fn_dot_jmp> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token
+			s.emplace_back(std::make_unique<ast::Future>(true));
 			action<grammar::jumps>::apply(in, s);
 			// stack: jump
 		}
@@ -842,6 +882,23 @@ namespace spero::parser::actions {
 
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::Match>(util::pop<ast::ValExpr>(s), std::move(cases)));
+			// stack: match
+		}
+	};
+	template<> struct action<grammar::fn_dot_match> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: token sentinel case+
+			std::deque<ptr<ast::Case>> cases;
+			while (util::at_node<ast::Case>(s))
+				cases.push_front(util::pop<ast::Case>(s));
+
+			s.pop_back();
+
+			// stack: expr token
+
+			s.pop_back();
+			auto expr = std::make_unique<ast::Future>(true);
+			s.emplace_back(std::make_unique<ast::Match>(std::move(expr), std::move(cases)));
 			// stack: match
 		}
 	};
