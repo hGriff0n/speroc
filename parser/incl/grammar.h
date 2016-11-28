@@ -77,7 +77,7 @@ namespace spero::parser::grammar {
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
 	struct op_characters : sor<one<'!'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
 		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'+'>, one<'~'>> {};
-	struct op : seq<sor<one<'&'>, one<'~'>, one<'!'>, two<':'>, one<':'>, eps>, plus<op_characters>, ig_s> {};
+	struct op : seq<sor<one<'&'>, one<'~'>, one<'!'>, two<':'>, one<':'>, pstr("->"), eps>, plus<op_characters>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
 	struct name_eps : seq<eps> {};
@@ -251,7 +251,7 @@ namespace spero::parser::grammar {
 	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
 	struct stmt : seq<star<annotation, ig_s>, sor<global_annotation, mod_dec, expr>> {};
-	struct program : seq<ig_s, star<stmt>, eof> {};
+	struct program : seq<ig_s, star<stmt>, eolf> {};
 
 	#undef key
 	#undef pstr

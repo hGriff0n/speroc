@@ -1,8 +1,8 @@
 
 todo:
+ work on blog posts
  add in error recognition to the parser
  update documentation
- work on blog posts
   
 "match (3, 4) { x, y -> 4 (y) -> 3 }"
    "4 (y)" interpreted as a function call "->" should be an error

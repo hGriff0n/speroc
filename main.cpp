@@ -47,15 +47,18 @@ int main(int argc, const char* argv[]) {
 	while (getMultiline(std::cin, input)) {
 		if (input == ":q") break;
 
+		bool succ;
 		spero::parser::Stack res;
 
 		if (input.substr(0, 2) == ":l") {
-			res = parser::parseFile(input.substr(3));
+			std::tie(succ, res) = parser::parseFile(input.substr(3));
 			//res = parser::parse(findFile(input.substr(3), "spr", "spqr"));
 
-		} else
-			res = parser::parse(input);
+		} else {
+			std::tie(succ, res) = parser::parse(input);
+		}
 
+		std::cout << "Parsing Succeeded: " << (succ ? "true" : "false") << '\n';
 		for (auto&& node : res)
 			if (node) node->prettyPrint(std::cout, 0) << "\n";
 			else std::cout << "nullptr\n";

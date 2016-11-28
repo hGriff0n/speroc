@@ -3,14 +3,14 @@
 #include "pegtl/analyze.hh"
 
 namespace spero::parser {
-	Stack parse(std::string input) {
+	std::tuple<bool, Stack> parse(std::string input) {
 		// Setup parsing state
 
 		Stack s{};
 		s.emplace_back(compiler::ast::Sentinel{});
 
 		// Perform parse run
-		pegtl::parse_string<grammar::program, actions::action, control::control>(input, "me", s);
+		auto succ = pegtl::parse_string<grammar::program, actions::action, control::control>(input, "me", s);
 
 		// Remove Sentinel nodes (currently only removes the first, any others are parser errors)
 		s.pop_front();
@@ -19,16 +19,16 @@ namespace spero::parser {
 		if (s.size() == 0) s.emplace_back(std::make_unique<compiler::ast::Ast>());
 
 		// Return completed ast (for now ast stack)
-		return std::move(s);
+		return std::make_tuple(succ, std::move(s));
 	}
 
-	Stack parseFile(std::string file) {
+	std::tuple<bool, Stack> parseFile(std::string file) {
 		// Setup parsing state
 		Stack s{};
 		s.emplace_back(compiler::ast::Sentinel{});
 
 		// Perform parse run
-		pegtl::file_parser{ file }.parse<grammar::program, actions::action, control::control>(s);
+		auto succ = pegtl::file_parser{ file }.parse<grammar::program, actions::action, control::control>(s);
 
 		// Remove Sentinel nodes (currently only removes the first, any others are parser errors)
 		s.pop_front();
@@ -37,7 +37,7 @@ namespace spero::parser {
 		if (s.size() == 0) s.emplace_back(std::make_unique<compiler::ast::Ast>());
 
 		// Return completed ast (for now ast stack)
-		return std::move(s);
+		return std::make_tuple(succ, std::move(s));
 	}
 
 	size_t num_issues() {
