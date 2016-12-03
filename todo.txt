@@ -32,6 +32,8 @@ todo:
      note: 'action<inf>' isn't triggered with "::"
 	 could remove the optional tuple (this would allow me to remove the ast_seperator too)
    fncall node may have too much responsibility
+   maybe change translation of operator calls
+     need to check for definitions within the type body first
    need to determine a distinction between semantic and syntactic typing in the ast
      depends in large part based on how I'm representing types internally
 

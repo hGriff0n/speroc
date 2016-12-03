@@ -135,7 +135,6 @@ namespace spero::compiler::ast {
 	 */
 	struct ValExpr : Stmt {
 		bool is_mut = false;
-		//UnaryType unop;
 		ptr<Type> type;
 
 		ValExpr();
@@ -149,6 +148,7 @@ namespace spero::compiler::ast {
 	 * [deprecated] - meant to be used to resolve anon_type - type_tuple clases
 	 */
 	//struct AnonTypeSeperator : Ast {};
+
 }
 
 namespace spero::parser {

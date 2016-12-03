@@ -9,7 +9,6 @@ namespace spero::compiler::ast {
 	 */
 	Tuple::Tuple(std::deque<ptr<ValExpr>> vals) : Sequence{ std::move(vals) } {}
 	OutStream& Tuple::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		// TODO: Need to differentiate Tuple, Array, and Block in prettyPrinting
 		s << std::string(buf, ' ') << context << "ast.Tuple" << exprs.size() << " (";
 		for (auto&& e : exprs)
 			e->prettyPrint(s << '\n', buf + 2) << ",";

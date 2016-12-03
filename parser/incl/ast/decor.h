@@ -40,8 +40,6 @@ namespace spero::compiler::ast {
 	 *   global - flag for whether the annotation applies to the compilation environment or context
 	 *   name   - binding that the annotation is associated to
 	 *   args   - arguments provided to the annotation
-	 *
-	 * TODO: Split into global and local annotation classes (Global annotations are statements themselves)
 	 */
 	struct Annotation : Ast {
 		ptr<BasicBinding> name;
