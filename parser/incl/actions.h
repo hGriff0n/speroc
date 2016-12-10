@@ -29,6 +29,7 @@ namespace spero::parser::actions {
 	SENTINEL(obrace);
 	SENTINEL(obrack);
 	SENTINEL(oparen);
+	SENTINEL(range_op);
 
 
 	// Literals
@@ -989,6 +990,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: expr, expr
 			auto stop = util::pop<ast::ValExpr>(s);
+			s.pop_back();
 			auto start = util::pop<ast::ValExpr>(s);
 			s.emplace_back(std::make_unique<ast::Range>(std::move(start), std::move(stop)));
 			// stack: range

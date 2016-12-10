@@ -70,4 +70,13 @@ namespace spero::compiler::ast {
 		return Stmt::prettyPrint(s, buf);
 	}
 
+
+	/*
+	 * ast::Error
+	 */
+	/*Error::Error(std::string msg) : msg{ std::move(msg) } {}
+	OutStream& Error::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		return s << std::string(buf, ' ') << context << "ast.Error " << msg;
+	}*/
+
 }

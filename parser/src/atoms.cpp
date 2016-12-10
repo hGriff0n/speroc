@@ -81,12 +81,12 @@ namespace spero::compiler::ast {
 	 */
 	Range::Range(ptr<ValExpr> start, ptr<ValExpr> stop) : start{ std::move(start) }, stop{ std::move(stop) }, step{ nullptr } {}
 	OutStream& Range::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.Range (";
+		s << std::string(buf, ' ') << context << (stop ? "ast.Range (" : "ast.InfRange (");
 		ValExpr::prettyPrint(s, buf);
 
 		start->prettyPrint(s << '\n', buf + 2, "start=");
 		if (step) step->prettyPrint(s << '\n', buf + 2, "step=");
-		stop->prettyPrint(s << '\n', buf + 2, "stop=");
+		if (stop) stop->prettyPrint(s << '\n', buf + 2, "stop=");
 		return s;
 	}
 

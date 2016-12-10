@@ -1,22 +1,19 @@
 
 todo:
  work on blog posts
+ add conditional match syntax
+ add operator currying syntax
  add in error recognition to the parser
  update documentation
-  
-"match (3, 4) { x, y -> 4 (y) -> 3 }"
-   "4 (y)" interpreted as a function call "->" should be an error
 
  language questions:
    update documentation to reflect the current language
      need to delve back into the more "design" parts of the language
-   add ability to restrict match patterns
-     "x :: Int" would only match int values, "x" would match anything
-	 need way to match on conditions (ala "x if x < 3 -> ..." )
    figure out how concurrency is going to be handled
    should a yield without a wait equate to a straight return ???
    determine sugaring operations
       behavior for '()' operations
+	    Indexable[T] -> get(Size), set(Size, T)
 	    scala uses apply and update
    figure out the translation of operators fully
      especially for '&' and '=', given they have special meanings in some conditions
@@ -25,6 +22,8 @@ todo:
 	     if no matching definition "+=" for can be found
 		   statement translates to "l = +(l, r)"
 		 otherwise translates to "+=(l, r)"
+	  might be changing the semantics of pointers so '&' aren't needed
+   look at changing the semantics of pointers to java semantics (ie. reference)
 
  parser improvements:
    re-enable "::" syntax for anonymous types
@@ -32,6 +31,8 @@ todo:
      note: 'action<inf>' isn't triggered with "::"
 	 could remove the optional tuple (this would allow me to remove the ast_seperator too)
    fncall node may have too much responsibility
+   think of splitting Range into Range and InfRange nodes
+     just need to be sure that infinite ranges can be easily noted
    maybe change translation of operator calls
      need to check for definitions within the type body first
    need to determine a distinction between semantic and syntactic typing in the ast

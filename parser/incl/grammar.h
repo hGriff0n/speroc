@@ -243,7 +243,8 @@ namespace spero::parser::grammar {
 	struct index : seq<star<unary>, fncall, star<_index_>, un_eps, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};
 	//struct range : seq<opt<two<','>, ig_s, index>, two<'.'>, ig_s, index> {};
 		// this grammar interferes with the sequence grammar on the ',' causing duplicates to exist
-	struct _range_ : seq<two<'.'>, ig_s, index> {};
+	struct range_op : two<'.'> {};
+	struct _range_ : seq<range_op, opt<index>> {};
 	struct range : seq<index, opt<_range_>> {};
 	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps> {};
 	struct valexpr : seq<opt<k_mut>, sor<control, binary>, ig_s, opt<one<';'>, ig_s>> {};
