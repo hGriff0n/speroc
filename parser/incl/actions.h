@@ -926,13 +926,15 @@ namespace spero::parser::actions {
 	INHERIT(op_prec_7, op_prec_1);
 	template<> struct action<grammar::_binary_prec_1> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: expr op expr -> op expr expr
-			std::iter_swap(std::rbegin(s) + 2, std::rbegin(s) + 1);
-
-			// push arg tuple onto the stack
+			// stack: expr op expr -> op expr expr | expr op
 			std::deque<ptr<ast::ValExpr>> args;
+			bool not_curried = util::is_type<ast::ValExpr>(s.back());
+
+			std::iter_swap(std::rbegin(s) + 1 + not_curried, std::rbegin(s) + not_curried);
+
 			args.push_front(util::pop<ast::ValExpr>(s));
-			args.push_front(util::pop<ast::ValExpr>(s));
+			if (not_curried) args.push_front(util::pop<ast::ValExpr>(s));
+
 			s.emplace_back(std::make_unique<ast::Tuple>(std::move(args)));
 
 			// stack: op tuple

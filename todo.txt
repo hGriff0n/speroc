@@ -2,8 +2,12 @@
 todo:
  work on blog posts
  add operator currying syntax
+   "2 +" is implemented, albeit with some error parses
+   "+ 2" is not, and may be difficult in the general case (too greedy)
  add in error recognition to the parser
  update documentation
+
+ "2 ++ -" leaves a token on the stack from matching the unary '-'
 
  language questions:
    update documentation to reflect the current language
@@ -22,6 +26,7 @@ todo:
 		   statement translates to "l = +(l, r)"
 		 otherwise translates to "+=(l, r)"
 	  might be changing the semantics of pointers so '&' aren't needed
+             I'll have to change operator rules to account for this a bit
    look at changing the semantics of pointers to java semantics (ie. reference)
 
  parser improvements:
