@@ -191,6 +191,8 @@ namespace spero::parser::grammar {
 	struct for_l : seq<for_core, opt<k_do>, valexpr> {};
 	struct jumps : seq<jump_keys, opt<valexpr>> {};
 	struct case_stmt : seq<sequ<seq<pattern, ig_s>>, pstr("->"), ig_s, valexpr> {};
+	struct case_if : seq<k_if, valexpr> {};
+	struct case_stmt : seq<sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("->"), ig_s, valexpr> {};
 	struct match_expr : seq<k_match, fncall, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_while : seq<while_core> {};
@@ -216,7 +218,7 @@ namespace spero::parser::grammar {
 	struct op_prec_2 : seq<opt<one<'&'>>, sor<one<'/'>, one<'%'>, one<'*'>>, star<op_characters>> {};
 	struct _binary_prec_2 : seq<op_prec_2, ig_s, binary_prec_1> {};
 	struct binary_prec_2 : seq<binary_prec_1, star<_binary_prec_2>> {};
-	struct op_prec_3 : seq<opt<one<'&'>>, sor<one<'+'>, one<'-'>>, star<op_characters>> {};
+	struct op_prec_3 : if_then_else<pstr("->"), plus<op_characters>, seq<opt<one<'&'>>, sor<one<'+'>, one<'-'>>, star<op_characters>>> {};
 	struct _binary_prec_3 : seq<op_prec_3, ig_s, binary_prec_2> {};
 	struct binary_prec_3 : seq<binary_prec_2, star<_binary_prec_3>> {};
 	struct op_prec_4 : seq<opt<one<'&'>>, sor<seq<one<'!'>, plus<op_characters>>, seq<one<'='>, star<op_characters>>>> {};

@@ -67,11 +67,11 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Case
 	 */
-	Case::Case(ptr<ValExpr> e) : Case{ nullptr, std::move(e) } {}
-	Case::Case(ptr<PTuple> vs, ptr<ValExpr> e) : vars{ std::move(vs) }, expr{ std::move(e) } {}
+	Case::Case(ptr<PTuple> vs, ptr<ValExpr> e, ptr<ValExpr> if_g) : vars{ std::move(vs) }, expr{ std::move(e) }, if_guard{ std::move(if_g) } {}
 	OutStream& Case::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Case";
 		vars->prettyPrint(s << '\n', buf + 2, "pattern=");
+		if (if_guard) if_guard->prettyPrint(s << '\n', buf + 2, "if=");
 		return expr->prettyPrint(s << '\n', buf + 2, "expr=");
 	}
 

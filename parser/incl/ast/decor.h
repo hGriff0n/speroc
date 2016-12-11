@@ -114,9 +114,9 @@ namespace spero::compiler::ast {
 	struct Case : ValExpr {
 		ptr<PTuple> vars;
 		ptr<ValExpr> expr;
+		ptr<ValExpr> if_guard;
 
-		Case(ptr<ValExpr>);
-		Case(ptr<PTuple>, ptr<ValExpr>);
+		Case(ptr<PTuple>, ptr<ValExpr>, ptr<ValExpr>);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 

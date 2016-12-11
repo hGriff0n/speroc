@@ -1,7 +1,6 @@
 
 todo:
  work on blog posts
- add conditional match syntax
  add operator currying syntax
  add in error recognition to the parser
  update documentation
