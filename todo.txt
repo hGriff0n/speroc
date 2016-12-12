@@ -1,13 +1,20 @@
 
 todo:
  work on blog posts
- add operator currying syntax
-   "2 +" is implemented, albeit with some error parses
-   "+ 2" is not, and may be difficult in the general case (too greedy)
- add in error recognition to the parser
+ work on solution to "/ 2" currying ("./2")
+   see if I want to extend this to indexing (ie. "3.+ 4")
+   see if I can further improve the solution
  update documentation
+ add location data to ast nodes
+ add in error recognition to the parser
 
- "2 ++ -" leaves a token on the stack from matching the unary '-'
+ "-" is interpreted as a unary way to greedily
+   "-" and "2 ++ -" fail to parse
+   "-(3, 4)" is a UnaryOp node instead of a FnCall
+     this could possibly be resolved in analysis though
+
+ variables don't allow trailing '!' or '?'
+   [2, 4, 6].map!(/ 2) fails
 
  language questions:
    update documentation to reflect the current language
@@ -35,8 +42,6 @@ todo:
      note: 'action<inf>' isn't triggered with "::"
 	 could remove the optional tuple (this would allow me to remove the ast_seperator too)
    fncall node may have too much responsibility
-   think of splitting Range into Range and InfRange nodes
-     just need to be sure that infinite ranges can be easily noted
    maybe change translation of operator calls
      need to check for definitions within the type body first
    need to determine a distinction between semantic and syntactic typing in the ast
@@ -56,7 +61,3 @@ Fix Spero
 Fixes Waiting for Other Features
   In-place modification of containers using for loops/iterators
     Waiting for: Implementation of standard containers and iterators
-
-
-Things I've Learned
-  Alt-click is vs-codes way of ctrl-click in sublime

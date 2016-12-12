@@ -106,6 +106,36 @@ namespace spero::parser::actions {
 			// stack: fnbody
 		}
 	};
+	// Moved here from above fneps action to enable op_forward action
+	template<> struct action<grammar::fnseq> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: expr, array?, anon_type?, tuple
+			auto args = util::pop<ast::Tuple>(s);
+			auto type = util::pop<ast::TypeExtension>(s);
+			auto inst = util::pop<ast::Array>(s);
+			auto caller = util::pop<ast::Ast>(s);
+
+			s.emplace_back(std::make_unique<ast::FnCall>(std::move(caller), std::move(type), std::move(args), std::move(inst)));
+			// stack: fncall
+		}
+	};
+	template<> struct action<grammar::op_forward> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			// stack: bind expr
+			if (!util::is_type<ast::Tuple>(s.back())) {
+				std::deque<ptr<ast::ValExpr>> args;
+				args.push_back(std::make_unique<ast::Future>(true));
+				args.push_back(std::move(util::pop<ast::ValExpr>(s)));
+
+				s.emplace_back(std::make_unique<ast::Tuple>(std::move(args)));
+
+			} else
+				util::view_as<ast::Tuple>(s.back())->exprs.push_front(std::make_unique<ast::Future>(true));
+
+			// stack: op tuple
+			action<grammar::fnseq>::apply(in, s);
+		}
+	};
 	template<> struct action<grammar::fn_forward> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: expr
@@ -253,18 +283,6 @@ namespace spero::parser::actions {
 
 			s.emplace_back(std::make_unique<ast::Wait>(std::move(expr)));
 			// stack: wait
-		}
-	};
-	template<> struct action<grammar::fnseq> {
-		static void apply(const pegtl::action_input& in, Stack& s) {
-			// stack: expr, array?, anon_type?, tuple
-			auto args = util::pop<ast::Tuple>(s);
-			auto type = util::pop<ast::TypeExtension>(s);
-			auto inst = util::pop<ast::Array>(s);
-			auto caller = util::pop<ast::Ast>(s);
-
-			s.emplace_back(std::make_unique<ast::FnCall>(std::move(caller), std::move(type), std::move(args), std::move(inst)));
-			// stack: fncall
 		}
 	};
 	template<> struct action<grammar::fneps> {
@@ -955,6 +973,7 @@ namespace spero::parser::actions {
 			auto expr = util::pop<ast::ValExpr>(s);
 			if (util::at_node<ast::Index>(s))
 				util::view_as<ast::Index>(s.back())->elems.push_back(std::move(expr));
+
 			else {
 				auto expr2 = util::pop<ast::ValExpr>(s);
 				s.emplace_back(std::make_unique<ast::Index>(std::move(expr2), std::move(expr)));

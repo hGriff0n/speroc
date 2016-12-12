@@ -77,7 +77,7 @@ namespace spero::parser::grammar {
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
 	struct op_characters : sor<one<'!'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
 		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'+'>, one<'~'>> {};
-	struct op : seq<sor<one<'&'>, one<'~'>, one<'!'>, two<':'>, one<':'>, pstr("->"), eps>, plus<op_characters>, ig_s> {};
+	struct op : seq<sor<one<'&'>, one<'~'>, one<'!'>, pstr("->"), eps>, plus<op_characters>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
 	struct name_eps : seq<eps> {};
@@ -103,7 +103,8 @@ namespace spero::parser::grammar {
 	struct tuple : seq<oparen, opt<sequ<valexpr>>, cparen> {};
 	struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};
 	struct fn_rettype : if_then<at<mut_type>, seq<mut_type, ig_s, scope>> {};
-	struct fn_forward : seq<one<'.'>, sor<fn_dot_ctrl, valexpr>> {};
+	struct op_forward : seq<op, opt<valexpr>> {};
+	struct fn_forward : seq<one<'.'>, sor<fn_dot_ctrl, op_forward, valexpr>> {};
 	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};
 	struct fn_or_tuple : sor<fn_forward, seq<tuple, opt<fn_def>>> {};
 	struct lit : sor<hex, bin, num, str, character, b_false, b_true, array, fn_or_tuple> {};
