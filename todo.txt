@@ -1,20 +1,15 @@
 
 todo:
  work on blog posts
- work on solution to "/ 2" currying ("./2")
-   see if I want to extend this to indexing (ie. "3.+ 4")
-   see if I can further improve the solution
  update documentation
  add location data to ast nodes
+   need a consistent way to construct this location struct
  add in error recognition to the parser
 
  "-" is interpreted as a unary way to greedily
    "-" and "2 ++ -" fail to parse
    "-(3, 4)" is a UnaryOp node instead of a FnCall
      this could possibly be resolved in analysis though
-
- variables don't allow trailing '!' or '?'
-   [2, 4, 6].map!(/ 2) fails
 
  language questions:
    update documentation to reflect the current language
@@ -35,6 +30,9 @@ todo:
 	  might be changing the semantics of pointers so '&' aren't needed
              I'll have to change operator rules to account for this a bit
    look at changing the semantics of pointers to java semantics (ie. reference)
+   look into possibly allowing operators to not require parenthesis in index
+      allow "3.+ 4" instead of "3.+(4)"
+	    difficult to parse though
 
  parser improvements:
    re-enable "::" syntax for anonymous types
@@ -46,6 +44,7 @@ todo:
      need to check for definitions within the type body first
    need to determine a distinction between semantic and syntactic typing in the ast
      depends in large part based on how I'm representing types internally
+   determine whether I really need the "Future" node
 
  prettyPrinting improvements:
    "3 :: Array[Int]" has a wierd output buffering

@@ -16,14 +16,16 @@ namespace spero::compiler {
 	// Bring in dependency on iostream (TODO: Find a better way to handle this)
 	using OutStream = std::ostream;
 
-	/*
-	* Templates to check if a variant could hold a T
-	*/
-	template<class T, class V>
-	struct can_hold : std::is_same<T, V> {};
 
+	/*
+	 * Templates to check if a variant could hold a T
+	 */
+	template<class T, class V>
+	struct can_hold : std::is_convertible<T, V> {};
 	template<class T, class... V>
-	struct can_hold<T, std::variant<V...>> : std::disjunction<std::is_same<T, V>...> {};
+	struct can_hold<T, std::variant<V...>> : std::disjunction<can_hold<T, V>...> {};
+	template<class T, class V>
+	constexpr bool can_hold_v = can_hold<T, V>::value;
 }
 
 namespace spero::compiler::ast {
@@ -46,11 +48,19 @@ namespace spero::compiler::ast {
 	/*
 	 * Base class for all ast nodes
 	 *
+	 * TODO: Figure out what needs to go in the location structure
+	 *
 	 * Exports:
 	 *   pretty_print - function to control pretty printing of ast nodes
+	 *   loc - structure that holds the location data for the node
 	 */
 	struct Ast {
 		Ast();
+
+		// TODO: Maybe refactor this into a named class (I don't know name or location atm)
+		struct {
+
+		} loc;
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
@@ -68,15 +78,8 @@ namespace spero::compiler::ast {
 		using token_type = std::variant<KeywordType, PtrStyling, VarianceType, RelationType, VisibilityType, BindingType, UnaryType>;
 		token_type value;
 
-		//template<class T, class = std::enable_if_t<can_hold<T, token_type>::value>>
-		//Token(const T val) : value{ val } {}
-		Token(KeywordType);
-		Token(PtrStyling);
-		Token(VarianceType);
-		Token(RelationType);
-		Token(VisibilityType);
-		Token(BindingType);
-		Token(UnaryType);
+		template<class T, class = std::enable_if_t<can_hold_v<T, token_type>>>
+		Token(T val) : value{ val } {}
 
 		OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};

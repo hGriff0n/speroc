@@ -122,6 +122,7 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::op_forward> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: bind expr
+
 			if (!util::is_type<ast::Tuple>(s.back())) {
 				std::deque<ptr<ast::ValExpr>> args;
 				args.push_back(std::make_unique<ast::Future>(true));

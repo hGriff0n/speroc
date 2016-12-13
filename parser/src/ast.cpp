@@ -16,13 +16,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Token
 	 */
-	Token::Token(KeywordType t) : value{ t } {}
-	Token::Token(PtrStyling t) : value{ t } {}
-	Token::Token(VarianceType t) : value{ t } {}
-	Token::Token(RelationType t) : value{ t } {}
-	Token::Token(VisibilityType t) : value{ t } {}
-	Token::Token(BindingType t) : value{ t } {}
-	Token::Token(UnaryType t) : value{ t } {}
+	
 	OutStream& Token::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Token ";
 

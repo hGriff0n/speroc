@@ -73,11 +73,11 @@ namespace spero::parser::grammar {
 	//
 	// Language Bindings
 	//
-	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
+	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>, sor<one<'!'>, one<'?'>, eps>> {};
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};
 	struct op_characters : sor<one<'!'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,
 		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'+'>, one<'~'>> {};
-	struct op : seq<sor<one<'&'>, one<'~'>, one<'!'>, pstr("->"), eps>, plus<op_characters>, ig_s> {};
+	struct op : seq<sor<one<'&'>, one<'~'>, one<'!'>, one<'?'>, pstr("->"), eps>, plus<op_characters>, ig_s> {};
 	struct variable : seq<var, ig_s> {};
 	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};
 	struct name_eps : seq<eps> {};
@@ -104,7 +104,7 @@ namespace spero::parser::grammar {
 	struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};
 	struct fn_rettype : if_then<at<mut_type>, seq<mut_type, ig_s, scope>> {};
 	struct op_forward : seq<op, opt<valexpr>> {};
-	struct fn_forward : seq<one<'.'>, sor<fn_dot_ctrl, op_forward, valexpr>> {};
+	struct fn_forward : seq<one<'.'>, sor<fn_dot_ctrl, op_forward, valexpr>> {};			// Don't need to anything for the valexpr case, will be handled in analysis
 	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};
 	struct fn_or_tuple : sor<fn_forward, seq<tuple, opt<fn_def>>> {};
 	struct lit : sor<hex, bin, num, str, character, b_false, b_true, array, fn_or_tuple> {};
@@ -249,7 +249,8 @@ namespace spero::parser::grammar {
 	struct _range_ : seq<range_op, opt<index>> {};
 	struct range : seq<index, opt<_range_>> {};
 	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps> {};
-	struct valexpr : seq<opt<k_mut>, sor<control, binary>, ig_s, opt<one<';'>, ig_s>> {};
+	//struct valexpr : seq<sor<k_mut, op, eps>, sor<control, binary>, ig_s, opt<one<';'>, ig_s>> {};
+	struct valexpr : seq<sor<k_mut, eps>, sor<control, binary>, ig_s, opt<one<';'>, ig_s>> {};
 	struct mod_use : seq<k_use, star<sor<use_one, use_any>, one<':'>>, use_final> {};
 	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};

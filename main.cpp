@@ -11,7 +11,7 @@
 #include "cmd_line.h"
 #include "util/utils.h"
 
-// Big performance hiy
+// Big performance hit
 //const size_t issues = spero::parser::num_issues();
 
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input (to simplify multiline repl testing)
@@ -34,6 +34,7 @@ int main(int argc, const char* argv[]) {
 	using namespace spero;
 	using namespace spero::parser;
 	//auto opts = spero::cmd::getOptions();
+	//auto [files, opts] = spero::cmd::parse();
 
 	/*
 	TODO: Features to look into using
