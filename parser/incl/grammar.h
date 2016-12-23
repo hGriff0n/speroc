@@ -150,12 +150,8 @@ namespace spero::parser::grammar {
 	struct use_final : sor<seq<use_many, opt<one<':'>, use_any>>, disable<use_any>, disable<use_one>> {};
 
 	//
-	// Assignment Grammar
+	// Patterns
 	//
-	struct adt_con : seq<typ, opt<type_tuple>, ig_s> {};
-	struct named_arg : seq<var, ig_s, opt<inf>> {};
-	struct con_tuple : seq<oparen, opt<sequ<named_arg>>, cparen> {};
-	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<con_tuple, disable<adt_con>, eps>> {};
 	struct var_tuple : seq<oparen, opt<sequ<var_pattern>>, cparen> {};
 	struct var_pattern : sor<var, op, var_tuple> {};
 	struct var_type : seq<typ> {};
@@ -166,6 +162,14 @@ namespace spero::parser::grammar {
 	struct pat_val : sor<hex, bin, num, str, character, b_false, b_true, array> {};
 	struct pat_any : seq<placeholder> {};
 	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt, pat_val> {};
+
+	//
+	// Assignment Grammar
+	//
+	struct adt_con : seq<typ, opt<type_tuple>, ig_s> {};
+	struct named_arg : seq<var, ig_s, opt<inf>> {};
+	struct con_tuple : seq<oparen, opt<sequ<named_arg>>, cparen> {};
+	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<con_tuple, disable<adt_con>, eps>> {};
 	struct assign_val : seq<one<'='>, ig_s, valexpr> {};
 	struct var_assign : seq<var_pattern, ig_s, opt<generic>, sor<seq<inf, opt<assign_val>>, assign_val>> {};
 	struct lhs_inher : seq<inf, one<'='>, ig_s> {};

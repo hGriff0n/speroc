@@ -1,7 +1,8 @@
 
 todo:
  work on blog posts
- update documentation
+ work on memory and pointers
+   work on more design questions
  add location data to ast nodes
    need a consistent way to construct this location struct
  add in error recognition to the parser
@@ -9,30 +10,30 @@ todo:
  "-" is interpreted as a unary way to greedily
    "-" and "2 ++ -" fail to parse
    "-(3, 4)" is a UnaryOp node instead of a FnCall
-     this could possibly be resolved in analysis though
+     this could possibly be resolved in analysis though (maybe in construction)
 
  language questions:
-   update documentation to reflect the current language
-     need to delve back into the more "design" parts of the language
+   look into changing rhs operator currying to have same semantics as lhs operator currying
+     the only problem is in parsing issues and mitigating them
    figure out how concurrency is going to be handled
    should a yield without a wait equate to a straight return ???
    determine sugaring operations
-      behavior for '()' operations
-	    Indexable[T] -> get(Size), set(Size, T)
-	    scala uses apply and update
+     behavior for '()' operations
+       Indexable[T] -> get(Size), set(Size, T)
+         scala uses apply and update
    figure out the translation of operators fully
      especially for '&' and '=', given they have special meanings in some conditions
-	   maybe make special ast nodes to represent them
-	   scala handling of '=' at the end (using "l += r")
-	     if no matching definition "+=" for can be found
-		   statement translates to "l = +(l, r)"
-		 otherwise translates to "+=(l, r)"
-	  might be changing the semantics of pointers so '&' aren't needed
-             I'll have to change operator rules to account for this a bit
+       maybe make special ast nodes to represent them
+       scala handling of '=' at the end (using "l += r")
+       if no matching definition "+=" for can be found
+         statement translates to "l = +(l, r)"
+         otherwise translates to "+=(l, r)"
+       might be changing the semantics of pointers so '&' aren't needed
+         I'll have to change operator rules to account for this a bit
    look at changing the semantics of pointers to java semantics (ie. reference)
-   look into possibly allowing operators to not require parenthesis in index
-      allow "3.+ 4" instead of "3.+(4)"
-	    difficult to parse though
+   look into possibly allowing operators to not require parenthesis in indexing
+     allow "3.+ 4" instead of "3.+(4)"
+       difficult to parse though
 
  parser improvements:
    re-enable "::" syntax for anonymous types
