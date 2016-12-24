@@ -3,7 +3,7 @@ todo:
  work on blog posts
  work on memory and pointers
    work on more design questions
- improve compiler location data to necessary
+ improve compiler location data
  what am i doing actions.h/l:647
  add in error recognition to the parser
 

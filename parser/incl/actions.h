@@ -652,8 +652,7 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::rhs_inf> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: binding
-			// Todo: Wat?
-			s.emplace_back(util::pop<ast::BasicBinding>(s));
+			s.emplace_back(std::make_unique<ast::BasicType>(util::pop<ast::BasicBinding>(s), ast::PtrStyling::NA, mkLoc(in)));
 			// stack: type
 		}
 	};
@@ -675,7 +674,8 @@ namespace spero::parser::actions {
 				gen.push_front(util::pop<ast::GenericPart>(s));
 			if (gen.size()) s.pop_back();
 
-			auto bind = util::pop<ast::AssignPattern>(s);
+			auto bind = util::pop<ast::AssignName>(s);
+			//auto bind = std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s), mkLoc(in));
 			s.emplace_back(std::make_unique<ast::TypeAssign>(std::move(bind), std::move(cons), std::move(gen), std::move(body), std::move(inherit), mkLoc(in)));
 			// stack: TypeAssign
 		}
