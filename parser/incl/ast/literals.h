@@ -19,7 +19,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Bool : ValExpr {
 		bool val;
-		Bool(bool);
+		Bool(bool, Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
@@ -35,7 +35,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Byte : ValExpr {
 		unsigned long val;
-		Byte(std::string, int);
+		Byte(std::string, int, Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
@@ -51,7 +51,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Float : ValExpr {
 		double val;
-		Float(std::string);
+		Float(std::string, Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
@@ -67,7 +67,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Int : ValExpr {
 		long val;
-		Int(std::string);
+		Int(std::string, Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
@@ -83,7 +83,7 @@ namespace spero::compiler::ast {
 	 */
 	struct String : ValExpr {
 		std::string val;
-		String(std::string);
+		String(std::string, Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
@@ -99,7 +99,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Char : ValExpr {
 		char val;
-		Char(char);
+		Char(char, Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
@@ -122,7 +122,7 @@ namespace spero::compiler::ast {
 		ptr<Type> ret;
 		ptr<ValExpr> body;
 
-		FnBody(ptr<ValExpr>, bool);
+		FnBody(ptr<ValExpr>, bool, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 }

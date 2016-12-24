@@ -25,7 +25,7 @@ namespace spero::compiler::ast {
 		std::deque<Pair> if_branches;
 		ptr<ValExpr> else_branch;
 
-		Branch(ptr<ValExpr>, ptr<ValExpr>);
+		Branch(ptr<ValExpr>, ptr<ValExpr>, Ast::Location);
 		void addBranch(ptr<ValExpr>, ptr<ValExpr>);
 		void addBranch(ptr<ValExpr>);
 
@@ -43,7 +43,7 @@ namespace spero::compiler::ast {
 	struct Loop : ValExpr {
 		ptr<ValExpr> body;
 
-		Loop(ptr<ValExpr>);
+		Loop(ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -60,7 +60,7 @@ namespace spero::compiler::ast {
 	struct While : ValExpr {
 		ptr<ValExpr> test, body;
 
-		While(ptr<ValExpr>, ptr<ValExpr>);
+		While(ptr<ValExpr>, ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -79,7 +79,7 @@ namespace spero::compiler::ast {
 		ptr<Pattern> pattern;
 		ptr<ValExpr> generator, body;
 
-		For(ptr<Pattern>, ptr<ValExpr>, ptr<ValExpr>);
+		For(ptr<Pattern>, ptr<ValExpr>, ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -97,7 +97,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> switch_expr;
 		std::deque<ptr<Case>> cases;
 
-		Match(ptr<ValExpr>, std::deque<ptr<Case>>);
+		Match(ptr<ValExpr>, std::deque<ptr<Case>>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -115,7 +115,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> expr;
 		KeywordType jmp;
 
-		Jump(KeywordType, ptr<ValExpr> = nullptr);
+		Jump(KeywordType, ptr<ValExpr>, Ast::Location);
 	};
 
 	/*
@@ -124,7 +124,7 @@ namespace spero::compiler::ast {
 	* Extends: Jump
 	*/
 	struct Wait : Jump {
-		Wait(ptr<ValExpr>);
+		Wait(ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -135,7 +135,7 @@ namespace spero::compiler::ast {
 	 * Extends: Jump
 	 */
 	struct Break : Jump {
-		Break(ptr<ValExpr>);
+		Break(ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -146,7 +146,7 @@ namespace spero::compiler::ast {
 	 * Extends: Jump
 	 */
 	struct Continue : Jump {
-		Continue(ptr<ValExpr>);
+		Continue(ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -157,7 +157,7 @@ namespace spero::compiler::ast {
 	 * Extends: Jump
 	 */
 	struct Return : Jump {
-		Return(ptr<ValExpr>);
+		Return(ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -168,7 +168,7 @@ namespace spero::compiler::ast {
 	 * Extends: Jump
 	 */
 	struct YieldRet : Jump {
-		YieldRet(ptr<ValExpr>);
+		YieldRet(ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 }

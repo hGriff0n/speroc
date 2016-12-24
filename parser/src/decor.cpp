@@ -8,7 +8,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::GlobalAnnotation
 	 */
-	GlobalAnnotation::GlobalAnnotation(ptr<BasicBinding> n, ptr<Tuple> t) : name{ std::move(n) }, args{ std::move(t) } {}
+	GlobalAnnotation::GlobalAnnotation(ptr<BasicBinding> n, ptr<Tuple> t, Ast::Location loc)
+		: Ast{ loc }, name { std::move(n) }, args{ std::move(t) } {}
 	OutStream& GlobalAnnotation::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.GlobalAnnotation name=";
 		name->prettyPrint(s, 0);
@@ -21,7 +22,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Annotation
 	 */
-	Annotation::Annotation(ptr<BasicBinding> n, ptr<Tuple> t) : name{ std::move(n) }, args{ std::move(t) } {}
+	Annotation::Annotation(ptr<BasicBinding> n, ptr<Tuple> t, Ast::Location loc)
+		: Ast{ loc }, name { std::move(n) }, args{ std::move(t) } {}
 	OutStream& Annotation::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Annotation name=";
 		name->prettyPrint(s, 0);
@@ -34,14 +36,15 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::GenericPart
 	 */
-	GenericPart::GenericPart(ptr<BasicBinding> n, ptr<Type> t) : name{ std::move(n) }, type{ std::move(t) } {}
+	GenericPart::GenericPart(ptr<BasicBinding> n, ptr<Type> t, Ast::Location loc)
+		: Ast{ loc }, name { std::move(n) }, type{ std::move(t) } {}
 
 
 	/*
 	 * ast::TypeGeneric
 	 */
-	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, VarianceType var)
-		: GenericPart{ std::move(b), std::move(t) }, rel{ rel }, var{ var } {}
+	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, VarianceType var, Ast::Location loc)
+		: GenericPart{ std::move(b), std::move(t), loc }, rel{ rel }, var{ var } {}
 	OutStream& TypeGeneric::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.TypeGeneric (rel=" << rel._to_string() << ", var=" << var._to_string() << ')';
 		name->prettyPrint(s << '\n', buf + 2, "binding=");
@@ -53,8 +56,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::ValueGeneric
 	 */
-	ValueGeneric::ValueGeneric(ptr<BasicBinding> b, ptr<Type> t, ptr<ValExpr> v)
-		: GenericPart{ std::move(b), std::move(t) }, value{ std::move(v) } {}
+	ValueGeneric::ValueGeneric(ptr<BasicBinding> b, ptr<Type> t, ptr<ValExpr> v, Ast::Location loc)
+		: GenericPart{ std::move(b), std::move(t), loc }, value{ std::move(v) } {}
 	OutStream& ValueGeneric::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.ValueGeneric (type=" << (type != nullptr) << ", val=" << (value != nullptr) << ')';
 		name->prettyPrint(s << '\n', buf + 2, "binding=");
@@ -67,7 +70,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Case
 	 */
-	Case::Case(ptr<PTuple> vs, ptr<ValExpr> e, ptr<ValExpr> if_g) : vars{ std::move(vs) }, expr{ std::move(e) }, if_guard{ std::move(if_g) } {}
+	Case::Case(ptr<PTuple> vs, ptr<ValExpr> e, ptr<ValExpr> if_g, Ast::Location loc)
+		: ValExpr{ loc }, vars { std::move(vs) }, expr{ std::move(e) }, if_guard{ std::move(if_g) } {}
 	OutStream& Case::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Case";
 		vars->prettyPrint(s << '\n', buf + 2, "pattern=");
@@ -79,6 +83,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::ImporPiece
 	 */
+	ImportPiece::ImportPiece(Ast::Location loc) : Ast{ loc } {}
 	OutStream& ImportPiece::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		return s << std::string(buf, ' ') << context << "ast.ImportAny (_)";
 	}
@@ -87,7 +92,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::ImportName
 	 */
-	ImportName::ImportName(ptr<BasicBinding> n, ptr<BasicBinding> o) : name{ std::move(n) }, old_name{ std::move(o) } {}
+	ImportName::ImportName(ptr<BasicBinding> n, ptr<BasicBinding> o, Ast::Location loc)
+		: ImportPiece{ loc }, name { std::move(n) }, old_name{ std::move(o) } {}
 	OutStream& ImportName::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.ImportName (";
 
@@ -101,7 +107,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::ImportGroup
 	 */
-	ImportGroup::ImportGroup(std::deque<ptr<ImportPiece>> is) : imps{ std::move(is) } {}
+	ImportGroup::ImportGroup(std::deque<ptr<ImportPiece>> is, Ast::Location loc) : ImportPiece{ loc }, imps { std::move(is) } {}
 	OutStream& ImportGroup::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.ImportGroup (size=" << imps.size() << ')';
 
@@ -115,7 +121,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Adt
 	 */
-	Adt::Adt(ptr<BasicBinding> n, ptr<TupleType> t) : name{ std::move(n) }, args{ std::move(t) } {}
+	Adt::Adt(ptr<BasicBinding> n, ptr<TupleType> t, Ast::Location loc)
+		: Ast{ loc }, name{ std::move(n) }, args{ std::move(t) } {}
 	OutStream& Adt::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Adt (name=";
 		name->prettyPrint(s, 0) << ")";
@@ -128,7 +135,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Future
 	 */
-	Future::Future(bool f) : forwarded_from_fn{ f } {}
+	Future::Future(bool f, Ast::Location loc) : ValExpr{ loc }, forwarded_from_fn { f } {}
 	OutStream& Future::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		return s << std::string(buf, ' ') << context << "ast.FutureValue (fwd=" << forwarded_from_fn << ')';
 	}

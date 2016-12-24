@@ -8,7 +8,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Bool
 	 */
-	Bool::Bool(bool b) : val{ b } {}
+	Bool::Bool(bool b, Ast::Location loc) : ValExpr{ loc }, val{ b } {}
 	OutStream& Bool::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Bool (val=" << (val ? "true, " : "false, ");
 
@@ -19,7 +19,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Byte
 	 */
-	Byte::Byte(std::string num, int base) : val{ std::stoul(std::move(num), nullptr, base) } {}
+	Byte::Byte(std::string num, int base, Ast::Location loc)
+		: ValExpr{ loc }, val { std::stoul(std::move(num), nullptr, base) } {}
 	OutStream& Byte::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Byte (val=" << val << ", ";
 
@@ -30,7 +31,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Float
 	 */
-	Float::Float(std::string num) : val{ std::stof(std::move(num)) } {}
+	Float::Float(std::string num, Ast::Location loc) : ValExpr{ loc }, val{ std::stof(std::move(num)) } {}
 	OutStream& Float::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Float (val=" << val << ", ";
 
@@ -41,7 +42,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Int
 	 */
-	Int::Int(std::string num) : val{ std::stoi(std::move(num)) } {}
+	Int::Int(std::string num, Ast::Location loc) : ValExpr{ loc }, val{ std::stoi(std::move(num)) } {}
 	OutStream& Int::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		// Print out Int specific values
 		s << std::string(buf, ' ') << context << "ast.Int (val=" << val << ", ";
@@ -53,7 +54,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::String
 	 */
-	String::String(std::string v) : val{ std::move(v) } {}
+	String::String(std::string v, Ast::Location loc) : ValExpr{ loc }, val{ std::move(v) } {}
 	OutStream& String::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.String (val=\"" << val << "\", ";
 
@@ -64,7 +65,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Char
 	 */
-	Char::Char(char c) : val{ c } {}
+	Char::Char(char c, Ast::Location loc) : ValExpr{ loc }, val{ c } {}
 	OutStream& Char::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Char (val='" << val << ", ";
 
@@ -75,7 +76,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::FnBody
 	 */
-	FnBody::FnBody(ptr<ValExpr> b, bool f) : forward{ f }, body{ std::move(b) } {}
+	FnBody::FnBody(ptr<ValExpr> b, bool f, Ast::Location loc) : ValExpr{ loc }, forward{ f }, body{ std::move(b) } {}
 	OutStream& FnBody::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.FnBody (fwd=" << (forward ? "true, " : "false, ");
 		ValExpr::prettyPrint(s, buf);

@@ -16,7 +16,7 @@ namespace spero::compiler::ast {
 	struct Sequence : ValExpr {
 		std::deque<ptr<T>> exprs;
 
-		Sequence(std::deque<ptr<T>> e) : exprs(std::move(e)) {}
+		Sequence(std::deque<ptr<T>> e, Ast::Location loc) : ValExpr{ loc }, exprs(std::move(e)) {}
 	};
 
 	
@@ -28,7 +28,7 @@ namespace spero::compiler::ast {
 	 * Exports: NA
 	 */
 	struct Tuple : Sequence<ValExpr> {
-		Tuple(std::deque<ptr<ValExpr>>);
+		Tuple(std::deque<ptr<ValExpr>>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -41,7 +41,7 @@ namespace spero::compiler::ast {
 	 * Exports: NA
 	 */
 	struct Array : Sequence<ValExpr> {
-		Array(std::deque<ptr<ValExpr>>);
+		Array(std::deque<ptr<ValExpr>>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -54,7 +54,7 @@ namespace spero::compiler::ast {
 	 * Exports: NA
 	 */
 	struct Block : Sequence<Ast> {
-		Block(std::deque<ptr<Ast>>);
+		Block(std::deque<ptr<Ast>>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -72,8 +72,8 @@ namespace spero::compiler::ast {
 		ptr<Tuple> cons;
 		ptr<Block> body;
 
-		TypeExtension(ptr<Block>);
-		TypeExtension(ptr<Tuple>, ptr<Block>);
+		TypeExtension(ptr<Block>, Ast::Location);
+		TypeExtension(ptr<Tuple>, ptr<Block>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -95,7 +95,7 @@ namespace spero::compiler::ast {
 		ptr<Tuple> args;
 		ptr<Array> inst;
 
-		FnCall(ptr<Ast>, ptr<TypeExtension>, ptr<Tuple>, ptr<Array>);
+		FnCall(ptr<Ast>, ptr<TypeExtension>, ptr<Tuple>, ptr<Array>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -114,7 +114,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> start, stop;
 		ptr<ValExpr> step;
 
-		Range(ptr<ValExpr>, ptr<ValExpr>);
+		Range(ptr<ValExpr>, ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -128,7 +128,7 @@ namespace spero::compiler::ast {
 		UnaryType op;
 		ptr<ValExpr> expr;
 
-		UnaryApp(ptr<ValExpr>, UnaryType);
+		UnaryApp(ptr<ValExpr>, UnaryType, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 }

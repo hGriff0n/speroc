@@ -7,7 +7,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Ast
 	 */
-	Ast::Ast() {}
+	Ast::Ast(Ast::Location loc) : loc{ loc } {}
 	OutStream& Ast::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		return s << std::string(buf, ' ') << context << "ast.Ast";
 	}
@@ -16,7 +16,6 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Token
 	 */
-	
 	OutStream& Token::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Token ";
 
@@ -42,7 +41,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Stmt
 	 */
-	Stmt::Stmt() {}
+	Stmt::Stmt(Ast::Location loc) : Ast{ loc } {}
 	OutStream& Stmt::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		for (auto&& a : annots)
 			a->prettyPrint(s << '\n', buf + 2);
@@ -54,7 +53,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::ValExpr
 	 */
-	ValExpr::ValExpr() {}
+	ValExpr::ValExpr(Ast::Location loc) : Stmt{ loc } {}
 	OutStream& ValExpr::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << "mut=" << is_mut << ')';
 

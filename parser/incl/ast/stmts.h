@@ -33,7 +33,7 @@ namespace spero::compiler::ast {
 		GenArray generics;
 		ptr<Type> type;
 
-		Interface(ptr<AssignPattern>, GenArray, ptr<Type>);
+		Interface(ptr<AssignPattern>, GenArray, ptr<Type>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
@@ -52,7 +52,7 @@ namespace spero::compiler::ast {
 		std::deque<ptr<Ast>> cons;				// must be Adt or Tuple, only one Tuple allowed
 		ptr<Block> body;
 
-		TypeAssign(ptr<AssignPattern>, std::deque<ptr<Ast>>, GenArray, ptr<Block>, ptr<Type>);
+		TypeAssign(ptr<AssignPattern>, std::deque<ptr<Ast>>, GenArray, ptr<Block>, ptr<Type>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -69,7 +69,7 @@ namespace spero::compiler::ast {
 	struct VarAssign : Interface {
 		ptr<ValExpr> expr;						// must be a FnBody if name is a Operator
 
-		VarAssign(ptr<AssignPattern>, GenArray, ptr<ValExpr>, ptr<Type>);
+		VarAssign(ptr<AssignPattern>, GenArray, ptr<ValExpr>, ptr<Type>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -85,7 +85,7 @@ namespace spero::compiler::ast {
 	struct ImplExpr : Stmt {
 		ptr<QualifiedBinding> type;
 
-		ImplExpr(ptr<QualifiedBinding>);
+		ImplExpr(ptr<QualifiedBinding>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -101,7 +101,7 @@ namespace spero::compiler::ast {
 	struct ModDec : Stmt {
 		ptr<QualifiedBinding> module;
 
-		ModDec(ptr<QualifiedBinding>);
+		ModDec(ptr<QualifiedBinding>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -117,7 +117,7 @@ namespace spero::compiler::ast {
 	struct ModImport : Stmt {
 		std::deque<ptr<ImportPiece>> parts;
 
-		ModImport(std::deque<ptr<ImportPiece>>);
+		ModImport(std::deque<ptr<ImportPiece>>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -133,7 +133,7 @@ namespace spero::compiler::ast {
 	struct Index : ValExpr {
 		std::deque<ptr<ValExpr>> elems;
 
-		Index(ptr<ValExpr>, ptr<ValExpr>);
+		Index(ptr<ValExpr>, ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 }

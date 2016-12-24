@@ -7,7 +7,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::BasicBinding
 	 */
-	BasicBinding::BasicBinding(std::string n, BindingType t) : name{ std::move(n) }, type{ t } {}
+	BasicBinding::BasicBinding(std::string n, BindingType t, Ast::Location loc) : Ast{ loc }, name{ std::move(n) }, type{ t } {}
 	OutStream& BasicBinding::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		return s << std::string(buf, ' ') << context << "ast.BasicBinding (var=" << name << ", type=" << type._to_string() << ")";
 	}
@@ -16,10 +16,10 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::QualifiedBinding
 	 */
-	QualifiedBinding::QualifiedBinding(ptr<BasicBinding> b) {
+	QualifiedBinding::QualifiedBinding(ptr<BasicBinding> b, Ast::Location loc) : Ast{ loc } {
 		parts.push_back(std::move(b));
 	}
-	QualifiedBinding::QualifiedBinding(std::deque<ptr<BasicBinding>> ps) : parts{ std::move(ps) } {}
+	QualifiedBinding::QualifiedBinding(std::deque<ptr<BasicBinding>> ps, Ast::Location loc) : Ast{ loc }, parts{ std::move(ps) } {}
 	OutStream& QualifiedBinding::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.QualifiedBinding " << parts.front()->name;
 
@@ -33,7 +33,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Variable
 	 */
-	Variable::Variable(ptr<QualifiedBinding> n) : name{ std::move(n) } {}
+	Variable::Variable(ptr<QualifiedBinding> n, Ast::Location loc) : ValExpr{ loc }, name{ std::move(n) } {}
 	OutStream& Variable::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Variable (";
 		ValExpr::prettyPrint(s, buf);
@@ -42,9 +42,15 @@ namespace spero::compiler::ast {
 
 
 	/*
+	 * ast::AssignPattern
+	 */
+	AssignPattern::AssignPattern(Ast::Location loc) : Ast{ loc } {}
+
+
+	/*
 	 * ast::AssignName
 	 */
-	AssignName::AssignName(ptr<BasicBinding> n) : var{ std::move(n) } {}
+	AssignName::AssignName(ptr<BasicBinding> n, Ast::Location loc) : AssignPattern{ loc }, var{ std::move(n) } {}
 	OutStream& AssignName::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		return var->prettyPrint(s, buf, context);
 	}
@@ -53,7 +59,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::AssignTuple
 	 */
-	AssignTuple::AssignTuple(std::deque<ptr<AssignPattern>> vs) : vars{ std::move(vs) } {}
+	AssignTuple::AssignTuple(std::deque<ptr<AssignPattern>> vs, Ast::Location loc) : AssignPattern{ loc }, vars{ std::move(vs) } {}
 	OutStream& AssignTuple::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.AssignTuple" << vars.size() << "(\n";
 		for (auto&& var : vars)
@@ -65,6 +71,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Pattern
 	 */
+	Pattern::Pattern(Ast::Location loc) : Ast{ loc } {}
 	OutStream& Pattern::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		return s << std::string(buf, ' ') << context << "ast.PatternAny (_)";
 	}
@@ -73,7 +80,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::PTuple
 	 */
-	PTuple::PTuple(std::deque<ptr<Pattern>> ps) : ptns{ std::move(ps) } {}
+	PTuple::PTuple(std::deque<ptr<Pattern>> ps, Ast::Location loc) : Pattern{ loc }, ptns{ std::move(ps) } {}
 	OutStream& PTuple::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.PTuple" << ptns.size() << " (mut=" << is_mut << ") (\n";
 		for (auto&& p : ptns)
@@ -85,7 +92,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::PNamed
 	 */
-	PNamed::PNamed(ptr<BasicBinding> n) : name{ std::move(n) } {}
+	PNamed::PNamed(ptr<BasicBinding> n, Ast::Location loc) : Pattern{ loc }, name{ std::move(n) } {}
 	OutStream& PNamed::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.PNamed (mut=" << is_mut << ')';
 		return name->prettyPrint(s, 1);
@@ -95,7 +102,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::PAdt
 	 */
-	PAdt::PAdt(ptr<BasicBinding> n, ptr<PTuple> as) : PNamed{ std::move(n) }, args{ std::move(as) } {}
+	PAdt::PAdt(ptr<BasicBinding> n, ptr<PTuple> as, Ast::Location loc) : PNamed{ std::move(n), loc }, args{ std::move(as) } {}
 	OutStream& PAdt::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.PAdt";
 		name->prettyPrint(s, 1, "(type=") << ')';
@@ -107,7 +114,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::PVal
 	 */
-	PVal::PVal(ptr<ValExpr> v) : value{ std::move(v) } {}
+	PVal::PVal(ptr<ValExpr> v, Ast::Location loc) : Pattern{ loc }, value { std::move(v) } {}
 	OutStream& PVal::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.PVal";
 		return value->prettyPrint(s, 1, "(val=") << ')';

@@ -8,7 +8,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Branch
 	 */
-	Branch::Branch(ptr<ValExpr> test, ptr<ValExpr> body) : else_branch{nullptr} {
+	Branch::Branch(ptr<ValExpr> test, ptr<ValExpr> body, Ast::Location loc) : ValExpr{ loc }, else_branch { nullptr } {
 		addBranch(std::move(test), std::move(body));
 	}
 	void Branch::addBranch(ptr<ValExpr> test, ptr<ValExpr> body) {
@@ -38,7 +38,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Loop
 	 */
-	Loop::Loop(ptr<ValExpr> b) : body{ std::move(b) } {}
+	Loop::Loop(ptr<ValExpr> b, Ast::Location loc) : ValExpr{ loc }, body { std::move(b) } {}
 	OutStream& Loop::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Loop (";
 		ValExpr::prettyPrint(s, buf);
@@ -49,7 +49,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::While
 	 */
-	While::While(ptr<ValExpr> test, ptr<ValExpr> body) : test{ std::move(test) }, body{ std::move(body) } {}
+	While::While(ptr<ValExpr> test, ptr<ValExpr> body, Ast::Location loc)
+		: ValExpr{ loc }, test { std::move(test) }, body{ std::move(body) } {}
 	OutStream& While::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.While (";
 		ValExpr::prettyPrint(s, buf);
@@ -61,7 +62,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::For
 	 */
-	For::For(ptr<Pattern> p, ptr<ValExpr> g, ptr<ValExpr> b) : pattern{ std::move(p) }, generator{ std::move(g) }, body{ std::move(b) } {}
+	For::For(ptr<Pattern> p, ptr<ValExpr> g, ptr<ValExpr> b, Ast::Location loc)
+		: ValExpr{ loc }, pattern { std::move(p) }, generator{ std::move(g) }, body{ std::move(b) } {}
 	OutStream& For::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.For (";
 		ValExpr::prettyPrint(s, buf);
@@ -75,7 +77,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Match
 	 */
-	Match::Match(ptr<ValExpr> s, std::deque<ptr<Case>> cs) : switch_expr{ std::move(s) }, cases{ std::move(cs) } {}
+	Match::Match(ptr<ValExpr> s, std::deque<ptr<Case>> cs, Ast::Location loc)
+		: ValExpr{ loc }, switch_expr { std::move(s) }, cases{ std::move(cs) } {}
 	OutStream& Match::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Match (";
 		ValExpr::prettyPrint(s, buf);
@@ -92,13 +95,13 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Jump
 	 */
-	Jump::Jump(KeywordType k, ptr<ValExpr> e) : expr{ std::move(e) }, jmp{ k } {}
+	Jump::Jump(KeywordType k, ptr<ValExpr> e, Ast::Location loc) : ValExpr{ loc }, expr { std::move(e) }, jmp{ k } {}
 
 
 	/*
 	 * ast::Wait
 	 */
-	Wait::Wait(ptr<ValExpr> e) : Jump{ KeywordType::WAIT, std::move(e) } {}
+	Wait::Wait(ptr<ValExpr> e, Ast::Location loc) : Jump{ KeywordType::WAIT, std::move(e), loc } {}
 	OutStream& Wait::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Wait (";
 		ValExpr::prettyPrint(s, buf);
@@ -111,7 +114,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Break
 	 */
-	Break::Break(ptr<ValExpr> e) : Jump{ KeywordType::BREAK, std::move(e) } {}
+	Break::Break(ptr<ValExpr> e, Ast::Location loc) : Jump{ KeywordType::BREAK, std::move(e), loc } {}
 	OutStream& Break::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Break (";
 		ValExpr::prettyPrint(s, buf);
@@ -124,7 +127,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Continue
 	 */
-	Continue::Continue(ptr<ValExpr> e) : Jump{ KeywordType::CONT, std::move(e) } {}
+	Continue::Continue(ptr<ValExpr> e, Ast::Location loc) : Jump{ KeywordType::CONT, std::move(e), loc } {}
 	OutStream& Continue::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Continue (";
 		ValExpr::prettyPrint(s, buf);
@@ -137,7 +140,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Return
 	 */
-	Return::Return(ptr<ValExpr> e) : Jump{ KeywordType::RET, std::move(e) } {}
+	Return::Return(ptr<ValExpr> e, Ast::Location loc) : Jump{ KeywordType::RET, std::move(e), loc } {}
 	OutStream& Return::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Return (";
 		ValExpr::prettyPrint(s, buf);
@@ -150,7 +153,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::YieldRet
 	 */
-	YieldRet::YieldRet(ptr<ValExpr> e) : Jump{ KeywordType::YIELD, std::move(e) } {}
+	YieldRet::YieldRet(ptr<ValExpr> e, Ast::Location loc) : Jump{ KeywordType::YIELD, std::move(e), loc } {}
 	OutStream& YieldRet::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Yield (";
 		ValExpr::prettyPrint(s, buf);

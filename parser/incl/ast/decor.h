@@ -26,7 +26,7 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> name;
 		ptr<Tuple> args;
 
-		GlobalAnnotation(ptr<BasicBinding>, ptr<Tuple>);
+		GlobalAnnotation(ptr<BasicBinding>, ptr<Tuple>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
@@ -45,7 +45,7 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> name;
 		ptr<Tuple> args;
 
-		Annotation(ptr<BasicBinding>, ptr<Tuple>);
+		Annotation(ptr<BasicBinding>, ptr<Tuple>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -64,7 +64,7 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> name;
 		ptr<Type> type;
 
-		GenericPart(ptr<BasicBinding>, ptr<Type>);
+		GenericPart(ptr<BasicBinding>, ptr<Type>, Ast::Location);
 	};
 
 
@@ -81,7 +81,7 @@ namespace spero::compiler::ast {
 		RelationType rel;
 		VarianceType var;
 
-		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType);
+		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -97,7 +97,7 @@ namespace spero::compiler::ast {
 	struct ValueGeneric : GenericPart {
 		ptr<ValExpr> value;
 
-		ValueGeneric(ptr<BasicBinding>, ptr<Type>, ptr<ValExpr>);
+		ValueGeneric(ptr<BasicBinding>, ptr<Type>, ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -116,7 +116,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> expr;
 		ptr<ValExpr> if_guard;
 
-		Case(ptr<PTuple>, ptr<ValExpr>, ptr<ValExpr>);
+		Case(ptr<PTuple>, ptr<ValExpr>, ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -128,6 +128,7 @@ namespace spero::compiler::ast {
 	 * Extends: Ast
 	 */
 	struct ImportPiece : Ast {
+		ImportPiece(Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
@@ -146,7 +147,7 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> name;
 		ptr<BasicBinding> old_name;
 
-		ImportName(ptr<BasicBinding>, ptr<BasicBinding> = nullptr);
+		ImportName(ptr<BasicBinding>, ptr<BasicBinding>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -162,7 +163,7 @@ namespace spero::compiler::ast {
 	struct ImportGroup : ImportPiece {
 		std::deque<ptr<ImportPiece>> imps;
 
-		ImportGroup(std::deque<ptr<ImportPiece>>);
+		ImportGroup(std::deque<ptr<ImportPiece>>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -180,7 +181,7 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> name;
 		ptr<TupleType> args;
 
-		Adt(ptr<BasicBinding>, ptr<TupleType>);
+		Adt(ptr<BasicBinding>, ptr<TupleType>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -197,7 +198,7 @@ namespace spero::compiler::ast {
 	struct Future : ValExpr {
 		bool forwarded_from_fn;
 
-		Future(bool);
+		Future(bool, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 

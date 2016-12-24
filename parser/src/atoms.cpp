@@ -7,7 +7,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Tuple
 	 */
-	Tuple::Tuple(std::deque<ptr<ValExpr>> vals) : Sequence{ std::move(vals) } {}
+	Tuple::Tuple(std::deque<ptr<ValExpr>> vals, Ast::Location loc) : Sequence{ std::move(vals), loc } {}
 	OutStream& Tuple::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Tuple" << exprs.size() << " (";
 		for (auto&& e : exprs)
@@ -21,7 +21,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Array
 	 */
-	Array::Array(std::deque<ptr<ValExpr>> vals) : Sequence{ std::move(vals) } {}
+	Array::Array(std::deque<ptr<ValExpr>> vals, Ast::Location loc) : Sequence{ std::move(vals), loc } {}
 	OutStream& Array::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Array" << exprs.size() << " [type={}] [";
 		for (auto&& e : exprs)
@@ -35,7 +35,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Block
 	 */
-	Block::Block(std::deque<ptr<Ast>> es) : Sequence{ std::move(es) } {}
+	Block::Block(std::deque<ptr<Ast>> es, Ast::Location loc) : Sequence{ std::move(es), loc } {}
 	OutStream& Block::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.Block (size=" << exprs.size() << ") {";
 		for (auto&& e : exprs)
@@ -49,8 +49,9 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::TypeExtension
 	 */
-	TypeExtension::TypeExtension(ptr<Block> b) : cons{}, body{ std::move(b) } {}
-	TypeExtension::TypeExtension(ptr<Tuple> c, ptr<Block> b) : cons{ std::move(c) }, body{ std::move(b) } {}
+	TypeExtension::TypeExtension(ptr<Block> b, Ast::Location loc) : Ast{ loc }, cons {}, body{ std::move(b) } {}
+	TypeExtension::TypeExtension(ptr<Tuple> c, ptr<Block> b, Ast::Location loc)
+		: Ast{ loc }, cons { std::move(c) }, body{ std::move(b) } {}
 	OutStream& TypeExtension::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.TypeExtension";
 		if (cons) cons->prettyPrint(s << '\n', buf + 2, "cons=");
@@ -61,8 +62,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::FnCall
 	 */
-	FnCall::FnCall(ptr<Ast> c, ptr<TypeExtension> t, ptr<Tuple> a, ptr<Array> i)
-		: caller{ std::move(c) }, anon{ std::move(t) }, args{ std::move(a) }, inst{ std::move(i) } {}
+	FnCall::FnCall(ptr<Ast> c, ptr<TypeExtension> t, ptr<Tuple> a, ptr<Array> i, Ast::Location loc)
+		: ValExpr{ loc }, caller{ std::move(c) }, anon{ std::move(t) }, args{ std::move(a) }, inst{ std::move(i) } {}
 	OutStream& FnCall::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.FnCall (anon="
 			<< (bool)anon << ", args=" << (bool)args << ", inst=" << (bool)inst << ", ";
@@ -79,7 +80,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Range
 	 */
-	Range::Range(ptr<ValExpr> start, ptr<ValExpr> stop) : start{ std::move(start) }, stop{ std::move(stop) }, step{ nullptr } {}
+	Range::Range(ptr<ValExpr> start, ptr<ValExpr> stop, Ast::Location loc)
+		: ValExpr{ loc }, start { std::move(start) }, stop{ std::move(stop) }, step{ nullptr } {}
 	OutStream& Range::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << (stop ? "ast.Range (" : "ast.InfRange (");
 		ValExpr::prettyPrint(s, buf);
@@ -94,7 +96,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::UnApp
 	 */
-	UnaryApp::UnaryApp(ptr<ValExpr> e, UnaryType t) : op{ t }, expr{ std::move(e) } {}
+	UnaryApp::UnaryApp(ptr<ValExpr> e, UnaryType t, Ast::Location loc) : ValExpr{ loc }, op { t }, expr{ std::move(e) } {}
 	OutStream& UnaryApp::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.UnaryApp (op=" << op._to_string();
 		ValExpr::prettyPrint(s << ", ", buf);

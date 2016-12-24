@@ -24,8 +24,8 @@ namespace spero::compiler::ast {
 		ptr<QualifiedBinding> name;
 		PtrStyling pointer;
 		
-		BasicType(ptr<BasicBinding>, PtrStyling=PtrStyling::NA);
-		BasicType(ptr<QualifiedBinding>, PtrStyling = PtrStyling::NA);
+		BasicType(ptr<BasicBinding>, PtrStyling, Ast::Location);
+		BasicType(ptr<QualifiedBinding>, PtrStyling, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
@@ -41,7 +41,7 @@ namespace spero::compiler::ast {
 	struct GenericType : BasicType {
 		ptr<Array> inst;
 
-		GenericType(ptr<QualifiedBinding>, ptr<Array>, PtrStyling);
+		GenericType(ptr<QualifiedBinding>, ptr<Array>, PtrStyling, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -57,7 +57,7 @@ namespace spero::compiler::ast {
 	struct TupleType : Type {
 		std::deque<ptr<Type>> elems;
 
-		TupleType(std::deque<ptr<Type>>);
+		TupleType(std::deque<ptr<Type>>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
@@ -75,7 +75,7 @@ namespace spero::compiler::ast {
 		ptr<TupleType> args;
 		ptr<Type> ret;
 
-		FunctionType(ptr<TupleType>, ptr<Type>);
+		FunctionType(ptr<TupleType>, ptr<Type>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 }

@@ -8,14 +8,16 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::Type
 	 */
-	Type::Type() {}
+	Type::Type(Ast::Location loc) : Ast{ loc } {}
 
 
 	/*
 	 * ast::BasicType
 	 */
-	BasicType::BasicType(ptr<BasicBinding> b, PtrStyling p) : BasicType{ std::make_unique<QualifiedBinding>(std::move(b)), p } {}
-	BasicType::BasicType(ptr<QualifiedBinding> b, PtrStyling p) : name{ std::move(b) }, pointer{ p } {}
+	BasicType::BasicType(ptr<BasicBinding> b, PtrStyling p, Ast::Location loc)
+		: BasicType{ std::make_unique<ast::QualifiedBinding>(std::move(b), loc), p, loc } {}
+	BasicType::BasicType(ptr<QualifiedBinding> b, PtrStyling p, Ast::Location loc)
+		: Type{ loc }, name{ std::move(b) }, pointer{ p } {}
 	OutStream& BasicType::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.BasicType \"";
 		return name->prettyPrint(s, 0) << "\" (ptr=" << pointer._to_string() << ")";
@@ -25,7 +27,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::GenericType
 	 */
-	GenericType::GenericType(ptr<QualifiedBinding> b, ptr<Array> a, PtrStyling p) : BasicType{ std::move(b), p }, inst{ std::move(a) } {}
+	GenericType::GenericType(ptr<QualifiedBinding> b, ptr<Array> a, PtrStyling p, Ast::Location loc)
+		: BasicType{ std::move(b), p, loc }, inst{ std::move(a) } {}
 	OutStream& GenericType::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.GenericType \"";
 		name->prettyPrint(s, 0) << "\" (ptr=" << pointer._to_string() << ")";
@@ -44,7 +47,7 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::TupleType
 	 */
-	TupleType::TupleType(std::deque<ptr<Type>> ts) : elems{ std::move(ts) } {}
+	TupleType::TupleType(std::deque<ptr<Type>> ts, Ast::Location loc) : Type{ loc }, elems{ std::move(ts) } {}
 	OutStream& TupleType::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.TupleType" << elems.size() << "(";
 
@@ -58,7 +61,8 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::FunctionType
 	 */
-	FunctionType::FunctionType(ptr<TupleType> as, ptr<Type> r) : args{ std::move(as) }, ret{ std::move(r) } {}
+	FunctionType::FunctionType(ptr<TupleType> as, ptr<Type> r, Ast::Location loc)
+		: Type{ loc }, args{ std::move(as) }, ret{ std::move(r) } {}
 	OutStream& FunctionType::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.FunctionType";
 

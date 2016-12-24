@@ -16,7 +16,7 @@ namespace spero::parser {
 		s.pop_front();
 
 		// Put an empty node on the stack if nothing was parsed (ie. empty input)
-		if (s.size() == 0) s.emplace_back(std::make_unique<compiler::ast::Ast>());
+		if (s.size() == 0) s.emplace_back(std::make_unique<compiler::ast::Ast>(compiler::ast::Ast::Location{}));
 
 		// Return completed ast (for now ast stack)
 		return std::make_tuple(succ, std::move(s));
@@ -34,7 +34,7 @@ namespace spero::parser {
 		s.pop_front();
 
 		// Put an empty node on the stack if nothing was parsed (ie. empty input)
-		if (s.size() == 0) s.emplace_back(std::make_unique<compiler::ast::Ast>());
+		if (s.size() == 0) s.emplace_back(std::make_unique<compiler::ast::Ast>(compiler::ast::Ast::Location{}));
 
 		// Return completed ast (for now ast stack)
 		return std::make_tuple(succ, std::move(s));

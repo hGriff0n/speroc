@@ -55,12 +55,12 @@ namespace spero::compiler::ast {
 	 *   loc - structure that holds the location data for the node
 	 */
 	struct Ast {
-		Ast();
-
-		// TODO: Maybe refactor this into a named class (I don't know name or location atm)
-		struct {
-
+		struct Location {
+			size_t byte, line;
+			std::string src;
 		} loc;
+
+		Ast(Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
@@ -79,7 +79,7 @@ namespace spero::compiler::ast {
 		token_type value;
 
 		template<class T, class = std::enable_if_t<can_hold_v<T, token_type>>>
-		Token(T val) : value{ val } {}
+		Token(T val, Ast::Location loc) : Ast{ loc }, value { val } {}
 
 		OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
@@ -102,7 +102,7 @@ namespace spero::compiler::ast {
 		size_t id;
 		bool is_mut = false;
 
-		Type();
+		Type(Ast::Location);
 	};
 
 
@@ -118,7 +118,7 @@ namespace spero::compiler::ast {
 	struct Stmt : Ast {
 		std::deque<ptr<Annotation>> annots;
 
-		Stmt();
+		Stmt(Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
@@ -140,7 +140,7 @@ namespace spero::compiler::ast {
 		bool is_mut = false;
 		ptr<Type> type;
 
-		ValExpr();
+		ValExpr(Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 

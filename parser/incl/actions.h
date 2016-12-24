@@ -15,12 +15,23 @@ template<> struct action<grammar::gram> {\
 #define TOKEN(gram, val) \
 template<> struct action<grammar::gram> {\
 	static void apply(const pegtl::action_input& in, Stack& s) { \
-	s.emplace_back(std::make_unique<ast::Token>(val)); }}
+	s.emplace_back(std::make_unique<ast::Token>(val, mkLoc(in))); }}
 #define INHERIT(gram, base) \
 template<> struct action<grammar::gram> : action<grammar::base> {}
 
 namespace spero::parser::actions {
 	using namespace spero::compiler;
+
+	inline ast::Ast::Location mkLoc(const pegtl::action_input& in) {
+		using Loc = compiler::ast::Ast::Location;
+
+		Loc location{};
+		location.byte = in.byte_in_line();
+		location.line = in.line();
+		location.src = in.source();
+
+		return std::move(location);
+	}
 
 	template<class Rule>
 	struct action : pegtl::nothing<Rule> {};
@@ -35,42 +46,42 @@ namespace spero::parser::actions {
 	// Literals
 	template<> struct action<grammar::hex_body> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::Byte>(in.string(), 16));
+			s.emplace_back(std::make_unique<ast::Byte>(in.string(), 16, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::bin_body> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::Byte>(in.string(), 2));
+			s.emplace_back(std::make_unique<ast::Byte>(in.string(), 2, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::integer> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::Int>(in.string()));
+			s.emplace_back(std::make_unique<ast::Int>(in.string(), mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::dec> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::Float>(in.string()));
+			s.emplace_back(std::make_unique<ast::Float>(in.string(), mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::str_body> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::String>(util::escape(in.string())));
+			s.emplace_back(std::make_unique<ast::String>(util::escape(in.string()), mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::char_body> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::Char>(util::escape(in.string())[0]));
+			s.emplace_back(std::make_unique<ast::Char>(util::escape(in.string())[0], mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::b_false> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::Bool>(false));
+			s.emplace_back(std::make_unique<ast::Bool>(false, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::b_true> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::Bool>(true));
+			s.emplace_back(std::make_unique<ast::Bool>(true, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::tuple> {
@@ -81,7 +92,7 @@ namespace spero::parser::actions {
 				vals.push_front(util::pop<ast::ValExpr>(s));
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::Tuple>(std::move(vals)));
+			s.emplace_back(std::make_unique<ast::Tuple>(std::move(vals), mkLoc(in)));
 			// stack: tuple
 		}
 	};
@@ -93,14 +104,14 @@ namespace spero::parser::actions {
 				vals.push_front(util::pop<ast::ValExpr>(s));
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::Array>(std::move(vals)));
+			s.emplace_back(std::make_unique<ast::Array>(std::move(vals), mkLoc(in)));
 			// stack: array
 		}
 	};
 	template<> struct action<grammar::fn_rettype> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: type expr
-			auto fn = std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false);
+			auto fn = std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false, mkLoc(in));
 			fn->ret = std::move(util::pop<ast::Type>(s));
 			s.push_back(std::move(fn));
 			// stack: fnbody
@@ -115,7 +126,7 @@ namespace spero::parser::actions {
 			auto inst = util::pop<ast::Array>(s);
 			auto caller = util::pop<ast::Ast>(s);
 
-			s.emplace_back(std::make_unique<ast::FnCall>(std::move(caller), std::move(type), std::move(args), std::move(inst)));
+			s.emplace_back(std::make_unique<ast::FnCall>(std::move(caller), std::move(type), std::move(args), std::move(inst), mkLoc(in)));
 			// stack: fncall
 		}
 	};
@@ -125,13 +136,13 @@ namespace spero::parser::actions {
 
 			if (!util::is_type<ast::Tuple>(s.back())) {
 				std::deque<ptr<ast::ValExpr>> args;
-				args.push_back(std::make_unique<ast::Future>(true));
+				args.push_back(std::make_unique<ast::Future>(true, mkLoc(in)));
 				args.push_back(std::move(util::pop<ast::ValExpr>(s)));
 
-				s.emplace_back(std::make_unique<ast::Tuple>(std::move(args)));
+				s.emplace_back(std::make_unique<ast::Tuple>(std::move(args), mkLoc(in)));
 
 			} else
-				util::view_as<ast::Tuple>(s.back())->exprs.push_front(std::make_unique<ast::Future>(true));
+				util::view_as<ast::Tuple>(s.back())->exprs.push_front(std::make_unique<ast::Future>(true, mkLoc(in)));
 
 			// stack: op tuple
 			action<grammar::fnseq>::apply(in, s);
@@ -140,7 +151,7 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::fn_forward> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: expr
-			s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), true));
+			s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), true, mkLoc(in)));
 			// stack: fnbody
 		}
 	};
@@ -148,7 +159,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: fnbody | expr
 			if (!util::at_node<ast::FnBody>(s))
-				s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false));
+				s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false, mkLoc(in)));
 			// stack: fnbody
 		}
 	};
@@ -190,19 +201,19 @@ namespace spero::parser::actions {
 	// Bindings
 	template<> struct action<grammar::var> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::VARIABLE));
+			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::VARIABLE, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::typ> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::TYPE));
+			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::TYPE, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::op> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// Produce a qualified binding because operators aren't included in name_path
 			s.emplace_back(std::make_unique<ast::QualifiedBinding>(
-				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR)
+				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR, mkLoc(in)), mkLoc(in)
 			));
 		}
 	};
@@ -217,7 +228,7 @@ namespace spero::parser::actions {
 					util::view_as<ast::QualifiedBinding>(s.back())->parts.emplace_back(std::move(part));
 
 				else
-					s.emplace_back(std::make_unique<ast::QualifiedBinding>(std::move(part)));
+					s.emplace_back(std::make_unique<ast::QualifiedBinding>(std::move(part), mkLoc(in)));
 			}
 			// stack: qual
 		}
@@ -234,7 +245,7 @@ namespace spero::parser::actions {
 					util::view_as<ast::QualifiedBinding>(s.back())->parts.emplace_back(std::move(part));
 
 				else
-					s.emplace_back(std::make_unique<ast::QualifiedBinding>(std::move(part)));
+					s.emplace_back(std::make_unique<ast::QualifiedBinding>(std::move(part), mkLoc(in)));
 			}
 
 			if (util::view_as<ast::Ast>(s.back()))
@@ -245,22 +256,27 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::typ_pointer> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::POINTER));
-			else if (in.string() == "*") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::VIEW));
-			else s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::NA));
+			if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::POINTER, mkLoc(in)));
+			else if (in.string() == "*") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::VIEW, mkLoc(in)));
+			else s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::NA, mkLoc(in)));
 		}
 	};
 
 
 	// Atoms
 	SENTINEL(anon_sep);
+	/*template<> struct action<grammar::anon_sep> {
+		static void apply(const pegtl::action_input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::AnonTypeSeperator>());
+		}
+	};*/
 	template<> struct action<grammar::anon_type> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: sentinel tuple? scope
 			auto scp = util::pop<ast::Block>(s);
 			auto tup = util::pop<ast::Tuple>(s);
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::TypeExtension>(std::move(tup), std::move(scp)));
+			s.emplace_back(std::make_unique<ast::TypeExtension>(std::move(tup), std::move(scp), mkLoc(in)));
 			// stack: anon
 		}
 	};
@@ -272,7 +288,7 @@ namespace spero::parser::actions {
 				vals.push_front(util::pop<ast::Ast>(s));
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::Block>(std::move(vals)));
+			s.emplace_back(std::make_unique<ast::Block>(std::move(vals), mkLoc(in)));
 			// stack: block
 		}
 	};
@@ -282,7 +298,7 @@ namespace spero::parser::actions {
 			auto expr = util::pop<ast::ValExpr>(s);
 			s.pop_back();
 
-			s.emplace_back(std::make_unique<ast::Wait>(std::move(expr)));
+			s.emplace_back(std::make_unique<ast::Wait>(std::move(expr), mkLoc(in)));
 			// stack: wait
 		}
 	};
@@ -294,7 +310,7 @@ namespace spero::parser::actions {
 
 			auto name = util::pop<ast::QualifiedBinding>(s);
 			if (name)
-				s.emplace_back(std::make_unique<ast::Variable>(std::move(name)));
+				s.emplace_back(std::make_unique<ast::Variable>(std::move(name), mkLoc(in)));
 
 
 			if (sentinel_on_top) s.emplace_back(ast::Sentinel{});
@@ -311,17 +327,17 @@ namespace spero::parser::actions {
 			auto inst = util::pop<ast::Array>(s);
 			auto name = util::pop<ast::QualifiedBinding>(s);
 
-			s.emplace_back(std::make_unique<ast::GenericType>(std::move(name), std::move(inst), std::get<ast::PtrStyling>(tkn->value)));
+			s.emplace_back(std::make_unique<ast::GenericType>(std::move(name), std::move(inst), std::get<ast::PtrStyling>(tkn->value), mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::unary> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			auto un_c = in.string()[0];
-			if (un_c == '&') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::DEREF));
-			else if (un_c == '!') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NOT));
-			else if (un_c == '-') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::MINUS));
-			else if (un_c == '~') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::RESERVED));
-			else s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA));
+			if (un_c == '&') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::DEREF, mkLoc(in)));
+			else if (un_c == '!') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NOT, mkLoc(in)));
+			else if (un_c == '-') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::MINUS, mkLoc(in)));
+			else if (un_c == '~') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::RESERVED, mkLoc(in)));
+			else s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NA, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::annotation> {
@@ -330,7 +346,7 @@ namespace spero::parser::actions {
 			auto tup = util::pop<ast::Tuple>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
 
-			s.emplace_back(std::make_unique<ast::Annotation>(std::move(name), std::move(tup)));
+			s.emplace_back(std::make_unique<ast::Annotation>(std::move(name), std::move(tup), mkLoc(in)));
 			// stack: annotation
 		}
 	};
@@ -340,7 +356,7 @@ namespace spero::parser::actions {
 			auto tup = util::pop<ast::Tuple>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
 
-			s.emplace_back(std::make_unique<ast::GlobalAnnotation>(std::move(name), std::move(tup)));
+			s.emplace_back(std::make_unique<ast::GlobalAnnotation>(std::move(name), std::move(tup), mkLoc(in)));
 			// stack: annotation
 		}
 	};
@@ -352,7 +368,7 @@ namespace spero::parser::actions {
 				mod.push_front(util::pop<ast::BasicBinding>(s));
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::ModDec>(std::make_unique<ast::QualifiedBinding>(std::move(mod))));
+			s.emplace_back(std::make_unique<ast::ModDec>(std::make_unique<ast::QualifiedBinding>(std::move(mod), mkLoc(in)), mkLoc(in)));
 			// stack: mod_dec
 		}
 	};
@@ -382,7 +398,7 @@ namespace spero::parser::actions {
 				types.push_front(util::pop<ast::Type>(s));
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::TupleType>(std::move(types)));
+			s.emplace_back(std::make_unique<ast::TupleType>(std::move(types), mkLoc(in)));
 			// stack: tupletype
 		}
 	};
@@ -393,7 +409,7 @@ namespace spero::parser::actions {
 			auto args = util::pop<ast::TupleType>(s);
 
 			if (args)
-				s.emplace_back(std::make_unique<ast::FunctionType>(std::move(args), std::move(ret)));
+				s.emplace_back(std::make_unique<ast::FunctionType>(std::move(args), std::move(ret), mkLoc(in)));
 			else
 				s.emplace_back(std::move(ret));
 			// stack: fntype
@@ -401,17 +417,17 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::gen_variance> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			if (in.string() == "+") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::COVARIANT));
-			else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::CONTRAVARIANT));
-			else s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::NA));
+			if (in.string() == "+") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::COVARIANT, mkLoc(in)));
+			else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::CONTRAVARIANT, mkLoc(in)));
+			else s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::NA, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::gen_subrel> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			if (in.string() == "::") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::IMPLS));
-			else if (in.string() == "!:") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::NOT_IMPLS));
-			else if (in.string() == ">")  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUPERTYPE));
-			else  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUBTYPE));
+			if (in.string() == "::") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::IMPLS, mkLoc(in)));
+			else if (in.string() == "!:") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::NOT_IMPLS, mkLoc(in)));
+			else if (in.string() == ">")  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUPERTYPE, mkLoc(in)));
+			else  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUBTYPE, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::gen_type> {
@@ -427,7 +443,7 @@ namespace spero::parser::actions {
 
 			s.emplace_back(std::make_unique<ast::TypeGeneric>(
 				std::move(name), std::move(type),
-				rel_val, var_val
+				rel_val, var_val, mkLoc(in)
 			));
 			// stack: generic
 		}
@@ -438,20 +454,20 @@ namespace spero::parser::actions {
 			auto expr = util::pop<ast::ValExpr>(s);
 			auto type = util::pop<ast::Type>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
-			s.emplace_back(std::make_unique<ast::ValueGeneric>(std::move(name), std::move(type), std::move(expr)));
+			s.emplace_back(std::make_unique<ast::ValueGeneric>(std::move(name), std::move(type), std::move(expr), mkLoc(in)));
 			// stack: generic
 		}
 	};
 	template<> struct action<grammar::use_one> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: var
-			s.emplace_back(std::make_unique<ast::ImportName>(util::pop<ast::BasicBinding>(s)));
+			s.emplace_back(std::make_unique<ast::ImportName>(util::pop<ast::BasicBinding>(s), nullptr, mkLoc(in)));
 			// stack: ImportName
 		}
 	};
 	template<> struct action<grammar::use_any> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::ImportPiece>());
+			s.emplace_back(std::make_unique<ast::ImportPiece>(mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::use_many> {
@@ -461,7 +477,7 @@ namespace spero::parser::actions {
 			while (util::at_node<ast::ImportPiece>(s))
 				imps.push_front(util::pop<ast::ImportPiece>(s));
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::ImportGroup>(std::move(imps)));
+			s.emplace_back(std::make_unique<ast::ImportGroup>(std::move(imps), mkLoc(in)));
 			// stack: ImportGroup
 		}
 	};
@@ -471,7 +487,7 @@ namespace spero::parser::actions {
 			auto name = util::pop<ast::BasicBinding>(s);
 			auto old = util::pop<ast::BasicBinding>(s);
 
-			s.emplace_back(std::make_unique<ast::ImportName>(std::move(name), std::move(old)));
+			s.emplace_back(std::make_unique<ast::ImportName>(std::move(name), std::move(old), mkLoc(in)));
 			// staack: ImportName
 		}
 	};
@@ -486,7 +502,7 @@ namespace spero::parser::actions {
 				pat.push_front(util::pop<ast::AssignPattern>(s));
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::AssignTuple>(std::move(pat)));
+			s.emplace_back(std::make_unique<ast::AssignTuple>(std::move(pat), mkLoc(in)));
 			// stack: AssignTuple
 		}
 	};
@@ -494,7 +510,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: binding
 			if (util::at_node<ast::BasicBinding>(s))
-				s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s)));
+				s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s), mkLoc(in)));
 			// stack: VarPat
 		}
 	};
@@ -502,11 +518,11 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: binding
 			if (util::at_node<ast::BasicBinding>(s))
-				s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s)));
+				s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s), mkLoc(in)));
 
 			if (util::at_node<ast::QualifiedBinding>(s) && util::view_as<ast::QualifiedBinding>(s.back())->parts.back()->type == +ast::BindingType::OPERATOR) {
 				auto op = util::pop<ast::QualifiedBinding>(s);
-				s.emplace_back(std::make_unique<ast::AssignName>(std::move(op->parts.back())));
+				s.emplace_back(std::make_unique<ast::AssignName>(std::move(op->parts.back()), mkLoc(in)));
 			}
 			// stack: VarPat
 		}
@@ -519,7 +535,7 @@ namespace spero::parser::actions {
 				vals.push_front(util::pop<ast::Pattern>(s));
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::PTuple>(std::move(vals)));
+			s.emplace_back(std::make_unique<ast::PTuple>(std::move(vals), mkLoc(in)));
 			// stack: PTuple
 		}
 	};
@@ -548,14 +564,14 @@ namespace spero::parser::actions {
 			//stack: binding PTuple?
 			auto args = util::pop<ast::PTuple>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
-			s.emplace_back(std::make_unique<ast::PAdt>(std::move(name), std::move(args)));
+			s.emplace_back(std::make_unique<ast::PAdt>(std::move(name), std::move(args), mkLoc(in)));
 			//stack: PAdt
 		}
 	};
 	template<> struct action<grammar::pat_var> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: mut? var
-			auto pat = std::make_unique<ast::PNamed>(std::move(util::pop<ast::BasicBinding>(s)));
+			auto pat = std::make_unique<ast::PNamed>(std::move(util::pop<ast::BasicBinding>(s)), mkLoc(in));
 
 			auto tkn = util::pop<ast::Token>(s);
 			if (tkn) {
@@ -572,12 +588,12 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::pat_any> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::Pattern>());
+			s.emplace_back(std::make_unique<ast::Pattern>(mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::pat_val> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::PVal>(util::pop<ast::ValExpr>(s)));
+			s.emplace_back(std::make_unique<ast::PVal>(util::pop<ast::ValExpr>(s), mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::var_assign> {
@@ -595,9 +611,9 @@ namespace spero::parser::actions {
 			auto bind = util::pop<ast::AssignPattern>(s);
 
 			if (val)
-				s.emplace_back(std::make_unique<ast::VarAssign>(std::move(bind), std::move(gen), std::move(val), std::move(inf)));
+				s.emplace_back(std::make_unique<ast::VarAssign>(std::move(bind), std::move(gen), std::move(val), std::move(inf), mkLoc(in)));
 			else
-				s.emplace_back(std::make_unique<ast::Interface>(std::move(bind), std::move(gen), std::move(inf)));
+				s.emplace_back(std::make_unique<ast::Interface>(std::move(bind), std::move(gen), std::move(inf), mkLoc(in)));
 			// stack: VarAssign
 		}
 	};
@@ -606,7 +622,7 @@ namespace spero::parser::actions {
 			// stack: binding TupleType?
 			auto args = util::pop<ast::TupleType>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
-			s.emplace_back(std::make_unique<ast::Adt>(std::move(name), std::move(args)));
+			s.emplace_back(std::make_unique<ast::Adt>(std::move(name), std::move(args), mkLoc(in)));
 			// stack: Adt
 		}
 	};
@@ -616,7 +632,7 @@ namespace spero::parser::actions {
 			auto type = util::pop<ast::Type>(s);
 			auto var = util::pop<ast::BasicBinding>(s);
 
-			s.emplace_back(std::make_unique<ast::Variable>(std::make_unique<ast::QualifiedBinding>(std::move(var))));
+			s.emplace_back(std::make_unique<ast::Variable>(std::make_unique<ast::QualifiedBinding>(std::move(var), mkLoc(in)), mkLoc(in)));
 			util::view_as<ast::ValExpr>(s.back())->type = std::move(type);
 			// stack: variable
 		}
@@ -629,13 +645,14 @@ namespace spero::parser::actions {
 				vals.push_front(util::pop<ast::ValExpr>(s));
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::Tuple>(std::move(vals)));
+			s.emplace_back(std::make_unique<ast::Tuple>(std::move(vals), mkLoc(in)));
 			// stack: tuple
 		}
 	};
 	template<> struct action<grammar::rhs_inf> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: binding
+			// Todo: Wat?
 			s.emplace_back(util::pop<ast::BasicBinding>(s));
 			// stack: type
 		}
@@ -659,7 +676,7 @@ namespace spero::parser::actions {
 			if (gen.size()) s.pop_back();
 
 			auto bind = util::pop<ast::AssignPattern>(s);
-			s.emplace_back(std::make_unique<ast::TypeAssign>(std::move(bind), std::move(cons), std::move(gen), std::move(body), std::move(inherit)));
+			s.emplace_back(std::make_unique<ast::TypeAssign>(std::move(bind), std::move(cons), std::move(gen), std::move(body), std::move(inherit), mkLoc(in)));
 			// stack: TypeAssign
 		}
 	};
@@ -671,8 +688,8 @@ namespace spero::parser::actions {
 
 			if (tkn && std::holds_alternative<ast::VisibilityType>(tkn->value))
 				assign->vis = std::get<ast::VisibilityType>(tkn->value);
-			else {
-			}
+			//else {
+			//}
 
 			s.push_back(std::move(assign));
 			// stack: interface
@@ -687,7 +704,7 @@ namespace spero::parser::actions {
 			auto body = util::pop<ast::ValExpr>(s);
 			auto test = util::pop<ast::ValExpr>(s);
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::Branch>(std::move(test), std::move(body)));
+			s.emplace_back(std::make_unique<ast::Branch>(std::move(test), std::move(body), mkLoc(in)));
 			// stack: branch
 		}
 	};
@@ -723,7 +740,7 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::fn_if_core> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: token test
-			s.emplace_back(std::make_unique<ast::Future>(true));
+			s.emplace_back(std::make_unique<ast::Future>(true, mkLoc(in)));
 			action<grammar::if_core>::apply(in, s);
 			// stack: branch
 		}
@@ -733,7 +750,7 @@ namespace spero::parser::actions {
 			// stack: token body
 			auto part = util::pop<ast::ValExpr>(s);
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::Loop>(std::move(part)));
+			s.emplace_back(std::make_unique<ast::Loop>(std::move(part), mkLoc(in)));
 			// stack: loop
 		}
 	};
@@ -749,7 +766,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: token
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::Loop>(std::make_unique<ast::Future>(true)));
+			s.emplace_back(std::make_unique<ast::Loop>(std::make_unique<ast::Future>(true, mkLoc(in)), mkLoc(in)));
 			// stack: loop
 		}
 	};
@@ -759,7 +776,7 @@ namespace spero::parser::actions {
 			auto body = util::pop<ast::ValExpr>(s);
 			auto test = util::pop<ast::ValExpr>(s);
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::While>(std::move(test), std::move(body)));
+			s.emplace_back(std::make_unique<ast::While>(std::move(test), std::move(body), mkLoc(in)));
 			// stack: while
 		}
 	};
@@ -776,7 +793,7 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::fn_dot_while> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: token test
-			s.emplace_back(std::make_unique<ast::Future>(true));
+			s.emplace_back(std::make_unique<ast::Future>(true, mkLoc(in)));
 			action<grammar::while_l>::apply(in, s);
 			// stack: while
 		}
@@ -788,7 +805,7 @@ namespace spero::parser::actions {
 			auto gen = util::pop<ast::ValExpr>(s);
 			auto pattern = util::pop<ast::Pattern>(s);
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::For>(std::move(pattern), std::move(gen), std::move(body)));
+			s.emplace_back(std::make_unique<ast::For>(std::move(pattern), std::move(gen), std::move(body), mkLoc(in)));
 			// stack: for
 		}
 	};
@@ -806,7 +823,7 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::fn_dot_for> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: token pattern generator
-			s.emplace_back(std::make_unique<ast::Future>(true));
+			s.emplace_back(std::make_unique<ast::Future>(true, mkLoc(in)));
 			action<grammar::for_l>::apply(in, s);
 			// stack: for
 		}
@@ -819,16 +836,16 @@ namespace spero::parser::actions {
 
 			switch (tkn) {
 				case ast::KeywordType::BREAK:
-					s.emplace_back(std::make_unique<ast::Break>(std::move(expr)));
+					s.emplace_back(std::make_unique<ast::Break>(std::move(expr), mkLoc(in)));
 					break;
 				case ast::KeywordType::CONT:
-					s.emplace_back(std::make_unique<ast::Continue>(std::move(expr)));
+					s.emplace_back(std::make_unique<ast::Continue>(std::move(expr), mkLoc(in)));
 					break;
 				case ast::KeywordType::YIELD:
-					s.emplace_back(std::make_unique<ast::YieldRet>(std::move(expr)));
+					s.emplace_back(std::make_unique<ast::YieldRet>(std::move(expr), mkLoc(in)));
 					break;
 				case ast::KeywordType::RET:
-					s.emplace_back(std::make_unique<ast::Return>(std::move(expr)));
+					s.emplace_back(std::make_unique<ast::Return>(std::move(expr), mkLoc(in)));
 					break;
 				default:
 					break;
@@ -848,7 +865,7 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::fn_dot_jmp> {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// stack: token
-			s.emplace_back(std::make_unique<ast::Future>(true));
+			s.emplace_back(std::make_unique<ast::Future>(true, mkLoc(in)));
 			action<grammar::jumps>::apply(in, s);
 			// stack: jump
 		}
@@ -870,9 +887,9 @@ namespace spero::parser::actions {
 			if (pattern.size() == 1 && util::is_type<ast::PTuple>(pattern.back()))
 				pt = util::dyn_cast<ast::PTuple>(std::move(pattern.back()));
 			else
-				pt = std::make_unique<ast::PTuple>(std::move(pattern));
+				pt = std::make_unique<ast::PTuple>(std::move(pattern), mkLoc(in));
 			
-			s.emplace_back(std::make_unique<ast::Case>(std::move(pt), std::move(expr), std::move(if_guard)));
+			s.emplace_back(std::make_unique<ast::Case>(std::move(pt), std::move(expr), std::move(if_guard), mkLoc(in)));
 			// stack: (sentinel | case) case
 		}
 	};
@@ -890,7 +907,7 @@ namespace spero::parser::actions {
 			auto match_val = util::pop<ast::ValExpr>(s);
 			s.pop_back();
 
-			s.emplace_back(std::make_unique<ast::Match>(std::move(match_val), std::move(cases)));
+			s.emplace_back(std::make_unique<ast::Match>(std::move(match_val), std::move(cases), mkLoc(in)));
 			// stack: match
 		}
 	};
@@ -906,7 +923,7 @@ namespace spero::parser::actions {
 			// stack: expr token
 
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::Match>(util::pop<ast::ValExpr>(s), std::move(cases)));
+			s.emplace_back(std::make_unique<ast::Match>(util::pop<ast::ValExpr>(s), std::move(cases), mkLoc(in)));
 			// stack: match
 		}
 	};
@@ -922,8 +939,8 @@ namespace spero::parser::actions {
 			// stack: expr token
 
 			s.pop_back();
-			auto expr = std::make_unique<ast::Future>(true);
-			s.emplace_back(std::make_unique<ast::Match>(std::move(expr), std::move(cases)));
+			auto expr = std::make_unique<ast::Future>(true, mkLoc(in));
+			s.emplace_back(std::make_unique<ast::Match>(std::move(expr), std::move(cases), mkLoc(in)));
 			// stack: match
 		}
 	};
@@ -933,7 +950,7 @@ namespace spero::parser::actions {
 		static void apply(const pegtl::action_input& in, Stack& s) {
 			// Produce a qualified binding because operators aren't included in name_path
 			s.emplace_back(std::make_unique<ast::QualifiedBinding>(
-				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR)
+				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR, mkLoc(in)), mkLoc(in)
 			));
 		}
 	};
@@ -954,7 +971,7 @@ namespace spero::parser::actions {
 			args.push_front(util::pop<ast::ValExpr>(s));
 			if (not_curried) args.push_front(util::pop<ast::ValExpr>(s));
 
-			s.emplace_back(std::make_unique<ast::Tuple>(std::move(args)));
+			s.emplace_back(std::make_unique<ast::Tuple>(std::move(args), mkLoc(in)));
 
 			// stack: op tuple
 			action<grammar::fnseq>::apply(in, s);
@@ -977,7 +994,7 @@ namespace spero::parser::actions {
 
 			else {
 				auto expr2 = util::pop<ast::ValExpr>(s);
-				s.emplace_back(std::make_unique<ast::Index>(std::move(expr2), std::move(expr)));
+				s.emplace_back(std::make_unique<ast::Index>(std::move(expr2), std::move(expr), mkLoc(in)));
 			}
 			// stack: index
 		}
@@ -991,7 +1008,7 @@ namespace spero::parser::actions {
 				auto tkn = util::pop<ast::Token>(s);
 				
 				if (std::holds_alternative<ast::UnaryType>(tkn->value)) {
-					expr = std::make_unique<ast::UnaryApp>(std::move(expr), std::get<ast::UnaryType>(tkn->value));
+					expr = std::make_unique<ast::UnaryApp>(std::move(expr), std::get<ast::UnaryType>(tkn->value), mkLoc(in));
 
 				} else {
 					s.emplace_back(std::move(tkn));
@@ -1018,7 +1035,7 @@ namespace spero::parser::actions {
 			auto stop = util::pop<ast::ValExpr>(s);
 			s.pop_back();
 			auto start = util::pop<ast::ValExpr>(s);
-			s.emplace_back(std::make_unique<ast::Range>(std::move(start), std::move(stop)));
+			s.emplace_back(std::make_unique<ast::Range>(std::move(start), std::move(stop), mkLoc(in)));
 			// stack: range
 		}
 	};
@@ -1027,7 +1044,7 @@ namespace spero::parser::actions {
 			// stack: IMPL qual
 			auto qual = util::pop<ast::QualifiedBinding>(s);
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::ImplExpr>(std::move(qual)));
+			s.emplace_back(std::make_unique<ast::ImplExpr>(std::move(qual), mkLoc(in)));
 			// stack: impl
 		}
 	};
@@ -1038,7 +1055,7 @@ namespace spero::parser::actions {
 			while (util::at_node<ast::ImportPiece>(s))
 				imps.push_front(util::pop<ast::ImportPiece>(s));
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::ModImport>(std::move(imps)));
+			s.emplace_back(std::make_unique<ast::ModImport>(std::move(imps), mkLoc(in)));
 			// stack: Import
 		}
 	};

@@ -19,7 +19,7 @@ namespace spero::compiler::ast {
 		std::string name;
 		BindingType type;
 
-		BasicBinding(std::string, BindingType);
+		BasicBinding(std::string, BindingType, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -35,8 +35,8 @@ namespace spero::compiler::ast {
 	struct QualifiedBinding : Ast {
 		std::deque<ptr<BasicBinding>> parts;
 
-		QualifiedBinding(ptr<BasicBinding>);
-		QualifiedBinding(std::deque<ptr<BasicBinding>>);
+		QualifiedBinding(ptr<BasicBinding>, Ast::Location);
+		QualifiedBinding(std::deque<ptr<BasicBinding>>, Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
@@ -53,7 +53,7 @@ namespace spero::compiler::ast {
 	struct Variable : ValExpr {
 		ptr<QualifiedBinding> name;
 
-		Variable(ptr<QualifiedBinding>);
+		Variable(ptr<QualifiedBinding>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -67,6 +67,7 @@ namespace spero::compiler::ast {
 	 * Note: Instance usage is currently deprecated
 	 */
 	struct AssignPattern : Ast {
+		AssignPattern(Ast::Location);
 	};
 
 
@@ -81,7 +82,7 @@ namespace spero::compiler::ast {
 	struct AssignName : AssignPattern {
 		ptr<BasicBinding> var;
 
-		AssignName(ptr<BasicBinding>);
+		AssignName(ptr<BasicBinding>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -97,7 +98,7 @@ namespace spero::compiler::ast {
 	struct AssignTuple : AssignPattern {
 		std::deque<ptr<AssignPattern>> vars;
 
-		AssignTuple(std::deque<ptr<AssignPattern>>);
+		AssignTuple(std::deque<ptr<AssignPattern>>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -113,6 +114,8 @@ namespace spero::compiler::ast {
 	 */
 	struct Pattern : Ast {
 		bool is_mut = false;
+
+		Pattern(Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
@@ -128,7 +131,7 @@ namespace spero::compiler::ast {
 	struct PTuple : Pattern {
 		std::deque<ptr<Pattern>> ptns;
 
-		PTuple(std::deque<ptr<Pattern>>);
+		PTuple(std::deque<ptr<Pattern>>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -144,7 +147,7 @@ namespace spero::compiler::ast {
 	struct PNamed : Pattern {
 		ptr<BasicBinding> name;
 
-		PNamed(ptr<BasicBinding>);
+		PNamed(ptr<BasicBinding>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
 	};
 
@@ -162,7 +165,7 @@ namespace spero::compiler::ast {
 		ptr<PTuple> args;
 		// Note: assert(name.type == BindingType::TYPE);
 
-		PAdt(ptr<BasicBinding>, ptr<PTuple>);
+		PAdt(ptr<BasicBinding>, ptr<PTuple>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 
@@ -179,7 +182,7 @@ namespace spero::compiler::ast {
 	struct PVal : Pattern {
 		ptr<ValExpr> value;
 
-		PVal(ptr<ValExpr>);
+		PVal(ptr<ValExpr>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 }

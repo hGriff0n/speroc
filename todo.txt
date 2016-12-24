@@ -3,8 +3,8 @@ todo:
  work on blog posts
  work on memory and pointers
    work on more design questions
- add location data to ast nodes
-   need a consistent way to construct this location struct
+ improve compiler location data to necessary
+ what am i doing actions.h/l:647
  add in error recognition to the parser
 
  "-" is interpreted as a unary way to greedily
