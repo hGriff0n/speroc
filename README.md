@@ -13,10 +13,11 @@ Current Status:
 Current Dev Plan:
 
     Augment Parser and AST with error handling
+    Work on simple codegen code (ie. "def main = () -> 5 + 5")
 
 Project Info:
 
-    size: 3157 sloc (according to Github)
+    size: 3200 sloc (according to Github)
     17 header files, 11 source files
     
 Libraries Used:

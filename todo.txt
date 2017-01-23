@@ -1,16 +1,22 @@
 
 todo:
- work on blog posts
  work on memory and pointers
    work on more design questions
- improve compiler location data
- what am i doing actions.h/l:647
+   make design blog post about this
+ work on ast blog posts
+ update the parser/compiler/docs to recent language changes
+   see 'memory.spr' to see what changes need to be made
+ improve compiler location data collection
  add in error recognition to the parser
+   add in a compiler framework for collecting and reporting errors
+ get basic codegen setup and running
+   pe file creation + basic main ('first.spr' should return '5')
 
- "-" is interpreted as a unary way to greedily
-   "-" and "2 ++ -" fail to parse
-   "-(3, 4)" is a UnaryOp node instead of a FnCall
-     this could possibly be resolved in analysis though (maybe in construction)
+ errors:
+   "-" is interpreted as a unary way to greedily
+     "-" and "2 ++ -" fail to parse
+     "-(3, 4)" is a UnaryOp node instead of a FnCall
+       this could possibly be resolved in analysis though (maybe in construction)
 
  language questions:
    look into changing rhs operator currying to have same semantics as lhs operator currying
@@ -19,8 +25,9 @@ todo:
    should a yield without a wait equate to a straight return ???
    determine sugaring operations
      behavior for '()' operations
-       Indexable[T] -> get(Size), set(Size, T)
-         scala uses apply and update
+       T:apply(A..) -> T(A..)
+         I get the name from Scala (might be better to change)
+       Indexable[T] -> apply(Size), set(Size, T)
    figure out the translation of operators fully
      especially for '&' and '=', given they have special meanings in some conditions
        maybe make special ast nodes to represent them
@@ -28,9 +35,8 @@ todo:
        if no matching definition "+=" for can be found
          statement translates to "l = +(l, r)"
          otherwise translates to "+=(l, r)"
-       might be changing the semantics of pointers so '&' aren't needed
-         I'll have to change operator rules to account for this a bit
-   look at changing the semantics of pointers to java semantics (ie. reference)
+   change the precedence rules of '&' operators (need to have high precedence)
+     might be changing the semantics of pointers so '&' aren't needed
    look into possibly allowing operators to not require parenthesis in indexing
      allow "3.+ 4" instead of "3.+(4)"
        difficult to parse though
@@ -54,8 +60,8 @@ todo:
 Fix Spero
   Range grammar interfered with sequence grammar on the ',' (step)
   Figure out a better way to handle the duplication between rhs_inher and adt
-	The old grammar causes the type name to be pushed on the stack twice
-	  I fixed this by adding the 'if<at>' rule, but I want to have a more focused rule
+    The old grammar causes the type name to be pushed on the stack twice
+      I fixed this by adding the 'if<at>' rule, but I want to have a more focused rule
   Figure out the rules and abilities of pointers and manual memory
 
 Fixes Waiting for Other Features
