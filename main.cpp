@@ -1,12 +1,7 @@
 #pragma warning(disable : 4503)
 
-#define CATCH_CPP14_OR_GREATER
-#define CATCH_CONFIG_RUNNER
-
-#include "catch.hpp"
-
 #include <iostream>
-#include "parser\parser.h"
+#include "parser/parser.h"
 
 #include "cmd_line.h"
 #include "util/utils.h"
@@ -20,7 +15,7 @@ Stream& getMultiline(Stream& in, std::string& s) {
 	std::getline(in, s);
 	if (s == ":q") return in;
 
-	std::string tmp{};
+	std::string tmp;
 	while (std::getline(in, tmp)) {
 		if (tmp == "") return in;
 
@@ -60,7 +55,7 @@ int main(int argc, const char* argv[]) {
 		}
 
 		std::cout << "Parsing Succeeded: " << (succ ? "true" : "false") << '\n';
-		for (auto&& node : res)
+		for (const auto& node : res)
 			if (node) node->prettyPrint(std::cout, 0) << "\n";
 			else std::cout << "nullptr\n";
 
