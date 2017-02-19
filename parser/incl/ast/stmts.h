@@ -10,6 +10,7 @@ namespace spero::compiler::ast {
 	struct QualifiedBinding;
 	struct Block;
 	struct GenericPart;
+	struct GenericType;
 	struct ImportPiece;
 
 	using GenArray = std::deque<ptr<GenericPart>>;
@@ -100,10 +101,11 @@ namespace spero::compiler::ast {
 	 *   type - the type that is being implemented
 	 */
 	struct ImplExpr : Stmt {
-		ptr<QualifiedBinding> type;
+		//ptr<QualifiedBinding> type;
+		ptr<GenericType> type;
 		ptr<Block> impls;
 
-		ImplExpr(ptr<QualifiedBinding>, ptr<Block>, Ast::Location);
+		ImplExpr(ptr<GenericType>, ptr<Block>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 

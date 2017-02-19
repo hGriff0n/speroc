@@ -97,15 +97,18 @@ namespace spero::compiler::ast {
 	OutStream& ImportName::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.ImportName (";
 
-		name->prettyPrint(s, 0, "name=") << ')';
+		(new_name ? new_name : name)->prettyPrint(s, 0, "name=") << ')';
 
-		if (inst && inst->exprs.size()) {
-			s << " [\n";
-			for (auto&& e : inst->exprs)
-				e->prettyPrint(s, buf + 3) << '\n';
-			s << std::string(buf + 2, ' ') << "]";
+		if (new_name) {
+			name->prettyPrint(s << '\n', buf + 2, "imp=");
+
+			if (inst && inst->exprs.size()) {
+				s << " [\n";
+				for (auto&& e : inst->exprs)
+					e->prettyPrint(s, buf + 3) << '\n';
+				s << std::string(buf + 2, ' ') << ']';
+			}
 		}
-		if (new_name) new_name->prettyPrint(s << '\n', buf + 2, "new=");
 
 		return s;
 	}

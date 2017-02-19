@@ -262,7 +262,7 @@ namespace spero::parser::grammar {
 	//struct valexpr : seq<sor<k_mut, op, eps>, sor<control, binary>, ig_s, opt<one<';'>, ig_s>> {};
 	struct valexpr : seq<sor<k_mut, eps>, sor<control, binary>, ig_s, opt<one<';'>, ig_s>> {};
 	struct mod_use : seq<k_use, star<use_one, one<':'>>, use_final> {};
-	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s, opt<scope>> {};
+	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s, opt<array>, ig_s, opt<scope>> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
 	struct stmt : seq<star<annotation, ig_s>, sor<global_annotation, mod_dec, expr>> {};
 	struct program : seq<ig_s, star<stmt>, eolf> {};

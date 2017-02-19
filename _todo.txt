@@ -1,9 +1,5 @@
 
 todo:
- update impls block to correctly implement impls
-   current design doesn't allow for "impls Printable[Int] {}"
-   improve pretty-printing design (add in block)
-   also improve pretyty-printing of "use Vec[Int] as IVec"
  improve collection of location data in the compiler (performance)
  get basic codegen setup and running
    target: x86 assembly (format to be decided between gcc and clang, probably gcc)

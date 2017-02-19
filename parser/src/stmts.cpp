@@ -2,6 +2,7 @@
 #include "ast/atoms.h"
 #include "ast/decor.h"
 #include "ast/names.h"
+#include "ast/types.h"
 
 namespace spero::compiler::ast {
 
@@ -98,11 +99,12 @@ namespace spero::compiler::ast {
 	/*
 	 * ast::ImplExpr
 	 */
-	ImplExpr::ImplExpr(ptr<QualifiedBinding> t, ptr<Block> b, Ast::Location loc)
+	ImplExpr::ImplExpr(ptr<GenericType> t, ptr<Block> b, Ast::Location loc)
 			: Stmt{ loc }, type{ std::move(t) }, impls{ std::move(b) } {}
 	OutStream& ImplExpr::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.ImplExpr (type=";
-		type->prettyPrint(s, 0) << ')';
+		s << std::string(buf, ' ') << context << "ast.ImplExpr\n";
+		type->prettyPrint(s, buf + 2, "type=") << ")\n";
+		if (impls) impls->prettyPrint(s, buf + 2, "impl=");
 		return Stmt::prettyPrint(s, buf + 2);
 	}
 

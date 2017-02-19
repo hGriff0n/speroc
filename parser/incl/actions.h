@@ -1202,11 +1202,15 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::impl_expr> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
-			// stack: IMPL qual block
+			// stack: IMPL qual array? block?
 			auto block = util::pop<ast::Block>(s);
+			auto gen = util::pop<ast::Array>(s);
 			auto qual = util::pop<ast::QualifiedBinding>(s);
 			s.pop_back();
-			s.emplace_back(std::make_unique<ast::ImplExpr>(std::move(qual), std::move(block), mkLoc(in)));
+
+			s.emplace_back(std::make_unique<ast::ImplExpr>(
+				std::make_unique<ast::GenericType>(std::move(qual), std::move(gen), ast::PtrStyling::NA, mkLoc(in)),
+				std::move(block), mkLoc(in)));
 			// stack: impl
 		}
 	};
