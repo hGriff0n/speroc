@@ -82,7 +82,7 @@ namespace spero::compiler::ast {
 	 */
 	PTuple::PTuple(std::deque<ptr<Pattern>> ps, Ast::Location loc) : Pattern{ loc }, ptns{ std::move(ps) } {}
 	OutStream& PTuple::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.PTuple" << ptns.size() << " (mut=" << is_mut << ") (\n";
+		s << std::string(buf, ' ') << context << "ast.PTuple" << ptns.size() << " (capture=" << cap._to_string() << ") (\n";
 		for (auto&& p : ptns)
 			p->prettyPrint(s, buf + 2) << '\n';
 		return s << std::string(buf, ' ') << ')';
@@ -94,7 +94,7 @@ namespace spero::compiler::ast {
 	 */
 	PNamed::PNamed(ptr<BasicBinding> n, Ast::Location loc) : Pattern{ loc }, name{ std::move(n) } {}
 	OutStream& PNamed::prettyPrint(OutStream& s, size_t buf, std::string context) {
-		s << std::string(buf, ' ') << context << "ast.PNamed (mut=" << is_mut << ')';
+		s << std::string(buf, ' ') << context << "ast.PNamed (capture=" << cap._to_string() << ')';
 		return name->prettyPrint(s, 1);
 	}
 

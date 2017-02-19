@@ -36,12 +36,13 @@ namespace spero::compiler::ast {
 	BETTER_ENUM(KeywordType, char, LET, DEF, STATIC, MUT, DO,
 				MOD, USE, MATCH, IF, ELSIF, ELSE, WHILE, FOR, LOOP,
 				BREAK, CONT, YIELD, RET, WAIT, IMPL, F_IN);
-	BETTER_ENUM(PtrStyling, char, POINTER, VIEW, NA);
-	BETTER_ENUM(VarianceType, char, COVARIANT, CONTRAVARIANT, INVARIANT, NA);
+	BETTER_ENUM(PtrStyling, char, PTR, REF, VIEW, NA);
+	BETTER_ENUM(VarianceType, char, COVARIANT, CONTRAVARIANT, INVARIANT, VARIADIC);
 	BETTER_ENUM(RelationType, char, IMPLS, NOT_IMPLS, SUBTYPE, SUPERTYPE, NA);
 	BETTER_ENUM(VisibilityType, char, PUBLIC, PROTECTED, PRIVATE, STATIC);
 	BETTER_ENUM(BindingType, char, TYPE, VARIABLE, OPERATOR);
 	BETTER_ENUM(UnaryType, char, DEREF, NOT, MINUS, RESERVED, NA);
+	BETTER_ENUM(CaptureType, char, NORM, MUT, REF, MUTREF);
 	struct Annotation;
 
 
@@ -75,7 +76,8 @@ namespace spero::compiler::ast {
 	 *   value - a variant of all token types
 	 */
 	struct Token : Ast {
-		using token_type = std::variant<KeywordType, PtrStyling, VarianceType, RelationType, VisibilityType, BindingType, UnaryType>;
+		using token_type = std::variant<KeywordType, PtrStyling, VarianceType, RelationType,
+										VisibilityType, BindingType, UnaryType, CaptureType>;
 		token_type value;
 
 		template<class T, class = std::enable_if_t<can_hold_v<T, token_type>>>

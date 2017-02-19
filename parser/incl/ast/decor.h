@@ -7,6 +7,7 @@ namespace spero::compiler::ast {
 	 * Forward Declarations
 	 */
 	struct Tuple;
+	struct Array;
 	struct TupleType;
 	struct Pattern;
 	struct PTuple;
@@ -145,9 +146,10 @@ namespace spero::compiler::ast {
 	 */
 	struct ImportName : ImportPiece {
 		ptr<BasicBinding> name;
-		ptr<BasicBinding> old_name;
+		ptr<BasicBinding> new_name;
+		ptr<Array> inst;
 
-		ImportName(ptr<BasicBinding>, ptr<BasicBinding>, Ast::Location);
+		ImportName(ptr<BasicBinding>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 

@@ -75,6 +75,23 @@ namespace spero::compiler::ast {
 
 
 	/*
+	* Represents a "In-binding" assignment
+	*
+	* Extends: ValExpr
+	*
+	* Exports:
+	*
+	*/
+	struct InAssign : ValExpr {
+		ptr<VarAssign> binding;
+		ptr<ValExpr> expr;
+
+		InAssign(ptr<ValExpr> expr, Ast::Location);
+		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
+	};
+
+
+	/*
 	 * Represents an implements expression within a type body
 	 *
 	 * Extends: Stmt
@@ -84,8 +101,9 @@ namespace spero::compiler::ast {
 	 */
 	struct ImplExpr : Stmt {
 		ptr<QualifiedBinding> type;
+		ptr<Block> impls;
 
-		ImplExpr(ptr<QualifiedBinding>, Ast::Location);
+		ImplExpr(ptr<QualifiedBinding>, ptr<Block>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
 	};
 

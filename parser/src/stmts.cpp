@@ -84,11 +84,22 @@ namespace spero::compiler::ast {
 		return expr->prettyPrint(s << '\n', buf + 2, "value=");
 	}
 
+	
+	/*
+	 * ast::InAssign
+	 */
+	InAssign::InAssign(ptr<ValExpr> e, Ast::Location loc) : ValExpr{ loc }, expr{ std::move(e) } {}
+	OutStream& InAssign::prettyPrint(OutStream& s, size_t buf, std::string context) {
+		s << std::string(buf, ' ') << context << "ast.ScopedBinding\n";
+		binding->prettyPrint(s, buf + 2, "bind=") << '\n';
+		return expr->prettyPrint(s, buf + 2, "in=");
+	}
 
 	/*
 	 * ast::ImplExpr
 	 */
-	ImplExpr::ImplExpr(ptr<QualifiedBinding> t, Ast::Location loc) : Stmt{ loc }, type{ std::move(t) } {}
+	ImplExpr::ImplExpr(ptr<QualifiedBinding> t, ptr<Block> b, Ast::Location loc)
+			: Stmt{ loc }, type{ std::move(t) }, impls{ std::move(b) } {}
 	OutStream& ImplExpr::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		s << std::string(buf, ' ') << context << "ast.ImplExpr (type=";
 		type->prettyPrint(s, 0) << ')';

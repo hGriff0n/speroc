@@ -113,7 +113,7 @@ namespace spero::compiler::ast {
 	 *   is_mut - flag for whether bound value should be mutable
 	 */
 	struct Pattern : Ast {
-		bool is_mut = false;
+		CaptureType cap = CaptureType::NORM;
 
 		Pattern(Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
