@@ -72,6 +72,7 @@ namespace spero::compiler::ast {
 
 		VarAssign(ptr<AssignPattern>, GenArray, ptr<ValExpr>, ptr<Type>, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
+		virtual OutStream& assemblyCode(OutStream&) final;
 	};
 
 

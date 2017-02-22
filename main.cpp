@@ -9,21 +9,15 @@
 // Big performance hit
 //const size_t issues = spero::parser::num_issues();
 
-// Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input (to simplify multiline repl testing)
+// Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
 template <class Stream>
-Stream& getMultiline(Stream& in, std::string& s) {
-	std::getline(in, s);
-	if (s == ":q") return in;
+Stream& getMultiline(Stream&, std::string&);
 
-	std::string tmp;
-	while (std::getline(in, tmp)) {
-		if (tmp == "") return in;
+// Helper function to print out the ast
+template<class Stream>
+Stream& writeAST(Stream&, const spero::parser::Stack&);
 
-		s += "\n" + tmp;
-	}
-
-	return in;
-}
+void compile(spero::parser::Stack&, std::string, std::string);
 
 int main(int argc, const char* argv[]) {
 	using namespace spero;
@@ -47,7 +41,13 @@ int main(int argc, const char* argv[]) {
 		spero::parser::Stack res;
 
 		if (input.substr(0, 2) == ":l") {
-			std::tie(succ, res) = parser::parseFile(input.substr(3));
+			auto file = input.substr(3);
+			std::tie(succ, res) = parser::parseFile(file);
+
+			if (succ) {
+				compile(res, file, "out.s");
+				system("gcc out.s -o spero.exe");
+			}
 			//res = parser::parse(findFile(input.substr(3), "spr", "spqr"));
 
 		} else {
@@ -55,13 +55,60 @@ int main(int argc, const char* argv[]) {
 		}
 
 		std::cout << "Parsing Succeeded: " << (succ ? "true" : "false") << '\n';
-		for (const auto& node : res)
-			if (node) node->prettyPrint(std::cout, 0) << "\n";
-			else std::cout << "nullptr\n";
-
+		writeAST(std::cout, res);
 		std::cout << std::endl;
 	}
 
 	//std::cout << issues << " - Fin";
 	//std::cin.get();
 }
+
+template <class Stream>
+Stream& getMultiline(Stream& in, std::string& s) {
+	std::getline(in, s);
+	if (s == ":q") return in;
+
+	std::string tmp;
+	while (std::getline(in, tmp)) {
+		if (tmp == "") return in;
+
+		s += "\n" + tmp;
+	}
+
+	return in;
+}
+
+
+template<class Stream>
+Stream& writeAST(Stream& s, const spero::parser::Stack& stack) {
+	for (const auto& node : stack)
+		if (node) node->prettyPrint(s, 0) << '\n';
+		else s << "nullptr\n";
+
+	return s << '\n';
+}
+
+
+#include <fstream>
+void compile(spero::parser::Stack& s, std::string in, std::string out) {
+	using namespace spero::parser;
+	std::cout << "Starting compilation phase...\n";
+
+	// Open the output file
+	std::ofstream o{ out };
+	std::cout << "Opened file " << out << " for compilation output\n";
+
+	// Output file header information
+	o << "\t.file \"" << in << "\"\n.text\n";
+
+	// Print everything directly to the file
+	for (const auto& node : s)
+		node->assemblyCode(o);
+
+	o << '\n';
+
+	// End the compilation phase
+	std::cout << "Ending compilation phase...\n";
+}
+
+// TODO: Have Module Declarations collect everything as a single string

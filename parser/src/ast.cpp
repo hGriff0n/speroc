@@ -11,6 +11,9 @@ namespace spero::compiler::ast {
 	OutStream& Ast::prettyPrint(OutStream& s, size_t buf, std::string context) {
 		return s << std::string(buf, ' ') << context << "ast.Ast";
 	}
+	OutStream& Ast::assemblyCode(OutStream& s) {
+		return s;
+	}
 
 
 	/*

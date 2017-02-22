@@ -1,14 +1,20 @@
 
 todo:
- improve collection of location data in the compiler (performance)
  get basic codegen setup and running
-   target: x86 assembly (format to be decided between gcc and clang, probably gcc)
-     then use other tools to turn the assembly into an executable (gcc -> as -> link)
+   come up with a good way of adding on analysis transforms to the ast structure
+     just making a new method at every stage won't work
+	 modify the assembly generation to use this procedure
+   abstract the codegen to get some more advanced sequences
  add in exception/error handling to make the compiler usable
    add in a compiler framework for collecting/reporting errors
+ improve collection of location data in the compiler (performance)
  setup command line flags for the compiler
    particularly the '-S' flag for getting just the assembly
+   change the way the projects are setup
+     change the "main" project into a console to query the compiler chain
+	 move the "compiler" project internals into a separate project (slightly different name than speroc?)
  setup "test" project
+ answer the questions/improvements below
 
  errors:
    "-" is interpreted as a unary way to greedily
@@ -65,3 +71,11 @@ Fix Spero
 Fixes Waiting for Other Features
   In-place modification of containers using for loops/iterators
     Waiting for: Implementation of standard containers and iterators
+
+Breaking Codes
+	use std:io:println as puts
+	def main = () -> {
+		#let x = let y = 5 in y * y		# Assignments aren't ValExpr so this breaks
+		let x = { let y = 5 in y * y }
+		"5^2 = {}".puts(x)
+	}

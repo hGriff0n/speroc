@@ -84,7 +84,9 @@ namespace spero::compiler::ast {
 
 		return expr->prettyPrint(s << '\n', buf + 2, "value=");
 	}
-
+	OutStream& VarAssign::assemblyCode(OutStream& out) {
+		return expr->assemblyCode(out);
+	}
 	
 	/*
 	 * ast::InAssign

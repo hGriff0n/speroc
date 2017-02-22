@@ -49,6 +49,9 @@ namespace spero::compiler::ast {
 
 		return ValExpr::prettyPrint(s, buf);
 	}
+	OutStream& Int::assemblyCode(OutStream& s) {
+		return s << "\tmov $" << val << ", %eax\n";
+	}
 
 
 	/*
@@ -84,6 +87,25 @@ namespace spero::compiler::ast {
 		if (ret) ret->prettyPrint(s << '\n', buf + 2, "returns=");
 		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
 		return body->prettyPrint(s << '\n', buf + 2, "expr=");
+	}
+	OutStream& FnBody::assemblyCode(OutStream& out) {
+		out << "\t.p2align 4, 0x90\n"
+			<< "\t.globl _main\n"
+			<< "\t.def _main; .scl 2; .type 32; .endef\n"
+			<< "_main:\n"
+			<< "LFB0:\n"
+			<< "\tpush %ebp\n"
+			<< "\tmov %esp, %ebp\n"
+			<< "\tpush %eax\n";
+
+		// Print the int (what does the fn have?)
+		body->assemblyCode(out);
+
+		// Print function tail/endlog
+		return out << "\tleave\n"
+			<< "\tret\n"
+			<< "LFE0:\n"
+			<< "\t.ident \"speroc: 0.0.1 (Windows 2016)\"";
 	}
 
 }

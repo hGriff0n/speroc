@@ -70,6 +70,7 @@ namespace spero::compiler::ast {
 		Int(std::string, Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "") final;
+		virtual OutStream& assemblyCode(OutStream&) final;
 	};
 
 
@@ -124,5 +125,6 @@ namespace spero::compiler::ast {
 
 		FnBody(ptr<ValExpr>, bool, Ast::Location);
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
+		virtual OutStream& assemblyCode(OutStream&);
 	};
 }

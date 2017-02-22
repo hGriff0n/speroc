@@ -64,6 +64,7 @@ namespace spero::compiler::ast {
 		Ast(Ast::Location);
 
 		virtual OutStream& prettyPrint(OutStream&, size_t, std::string = "");
+		virtual OutStream& assemblyCode(OutStream&);
 	};
 
 
