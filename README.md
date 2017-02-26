@@ -5,18 +5,18 @@ I don't know too much about compiler development so I'm at a bit of a loss in so
 Current Status:
 
     parser - largely implemented, error-prone
-    ast - largely assembled with pretty-printing, error-prone
+    ast - largely assembled, error-prone
     tests - unimplemented
     analysis - unimplemented
-    codegen - some organizational knowledge of PE format
+    codegen - can produce basic ("return i") executables
 
 Current Dev Plan:
 
-    Augment Parser and AST with error handling
     Work on simple codegen (ie. "def main = () -> 5 + 5")
+    Augment Parser and AST with error handling
     Develop complete compiler testing framework
-    Reach v1.0 by completing analysis compilation stages
     Start work on implmenting standard library
+    Reach v1.0 by completing analysis compilation stages
 
 Project Info:
 
@@ -32,7 +32,8 @@ Libraries Used:
 
 Release Framework (Current expectations):
 
-    v0.1 - Simple codegen and compilation possible
-    v1.0 - Complete language specification with all analysis
-    v2.0 - Language updates plus standard library and optimization stages
-    v3.0 - Language updates, possible transfer to LLVM backend, maybe bootstrapped
+    v0.1 - Simple codegen and compilation possible with some analysis stages
+    v0.2 - Type system and type inference completely setup
+    v1.0 - Complete language specification with all analysis, standard library
+    v2.0 - Language updates, plus optimization stages and transfer to LLVM backend
+    v2.0 - Language updates, maybe bootstrapped

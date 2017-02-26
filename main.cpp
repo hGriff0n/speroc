@@ -88,7 +88,6 @@ Stream& writeAST(Stream& s, const spero::parser::Stack& stack) {
 	return s << '\n';
 }
 
-
 #include <fstream>
 void compile(spero::parser::Stack& s, std::string in, std::string out) {
 	using namespace spero::parser;
@@ -101,9 +100,11 @@ void compile(spero::parser::Stack& s, std::string in, std::string out) {
 	// Output file header information
 	o << "\t.file \"" << in << "\"\n.text\n";
 
+	auto visitor = spero::compiler::codegen::AsmGenerator{ o };
+
 	// Print everything directly to the file
 	for (const auto& node : s)
-		node->assemblyCode(o);
+		node->visit(visitor);
 
 	o << '\n';
 

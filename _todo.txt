@@ -1,10 +1,19 @@
 
 todo:
  get basic codegen setup and running
-   come up with a good way of adding on analysis transforms to the ast structure
-     just making a new method at every stage won't work
-	 modify the assembly generation to use this procedure
-   abstract the codegen to get some more advanced sequences
+   rewrite ast structure to enable good visiting patterns
+	 look into why FnCall takes an Ast as the caller
+	 change naming of GlobalAnnotation and Annotation (find a way to abstract common behavior)
+   ensure '_ast.h' is navigable
+   improve the capabilities of the code generation engine
+     get proper codegen for returning basic literals (everything but strings)
+ rework organization
+   think about moving parser back into the speroc main project
+   AsmGenerator needs a better placement in the heirarchy
+     additionally the AST nodes don't need to be filtered through Visitor
+   look at renaming speroc
+     this is too facilitate the "forward to gcc" model
+   take another look into the ast structure to make sure that every piece is meaningful
  add in exception/error handling to make the compiler usable
    add in a compiler framework for collecting/reporting errors
  improve collection of location data in the compiler (performance)
@@ -44,6 +53,7 @@ todo:
    look into possibly allowing operators to not require parenthesis in indexing
      allow "3.+ 4" instead of "3.+(4)"
        difficult to parse though
+   look at solutions for solving the expression problem (typeclasses, multimethods, implicits)
 
  parser improvements:
    re-enable "::" syntax for anonymous types
@@ -56,6 +66,8 @@ todo:
    need to determine a distinction between semantic and syntactic typing in the ast
      depends in large part based on how I'm representing types internally
    determine whether I really need the "Future" node
+   look into replacing 'std::string' with 'std::string_view' for ast prettyPrint
+   look into moving pretty printing into the visitor model
 
  prettyPrinting improvements:
    "3 :: Array[Int]" has a wierd output buffering
