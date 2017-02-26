@@ -560,16 +560,6 @@ namespace spero::compiler::ast {
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
-	
-	/*
-	 * This class only exists to silence the linker
-	 * It is never used, never constructed, and has no links to any outside code
-	 * At one point, the above class was named 'GlobalAnnotation' but I changed that
-	 * As the 'Annotation' class was inheriting from 'GlobalAnnotation'
-	 */
-	struct GlobalAnnotation : Annotation {
-		GlobalAnnotation(ptr<BasicBinding>, ptr<Tuple>, Ast::Location);
-	};
 
 
 	/*

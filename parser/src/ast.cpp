@@ -375,8 +375,6 @@ namespace spero::compiler::ast {
 		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
 		return s;
 	}
-	GlobalAnnotation::GlobalAnnotation(ptr<BasicBinding> b, ptr<Tuple> t, Ast::Location l)
-		: Annotation{ std::move(b), std::move(t), l } {}
 
 	LocalAnnotation::LocalAnnotation(ptr<BasicBinding> n, ptr<Tuple> t, Ast::Location loc)
 		: Annotation{ std::move(n), std::move(t), loc } {}
