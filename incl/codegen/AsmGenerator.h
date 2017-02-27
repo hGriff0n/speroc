@@ -1,6 +1,6 @@
 #pragma once
 
-#include "visitor.h"
+#include "parser/visitor.h"
 
 namespace spero::compiler::codegen {
 

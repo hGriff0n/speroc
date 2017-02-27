@@ -1,4 +1,4 @@
-#include "AsmGenerator.h"
+#include "codegen/AsmGenerator.h"
 
 namespace spero::compiler::codegen {
 	AsmGenerator::AsmGenerator(std::ostream& s) : out{ s } {}

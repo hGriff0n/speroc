@@ -1,7 +1,7 @@
 #pragma once
 
 #include "grammar.h"
-#include "ast/ast.h"
+#include "ast.h"
 #include "utils.h"
 
 #include <algorithm>

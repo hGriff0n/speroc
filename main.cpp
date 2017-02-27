@@ -1,13 +1,10 @@
 #pragma warning(disable : 4503)
 
 #include <iostream>
-#include "parser/parser.h"
+#include "parser.h"
 
 #include "cmd_line.h"
 #include "util/utils.h"
-
-// Big performance hit
-//const size_t issues = spero::parser::num_issues();
 
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
 template <class Stream>
@@ -88,7 +85,15 @@ Stream& writeAST(Stream& s, const spero::parser::Stack& stack) {
 	return s << '\n';
 }
 
+
+/*
+ * Codegen section 
+ *
+ * TODO: Move into a seperate file
+ */
+
 #include <fstream>
+#include "codegen/AsmGenerator.h"
 void compile(spero::parser::Stack& s, std::string in, std::string out) {
 	using namespace spero::parser;
 	std::cout << "Starting compilation phase...\n";

@@ -4,9 +4,6 @@ todo:
    improve the capabilities of the code generation engine
      get proper codegen for returning basic literals (everything but strings)
  rework organization
-   think about moving parser back into the speroc main project
-   AsmGenerator needs a better placement in the heirarchy
-     additionally the AST nodes don't need to be filtered through Visitor
    look at renaming speroc
      this is too facilitate the "forward to gcc" model
    take another look into the ast structure to make sure that every piece is meaningful

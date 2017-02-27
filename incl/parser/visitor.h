@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast/ast.h"
+#include "ast.h"
 
 namespace spero::compiler::ast {
 

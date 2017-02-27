@@ -1,4 +1,4 @@
-#include "visitor.h"
+#include "parser/visitor.h"
 
 namespace spero::compiler::ast {
 	// Only defined as `std::deque` has no `initializer_list` constructor

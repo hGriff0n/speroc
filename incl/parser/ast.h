@@ -1178,7 +1178,3 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 }
-
-namespace spero::parser {
-	using Stack = std::deque<compiler::ptr<compiler::ast::Ast>>;
-}

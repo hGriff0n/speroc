@@ -99,8 +99,11 @@ namespace spero::parser::grammar {
 	struct str_body : until<at<one<'"'>>, seq<opt<one<'\\'>>, any>> {};
 	struct str : seq<one<'"'>, str_body, one<'"'>, ig_s> {};
 	struct char_body : seq<opt<one<'\\'>>, any> {};
+	//struct character : seq<one<'\''>, if_then_else<char_body, one<'\''>, err_char_no_close>, ig_s> {};
 	struct character : seq<one<'\''>, char_body, one<'\''>, ig_s> {};
+	//struct tuple : seq<oparen, opt<sequ<valexpr>>, if_then_else<cparen, eps, seq<err_tuple_no_close>>> {};
 	struct tuple : seq<oparen, opt<sequ<valexpr>>, cparen> {};
+	//struct array : seq<obrack, opt<sequ<valexpr>>, if_then_else<cbrack, eps, seq<err_array_no_close>>> {};
 	struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};
 	struct fn_rettype : if_then<at<mut_type>, seq<mut_type, ig_s, scope>> {};
 	struct op_forward : seq<op, opt<valexpr>> {};
