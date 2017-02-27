@@ -4,3 +4,5 @@ Debug
 ipch
 *.vcxproj*
 fasm\.pdf
+
+other/

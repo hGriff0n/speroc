@@ -2,12 +2,12 @@
 todo:
  get basic codegen setup and running
    improve the capabilities of the code generation engine
-     get proper codegen for returning basic literals (everything but strings)
+     get proper codegen for returning basic literals (everything but strings and floats)
+   get the function codegen away from hard-coded values
+   move compile into a seperate header/source
  rework organization
-   look at renaming speroc
-     this is too facilitate the "forward to gcc" model
    take another look into the ast structure to make sure that every piece is meaningful
- add in exception/error handling to make the compiler usable
+ add in exception/error handling to make the compiler/parser usable
    add in a compiler framework for collecting/reporting errors
  improve collection of location data in the compiler (performance)
  setup command line flags for the compiler
@@ -15,8 +15,11 @@ todo:
    change the way the projects are setup
      change the "main" project into a console to query the compiler chain
 	 move the "compiler" project internals into a separate project (slightly different name than speroc?)
+   figure out how the gcc-assembler interaction will work
+     think about renaming speroc so the interaction wrapper can have that name instead
  setup "test" project
  answer the questions/improvements below
+ start working on more complicated codegen/analysis
 
  errors:
    "-" is interpreted as a unary way to greedily

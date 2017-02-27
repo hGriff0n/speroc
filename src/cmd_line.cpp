@@ -10,7 +10,7 @@ namespace spero {
 
 			opts.add_options()
 				("d, debug", "Enable debugging")
-				("o,out", "Specify output file", value<std::string>());
+				("o, out", "Specify output file", value<std::string>());
 
 			return std::move(opts);
 		}
