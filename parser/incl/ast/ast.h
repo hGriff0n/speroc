@@ -979,12 +979,12 @@ namespace spero::compiler::ast {
 	 *   inst   - generic instantiation section
 	 */
 	struct FnCall : ValExpr {
-		ptr<Ast> caller;
+		ptr<ValExpr> caller;
 		ptr<TypeExt> anon;
 		ptr<Tuple> args;
 		ptr<Array> inst;
 
-		FnCall(ptr<Ast>, ptr<TypeExt>, ptr<Tuple>, ptr<Array>, Ast::Location);
+		FnCall(ptr<ValExpr>, ptr<TypeExt>, ptr<Tuple>, ptr<Array>, Ast::Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;

@@ -135,13 +135,20 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::fnseq> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
-			// stack: expr, array?, anon_type?, tuple
+			// stack: expr array? anon_type? tuple
 			auto args = util::pop<ast::Tuple>(s);
 			auto type = util::pop<ast::TypeExt>(s);
 			auto inst = util::pop<ast::Array>(s);
-			auto caller = util::pop<ast::Ast>(s);
 
-			s.emplace_back(std::make_unique<ast::FnCall>(std::move(caller), std::move(type), std::move(args), std::move(inst), mkLoc(in)));
+			// Handle the case where a function is called with a variable (prior actions leave the QualifiedBinding)
+			if (util::at_node<ast::QualifiedBinding>(s))
+				s.emplace_back(std::make_unique<ast::FnCall>(
+					std::make_unique<ast::Variable>(util::pop<ast::QualifiedBinding>(s), mkLoc(in)),
+					std::move(type), std::move(args), std::move(inst), mkLoc(in)));
+
+			else
+				s.emplace_back(std::make_unique<ast::FnCall>(
+					util::pop<ast::ValExpr>(s), std::move(type), std::move(args), std::move(inst), mkLoc(in)));
 			// stack: fncall
 		}
 	};

@@ -695,7 +695,7 @@ namespace spero::compiler::ast {
 		return body->prettyPrint(s << '\n', buf + 2, "expr=");
 	}
 
-	FnCall::FnCall(ptr<Ast> c, ptr<TypeExt> t, ptr<Tuple> a, ptr<Array> i, Ast::Location loc)
+	FnCall::FnCall(ptr<ValExpr> c, ptr<TypeExt> t, ptr<Tuple> a, ptr<Array> i, Ast::Location loc)
 		: ValExpr{ loc }, caller{ std::move(c) }, anon{ std::move(t) }, args{ std::move(a) }, inst{ std::move(i) } {}
 	Visitor& FnCall::visit(Visitor& v) {
 		v.acceptFnCall(*this);

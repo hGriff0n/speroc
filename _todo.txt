@@ -1,10 +1,6 @@
 
 todo:
  get basic codegen setup and running
-   rewrite ast structure to enable good visiting patterns
-	 look into why FnCall takes an Ast as the caller
-	 change naming of GlobalAnnotation and Annotation (find a way to abstract common behavior)
-   ensure '_ast.h' is navigable
    improve the capabilities of the code generation engine
      get proper codegen for returning basic literals (everything but strings)
  rework organization
