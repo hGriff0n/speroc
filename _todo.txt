@@ -1,15 +1,8 @@
 
 todo:
- get basic codegen setup and running
-   improve the capabilities of the code generation engine
-     get proper codegen for returning basic literals (everything but strings and floats)
-   get the function codegen away from hard-coded values
-   move compile into a seperate header/source
- rework organization
-   take another look into the ast structure to make sure that every piece is meaningful
  add in exception/error handling to make the compiler/parser usable
    add in a compiler framework for collecting/reporting errors
- improve collection of location data in the compiler (performance)
+ improve collection of location data in the parser (performance)
  setup command line flags for the compiler
    particularly the '-S' flag for getting just the assembly
    change the way the projects are setup
@@ -19,6 +12,10 @@ todo:
      think about renaming speroc so the interaction wrapper can have that name instead
  setup "test" project
  answer the questions/improvements below
+ exhaustively work over the language design to eliminate any issues/oversights
+   explore the type system intricately
+     consider allowing monomorphic compiler
+	 also start working on building it up
  start working on more complicated codegen/analysis
 
  errors:
@@ -44,12 +41,12 @@ todo:
        if no matching definition "+=" for can be found
          statement translates to "l = +(l, r)"
          otherwise translates to "+=(l, r)"
-   change the precedence rules of '&' operators (need to have high precedence)
-     might be changing the semantics of pointers so '&' aren't needed
    look into possibly allowing operators to not require parenthesis in indexing
      allow "3.+ 4" instead of "3.+(4)"
        difficult to parse though
    look at solutions for solving the expression problem (typeclasses, multimethods, implicits)
+     I think I might already have multimethods, though I need to do a bit of work on analysis
+   Look at changing Byte to zero out the other bits (probably a bit more accurate for what's desired)
 
  parser improvements:
    re-enable "::" syntax for anonymous types
@@ -64,6 +61,9 @@ todo:
    determine whether I really need the "Future" node
    look into replacing 'std::string' with 'std::string_view' for ast prettyPrint
    look into moving pretty printing into the visitor model
+   have the moduleDec rule collect everything as a single string
+   switch over to using clang instead of gcc
+     the '.ident' directive isn't supported
 
  prettyPrinting improvements:
    "3 :: Array[Int]" has a wierd output buffering

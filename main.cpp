@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "parser.h"
+#include "compiler.h"
 
 #include "cmd_line.h"
 #include "util/utils.h"
@@ -29,15 +30,35 @@ int main(int argc, const char* argv[]) {
 		std::chrono
 	 */
 
+	// Quick and simple command line interface for testing
+	if (argc > 1) {
+		std::string out = (argc > 2) ? argv[2] : "spero.exe";
+		std::string gcc = "gcc out.s -o " + out;
+
+		bool succ;
+		spero::parser::Stack res;
+
+		std::tie(succ, res) = parser::parseFile(argv[1]);
+		if (succ) {
+			compiler::compile(res, argv[1], "out.s", std::cout);
+			system(gcc.c_str());
+
+		} else {
+			std::cout << "Parsing failed\n";
+		}
+
+		return 0;
+	}
+
 	std::string input;
 
-	while (getMultiline(std::cin, input)) {
+	while (std::cout << "> " && getMultiline(std::cin, input)) {
 		if (input == ":q") break;
 
 		bool succ;
 		spero::parser::Stack res;
 
-		if (input.substr(0, 2) == ":l") {
+		if (input.substr(0, 2) == ":c") {
 			auto file = input.substr(3);
 			std::tie(succ, res) = parser::parseFile(file);
 
@@ -53,7 +74,6 @@ int main(int argc, const char* argv[]) {
 
 		std::cout << "Parsing Succeeded: " << (succ ? "true" : "false") << '\n';
 		writeAST(std::cout, res);
-		std::cout << std::endl;
 	}
 
 	//std::cout << issues << " - Fin";
