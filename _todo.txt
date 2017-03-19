@@ -1,16 +1,15 @@
 
 todo:
+ update compiler to reflect the current documentation
+   document Byte to 0 out bits (round up to boundary)
+ get clang assembly/linking working properly
+ setup the "test" project and get testing started
+ add in basic operator/function calls
+   need to figure out how to abstract the name out
+   needs to setup a symbol table
  add in exception/error handling to make the compiler/parser usable
-   add in a compiler framework for collecting/reporting errors
+   create a compiler error-reporting framework (also for collection)
  improve collection of location data in the parser (performance)
- setup command line flags for the compiler
-   particularly the '-S' flag for getting just the assembly
-   change the way the projects are setup
-     change the "main" project into a console to query the compiler chain
-	 move the "compiler" project internals into a separate project (slightly different name than speroc?)
-   figure out how the gcc-assembler interaction will work
-     think about renaming speroc so the interaction wrapper can have that name instead
- setup "test" project
  answer the questions/improvements below
  exhaustively work over the language design to eliminate any issues/oversights
    explore the type system intricately
@@ -24,29 +23,24 @@ todo:
      "-(3, 4)" is a UnaryOp node instead of a FnCall
        this could possibly be resolved in analysis though (maybe in construction)
 
+ organization
+   consider changing the "main" project into a console that queries the compiler chain
+     this would move the "compiler" project internals into a separate project
+   figure out how gcc-assembler interaction will work
+     think about renaming speroc so the interaction wrapper can have that name instead
+   look at designing a non-graph intermediate representation
+
  language questions:
    look into changing rhs operator currying to have same semantics as lhs operator currying
      the only problem is in parsing issues and mitigating them
    figure out how concurrency is going to be handled
-   should a yield without a wait equate to a straight return ???
+     should a yield without a wait equate to a straight return ???
    determine sugaring operations
-     behavior for '()' operations
-       T:apply(A..) -> T(A..)
-         I get the name from Scala (might be better to change)
-       Indexable[T] -> apply(Size), set(Size, T)
    figure out the translation of operators fully
-     especially for '&' and '=', given they have special meanings in some conditions
-       maybe make special ast nodes to represent them
-       scala handling of '=' at the end (using "l += r")
-       if no matching definition "+=" for can be found
-         statement translates to "l = +(l, r)"
-         otherwise translates to "+=(l, r)"
+     look at scala's handling of '=' for a possible idea
    look into possibly allowing operators to not require parenthesis in indexing
      allow "3.+ 4" instead of "3.+(4)"
        difficult to parse though
-   look at solutions for solving the expression problem (typeclasses, multimethods, implicits)
-     I think I might already have multimethods, though I need to do a bit of work on analysis
-   Look at changing Byte to zero out the other bits (probably a bit more accurate for what's desired)
 
  parser improvements:
    re-enable "::" syntax for anonymous types
@@ -54,16 +48,12 @@ todo:
      note: 'action<inf>' isn't triggered with "::"
 	 could remove the optional tuple (this would allow me to remove the ast_seperator too)
    fncall node may have too much responsibility
-   maybe change translation of operator calls
-     need to check for definitions within the type body first
    need to determine a distinction between semantic and syntactic typing in the ast
      depends in large part based on how I'm representing types internally
    determine whether I really need the "Future" node
    look into replacing 'std::string' with 'std::string_view' for ast prettyPrint
    look into moving pretty printing into the visitor model
    have the moduleDec rule collect everything as a single string
-   switch over to using clang instead of gcc
-     the '.ident' directive isn't supported
 
  prettyPrinting improvements:
    "3 :: Array[Int]" has a wierd output buffering
@@ -74,16 +64,9 @@ Fix Spero
   Figure out a better way to handle the duplication between rhs_inher and adt
     The old grammar causes the type name to be pushed on the stack twice
       I fixed this by adding the 'if<at>' rule, but I want to have a more focused rule
-  Figure out the rules and abilities of pointers and manual memory
 
 Fixes Waiting for Other Features
   In-place modification of containers using for loops/iterators
     Waiting for: Implementation of standard containers and iterators
 
 Breaking Codes
-	use std:io:println as puts
-	def main = () -> {
-		#let x = let y = 5 in y * y		# Assignments aren't ValExpr so this breaks
-		let x = { let y = 5 in y * y }
-		"5^2 = {}".puts(x)
-	}

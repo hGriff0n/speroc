@@ -17,10 +17,13 @@ Stream& writeAST(Stream&, const spero::parser::Stack&);
 
 void compile(spero::parser::Stack&, std::string, std::string);
 
-int main(int argc, const char* argv[]) {
+int main(int argc, char* argv[]) {
 	using namespace spero;
 	using namespace spero::parser;
-	//auto opts = spero::cmd::getOptions();
+
+	// Parse the command line arguments
+	auto opts = spero::cmd::getOptions();
+	auto files = spero::cmd::parseCmdLine(opts, argc, argv);
 	//auto [files, opts] = spero::cmd::parse();
 
 	/*
@@ -30,54 +33,49 @@ int main(int argc, const char* argv[]) {
 		std::chrono
 	 */
 
-	// Quick and simple command line interface for testing
-	if (argc > 1) {
-		std::string out = (argc > 2) ? argv[2] : "spero.exe";
-		std::string gcc = "gcc out.s -o " + out;
+	// Interactive mode for testing ast creation/parsing runs
+	if (files.size() == 0 || opts["inter"].as<bool>()) {
+		std::string input;
 
-		bool succ;
-		spero::parser::Stack res;
+		while (std::cout << "> " && getMultiline(std::cin, input)) {
+			if (input == ":q") break;
 
-		std::tie(succ, res) = parser::parseFile(argv[1]);
-		if (succ) {
-			compiler::compile(res, argv[1], "out.s", std::cout);
-			system(gcc.c_str());
+			bool succ;
+			spero::parser::Stack res;
 
-		} else {
-			std::cout << "Parsing failed\n";
-		}
+			if (input.substr(0, 2) == ":c") {
+				auto file = input.substr(3);
+				std::tie(succ, res) = parser::parseFile(file);
 
-		return 0;
-	}
+				if (succ) {
+					compiler::compile(res, file, "out.s", std::cout);
+					system("gcc out.s -o spero.exe");
+				}
+				//res = parser::parse(findFile(input.substr(3), "spr", "spqr"));
 
-	std::string input;
-
-	while (std::cout << "> " && getMultiline(std::cin, input)) {
-		if (input == ":q") break;
-
-		bool succ;
-		spero::parser::Stack res;
-
-		if (input.substr(0, 2) == ":c") {
-			auto file = input.substr(3);
-			std::tie(succ, res) = parser::parseFile(file);
-
-			if (succ) {
-				compiler::compile(res, file, "out.s", std::cout);
-				system("gcc out.s -o spero.exe");
+			} else {
+				std::tie(succ, res) = parser::parse(input);
 			}
-			//res = parser::parse(findFile(input.substr(3), "spr", "spqr"));
 
-		} else {
-			std::tie(succ, res) = parser::parse(input);
+			std::cout << "Parsing Succeeded: " << (succ ? "true" : "false") << '\n';
+			writeAST(std::cout, res);
 		}
 
-		std::cout << "Parsing Succeeded: " << (succ ? "true" : "false") << '\n';
-		writeAST(std::cout, res);
-	}
+	// Compiler run
+	} else {
+		std::string gcc_cmd = "gcc out.s -o " + opts["out"].as<std::string>();
 
-	//std::cout << issues << " - Fin";
-	//std::cin.get();
+		bool succ;
+		spero::parser::Stack res;
+
+		std::tie(succ, res) = parser::parseFile(files[0]);
+		if (succ) {
+			compiler::compile(res, files[0], "out.s", std::cout);
+			system(gcc_cmd.c_str());
+
+		} else
+			std::cout << "Parsing failed\n";
+	}
 }
 
 template <class Stream>
