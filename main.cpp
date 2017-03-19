@@ -63,7 +63,7 @@ int main(int argc, const char* argv[]) {
 			std::tie(succ, res) = parser::parseFile(file);
 
 			if (succ) {
-				compile(res, file, "out.s");
+				compiler::compile(res, file, "out.s", std::cout);
 				system("gcc out.s -o spero.exe");
 			}
 			//res = parser::parse(findFile(input.substr(3), "spr", "spqr"));
@@ -104,37 +104,3 @@ Stream& writeAST(Stream& s, const spero::parser::Stack& stack) {
 
 	return s << '\n';
 }
-
-
-/*
- * Codegen section 
- *
- * TODO: Move into a seperate file
- */
-
-#include <fstream>
-#include "codegen/AsmGenerator.h"
-void compile(spero::parser::Stack& s, std::string in, std::string out) {
-	using namespace spero::parser;
-	std::cout << "Starting compilation phase...\n";
-
-	// Open the output file
-	std::ofstream o{ out };
-	std::cout << "Opened file " << out << " for compilation output\n";
-
-	// Output file header information
-	o << "\t.file \"" << in << "\"\n.text\n";
-
-	auto visitor = spero::compiler::codegen::AsmGenerator{ o };
-
-	// Print everything directly to the file
-	for (const auto& node : s)
-		node->visit(visitor);
-
-	o << '\n';
-
-	// End the compilation phase
-	std::cout << "Ending compilation phase...\n";
-}
-
-// TODO: Have Module Declarations collect everything as a single string

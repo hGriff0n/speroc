@@ -19,6 +19,8 @@ namespace spero::compiler::codegen {
 			virtual void acceptChar(ast::Char&) final;
 			//virtual void acceptString(ast::String&) final;
 
+			virtual void acceptBlock(ast::Block&) final;
+
 			virtual void acceptFnBody(ast::FnBody&) final;
 			virtual void acceptVarAssign(ast::VarAssign&) final;
 	};
