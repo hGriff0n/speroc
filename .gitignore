@@ -6,5 +6,6 @@ ipch
 fasm\.pdf
 
 other/
-test/*.exe
-test/*.s
+_test/*.exe
+_test/*.s
+_test/tmp
