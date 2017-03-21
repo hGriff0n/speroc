@@ -1,0 +1,9 @@
+Literals:
+  desc: "compiler recognition of basic literals"
+  tests:
+    -
+      files: [ 'first.spr' ]
+      out: 'first.exe'
+      args: 
+        - ''
+      value: 42

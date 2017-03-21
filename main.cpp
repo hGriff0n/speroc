@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 
 				if (succ) {
 					compiler::compile(res, file, "out.s", std::cout);
-					system("gcc out.s -o spero.exe");
+					system("gcc out.s -o out.exe");
 				}
 				//res = parser::parse(findFile(input.substr(3), "spr", "spqr"));
 

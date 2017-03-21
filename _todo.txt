@@ -1,21 +1,24 @@
 
 todo:
- update compiler to reflect the current documentation
-   document Byte to 0 out bits (round up to boundary)
- get clang assembly/linking working properly
  setup the "test" project and get testing started
+   see if I can get catch to work in the context of Visual Studio's inbuilt test app
+   general practice is to create a large set of programs and compare the compilers results
+   parser fails when run with files from a different folder
  add in basic operator/function calls
    need to figure out how to abstract the name out
    needs to setup a symbol table
  add in exception/error handling to make the compiler/parser usable
    create a compiler error-reporting framework (also for collection)
  improve collection of location data in the parser (performance)
+ add in pass timing reports with std::chrono
  answer the questions/improvements below
  exhaustively work over the language design to eliminate any issues/oversights
    explore the type system intricately
      consider allowing monomorphic compiler
 	 also start working on building it up
  start working on more complicated codegen/analysis
+ get clang assembly/linking working properly
+   apparently clang depends on visual studio 2012 being installed (or the library/include files at least)
 
  errors:
    "-" is interpreted as a unary way to greedily
