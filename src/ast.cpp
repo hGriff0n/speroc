@@ -8,12 +8,12 @@ namespace spero::compiler::ast {
 	std::deque<ptr<T>> MK_DEQUE(ptr<T> e1, ptr<T> e2) { std::deque<ptr<T>> ret; ret.emplace_back(std::move(e1)); ret.emplace_back(std::move(e2)); return std::move(ret); }
 
 	// Helper define to reduce typing
-	#define DEF_PRINTER(typ) std::ostream& typ::prettyPrint(std::ostream& s, size_t buf, std::string context)
+#define DEF_PRINTER(typ) std::ostream& typ::prettyPrint(std::ostream& s, size_t buf, std::string context)
 
 
-	/*
-	 * AST class implementations
-	 */
+/*
+ * AST class implementations
+ */
 	Ast::Ast(Ast::Location loc) : loc{ loc } {}
 	Visitor& Ast::visit(Visitor& v) { v.accept(*this); return v; }
 	DEF_PRINTER(Ast) {
@@ -44,7 +44,7 @@ namespace spero::compiler::ast {
 		else
 			return s << "err";
 	}
-		
+
 	Type::Type(Ast::Location loc) : Ast{ loc } {}
 	Visitor& Type::visit(Visitor& v) {
 		v.acceptType(*this);
@@ -269,18 +269,19 @@ namespace spero::compiler::ast {
 		return s << std::string(buf, ' ') << ')';
 	}
 
-	PNamed::PNamed(ptr<BasicBinding> n, Ast::Location loc) : Pattern{ loc }, name{ std::move(n) } {}
+	PNamed::PNamed(ptr<BasicBinding> n, ptr<Type> typ, Ast::Location loc) : Pattern{ loc }, name{ std::move(n) }, type{ std::move(typ) } {}
 	Visitor& PNamed::visit(Visitor& v) {
 		v.acceptPNamed(*this);
 		return v;
 	}
 	DEF_PRINTER(PNamed) {
 		s << std::string(buf, ' ') << context << "ast.PNamed (capture=" << cap._to_string() << ')';
+		//if (type) type->prettyPrint(s, )
 		return name->prettyPrint(s, 1);
 	}
 
 	PAdt::PAdt(ptr<BasicBinding> n, ptr<PTuple> as, Ast::Location loc)
-		: PNamed{ std::move(n), loc }, args{ std::move(as) } {}
+		: PNamed{ std::move(n), nullptr, loc }, args{ std::move(as) } {}
 	Visitor& PAdt::visit(Visitor& v) {
 		v.acceptPAdt(*this);
 		return v;
@@ -397,14 +398,15 @@ namespace spero::compiler::ast {
 		return v;
 	}
 
-	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, VarianceType var, Ast::Location loc)
-		: GenericPart{ std::move(b), std::move(t), loc }, rel{ rel }, var{ var } {}
+	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, VarianceType var1, VarianceType var2, Ast::Location loc)
+		: GenericPart{ std::move(b), std::move(t), loc }, rel{ rel }, variadic{ var2 }, variance{ var1 } {}
 	Visitor& TypeGeneric::visit(Visitor& v) {
 		v.acceptTypeGeneric(*this);
 		return v;
 	}
 	DEF_PRINTER(TypeGeneric) {
-		s << std::string(buf, ' ') << context << "ast.TypeGeneric (rel=" << rel._to_string() << ", var=" << var._to_string() << ')';
+		s << std::string(buf, ' ') << context << "ast.TypeGeneric (rel=" << rel._to_string()
+		  << ", variance=" << variance._to_string() << ", variadic=" << variadic._to_string() << ')';
 		name->prettyPrint(s << '\n', buf + 2, "binding=");
 		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
 		return s;
@@ -713,6 +715,20 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
+	BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, ptr<QualifiedBinding> op, Ast::Location loc)
+		: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ std::move(op) } {}
+	Visitor& BinOpCall::visit(Visitor& v) {
+		v.acceptBinOpCall(*this);
+		return v;
+	}
+	DEF_PRINTER(BinOpCall) {
+		s << std::string(buf, ' ') << context << "ast.BinOpCall (";
+		ValExpr::prettyPrint(s, buf);
+		op->prettyPrint(s << '\n', buf + 2, "op=");
+		lhs->prettyPrint(s << '\n', buf + 2, "lhs=");
+		return rhs->prettyPrint(s << '\n', buf + 2, "rhs=");
+	}
+
 	Range::Range(ptr<ValExpr> start, ptr<ValExpr> stop, Ast::Location loc)
 		: ValExpr{ loc }, start{ std::move(start) }, stop{ std::move(stop) } {}
 	Visitor& Range::visit(Visitor& v) {
@@ -766,14 +782,14 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	TypeAssign::TypeAssign(ptr<AssignPattern> n, std::deque<ptr<Ast>> cs, GenArray gs, ptr<Block> b, ptr<Type> t, Ast::Location loc)
-		: Interface{ std::move(n), std::move(gs), std::move(t), loc }, cons{ std::move(cs) }, body{ std::move(b) } {}
+	TypeAssign::TypeAssign(ptr<AssignPattern> n, std::deque<ptr<Ast>> cs, GenArray gs, ptr<Block> b, ptr<Type> t, bool m, Ast::Location loc)
+		: Interface{ std::move(n), std::move(gs), std::move(t), loc }, cons{ std::move(cs) }, body{ std::move(b) }, mutable_only{ m } {}
 	Visitor& TypeAssign::visit(Visitor& v) {
 		v.acceptTypeAssign(*this);
 		return v;
 	}
 	DEF_PRINTER(TypeAssign) {
-		s << std::string(buf, ' ') << context << "ast.TypeAssign (vis=" << vis._to_string() << ')';
+		s << std::string(buf, ' ') << context << "ast.TypeAssign (vis=" << vis._to_string() << ", mut=" << mutable_only << ')';
 		name->prettyPrint(s << '\n', buf + 2, "var=");
 
 		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");

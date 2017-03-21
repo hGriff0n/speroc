@@ -409,8 +409,9 @@ namespace spero::compiler::ast {
 	 */
 	struct PNamed : Pattern {
 		ptr<BasicBinding> name;
+		ptr<Type> type;
 
-		PNamed(ptr<BasicBinding>, Ast::Location);
+		PNamed(ptr<BasicBinding>, ptr<Type>, Ast::Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
@@ -605,9 +606,10 @@ namespace spero::compiler::ast {
 	 */
 	struct TypeGeneric : GenericPart {
 		RelationType rel;
-		VarianceType var;
+		VarianceType variance;
+		VarianceType variadic;
 
-		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType, Ast::Location);
+		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType, VarianceType, Ast::Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -990,6 +992,28 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
+	
+	/*
+	 * Represent an binary operator call
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   lhs - expression on the lhs of the operation
+	 *   rhs - expression on the rhs of the operation
+	 *   op  - operator that is being invoked
+	 */
+	struct BinOpCall : ValExpr {
+		ptr<ValExpr> lhs;
+		ptr<ValExpr> rhs;
+		ptr<QualifiedBinding> op;
+
+		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, ptr<QualifiedBinding>, Ast::Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
 
 	/*
 	 * Represents a range object construction
@@ -1065,8 +1089,9 @@ namespace spero::compiler::ast {
 	struct TypeAssign : Interface {
 		std::deque<ptr<Ast>> cons;
 		ptr<Block> body;
+		bool mutable_only;
 
-		TypeAssign(ptr<AssignPattern>, std::deque<ptr<Ast>>, GenArray, ptr<Block>, ptr<Type>, Ast::Location);
+		TypeAssign(ptr<AssignPattern>, std::deque<ptr<Ast>>, GenArray, ptr<Block>, ptr<Type>, bool, Ast::Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;

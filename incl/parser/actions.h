@@ -467,8 +467,13 @@ namespace spero::parser::actions {
 		static void apply(const Input& in, Stack& s) {
 			if (in.string() == "+") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::COVARIANT, mkLoc(in)));
 			else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::CONTRAVARIANT, mkLoc(in)));
-			else if (in.string() == "..") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::VARIADIC, mkLoc(in)));
 			else s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::INVARIANT, mkLoc(in)));
+		}
+	};
+	template<> struct action<grammar::gen_variadic> {
+		template<class Input>
+		static void apply(const Input& in, Stack& s) {
+			if (in.string() == "..") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::VARIADIC, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::gen_subrel> {
@@ -483,18 +488,20 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::gen_type> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
-			// stack: typ variance? (relation type)?
+			// stack: typ variance? variadic? (relation type)?
 			auto type = util::pop<ast::Type>(s);
 			auto rel = (type ? util::pop<ast::Token>(s) : nullptr);
-			auto var = util::pop<ast::Token>(s);
+			auto variadic = util::pop<ast::Token>(s);
+			auto variance = util::pop<ast::Token>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
 
 			auto rel_val = rel ? std::get<ast::RelationType>(rel->value) : ast::RelationType::NA;
-			auto var_val = var ? std::get<ast::VarianceType>(var->value) : ast::VarianceType::INVARIANT;
+			auto seq_val = variadic ? std::get<ast::VarianceType>(variadic->value) : ast::VarianceType::INVARIANT;
+			auto var_val = variance ? std::get<ast::VarianceType>(variance->value) : ast::VarianceType::INVARIANT;
 
 			s.emplace_back(std::make_unique<ast::TypeGeneric>(
 				std::move(name), std::move(type),
-				rel_val, var_val, mkLoc(in)
+				rel_val, seq_val, var_val, mkLoc(in)
 				));
 			// stack: generic
 		}
@@ -670,8 +677,9 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::pat_var> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
-			// stack: mut? var
-			auto pat = std::make_unique<ast::PNamed>(util::pop<ast::BasicBinding>(s), mkLoc(in));
+			// stack: mut? var type?
+			auto type = util::pop<ast::Type>(s);
+			auto pat = std::make_unique<ast::PNamed>(util::pop<ast::BasicBinding>(s), std::move(type), mkLoc(in));
 
 			auto tkn = util::pop<ast::Token>(s);
 			if (tkn) {
@@ -782,6 +790,8 @@ namespace spero::parser::actions {
 		static void apply(const Input& in, Stack& s) {
 			// stack: binding
 			s.emplace_back(std::make_unique<ast::SourceType>(util::pop<ast::BasicBinding>(s), ast::PtrStyling::NA, mkLoc(in)));
+			if (util::is_type<ast::Token>(*(std::rbegin(s) + 1)))
+				std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
 			// stack: type
 		}
 	};
@@ -796,6 +806,7 @@ namespace spero::parser::actions {
 			while (util::at_node<ast::Adt>(s) || util::at_node<ast::Tuple>(s))
 				cons.push_front(util::pop<ast::Ast>(s));
 
+			auto mut = util::pop<ast::Token>(s);
 			auto inherit = util::pop<ast::Type>(s);
 
 			// Get the generics list
@@ -805,7 +816,7 @@ namespace spero::parser::actions {
 			if (gen.size()) s.pop_back();
 
 			auto bind = util::pop<ast::AssignName>(s);
-			s.emplace_back(std::make_unique<ast::TypeAssign>(std::move(bind), std::move(cons), std::move(gen), std::move(body), std::move(inherit), mkLoc(in)));
+			s.emplace_back(std::make_unique<ast::TypeAssign>(std::move(bind), std::move(cons), std::move(gen), std::move(body), std::move(inherit), (bool)mut, mkLoc(in)));
 			// stack: TypeAssign
 		}
 	};
@@ -1127,18 +1138,26 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: expr op expr -> op expr expr | expr op
-			std::deque<ptr<ast::ValExpr>> args;
-			bool not_curried = util::is_type<ast::ValExpr>(s.back());
+			//std::deque<ptr<ast::ValExpr>> args;
+			//bool not_curried = util::is_type<ast::ValExpr>(s.back());
 
-			std::iter_swap(std::rbegin(s) + 1 + not_curried, std::rbegin(s) + not_curried);
+			//std::iter_swap(std::rbegin(s) + 1 + not_curried, std::rbegin(s) + not_curried);
 
-			args.push_front(util::pop<ast::ValExpr>(s));
-			if (not_curried) args.push_front(util::pop<ast::ValExpr>(s));
+			//args.push_front(util::pop<ast::ValExpr>(s));
+			//if (not_curried) args.push_front(util::pop<ast::ValExpr>(s));
 
-			s.emplace_back(std::make_unique<ast::Tuple>(std::move(args), mkLoc(in)));
+			//s.emplace_back(std::make_unique<ast::Tuple>(std::move(args), mkLoc(in)));
 
-			// stack: op tuple
-			action<grammar::fnseq>::apply(in, s);
+			//// stack: op tuple
+			//action<grammar::fnseq>::apply(in, s);
+
+			auto rhs = util::pop<ast::ValExpr>(s);
+			auto op = util::pop<ast::QualifiedBinding>(s);
+			auto lhs = util::pop<ast::ValExpr>(s);
+
+			if (!rhs) rhs = std::make_unique<ast::Future>(false, mkLoc(in));
+			s.emplace_back(std::make_unique<ast::BinOpCall>(std::move(lhs), std::move(rhs), std::move(op), mkLoc(in)));
+			// stack: BinOpCall
 		}
 	};
 	INHERIT(_binary_prec_2, _binary_prec_1);
@@ -1256,7 +1275,7 @@ namespace spero::parser::actions {
 			// stack: expr
 		}
 	};
-	template<> struct action<grammar::stmt> {
+	template<> struct action<grammar::anot_expr> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: annot* stmt

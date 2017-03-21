@@ -84,6 +84,7 @@ namespace spero::compiler::ast {
 		// Stmts
 		DEF_ACCEPT(FnBody)
 		DEF_ACCEPT(FnCall)
+		DEF_ACCEPT(BinOpCall)
 		DEF_ACCEPT(Range)
 		DEF_ACCEPT(UnaryOpApp)
 		DEF_ACCEPT(Interface)

@@ -9,9 +9,9 @@ namespace spero::parser::grammar {
 	#define key(x) seq<pstr((x)), not_at<ascii::identifier_other>, ig_s> {}
 
 	// Forward Declarations
-	struct array; struct expr; struct scope; struct atom; struct pattern;
+	struct array; struct anot_expr; struct scope; struct atom; struct pattern;
 	struct var_pattern; struct valexpr; struct fn_dot_ctrl; struct inf_fn_type;
-	struct mut_type; struct con_tuple; struct range;
+	struct mut_type; struct con_tuple; struct range; struct expr;
 
 	// Ignore Characters
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
@@ -51,6 +51,7 @@ namespace spero::parser::grammar {
 	struct k_mod : key("mod");
 	struct k_use : key("use");
 	struct k_match : key("match");
+	struct k_case : key("case");
 	struct k_if : key("if");
 	struct k_elsif : key("elsif");
 	struct k_else : key("else");
@@ -68,7 +69,7 @@ namespace spero::parser::grammar {
 	struct b_true : key("true");
 	struct vcontext : sor<k_let, k_def, k_static> {};
 	struct jump_keys : sor<k_break, k_continue, k_ret, k_yield> {};
-	struct keyword : sor<vcontext, jump_keys, placeholder, k_mut, k_mod, k_use, k_match, k_if, k_elsif, k_else, k_while, k_for, k_loop, k_wait, k_impl, k_in, b_false, b_true> {};
+	struct keyword : sor<vcontext, jump_keys, placeholder, k_mut, k_mod, k_use, k_match, k_case, k_if, k_elsif, k_else, k_while, k_for, k_loop, k_wait, k_impl, k_in, b_false, b_true> {};
 
 	//
 	// Language Bindings
@@ -118,7 +119,7 @@ namespace spero::parser::grammar {
 	struct anon_sep : seq<pstr(":::")> {};
 	struct anon_type : seq<anon_sep, ig_s, opt<con_tuple>, scope> {};
 	//struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};
-	struct scope : seq<obrace, star<expr>, cbrace> {};
+	struct scope : seq<obrace, star<anot_expr>, cbrace> {};
 	struct wait_stmt : seq<k_wait, valexpr> {};
 	struct atom : seq<sor<scope, wait_stmt, lit, binding>, ig_s> {};
 	struct fnseq : sor<seq<array, opt<anon_type>, opt<tuple>>, seq<anon_type, opt<tuple>>, tuple> {};
@@ -139,10 +140,11 @@ namespace spero::parser::grammar {
 	struct type_tuple : seq<oparen, sequ<inf_type>, cparen> {};
 	struct inf_fn_type : seq<type_tuple, opt<ig_s, pstr("->"), ig_s, inf_type>> {};
 	struct inf : seq<pstr("::"), ig_s, inf_type> {};
-	struct gen_variance : sor<one<'+'>, one<'-'>, two<'.'>, eps> {};
+	struct gen_variance : sor<one<'+'>, one<'-'>, eps> {};
+	struct gen_variadic : sor<two<'.'>, eps> {};
 	struct gen_subrel : sor<pstr("::"), pstr("!:"), one<'>'>, one<'<'>> {};
 	struct gen_subtype : seq<gen_subrel, ig_s, type> {};
-	struct gen_type : seq<typ, gen_variance, ig_s, opt<gen_subtype>> {};
+	struct gen_type : seq<typ, gen_variance, ig_s, gen_variadic, ig_s, opt<gen_subtype>> {};
 	struct gen_val : seq<variable, opt<pstr("::"), ig_s, type>, opt<one<'='>, ig_s, expr>> {};
 	struct gen_part : sor<gen_type, gen_val> {};
 	struct generic : seq<obrack, sequ<gen_part>, cbrack> {};
@@ -166,6 +168,7 @@ namespace spero::parser::grammar {
 	struct tuple_pat : seq<oparen, sequ<pattern>, one<')'>> {};
 	struct pat_adt : seq<typ, opt<tuple_pat>> {};
 	struct pat_tuple : seq<opt<disable<capture_dec>>, ig_s, tuple_pat> {};
+	//struct pat_var : seq<opt<capture_dec>, ig_s, var, ig_s, opt<inf>> {};
 	struct pat_var : seq<opt<capture_dec>, ig_s, var> {};
 	struct pat_val : sor<hex, bin, num, str, character, b_false, b_true, array> {};
 	struct pat_any : seq<placeholder> {};
@@ -181,10 +184,10 @@ namespace spero::parser::grammar {
 	struct in_binding : seq<k_in, ig_s, valexpr> {};
 	struct assign_val : seq<one<'='>, ig_s, valexpr, opt<in_binding>> {};
 	struct var_assign : seq<var_pattern, ig_s, opt<generic>, sor<seq<inf, opt<assign_val>>, assign_val>> {};
-	struct lhs_inher : seq<inf, one<'='>, ig_s> {};
+	struct lhs_inher : seq<inf, one<'='>, ig_s, opt<k_mut>> {};
 	//struct rhs_inf : seq<typ, ig_s, two<':'>, ig_s> {};
 	struct rhs_inf : if_then<at<typ, ig_s, two<':'>>, seq<typ, ig_s, two<':'>, ig_s>> {};
-	struct rhs_inher : seq<one<'='>, ig_s, opt<rhs_inf>> {};
+	struct rhs_inher : seq<one<'='>, ig_s, opt<k_mut>, opt<rhs_inf>> {};
 	struct type_assign : seq<var_type, not_at<oparen>, ig_s, opt<generic>, sor<lhs_inher, rhs_inher>, cons, scope> {};
 	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};
 
@@ -205,7 +208,7 @@ namespace spero::parser::grammar {
 	struct for_l : seq<for_core, opt<k_do>, valexpr> {};
 	struct jumps : seq<jump_keys, opt<valexpr>> {};
 	struct case_if : seq<k_if, valexpr> {};
-	struct case_stmt : seq<sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("->"), ig_s, valexpr> {};
+	struct case_stmt : seq<opt<k_case>, sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("->"), ig_s, valexpr> {};
 	struct match_expr : seq<k_match, fncall, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_while : seq<while_core> {};
@@ -267,7 +270,8 @@ namespace spero::parser::grammar {
 	struct mod_use : seq<k_use, star<use_one, one<':'>>, use_final> {};
 	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s, opt<array>, ig_s, opt<scope>> {};
 	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};
-	struct stmt : seq<star<annotation, ig_s>, sor<global_annotation, mod_dec, expr>> {};
+	struct anot_expr : seq<star<annotation, ig_s>, sor<global_annotation, expr>> {};
+	struct stmt : sor<mod_dec, anot_expr> {};
 	struct program : seq<ig_s, star<stmt>, eolf> {};
 
 	#undef key
