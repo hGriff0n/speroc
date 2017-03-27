@@ -1,6 +1,6 @@
 literals:
   desc: "compiler recognition of basic literals"
-  tag: "literals"
+  tags: ["literals", "basics"]
   tests:
     -
       files: [ 'first.spr' ]
@@ -13,20 +13,22 @@ literals:
       value: 0
 functions:
   desc: "calling, returning, and using functions"
-  tag: "func"
+  tags: ["func"]
   tests: []
 
 
 # IDEA for organization of yaml file
 # <test_group>: collection of tests and other data for modular testing
 #   <desc>: basic description of the tests in the test_group
-#   <tags>: command line tags to single out this test test_group
+#   <tags>: command line tags to single out this test test_group (must be lowercase)
 #   <level>: importance level of this test <- ???
 #   <panic>: fail test-suite if <panic>% of the tests in this group fail
 #   ...
 #   <tests>: array of tests to run for this group
+#     <desc>: basic description of the exact test case
 #     <files>: files to be compiled for this test
 #     <out>: output file name
+#     <fail>: should the test fail and at what point
 #     <args>: arguments to pass to the compilation stage
 #     <exp>: switch between expected output "runs" to test correctness (ie. return/asm_file/output)
 #     <return>: expected return value of the program
