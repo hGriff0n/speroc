@@ -2,7 +2,7 @@
 
 #include "parser/visitor.h"
 
-namespace spero::compiler::codegen {
+namespace spero::compiler::gen {
 
 	class AsmGenerator : public ast::Visitor {
 		std::ostream& out;
@@ -22,6 +22,7 @@ namespace spero::compiler::codegen {
 			virtual void acceptBlock(ast::Block&) final;
 
 			virtual void acceptFnBody(ast::FnBody&) final;
+			virtual void acceptBinOpCall(ast::BinOpCall&) final;
 			virtual void acceptVarAssign(ast::VarAssign&) final;
 	};
 

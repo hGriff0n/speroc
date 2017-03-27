@@ -9,3 +9,4 @@ other/
 _test/*.exe
 _test/*.s
 _test/tmp
+out\.s

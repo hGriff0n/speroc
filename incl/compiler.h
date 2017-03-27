@@ -1,33 +1,42 @@
 #pragma once
 
-#include "parser.h"
-#include "codegen/AsmGenerator.h"
-
 #include <fstream>
+#include <memory>
+#include <string>
+#include <deque>
+
+
+// Forward Declarations
+namespace spero::compiler {
+	template<class T> using ptr = std::unique_ptr<T>;
+}
+
+namespace spero::compiler::ast {
+	struct Ast;
+}
+
+namespace spero::parser {
+	using Stack = std::deque<compiler::ptr<compiler::ast::Ast>>;
+
+	// Helper function to print out the ast
+	std::ostream& printAST(std::ostream&, const Stack&);
+}
+
 
 namespace spero::compiler {
+	// Perform all steps related to parsing and initial IR creation
+	std::tuple<bool, spero::parser::Stack> parse(std::string);
+	std::tuple<bool, spero::parser::Stack> parseFile(std::string);
 
-	void compile(spero::parser::Stack& s, std::string in, std::string out, std::ostream& debug) {
-		using namespace spero::parser;
-		debug << "Starting compilation phase...\n";
+	// Perform all steps related to analysis and secondary IR creation (may abstract IR to a differnt function)
+	using IR_t = spero::parser::Stack;
+	IR_t analyze(spero::parser::Stack&);
 
-		// Open the output file
-		std::ofstream o{ out };
-		debug << "Opened file " << out << " for compilation output\n";
+	// Perform all steps related to final codegen stages (produces assembly code)
+	void codegen(IR_t&, std::string, std::string, std::ostream&);
+}
 
-		// Output file header information
-		o << "\t.file \"" << in << "\"\n.text\n";
 
-		auto visitor = spero::compiler::codegen::AsmGenerator{ o };
-
-		// Print everything directly to the file
-		for (const auto& node : s)
-			node->visit(visitor);
-
-		o << '\n';
-
-		// End the compilation phase
-		debug << "Ending compilation phase...\n";
-	}
-
+namespace spero {
+	bool compile(parser::Stack&, std::string, std::string);
 }

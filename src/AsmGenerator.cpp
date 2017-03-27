@@ -1,6 +1,6 @@
 #include "codegen/AsmGenerator.h"
 
-namespace spero::compiler::codegen {
+namespace spero::compiler::gen {
 	AsmGenerator::AsmGenerator(std::ostream& s) : out{ s } {}
 
 	void AsmGenerator::accept(ast::Ast&) {}
@@ -54,6 +54,10 @@ namespace spero::compiler::codegen {
 		out << "\tleave\n"
 			<< "\tret\n"
 			<< "LFE0:\n";
+	}
+
+	void AsmGenerator::acceptBinOpCall(ast::BinOpCall& b) {
+
 	}
 
 	void AsmGenerator::acceptVarAssign(ast::VarAssign& v) {

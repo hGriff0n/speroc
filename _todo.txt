@@ -1,21 +1,39 @@
 
 todo:
  setup the "test" project and get testing started
-   see if I can get catch to work in the context of Visual Studio's inbuilt test app
-   general practice is to create a large set of programs and compare the compilers results
-   parser fails when run with files from a different folder
- add in basic operator/function calls
-   need to figure out how to abstract the name out
-   needs to setup a symbol table
+   improve reporting/handling of tests in the ruby script
+   improve ability to selectively run tests from command line tags
+   work on improving the test yaml organization
+ figure out how the compiler is supposed to operate
+   project setup and organization
+     start creating an "implementation" checklist
+       list of unimplemented/incomplete features and guarantees plus need implementation steps
+     add in timing collection of the various pass steps (using 'std::chrono')
+     maybe also reorganize the file/project structure as well
+   work on laying out what passes need to occur
+     basic structural framing and comments
+     improve comments within the project
+   get basic functional codegen setup and working
+     be able to add two integers into a chosen register
+     be able to store and use variables
+     create, store, and call spero functions
+     basic type-checking and inference (set up the pass at least)
+      operator -> function translation
  add in exception/error handling to make the compiler/parser usable
    create a compiler error-reporting framework (also for collection)
- improve collection of location data in the parser (performance)
- add in pass timing reports with std::chrono
+ improve performance of the parsing stages
+   first benchmark the performance of the parsing stages
+     need to create a performance suite as well
+       also create compilation logging (especially for reporting timing)
+       switch compilation logging over to the new system
+   improve collection and memory usage of location data
+   look at using std::string_view instead of std::string everywhere
+   can I use attributes in any way
  answer the questions/improvements below
  exhaustively work over the language design to eliminate any issues/oversights
    explore the type system intricately
      consider allowing monomorphic compiler
-	 also start working on building it up
+       also start working on building it up
  start working on more complicated codegen/analysis
  get clang assembly/linking working properly
    apparently clang depends on visual studio 2012 being installed (or the library/include files at least)
@@ -27,15 +45,13 @@ todo:
        this could possibly be resolved in analysis though (maybe in construction)
 
  organization
-   consider changing the "main" project into a console that queries the compiler chain
-     this would move the "compiler" project internals into a separate project
    figure out how gcc-assembler interaction will work
      think about renaming speroc so the interaction wrapper can have that name instead
-   look at designing a non-graph intermediate representation
+   look at designing a non-graph intermediate representation (returned by analysis stage)
 
  language questions:
    look into changing rhs operator currying to have same semantics as lhs operator currying
-     the only problem is in parsing issues and mitigating them
+     the major problem is in parsing issues and mitigating them
    figure out how concurrency is going to be handled
      should a yield without a wait equate to a straight return ???
    determine sugaring operations
