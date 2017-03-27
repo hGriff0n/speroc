@@ -1,3 +1,3 @@
 mod fst
 
-def main = () -> 42
+def main = () -> 5
