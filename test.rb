@@ -2,14 +2,19 @@ require 'yaml'
 require 'optparse'
 
 # TODO:
-#  Switch over to the new yaml organization
-#    Make sure the new organization is covered
+#  Switch over completely to the new yaml organization
+#    panic
+#    asm_file
+#    output
+#    exec
+#    :plus any other things I need to implement
 #  Work on the displaying of the test cases (I don't quite like the look)
 #  Collect all output from the compilation and execution steps in an array
+#  Simplify the implementation of the runner
+
 
 # Parse out the command line arguments
 options = {
-    # provide default values for some commands
     :file => './_test/tests.yaml',
     :ignore => false,
 }
@@ -18,63 +23,100 @@ OptionParser.new do |opt|
     opt.on("-i", "--ignore") { |o| options[:ignore] = o }
 end.parse!
 
+# convert the remaining args to lowercase (same as tags)
 ARGV.map! {|s| s.downcase}
+
 
 # Run the actual test framework
 test_num = 0
 YAML.load_file(options[:file]).each do |name, tests|
+    # Skip this test group if specified
     is_arg = (tests['tags'] & ARGV)
     next if options[:ignore] && is_arg
     next if !options[:ignore] && !is_arg
 
+
     # Test group setup
     num_correct = 0
+    panic_pct = tests.key?('panic') ? tests['panic'] : 1
+
+
+    # Initial Test Group Output
     puts "Running Test Group \"#{name.capitalize}\""
     puts "  - Testing #{tests['desc']}\n"
     puts "======================================================="
 
+
     # Run all the tests in the test group
     tests['tests'].each do |test|
-        # Collect information for calling the compiler from the test specification
-        in_files = test['files'].map { |file| "./_test/#{file}" }.join(' ')
-        simp_out = test.key?('out') ? test['out'] : 'out.exe'
-        out_file = "_test/tmp/#{simp_out}"
-        args = test['args'].join(' ')
-        simple_cmd = "speroc #{test['files'].join(' ')} -o #{simp_out} #{args}"
-        speroc_cmd = "./_test/speroc #{in_files} -o #{out_file} #{args}"
+        can_run = true
+
+        # Test Setup (setting default variables/etc)
+        compile = test.key?('compile') ? test['compile']
+            : { :norun => true, 'files' => [], 'args' => [], 'out' => test['exec'] }
+        success_metric = test.key?('return') ? 0 : test.key?('asm_file') ? 1 : test.key?('output') ? 2 : 3
+        simple_cmd = exec_file = compile['out']
+        out_file = "_test/tmp/#{exec_file}"
 
 
-        # Compile the program and catch any compilation errors
-        IO.popen(speroc_cmd) do |io|
-            # Capture any compilation errors here
-            compilation_out = io.readlines
-            io.close
+        # Perform compilation if the specification requires it
+        if !compile[:norun] then 
 
-            # If compilation failed, display errors
-            if $?.exitstatus != 0 then
-                puts " [#{test_num}]: #{simple_cmd}"
-                puts "    Compilation failed with errorstatus #{$?.exitstatus}"
-                # TODO: Report compilation messages
-                puts " --------------------------------------------------"
+            # Generate strings for correctly calling the compiler from the runner
+            in_files = compile['files'].map { |file| "./_test/#{file}" }.join(' ')
+            args = compile['args'].join(' ')
+            speroc_cmd = "./_test/speroc #{in_files} -o #{out_file} #{args}"
+
+            # Generate a smaller string to simplify test print messages
+            simple_cmd = "speroc #{compile['files'].join(' ')} -o #{exec_file} #{args}"
+
+
+            # Compile the program and catch any compilation errors
+            IO.popen(speroc_cmd) do |io|
+                # Capture any compilation errors and close the process
+                compile['out'] = io.readlines
+                io.close
+
+                # If compilation failed, display errors and skip to the next test
+                can_run = $?.exitstatus == 0
+                if !can_run then
+                    if !test['fail'] then
+                        puts " [#{test_num}]: #{simple_cmd}"
+                        puts "    Compilation failed with errorstatus #{$?.exitstatus}"
+                        # TODO: Report compilation messages
+                        puts " --------------------------------------------------"
+                    else
+                        num_correct += 1
+                    end
+
+                elsif test['fail'] then
+                    puts " [#{test_num}]: #{simple_cmd}"
+                    puts "    Compilation succeeded when it should have failed"
+                end
             end
         end
 
         # If compilation succeeded, run the program
-        if $?.to_i == 0 then
+        if can_run || compile[:norun] then
+
             # Run the created executable
             IO.popen("./#{out_file}") do |io|
-                io.read
+                execute_out = io.readlines
                 io.close
 
                 # Test whether it worked or not
-                if $?.exitstatus != test['value'] then
+                if $?.exitstatus != test['return'] && !test['fail'] then
                     puts " [#{test_num}]: #{simple_cmd}"
                     puts "    Execution failed with incorrect return value"
-                    puts "     Expected: #{test['value']}, Actual: #{$?.exitstatus}"
+                    puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
+                    puts " --------------------------------------------------"
+                elsif test['fail'] then
+                    puts " [#{test_num}]: #{simple_cmd}"
+                    puts "    Execution succeeded when it should have failed"
+                    puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
                     puts " --------------------------------------------------"
                 else
-                    # puts "  Test #{test_num} Succeded with return '#{$?.exitstatus}'"
-                    num_correct = num_correct + 1
+                    num_correct += 1
                 end
             end
         end
@@ -87,23 +129,7 @@ YAML.load_file(options[:file]).each do |name, tests|
     num_tests = tests['tests'].size
     puts "  - Report for Test Group \"#{name.capitalize}\""
     if num_tests != 0 then
-        puts "   #{num_tests - num_correct} casses out of #{num_tests} possible failed | #{num_correct / num_tests}% passed"
+        puts "   #{num_tests - num_correct} cases out of #{num_tests} possible failed | #{num_correct / num_tests * 100}% passed"
     end
     puts "=======================================================\n\n"
-    # puts " -Report for Test Group #{name}: Succeed: #{num_correct}/#{num_tests} - Failed: #{num_failed}\n\n"
 end
-
-# Catch output (of individual tests)
-# {testloc}: {status}:
-#   {test}
-# with {failure}
-
-=begin
-{test_group}
-===============
-{individual}
-...
-===============
-test cases: {total} | {failed} failed
-assertions: {total} | {failed} failed
-=end
