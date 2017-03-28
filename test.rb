@@ -3,7 +3,6 @@ require 'optparse'
 
 # TODO:
 #  Switch over completely to the new yaml organization
-#    panic
 #    asm_file
 #    output
 #    exec
@@ -125,11 +124,18 @@ YAML.load_file(options[:file]).each do |name, tests|
         test_num = test_num + 1
     end
 
-    # Report status of test programs
+    # Report status of test programs and possibly panic if required
     num_tests = tests['tests'].size
+    pass_pct = num_correct / (num_tests * 1.0)
     puts "  - Report for Test Group \"#{name.capitalize}\""
     if num_tests != 0 then
-        puts "   #{num_tests - num_correct} cases out of #{num_tests} possible failed | #{num_correct / num_tests * 100}% passed"
+        puts "   #{num_tests - num_correct} cases out of #{num_tests} possible failed | #{num_correct} passed"
+    end
+    if (1 - pass_pct) > panic_pct then
+        puts "   Panic: #{(1 - panic_pct) * 100}% of tests must pass out of this group"
+        puts "     Stopping due to #{(1 - pass_pct) * 100}% test failure rate"
+        puts "=======================================================\n\n"
+        break
     end
     puts "=======================================================\n\n"
 end
