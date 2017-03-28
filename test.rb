@@ -3,14 +3,15 @@ require 'optparse'
 
 # TODO:
 #  Switch over completely to the new yaml organization
-#    asm_file
-#    output
 #    exec
 #    :plus any other things I need to implement
 #  Work on the displaying of the test cases (I don't quite like the look)
-#  Collect all output from the compilation and execution steps in an array
+#    How to control formatting of floats
 #  Simplify the implementation of the runner
-
+#    Have "data" pointing to various compiler flags and other constants
+#  Ensure that 'asm_file' forces the compiler to produce assembly code
+#    Test the behavior of asm_file once the flags are implemented
+#  Improve the way files are located from the test data (current approach will fail alot I feel)
 
 # Parse out the command line arguments
 options = {
@@ -24,6 +25,11 @@ end.parse!
 
 # convert the remaining args to lowercase (same as tags)
 ARGV.map! {|s| s.downcase}
+
+SUCCESS_RET = 0
+SUCCESS_ASM = 1
+SUCCESS_OUT = 2
+SUCCESS_NA  = 3
 
 
 # Run the actual test framework
@@ -53,7 +59,8 @@ YAML.load_file(options[:file]).each do |name, tests|
         # Test Setup (setting default variables/etc)
         compile = test.key?('compile') ? test['compile']
             : { :norun => true, 'files' => [], 'args' => [], 'out' => test['exec'] }
-        success_metric = test.key?('return') ? 0 : test.key?('asm_file') ? 1 : test.key?('output') ? 2 : 3
+        success_metric = test.key?('return') ? SUCCESS_RET : test.key?('asm_file') ? SUCCESS_ASM
+            : test.key?('output') ? SUCCESS_OUT : SUCCESS_NA
         simple_cmd = exec_file = compile['out']
         out_file = "_test/tmp/#{exec_file}"
 
@@ -88,9 +95,15 @@ YAML.load_file(options[:file]).each do |name, tests|
                         num_correct += 1
                     end
 
+                # If the compilation was supposed to fail
                 elsif test['fail'] then
                     puts " [#{test_num}]: #{simple_cmd}"
                     puts "    Compilation succeeded when it should have failed"
+
+                # Test against the produced assembly if expected
+                elsif success_metric == SUCCESS_ASM then
+                    FileUtils.identical?(test['asm_file'], "./#{out_file}")
+                    can_run = false
                 end
             end
         end
@@ -103,19 +116,50 @@ YAML.load_file(options[:file]).each do |name, tests|
                 execute_out = io.readlines
                 io.close
 
-                # Test whether it worked or not
-                if $?.exitstatus != test['return'] && !test['fail'] then
-                    puts " [#{test_num}]: #{simple_cmd}"
-                    puts "    Execution failed with incorrect return value"
-                    puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
-                    puts " --------------------------------------------------"
-                elsif test['fail'] then
-                    puts " [#{test_num}]: #{simple_cmd}"
-                    puts "    Execution succeeded when it should have failed"
-                    puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
-                    puts " --------------------------------------------------"
+                case success_metric
+                when SUCCESS_RET
+                    # Test whether it worked or not
+                    if $?.exitstatus != test['return'] && !test['fail'] then
+                        puts " [#{test_num}]: #{simple_cmd}"
+                        puts "    Execution failed with incorrect return value"
+                        puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
+                        puts " --------------------------------------------------"
+                    elsif test['fail'] then
+                        puts " [#{test_num}]: #{simple_cmd}"
+                        puts "    Execution succeeded when it should have failed"
+                        puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
+                        puts " --------------------------------------------------"
+                    else
+                        num_correct += 1
+                    end
+                when SUCCESS_OUT
+                    # Compare program output to the file in test['out']
+                    files_match = true
+                    File.readlines(test['out']).each_with_index do |line, lineno|
+                        if execute_out[lineno] != line then
+                            files_match = false
+                            break
+                        end
+                    end
+
+                    # Test whether it worked or not
+                    if !files_match && !test['fail'] then
+                        puts " [#{test_num}]: #{simple_cmd}"
+                        puts "    Execution failed to match expected output"
+                        puts "    See file real_#{test['out']} for actual output"
+                        puts " --------------------------------------------------"
+
+                        File.open("read_#{test['out']}", 'w') { |f| execute_out.each { |line| f.puts(line) } }
+
+                    elsif test['fail'] then
+                        puts " [#{test_num}]: #{simple_cmd}"
+                        puts "    Execution matched expected output when it should have failed"
+                        puts " --------------------------------------------------"
+                    else
+                        num_correct += 1
+                    end
                 else
-                    num_correct += 1
+                    puts " [#{test_num}]: Invalid success metric defined"
                 end
             end
         end
