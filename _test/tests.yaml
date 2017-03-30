@@ -7,15 +7,15 @@ literals:
     - compile:
         files: [ 'first.spr' ]
         out: 'first.exe'
-        args: []
       return: 5
     - fail: true
       compile:
         files: [ 'error.spr' ]
         out: 'err.exe'
-        args: []
       return: 0
-    - exec: 'first.exe'
+    -
+      exec:
+        file: 'first.exe'
       return: 42
     # - exec:
     #     file: 'first.exe'
@@ -29,26 +29,26 @@ functions:
 
 # IDEA for organization of yaml file
 # <test_group>: collection of tests and other data for modular testing
-#   <desc>: basic description of the tests in the test_group
-#   <tags>: command line tags to single out this test test_group (must be lowercase)
-#   <panic>: fail test-suite if <panic>% of the tests in this group fail
+#   <desc>: "" - basic description of the tests in the test_group
+#   <tags>: [] - command line tags to single out this test test_group (must be lowercase)
+#   <panic>: 0 - fail test-suite if <panic>% of the tests in this group fail
 #   ...
 #   <tests>: array of tests to run for this group
-#     <fail>: should the test fail and at what point
-#     <desc>: basic description of the exact test case                    <- Never print this
-#     <compile>: struct specifying compilation expectations
+#     <desc>: "" - basic description of the exact test case                    <- Never print this
+#     <compile>: [...] - struct specifying compilation expectations
 #       <files>: files to be compiled for this test
-#       <out>: output file name
-#       <args>: arguments to pass to the compilation stage
+#       <fail>: false - should the test fail to compile
+#       <out>: "out.exe" - output file name
+#       <args>: [] - arguments to pass to the compilation stage
 #     <exec>: file to execute. only needed if compile not provided
-#       <file>: file to execute, needed if compile not provided
-#       <args>: arguments to pass to execution
+#       <fail>: false - should the test fail at runtime
+#       <file>: compile.out - file to execute, needed if compile not provided
+#       <args>: [] - arguments to pass to execution
 #     <return>: expected return value of the program
 #     <asm_file>: file describing the expected assembly code output
 #     <output>: file describing the expected output from stdout
 
 # TODO:
-#   Need to be able to pass arguments to the executable
 #   Need ability to specify folder housing test files
 #   Need to work on documentation
-#   Need way to specify, "should fail at compile time"
+#   Look into moving return/etc. into exec (in some form at least)
