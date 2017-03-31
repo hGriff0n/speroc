@@ -2,33 +2,16 @@ require 'yaml'
 require 'optparse'
 
 # TODO:
-#  Work on the displaying of the test cases (I don't quite like the look)
-#  Add in the ability to specify directory from the yaml
-#  Improve yaml documentation
+#  Work on the displaying of the test cases (I don't quite like the look)\
 
-
+puts ""
 
 # Global defines for the project
 SUCCESS = { :ret => 0, :asm => 1, :out => 2, :na => 3 }
 
-# Generate default values for compilation and execution commands
-def compile_defaults(run)
-    if run.key?('compile')
-        compile = run['compile']
-        if !compile.key?('out') then compile['out'] = "out.exe" end
-        if !compile.key?('args') then compile['args'] = [] end
-        compile['exec'] = "_test/tmp/#{run['exec']}"
-        compile
-    else
-        { :norun => true, 'files' => [], 'args' => [], 'out' => run['exec'], 'fail' => false }
-    end
-end
-
-
-
 # Parse out the command line arguments
 options = {
-    :file => './_test/tests.yaml',
+    :file => 'tests.yaml',
     :ignore => false,
     :dir => "_test",
     :out_dir => "tmp"
@@ -44,9 +27,22 @@ end.parse!
 ARGV.map! {|s| s.downcase}
 
 
+# Generate default values for compilation and execution commands
+def compile_defaults(run)
+    if run.key?('compile')
+        compile = run['compile']
+        if !compile.key?('out') then compile['out'] = "out.exe" end
+        if !compile.key?('args') then compile['args'] = [] end
+        compile
+    else
+        { :norun => true, 'files' => [], 'args' => [], 'out' => run['exec'], 'fail' => false }
+    end
+end
+
+
 # Run the actual test framework
 test_num = 0
-yaml = YAML.load_file(options[:file])
+yaml = YAML.load_file("./#{options[:dir]}/#{options[:file]}")
 yaml.each do |name, tests|
 
     # Skip this test group if specified
@@ -73,17 +69,18 @@ yaml.each do |name, tests|
         # Setup run defaults and other variables
         run_desc = run.key?('desc') ? run['desc'] : ""
         compile = compile_defaults(run)
+        compile['exec'] = "#{options[:dir]}/#{options[:out_dir]}/#{run['exec']}"
         simple_cmd = run['exec']
         run_tests = 0
 
 
         # Perform compilation if the run requires it (likely)
-        if ! compile[:norun]
+        if !compile[:norun]
             
             # Generate strings for correctly calling the compiler from the runner
-            in_files = compile['files'].map { |file| "./_test/#{file}" }.join(' ')
+            in_files = compile['files'].map { |file| "./#{options[:dir]}/#{file}" }.join(' ')
             args = compile['args'].join(' ')
-            speroc_cmd = "./_test/speroc #{in_files} -o #{compile['exec']} #{args}"
+            speroc_cmd = "./#{options[:dir]}/speroc #{in_files} -o #{compile['exec']} #{args}"
 
             # Generate a smaller string to simplify test print messages
             simple_cmd = "speroc #{compile['files'].join(' ')} -o #{run['exec']} #{args}"
@@ -95,10 +92,7 @@ yaml.each do |name, tests|
                 # Capture any compilation errors and close the process
                 compile['out'] = io.readlines
                 io.close
-
-                # Store compilation success and mark test number
                 compile[:success] = $?.exitstatus == 0
-                run_tests += 1
 
 
                 # If compilation failed when it should have succeeded
@@ -116,15 +110,18 @@ yaml.each do |name, tests|
                 # TODO: Test against produced assembly if required
                 elsif compile[:success] && compile.key?('asm')
                     run_tests += 1
-                    num_correct += 1
+                    num_correct += 1        # The compilation succeeded, so mark that
 
+                    # Now check that the files are identical (the second test)
                     FileUtils.identical?(compile['asm'], "out.s")
-                    can_run = false
 
                 else
                     num_correct += 1
                 end
 
+
+                # Increment the number of run tests
+                run_tests += 1
             end
         end
 
@@ -134,6 +131,7 @@ yaml.each do |name, tests|
 
             # Setup test defaults and variables
             if !test.key?('args') then test['args'] = [] end
+            simple_cmd = "#{run['exec']} #{test['args'].join(' ')}"
             # test = set_test_defaults(test)
 
 
@@ -198,7 +196,6 @@ yaml.each do |name, tests|
 
         # Update runner variables and state
         num_tests += run_tests
-
     end
 
 

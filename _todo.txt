@@ -1,8 +1,5 @@
 
 todo:
- setup the "test" project and get testing started
-   improve reporting/handling of tests in the ruby script
-   Update readme
  figure out how the compiler is supposed to operate
    project setup and organization
      start creating an "implementation" checklist

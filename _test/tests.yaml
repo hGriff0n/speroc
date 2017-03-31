@@ -14,7 +14,7 @@ literals:
     - desc: ""
       exec: 'err.exe'
       compile:
-        fail: true
+        fail: false
         files: [ 'error.spr' ]
       
 functions:
@@ -24,8 +24,6 @@ functions:
 
 
 # TODO:
-#   Need ability to specify folder housing test files
-#   Need to work on documentation (mark optional args, etc.)
 #   Need ability to compare output of test to a file (ie. test prints to file, not stdout)
 #   Work on having more tests
 
@@ -34,19 +32,19 @@ functions:
 # <test_group>: collection of tests and other data
 #   <desc>: basic description of the tests in the test_group
 #   <tags>: command line tags to single out this test_group (must be lowercase)
-#   <panic>: fail test-suite if <panic>% of tests in this group fail
+#   [panic]: fail test-suite if <panic>% of tests in this group fail
 #   ...
 #   <runs>: array of unique executables to test for this group
-#     <desc>: basic description of this executable (never printed)
+#     [desc]: basic description of this executable (never printed)
 #     <exec>: name of the executable file
-#     <compile>: struct specifying compilation arguments/expectations
+#     [compile]: struct specifying compilation arguments/expectations
 #       <files>: files to be compiled to create the executable
-#       <fail>: should compilation fail or not
-#       <args>: arguments to provided to the compiler
-#       <asm>: file describing the expected assembly output (additional test)
+#       [fail]: should compilation fail or not
+#       [args]: arguments to provided to the compiler
+#       [asm]: file describing the expected assembly output (additional test)
 #     <tests>: array of tests that use the executable
-#       <fail>: should this test fail or not
-#       <args>: arguments to provide to the executable
-#       <return>: expected return value
-#       <output>: expected output to stdout (possibly a file/file descriptor if I add that ability in)
+#       [fail]: should this test fail or not
+#       [args]: arguments to provide to the executable
+#       [return]: expected return value
+#       [output]: expected output to stdout (possibly a file/file descriptor if I add that ability in)
 
