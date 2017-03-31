@@ -6,7 +6,7 @@ Current Status:
 
     parser - largely implemented, error-prone
     ast - largely assembled, error-prone
-    tests - unimplemented
+    tests - runner largely implemented, tests lacking
     analysis - unimplemented
     codegen - can produce basic ("return i") executables
 
@@ -14,26 +14,24 @@ Current Dev Plan:
 
     Work on simple codegen (ie. "def main = () -> 5 + 5")
     Augment Parser and AST with error handling
-    Develop complete compiler testing framework
     Start work on implmenting standard library
     Reach v1.0 by completing analysis compilation stages
 
 Project Info:
 
-    size: 3603 sloc (according to Github)
-    19 header files, 11 source files
+    size: 3827 sloc (according to Github)
+    9 .h files, 5 .cpp files, 1 .rb file
     
 Libraries Used:
 
-    PEGTL: PEG parsing library
-    Catch: Testing framework
-    better-enums: Enum extension
-    cxxopts: Cmd
+    PEGTL: PEG parsing
+    better-enums: Extended enums
+    cxxopts: cmd line parsing
 
 Release Framework (Current expectations):
 
     v0.1 - Simple codegen and compilation possible with some analysis stages
     v0.2 - Type system and type inference completely setup
-    v1.0 - Complete language specification with all analysis, standard library
+    v1.0 - Complete initial language specification with all analysis, standard library
     v2.0 - Language updates, plus optimization stages and transfer to LLVM backend
     v2.0 - Language updates, maybe bootstrapped

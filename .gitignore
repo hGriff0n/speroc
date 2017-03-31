@@ -10,3 +10,5 @@ _test/*.exe
 _test/*.s
 _test/tmp
 out\.s
+
+_gcc/

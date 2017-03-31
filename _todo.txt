@@ -1,9 +1,5 @@
 
 todo:
- setup the "test" project and get testing started
-   improve reporting/handling of tests in the ruby script
-   improve ability to selectively run tests from command line tags
-   work on improving the test yaml organization
  figure out how the compiler is supposed to operate
    project setup and organization
      start creating an "implementation" checklist
@@ -19,6 +15,9 @@ todo:
      create, store, and call spero functions
      basic type-checking and inference (set up the pass at least)
       operator -> function translation
+   Automatically delete temporary assembly files after compilation
+     Add in special command argument to handle this workflow
+     Adapt the test runner to use the command when needing to test assembly file
  add in exception/error handling to make the compiler/parser usable
    create a compiler error-reporting framework (also for collection)
  improve performance of the parsing stages
