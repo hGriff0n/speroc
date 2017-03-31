@@ -2,15 +2,13 @@ require 'yaml'
 require 'optparse'
 
 # TODO:
-#  Switch over completely to the new yaml organization
-#    :plus any other things I need to implement
+#  Switch yaml and runner organization to the "executable-based" approach (see '_tests.yaml')
 #  Work on the displaying of the test cases (I don't quite like the look)
-#    How to control formatting of floats
-#    Need the ability to differentiate between failures at runtime (currently displays compilation)
 #  Simplify the implementation of the runner
 #    Have "data" pointing to various compiler flags and other constants
 #  Ensure that 'asm_file' forces the compiler to produce assembly code
 #    Test the behavior of asm_file once the flags are implemented
+#  Find a way to "require" fields in yaml
 #  Improve the way files are located from the test data (current approach will fail alot I feel)
 
 
@@ -47,10 +45,14 @@ end
 options = {
     :file => './_test/tests.yaml',
     :ignore => false,
+    :dir => "_test",
+    :out_dir => "tmp"
 }
 OptionParser.new do |opt|
-    opt.on("-f", "--file [FILE]") { |o| options[:file] = o }
-    opt.on("-i", "--ignore") { |o| options[:ignore] = o }
+    opt.on("-f", "--file [FILE]") { |f| options[:file] = f }
+    opt.on("-i", "--ignore") { |i| options[:ignore] = i }
+    opt.on("-d", "--dir [DIR]") { |d| options[:dir] = d }
+    opt.on("-o", "--out [DIR]") { |d| options[:out_dir] = d }
 end.parse!
 
 # convert the remaining args to lowercase (same as tags)
@@ -59,7 +61,8 @@ ARGV.map! {|s| s.downcase}
 
 # Run the actual test framework
 test_num = 0
-YAML.load_file(options[:file]).each do |name, tests|
+yaml = YAML.load_file(options[:file])
+yaml.each do |name, tests|
     # Skip this test group if specified
     is_arg = (tests['tags'] & ARGV)
     next if options[:ignore] && is_arg
@@ -202,8 +205,8 @@ YAML.load_file(options[:file]).each do |name, tests|
         puts "   #{num_tests - num_correct} cases out of #{num_tests} possible failed | #{num_correct} passed"
     end
     if (1 - pass_pct) > panic_pct
-        puts "   Panic: #{(1 - panic_pct) * 100}% of tests must pass out of this group"
-        puts "     Stopping due to #{(1 - pass_pct) * 100}% test failure rate"
+        puts "   Panic: #{((1 - panic_pct) * 100).round(2)}% of tests must pass out of this group"
+        puts "     Stopping due to #{((1 - pass_pct) * 100).round(2)}% test failure rate"
         puts "=======================================================\n\n"
         break
     end

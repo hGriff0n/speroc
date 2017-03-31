@@ -21,12 +21,11 @@ Current Dev Plan:
 Project Info:
 
     size: 3603 sloc (according to Github)
-    19 header files, 11 source files
+    19 .h files, 11 .cpp files, 1 .rb file
     
 Libraries Used:
 
     PEGTL: PEG parsing library
-    Catch: Testing framework
     better-enums: Enum extension
     cxxopts: Cmd
 
@@ -34,6 +33,6 @@ Release Framework (Current expectations):
 
     v0.1 - Simple codegen and compilation possible with some analysis stages
     v0.2 - Type system and type inference completely setup
-    v1.0 - Complete language specification with all analysis, standard library
+    v1.0 - Complete initial language specification with all analysis, standard library
     v2.0 - Language updates, plus optimization stages and transfer to LLVM backend
     v2.0 - Language updates, maybe bootstrapped

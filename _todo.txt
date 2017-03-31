@@ -4,6 +4,7 @@ todo:
    improve reporting/handling of tests in the ruby script
    improve ability to selectively run tests from command line tags
    work on improving the test yaml organization
+   Update readme
  figure out how the compiler is supposed to operate
    project setup and organization
      start creating an "implementation" checklist
