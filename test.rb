@@ -2,40 +2,25 @@ require 'yaml'
 require 'optparse'
 
 # TODO:
-#  Switch yaml and runner organization to the "executable-based" approach (see '_tests.yaml')
 #  Work on the displaying of the test cases (I don't quite like the look)
-#  Simplify the implementation of the runner
-#    Have "data" pointing to various compiler flags and other constants
-#  Ensure that 'asm_file' forces the compiler to produce assembly code
-#    Test the behavior of asm_file once the flags are implemented
-#  Find a way to "require" fields in yaml
-#  Improve the way files are located from the test data (current approach will fail alot I feel)
+#  Add in the ability to specify directory from the yaml
+#  Improve yaml documentation
+
 
 
 # Global defines for the project
 SUCCESS = { :ret => 0, :asm => 1, :out => 2, :na => 3 }
 
 # Generate default values for compilation and execution commands
-def get_test_compilation(test)
-    if test.key?('compile')
-        compile = test['compile']
+def compile_defaults(run)
+    if run.key?('compile')
+        compile = run['compile']
         if !compile.key?('out') then compile['out'] = "out.exe" end
         if !compile.key?('args') then compile['args'] = [] end
+        compile['exec'] = "_test/tmp/#{run['exec']}"
         compile
     else
-        { :norun => true, 'files' => [], 'args' => [], 'out' => test['exec'], 'fail' => false }
-    end
-end
-
-def get_test_execution(test, compile)
-    if test.key?('exec')
-        exec = test['exec']
-        if !exec.key?('fail') then exec['fail'] = false end
-        if !exec.key?('file') then exec['file'] = "_test/tmp/#{compile['out']}" end
-        if !exec.key?('args') then exec['args'] = [] end
-        exec
-    else
-        { 'fail' => false, 'file' => compile['out'], 'args' => [] }
+        { :norun => true, 'files' => [], 'args' => [], 'out' => run['exec'], 'fail' => false }
     end
 end
 
@@ -63,14 +48,15 @@ ARGV.map! {|s| s.downcase}
 test_num = 0
 yaml = YAML.load_file(options[:file])
 yaml.each do |name, tests|
+
     # Skip this test group if specified
-    is_arg = (tests['tags'] & ARGV)
-    next if options[:ignore] && is_arg
-    next if !options[:ignore] && !is_arg
+    in_cmd_tags = (tests['tags'] & ARGV)
+    next if options[:ignore] && in_cmd_tags
+    next if !options[:ignore] && !in_cmd_tags
 
 
     # Setup group defaults and counters
-    num_correct = 0
+    num_correct = num_tests = 0
     group_desc = tests.key?('desc') ? tests['desc'] : ""
     panic_pct = tests.key?('panic') ? tests['panic'] : 1
 
@@ -80,125 +66,143 @@ yaml.each do |name, tests|
     puts "  - Testing #{group_desc}\n"
     puts "======================================================="
 
+    
+    # Run over all the unique executables in the test group
+    tests['runs'].each_with_index do |run, idx|
 
-    # Run all the tests in the test group
-    tests['tests'].each do |test|
-
-        # Setup test defaults and variables
-        can_run = true
-        test_desc = test.key?('desc') ? test['desc'] : ""
-        compile = get_test_compilation(test)
-        exec = get_test_execution(test, compile)
-        success_metric = test.key?('return') ? SUCCESS[:ret] : test.key?('asm_file') ? SUCCESS[:asm]
-            : test.key?('output') ? SUCCESS[:out] : SUCCESS[:na]
-        simple_cmd = compile['out']
+        # Setup run defaults and other variables
+        run_desc = run.key?('desc') ? run['desc'] : ""
+        compile = compile_defaults(run)
+        simple_cmd = run['exec']
+        run_tests = 0
 
 
-        # Perform compilation if the specification requires it
-        if !compile[:norun] 
-
+        # Perform compilation if the run requires it (likely)
+        if ! compile[:norun]
+            
             # Generate strings for correctly calling the compiler from the runner
             in_files = compile['files'].map { |file| "./_test/#{file}" }.join(' ')
             args = compile['args'].join(' ')
-            speroc_cmd = "./_test/speroc #{in_files} -o #{exec['file']} #{args}"
+            speroc_cmd = "./_test/speroc #{in_files} -o #{compile['exec']} #{args}"
 
             # Generate a smaller string to simplify test print messages
-            simple_cmd = "speroc #{compile['files'].join(' ')} -o #{compile['out']} #{args}"
+            simple_cmd = "speroc #{compile['files'].join(' ')} -o #{run['exec']} #{args}"
 
 
-            # Compile the program and catch any compilation errors
+            # Compile the program and report errors (if any)
             IO.popen(speroc_cmd) do |io|
+
                 # Capture any compilation errors and close the process
                 compile['out'] = io.readlines
                 io.close
 
-                # If compilation failed, display errors and skip to the next test
-                can_run = $?.exitstatus == 0
-                if !can_run
-                    if !compile['fail']
-                        puts " [#{test_num}]: #{simple_cmd}"
-                        puts "    Compilation failed with errorstatus #{$?.exitstatus}"
-                        # TODO: Report compilation messages
-                        puts " --------------------------------------------------"
-                    else
-                        num_correct += 1
-                    end
+                # Store compilation success and mark test number
+                compile[:success] = $?.exitstatus == 0
+                run_tests += 1
 
-                # If the compilation was supposed to fail
-                elsif compile['fail']
-                    puts " [#{test_num}]: #{simple_cmd}"
+
+                # If compilation failed when it should have succeeded
+                if !compile[:success] && !compile['fail']
+                    puts " [#{idx}:#{run_tests}]: #{simple_cmd}"
+                    puts "    Compilation failed with errorstatus #{$?.exitstatus}"
+                    # TODO: Report compilation messages
+                    puts " --------------------------------------------------"
+
+                # If compilation succeeded when it should have failed
+                elsif compile[:success] && compile['fail']
+                    puts " [#{idx}:#{run_tests}]: #{simple_cmd}"
                     puts "    Compilation succeeded when it should have failed"
 
-                # TODO: Test against the produced assembly if expected
-                elsif success_metric == SUCCESS[:asm]
-                    FileUtils.identical?(test['asm_file'], "./#{exec['file']}")
+                # TODO: Test against produced assembly if required
+                elsif compile[:success] && compile.key?('asm')
+                    run_tests += 1
+                    num_correct += 1
+
+                    FileUtils.identical?(compile['asm'], "out.s")
                     can_run = false
+
+                else
+                    num_correct += 1
                 end
+
             end
         end
 
-        # If compilation succeeded, run the program
-        if can_run || compile[:norun]
 
-            # Run the created executable
-            IO.popen("./#{exec['file']} #{exec['args'].join(' ')}") do |io|
-                execute_out = io.readlines
+        # Run over all tests if compilation succeeded (or the executable already existed)
+        run['tests'].each do |test|
+
+            # Setup test defaults and variables
+            if !test.key?('args') then test['args'] = [] end
+            # test = set_test_defaults(test)
+
+
+            # Run the exeuctable with the test specific arguments
+            IO.popen("./#{compile['exec']} #{test['args'].join(' ')}") do |io|
+                exec_out = io.readlines
                 io.close
 
-                case success_metric
-                when SUCCESS[:ret]
-                    # Test whether it worked or not
-                    if $?.exitstatus != test['return'] && !exec['fail']
-                        puts " [#{test_num}]: #{simple_cmd}"
+
+                # Test whether the return value matches (if required)
+                if test.key?('return')
+                    run_tests += 1
+
+                    if $?.exitstatus != test['return'] && !test['fail']
+                        puts " [#{idx}:#{run_tests}]: #{simple_cmd}"
                         puts "    Execution failed with incorrect return value"
                         puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
                         puts " --------------------------------------------------"
-                    elsif exec['fail']
-                        puts " [#{test_num}]: #{simple_cmd}"
+                    elsif test['fail']
+                        puts " [#{idx}:#{run_tests}]: #{simple_cmd}"
                         puts "    Execution succeeded when it should have failed"
                         puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
                         puts " --------------------------------------------------"
                     else
                         num_correct += 1
                     end
-                when SUCCESS[:out]
-                    # Compare program output to the file in test['out']
+                end
+
+                
+                # Test whether the program's output matches expectations (if required)
+                if test.key?('output')
+                    run_tests += 1
                     files_match = true
-                    File.readlines(test['out']).each_with_index do |line, lineno|
-                        if execute_out[lineno] != line
+
+                    # Compare every line of the file
+                    File.readlines(test['output']).each_with_index do |line, lineno|
+                        if exec_out[lineno] != line
                             files_match = false
                             break
                         end
                     end
 
-                    # Test whether it worked or not
-                    if !files_match && !exec['fail']
-                        puts " [#{test_num}]: #{simple_cmd}"
+
+                    if !files_match && !test['fail']
+                        puts " [#{run_n}:#{run_tests}]: #{simple_cmd}"
                         puts "    Execution failed to match expected output"
                         puts "    See file real_#{test['out']} for actual output"
                         puts " --------------------------------------------------"
 
                         File.open("read_#{test['out']}", 'w') { |f| execute_out.each { |line| f.puts(line) } }
-
-                    elsif exec['fail']
-                        puts " [#{test_num}]: #{simple_cmd}"
+                    elsif test['fail']
+                        puts " [#{run_n}:#{run_tests}]: #{simple_cmd}"
                         puts "    Execution matched expected output when it should have failed"
                         puts " --------------------------------------------------"
                     else
                         num_correct += 1
                     end
-                else
-                    puts " [#{test_num}]: Invalid success metric defined"
                 end
             end
-        end
 
-        # Update status for end output
-        test_num = test_num + 1
+        end if compile[:success] || compile[:norun]
+
+        # Update runner variables and state
+        num_tests += run_tests
+
     end
 
+
     # Report status of test programs and possibly panic if required
-    num_tests = tests['tests'].size
     pass_pct = num_correct / (num_tests * 1.0)
     puts "  - Report for Test Group \"#{name.capitalize}\""
     if num_tests != 0
