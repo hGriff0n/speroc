@@ -2,7 +2,8 @@ require 'yaml'
 require 'optparse'
 
 # TODO:
-#  Work on the displaying of the test cases (I don't quite like the look)\
+#  Work on the displaying of the test cases (I don't quite like the look)
+#  Get the file comparison tests working correctly (not an issue currently)
 
 puts ""
 

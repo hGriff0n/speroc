@@ -19,7 +19,7 @@ Current Dev Plan:
 
 Project Info:
 
-    size: 3827 sloc (according to Github, 165+3661)
+    size: 3827 sloc (according to Github)
     9 .h files, 5 .cpp files, 1 .rb file
     
 Libraries Used:
