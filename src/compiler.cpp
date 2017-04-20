@@ -22,7 +22,7 @@ namespace spero::util {
 namespace spero::compiler {
 	using namespace parser;
 
-	std::tuple<bool, Stack> parse_impl(std::string input, bool is_filename) {
+	std::tuple<bool, Stack> parse_impl(std::string input, CompilationState& state, bool is_filename) {
 		// Setup parser state
 		Stack ast;
 		ast.emplace_back(compiler::ast::Sentinel{});
@@ -44,26 +44,23 @@ namespace spero::compiler {
 		return std::make_tuple(succ, std::move(ast));
 	}
 
-	std::tuple<bool, Stack> parse(std::string input) {
-		return parse_impl(input, false);
+	std::tuple<bool, Stack> parse(std::string input, CompilationState& state) {
+		return parse_impl(input, state, false);
 	}
 
-	std::tuple<bool, Stack> parseFile(std::string file) {
-		return parse_impl(file, true);
+	std::tuple<bool, Stack> parseFile(std::string file, CompilationState& state) {
+		return parse_impl(file, state, true);
 	}
 
 	// Perform the various analysis stages
-	IR_t analyze(spero::parser::Stack& s) {
+	IR_t analyze(spero::parser::Stack& s, CompilationState& state) {
 		return std::move(s);
 	}
 
 	// Perform the final compilation stages (produces direct assembly code)
-	void codegen(IR_t& s, std::string in, std::string out, std::ostream& debug) {
-		// debug << "Starting compilation phase...\n";
-
+	void codegen(IR_t& s, std::string in, std::string out, CompilationState& state) {
 		// Open the output file
 		std::ofstream o{ out };
-		// debug << "Opened file " << out << " for compilation output\n";
 
 		// Output file header information
 		o << "\t.file \"" << in << "\"\n.text\n";
@@ -75,9 +72,6 @@ namespace spero::compiler {
 			node->visit(visitor);
 
 		o << '\n';
-
-		// End the compilation phase
-		// debug << "Ending compilation phase...\n";
 	}
 
 }

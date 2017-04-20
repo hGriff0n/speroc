@@ -3,9 +3,10 @@ todo:
  figure out how the compiler is supposed to operate
    project setup and organization
      start creating an "implementation" checklist
-       list of unimplemented/incomplete features and guarantees plus need implementation steps
-     add in timing collection of the various pass steps (using 'std::chrono')
+       list of unimplemented/incomplete features and guarantees plus needed implementation steps
      maybe also reorganize the file/project structure as well
+	 build up tests in test.yaml
+	   add in error reporting first
    work on laying out what passes need to occur
      basic structural framing and comments
      improve comments within the project
@@ -42,6 +43,7 @@ todo:
      "-" and "2 ++ -" fail to parse
      "-(3, 4)" is a UnaryOp node instead of a FnCall
        this could possibly be resolved in analysis though (maybe in construction)
+   possibly add in "error" field for test.compile struct (file to compare compilation errors to)
 
  organization
    figure out how gcc-assembler interaction will work
@@ -59,6 +61,7 @@ todo:
    look into possibly allowing operators to not require parenthesis in indexing
      allow "3.+ 4" instead of "3.+(4)"
        difficult to parse though
+   how do unary operators get specialized ???
 
  parser improvements:
    re-enable "::" syntax for anonymous types

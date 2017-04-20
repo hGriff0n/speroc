@@ -3,11 +3,14 @@
 #include "cxxopts.hpp"
 #include <tuple>
 
+#include "util\CompilationState.h"
+
 namespace spero {
 	namespace cmd {
 
 		cxxopts::Options getOptions();
-		std::vector<std::string> parseCmdLine(cxxopts::Options&, int&, char**&);
+		compiler::CompilationState parse(int&, char**&);
+		compiler::CompilationState parse(cxxopts::Options&, int&, char**&);
 
 		// Future function to parse the command line into the compilation state
 		//auto parseCmd(int argc, char** argv);
@@ -18,6 +21,7 @@ namespace spero {
 		// Need function to parse config files (yaml) if included
 
 	}
+
 
 	// Parsing yaml files
 	namespace yaml {

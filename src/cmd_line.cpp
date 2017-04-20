@@ -17,13 +17,22 @@ namespace spero {
 			return std::move(opts);
 		}
 
-		std::vector<std::string> parseCmdLine(cxxopts::Options& opts, int& argc, char**& argv) {
+		spero::compiler::CompilationState parse(int& argc, char**& argv) {
+			// Parse out the command line
+			auto opts = getOptions();
 			opts.parse(argc, argv);
-			
-			auto tmp = argc;
+
+			return parse(opts, argc, argv);
+		}
+
+		spero::compiler::CompilationState parse(cxxopts::Options& opts, int& argc, char**& argv) {
+			// Construct the compilation state from the parsed options
+			compiler::CompilationState state{ argv + 1, argv + argc };
 			argc = 1;
 
-			return { argv + 1, argv + tmp };
+			// init state
+
+			return state;
 		}
 
 	}

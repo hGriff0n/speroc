@@ -25,29 +25,30 @@ int main(int argc, char* argv[]) {
 	using namespace spero::parser;
 
 	// Parse the command line arguments
-	auto opts = spero::cmd::getOptions();
-	auto files = spero::cmd::parseCmdLine(opts, argc, argv);
-	//auto [files, opts] = spero::cmd::parse();
+	auto opts = cmd::getOptions();
+	auto state = cmd::parse(opts, argc, argv);
 
 
 	// Interactive mode for testing ast creation/parsing runs
-	if (files.size() == 0 || opts["inter"].as<bool>()) {
+	if (state.files().size() == 0 || opts["inter"].as<bool>()) {
 		std::string input;
 
 		while (std::cout << "> " && getMultiline(std::cin, input)) {
 			if (input == ":q") break;
 
 			bool succ;
-			spero::parser::Stack res;
+			parser::Stack res;
 
 			if (input.substr(0, 2) == ":c") {
-				if (!compile(res, input.substr(3), "out.exe")) {
+				state.files()[0] = input.substr(3);
+
+				if (!compile(state, res, "out.exe")) {
 					std::cout << "Compilation Failed\n";
 					continue;
 				}
 
 			} else
-				std::tie(succ, res) = compiler::parse(input);
+				std::tie(succ, res) = compiler::parse(input, state);
 
 			std::cout << "Parsing Succeeded: " << (succ ? "true" : "false") << '\n';
 			printAST(std::cout, res);
@@ -55,32 +56,33 @@ int main(int argc, char* argv[]) {
 
 	// Compiler run
 	} else {
-		spero::parser::Stack res;
+		parser::Stack res;
 
-		return !compile(res, files[0], opts["out"].as<std::string>());
+		bool success = compile(state, res, opts["out"].as<std::string>());
+
+		return !success;
 	}
 }
 
-bool spero::compile(spero::parser::Stack& stack, std::string in_file, std::string out_file) {
+bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack, std::string out_file) {
 	using namespace spero;
+
 	// TODO: Initialize timing and other compilation logging structures
+	bool succ;
 
 
 	/*
 	 * Perform parsing and initial recognization checks
 	 */
-	bool succ;
-	std::tie(succ, stack) = compiler::parseFile(in_file);
-
-	// TODO: Log report of the parsing phase
+	state.logTime();
+	std::tie(succ, stack) = compiler::parseFile(state.files()[0], state);
+	state.logTime();
 
 
 	/*
 	 * Run through the analysis stages
 	 */
-	auto ir = compiler::analyze(stack);
-
-	// TODO: Log report of analysis phases
+	auto ir = compiler::analyze(stack, state);
 
 	
 	/*
@@ -88,14 +90,15 @@ bool spero::compile(spero::parser::Stack& stack, std::string in_file, std::strin
 	 *   Note: If control reaches here, compilation should not fail
 	 */
 	if (succ) {
-		compiler::codegen(ir, in_file, "out.s", std::cout);
+		state.logTime();
+		compiler::codegen(ir, state.files()[0], "out.s", state);
+		state.logTime();
 
-		// TODO: Log report of the codegen phase
 
 		// Forward creation of the actual executable to some other compiler
+		state.logTime();
 		system((ASM_COMPILER" out.s -o " + out_file).c_str());
-
-		// TODO: Log report of the assembly phase
+		state.logTime();
 	}
 
 	return succ;
