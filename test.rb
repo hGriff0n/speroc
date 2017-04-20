@@ -32,17 +32,15 @@ ARGV.map! {|s| s.downcase}
 def compile_defaults(run)
     if run.key?('compile')
         compile = run['compile']
-        if !compile.key?('out') then compile['out'] = "out.exe" end
-        if !compile.key?('args') then compile['args'] = [] end
+        compile['args'] = [] unless compile.key?('args')
         compile
     else
-        { :norun => true, 'files' => [], 'args' => [], 'out' => run['exec'], 'fail' => false }
+        { :norun => true, 'files' => [], 'args' => [], 'exec' => run['exec'], 'fail' => false }
     end
 end
 
 
 # Run the actual test framework
-test_num = 0
 yaml = YAML.load_file("./#{options[:dir]}/#{options[:file]}")
 yaml.each do |name, tests|
 
@@ -76,7 +74,7 @@ yaml.each do |name, tests|
 
 
         # Perform compilation if the run requires it (likely)
-        if !compile[:norun]
+        unless compile[:norun]
             
             # Generate strings for correctly calling the compiler from the runner
             in_files = compile['files'].map { |file| "./#{options[:dir]}/#{file}" }.join(' ')
@@ -131,7 +129,7 @@ yaml.each do |name, tests|
         run['tests'].each do |test|
 
             # Setup test defaults and variables
-            if !test.key?('args') then test['args'] = [] end
+            test['args'] = [] unless test.key?('args')
             simple_cmd = "#{run['exec']} #{test['args'].join(' ')}"
             # test = set_test_defaults(test)
 
