@@ -7,7 +7,9 @@
 #include "cmd_line.h"
 #include "util/utils.h"
 
+
 #define ASM_COMPILER "gcc"
+
 
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
 template <class Stream>
@@ -64,6 +66,10 @@ int main(int argc, char* argv[]) {
 	}
 }
 
+
+/*
+ * Implementation of compilation function 
+ */
 bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack, std::string out_file) {
 	using namespace spero;
 
@@ -81,6 +87,9 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 
 	/*
 	 * Run through the analysis stages
+	 *
+	 * Don't mark this as a separate "phase" for timing purposes
+	 * The sub-phases perform their own timing passes
 	 */
 	auto ir = compiler::analyze(stack, state);
 
@@ -103,6 +112,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 
 	return succ;
 }
+
 
 template <class Stream>
 Stream& getMultiline(Stream& in, std::string& s) {

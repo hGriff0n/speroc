@@ -2,14 +2,13 @@
 todo:
  figure out how the compiler is supposed to operate
    project setup and organization
-     start creating an "implementation" checklist
-       list of unimplemented/incomplete features and guarantees plus needed implementation steps
-     maybe also reorganize the file/project structure as well
-	 build up tests in test.yaml
-	   add in error reporting first
-   work on laying out what passes need to occur
-     basic structural framing and comments
-     improve comments within the project
+     start creating an "implementation" checklist (unimplemented/incomplete features/guarantees + steps towards implementation)
+       organize the checklist in order of what I can do
+       adapt this todo list to focus on the checklist
+     maybe reorganize the file/project structure
+       build up tests in test.yaml
+     improve comments within the entire project
+       write out spero readme for possible posting
    get basic functional codegen setup and working
      be able to add two integers into a chosen register
      be able to store and use variables
@@ -20,23 +19,32 @@ todo:
      Add in special command argument to handle this workflow
      Adapt the test runner to use the command when needing to test assembly file
  add in exception/error handling to make the compiler/parser usable
-   create a compiler error-reporting framework (also for collection)
+   adapt the compilation state structure to include an error-reporting framework
+     figure out what that structure will need
+	 make sure to distinguish between errors and warnings
+	   setup interface to turn warnings into errors
+   hook up the compiler to stop on errors
+   improve reporting of the errors (long term project)
+     have basic "english" reasoning for the errors and where they occur
  improve performance of the parsing stages
-   first benchmark the performance of the parsing stages
-     need to create a performance suite as well
-       also create compilation logging (especially for reporting timing)
-       switch compilation logging over to the new system
+   create benchmark/performance suite for all stages
+     improve logging interface/information
+	   link stages to information in a usable way
+	   improve reporting/collection of timing
+	 find a decent way to see the benchmark data
+	   hook up reporting to the command line interface
    improve collection and memory usage of location data
    look at using std::string_view instead of std::string everywhere
-   can I use attributes in any way
+   look at using attributes in the code
  answer the questions/improvements below
  exhaustively work over the language design to eliminate any issues/oversights
    explore the type system intricately
      consider allowing monomorphic compiler
        also start working on building it up
  start working on more complicated codegen/analysis
- get clang assembly/linking working properly
-   apparently clang depends on visual studio 2012 being installed (or the library/include files at least)
+ move over to using llvm ir (and libraries)
+   switch out x86 codegen for llvm ir (make sure this is a benefit)
+   send the rest of the ir over to clang/llvm (need to wait for an update for VS 2017)
 
  errors:
    "-" is interpreted as a unary way to greedily

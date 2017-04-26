@@ -11,18 +11,14 @@ puts ""
 SUCCESS = { :ret => 0, :asm => 1, :out => 2, :na => 3 }
 
 # Parse out the command line arguments
-options = {
-    :file => 'tests.yaml',
-    :ignore => false,
-    :dir => "_test",
-    :out_dir => "tmp"
-}
+options = { :file => 'tests.yaml', :ignore => false, :dir => "_test", :out_dir => "tmp" }
 OptionParser.new do |opt|
     opt.on("-f", "--file [FILE]") { |f| options[:file] = f }
     opt.on("-i", "--ignore") { |i| options[:ignore] = i }
     opt.on("-d", "--dir [DIR]") { |d| options[:dir] = d }
     opt.on("-o", "--out [DIR]") { |d| options[:out_dir] = d }
 end.parse!
+
 
 # convert the remaining args to lowercase (same as tags)
 ARGV.map! {|s| s.downcase}
@@ -149,11 +145,13 @@ yaml.each do |name, tests|
                         puts "    Execution failed with incorrect return value"
                         puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
                         puts " --------------------------------------------------"
+
                     elsif test['fail']
                         puts " [#{idx}:#{run_tests}]: #{simple_cmd}"
                         puts "    Execution succeeded when it should have failed"
                         puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
                         puts " --------------------------------------------------"
+
                     else
                         num_correct += 1
                     end
@@ -181,6 +179,7 @@ yaml.each do |name, tests|
                         puts " --------------------------------------------------"
 
                         File.open("read_#{test['out']}", 'w') { |f| execute_out.each { |line| f.puts(line) } }
+
                     elsif test['fail']
                         puts " [#{run_n}:#{run_tests}]: #{simple_cmd}"
                         puts "    Execution matched expected output when it should have failed"
@@ -201,14 +200,18 @@ yaml.each do |name, tests|
     # Report status of test programs and possibly panic if required
     pass_pct = num_correct / (num_tests * 1.0)
     puts "  - Report for Test Group \"#{name.capitalize}\""
+
     if num_tests != 0
         puts "   #{num_tests - num_correct} cases out of #{num_tests} possible failed | #{num_correct} passed"
     end
+
     if (1 - pass_pct) > panic_pct
         puts "   Panic: #{((1 - panic_pct) * 100).round(2)}% of tests must pass out of this group"
         puts "     Stopping due to #{((1 - pass_pct) * 100).round(2)}% test failure rate"
         puts "=======================================================\n\n"
         break
     end
+
     puts "=======================================================\n\n"
+
 end
