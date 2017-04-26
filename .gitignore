@@ -12,3 +12,7 @@ _test/tmp
 out\.s
 
 _gcc/
+
+hooks\.lnk
+
+_readme\.md

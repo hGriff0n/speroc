@@ -5,10 +5,15 @@ todo:
      start creating an "implementation" checklist (unimplemented/incomplete features/guarantees + steps towards implementation)
        organize the checklist in order of what I can do
        adapt this todo list to focus on the checklist
+       figure out what stuff I need to have in order to implement each step
      maybe reorganize the file/project structure
-       build up tests in test.yaml
+     come up with a lot of test files and runs
+       organize everything within _tests and tests.yaml
      improve comments within the entire project
-       write out spero readme for possible posting
+       write out spero readme for possible posting (on reddit)
+     setup 'pre-commit' hook to run semantic versioning
+       setup automatic updating of readme and other docs using this hook
+         figure out how I can set up this system to force me to use it correctly
    get basic functional codegen setup and working
      be able to add two integers into a chosen register
      be able to store and use variables
