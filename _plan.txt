@@ -1,0 +1,19 @@
+Current Project State
+  mutability => mutable-by-default [off-spec]
+  types => impl: hardcoded, availability: standard-only, generics: no, inheritance: unk
+    recognized => Int, Bool, ~Byte, ~Char
+	...
+  variables => unsupported
+  functions => main-only
+  annotations => ignored
+
+Current Project Plan
+  Basic Operator Assembly (for int types)
+  x86 Register Analysis
+  Basic Variables
+  Type Inference
+  Extending Operators for more types
+  Basic Function Definition
+  Basic Function Calling
+  Converting Operators into function calls
+  ...

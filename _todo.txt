@@ -4,8 +4,9 @@ todo:
    project setup and organization
      start creating an "implementation" checklist (unimplemented/incomplete features/guarantees + steps towards implementation)
        organize the checklist in order of what I can do
-       adapt this todo list to focus on the checklist
        figure out what stuff I need to have in order to implement each step
+         start off with an "implicitly mutable" styling for values within spero
+           gradually morph to the language design of "immutable by default"
      maybe reorganize the file/project structure
      come up with a lot of test files and runs
        organize everything within _tests and tests.yaml

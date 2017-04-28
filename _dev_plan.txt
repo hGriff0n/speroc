@@ -1,145 +1,233 @@
 Compiler
   Interface
-    Specifying the interface (names and reasons)
+    Build up the command line interface (flags and everything)
+	  Add in an argument to turn warnings into errors (gradiated)
     Parsing out the interface into the compilation state/other structures
     Using the compilation state to control and modify compilation
+
   Errors and reporting
     Recognizing syntax errors in the parser
-      Recognizing warnings and errors in semantic analysis
-      Including a linter inside of the compiler (syntactical warnings)
-      Turning warnings into errors thorugh the command line interface
-      Display good and helpful error messages to the command line
-      Hook up compilation errors in the testing framework
+	  Setup the tester to handle reporting compilation errors
+	  Look at including a "fuzzy" search system for misspellings
+    Recognizing warnings and errors in semantic analysis
+	  Display helpful error messages to the command line
+	Think about including a linter inside the compiler (for producing syntactical warnings)
+
   Conversion to LLVM backend
-    Convert over to using clang for assembly as soon as possible
+    Convert over to using clang for assembly (as soon as possible)
     Eventually switch over to producing llvm ir (note: still needs to account for target details)
+
   Optimization
     Branch prediction/elimination
     Constant propogation
+	Improve register allocation procedures
+
+
 Annotations
-  Recognize invalid annotations
+  Recognize (ignore, warning) invalid annotations
+    Needs: list of "valid" annotations, pattern matching system
   Recognize annotations with invalid arguments
-  Figure out where to handle annotation "devolution"
-  Write down all annotations and their effects
-    Implement the effects on analysis/codegen/errors
+    Needs: mapping from annotation to implementation
+  Implement the various annotation effects
+    Write down the annotations and their interface
+    Figure out when to "correctly" insert this stage
+    Modify the ast so that "standard" annotations can change it
+	  Will also need to add in a couple ast nodes
+	Look into having a generic interaction framework (for future user-defined annotations)
+
+
 Operators
-  Implementation of Basic Operators for Basic Types
-    Full Binary Operations
-      Convert operators from direct codegen to method calls
-      Basic inlining of method calls (remove assembly penalty)
-      Providing Implementations for Prelude Functions (must be implemented in asm)
-        Add in '@asm' annotation for direct assembly (needs assembly syntax)
-        Standard/extendable way for "hard-coding" implementations in the compiler
-        Add in an annotation to mark the implementation as "given" elsewhere
-    Full Unary Operations
-      Determine how unary operations should be sugared
-      Convert unary operators to the sugar the same way as for Binary
+  Basic (direct to asm) for basic (number) types
+    Needs: Implementation of the AsmGenerator, Basic Register Analysis
+	Be sure to implement binary and unary operations
+
+  Full Binary Operations
+    Convert operators from direct codegen to method calls
+	  Needs: Type Inference/Checking, Function Calling, Custom Types and method calling
+    Basic inlining of method calls (remove assembly penalty)
+	  Needs: Call analysis, ???
+    Providing Implementations for Prelude Functions (must be implemented in asm)
+      Add in '@asm' annotation for direct assembly (needs assembly syntax)
+	    Needs: Annotation Implementation
+      Standard/extendable way for "hard-coding" implementations in the compiler
+      Add in an annotation to mark the implementation as "given" elsewhere ("@extern")
+
+  Full Unary Operations
+    Determine how unary operations should be sugared (if at all)
+      Convert unary operators to the sugar the same way as binary operators
+
+  Situate all operators within the standard type system
+
+
 Function Definition
   Basic Creation
     Abstract detail production away from main
     Name mangling/demangling
-    Arguments with correct value handling
+	  Needs: Variable tracking structures, Type Inference/Checking, Variable memory placements
+    Arguments with correct value handling <- ???
+	  Needs: Basic Function Resolution, ???
     Complex returns and bodies
+	  Add in "cleanup" sugar section
+	  Needs: Control Flow Analysis, Basic Type Sugar (drop method)
     Incorporating scoping rules in name lookup
-    Add in "cleanup" sugar section
+	  Needs: Variable tracking structures
+
   Function Overloading
     Recognizing overload definitions
-    Basic Checking for "correctness"
+	  Needs: More adaptable variable tracking, defined overload rules
+    Basic Checking for "correctness" (ie. no duplication)
+
   Lambda Definitions (ie. Local Creation)
     Adapting function codegen to account for variables in "dynamic" scopes
-	Abstract function "closure" analysis to consider the type of variables
-      Add in closure rules to the analysis scanner
+	  Add in closure rules to the analysis scanner
+	  Needs: More adaptable memory placement, Control flow analysis, closure rules defined
+	Abstract function "closure" analysis to consider the type of variables (for rejection)
+
   Determine the order/roles of program startup calls
+    Adapt the codegen to enforce this startup sequence
+
+
 Function Calling
   Basic name resolution and argument passing (pass by value for now)
     Setup argument copying through a "Copy" trait
+	  Needs: Type analysis, ???
 	Allow for ad-hoc polymorphism based on type tree (requires: inheritance/traits)
 	  Hook-up the code so that the type-checker does this if possible
+	  Needs: Type inference/checking system, Inference rules and implementation
+
   Dot-flipped calling
-    Adapt name resolution to consider basic dot-flipping
+    Adapt name resolution to consider basic dot-flipping <- ???
 	Add in lookup rules to prioritize methods when searching dot-flips
+	  Needs: Type System, Function Overloading, Type Inference, Function Calling
 	Adapt name resolution to consider methods on non dot-flip calls
+	  Needs: Dot-flip (above section)
 	Ensure that mutable methods aren't callable on non-mutable objects (need references)
+	  Needs: Mutability checking, type checking, type inference
+
   Overload Resolution
     Add in resolution rules to pick function based on the argument types
+	  Needs: Type Inference, Overload Definition, Type Checking
 	Ensure errors and warnings are setup for ambiguous calls
 	Add in rules to pick function based on the return type
 	  Be sure to adapt the type inference algorithm to account for this
 	  Add in errors for when an overload can't be picked based on ambiguous return type
+
   Adapt argument passing to account for references and pointers
+
   Allow for functions to be "run" at compile time (for constant propogation/calculation/etc.)
+
+
 Assignment
   Basic name binding (with explicit type annotations)
     Binding and access of constant values
+	  Needs: Variable tracking structures
 	Locating bound values on the stack
-	Allow for switching of storage if value is known at compile time
+	  Needs: Variable memory placements, type checking
+	Allow for switching of storage if value is known at compile time <- ??
 	Binding of expressions relying on other variables (stack/constant)
+	  Needs: Type Inference/Checking, Operators, Variables
+
   Modify analysis stages to handle shadowing of variables
     Enforce mutability assignment checks for values
 	Enforce mutability checks for references and pointers
+	Needs: Variable tracking structures
+
   Complete name binding
     Abstract to full pattern matching
+	  Needs: Type Inference/Checking
 	Add in type inference algorithm
-  Perform constant propogation within optimization phases
+	  Needs: Basic Type System
+
+
 Indexing
   OOP calling (see Function Calling)
+
   Dereference
     Be able to determine whether the indexing is valid for the type
+	  Needs: Type Checking, Type System
 	Access the value at a given offset from the value
 	Perform "deref" sugar-call on pointer types
+	  Needs: Pointer Types, Function calling, Type Checking
+
+
 Type Creation
   Basic Creation
     Have ability to define unqiue types within the language
+	  Needs: Type tracking structures, Variables
 	Settle on how custom types should be represented in memory
-	  Ensure that types are being placed as such
+	  Ensure that types are being placed as such in generated code
 	  Also come up with an implementation for ADTs (keeping basic types minimal)
 	Ensure that visibility keywords work to restrict method/member indexing
-	Be able to instantiate, return, pass instances of type
-	  Ensure type inference/OOP calling works
+	  Needs: Extending variable/type tracking structures with visibility, Type Checking
+	Be able to instantiate, return, pass instances of custom types
+	  Needs: Inheritance, Type Checking and memory
+	  Ensure type inference/OOP calling works with the new types
 	  Ensure mutability restrictions on method calling/member modification work
+	    Needs: Mutability restrictions, References
+
   ADT Definition
     Register ADT constructors to avoid duplication/clashing
+	  Needs: Basic Type Creation
     Add in sugar for ADT construction
-      Stup creation code to have minimal adt recognition tags
+      Setup creation code to have minimal adt recognition tags <- ???
       Ensure that ADT objects can be treated as type instances
     Ensure that pattern matching correctly decomposes the ADT instance
+	  Needs: Basic Pattern Matching, ADT signifiers
     Ensure that ADT names are "gated" (ie. Some can only refer to the std:Option:Some if imported)
       Note: This may greatly help with match completeness checking
+	  Needs: Module Importation, Standard Library, Type Checking/Tracking/Inference
+
   Local Creation
+    Needs: Basic Type Creation, Method calling
     Adapt the internal registers/type checkers to account for local/anonymous types
+	  Extend to not require broad lifetime requirements
 	Add in the ability to extend types with methods (ie. anonymous types)
 	  Setup code to instantly call constructor for the new type
 	  Abstract to allow for assigning to a type name
 	  Abstract to allow for defining completely unique types
+
   Generics
     Expand the type checking engine to account for generic types
 	  Also ensure internal registers account for that information as well
+	  Needs: Basic Type Creation, Type Checking, Type Inference
     Variance
 	  Add in code to type checker/inference to account for variance signals
 	    Modify function call resolution with this information if necessary
+	  Needs: Basic Generics, Type Creation, Type Checking
     Specialization
 	  Figure out a good syntax/recognition for specializing generics on specific types
 	  Ensure that explicit construction results in different behavior
 	    Possibly extend the system to have types be different (or optionally so)
 	    Ensure that generics inference performs the same behavior where possible
+	  Needs: Basic Generics, Type Inference
     Subtyping
 	  Add in checking of generic arguments to ensure type relationships
 	    Improve error messages when such checks fail
 	  Try to add in code to recognize overlapping relationships (with different definitions)
+	  Needs: Basic Generics, Inheritance, Type Checking
     Value Generics
 	  Add in code to allow for values to be used as generic arguments
 	    Settle on what types are natively supported as arguments
 		See if there's a system to allow for custom value types
 	  Figure out how to specify code in Spero that can be used at compile-time
+	  Needs: Basic Generics, Basic Types, Type Inference, Generic Inference
+
   Inheritance
     Sit down and resolve out how inheritance should work in Spero (especially in regards to "traits" and "impl-for")
 	TODO: Write this out based on how that discussion goes
+
+
 Control Flow Constructs
-  Conditional branching on a flag (if-else/while)
+  Conditional branching on a flag (if-else/while/loop)
     Specially handle and/or operators for Bool to short-circuit
-	Modify while code to produce code for loop
 	Add on codegen for elsif construct
-    Generate control flow graphs
+    Needs: Basic Control Flow Graphs, Bool, Relational Operators
+
+  For loop
+    Extend while loop code to support ranged iteration
+	  First need to settle on how the translations are being handled
+	Needs: Ranges, Iteration, Basic Control Flow, For loop translations
+
   Pattern matching
     Extend assignment pattern matching to have full ADT/tuple decomposition
     Match
@@ -149,71 +237,108 @@ Control Flow Constructs
 	For loop
 	  Modify looping codegen to run off of pattern matching
 	  Settle on rules for for-loop translations and implement codegen accordingly
+	Needs: ADT Creation, Type Checking, References, Basic Control Flow, Variables, Mutability Checking
+
   Wait/Yield
     Decide on the semantics for wait/yield
+
   Break/Continue/Return
     Add in analysis to determine where in-body jumps should go to
 	Ensure that return works as expected (jumping to cleanup code)
 	  Will need to breakup cleanup code to account for delayed variable definition
+	Needs: Advanced control flow graphs, Function Definition, Variable Tracking Structures (liveliness analysis)
+
   Scopes
     Add in scoped lookup rules
 	Add in stack/heap cleanup code for scope-local variables
-        Ensure that scope cleanup rules don't interfere with function returns
+      Ensure that scope cleanup rules don't interfere with function returns
+	Needs: Variable tracking structures, Liveliness analysis
+
+
 Type System
-  Standard Types
-    Integer Types (Int, Bool, Char, Size, Byte)
-      Implement basic operators for all types (in accordance to need)
-      Implement byte type to have bit-specific operations
-      Look into whether Char should be changed to UnicodePoint or maintain C ascii compatibility
-      Write "typeful" implementation within standard library
-        Adapt type-checker to use the stdlib module instead of hard-coding behavior
-        Might need to add in "@extern" annotation for initial implementation
-      Figure out a way to write method implementations within Spero code (maybe using asm annotation)
-    Floating Point Type
-      Modify assembly generation to produce correct assembly for floating points
-      Ensure that int->float and float->int conversions work correctly
-      Write "typeful" implementation with stdlib module
-    Tuple and Function Types
-      Implement basic tuples as "offset"-grouped values
-      Allow for functions to be considered as "first-order values" (ie. passed to functions, etc.)
-        Ensure that "call" syntactic sugar supports the correct semantics (don't have to hook it into the type)
-      Formalize the tuple and function typing rules within spero module
-        Extend the support and capabilities of tuples <- ???
-    Primitive Array Type (for views)
-      Implement a very basic understanding of arrays within the spero system (hard-coded)
-      Automatically translate all typed views into this basic array implementation
-      Look at abstracting some of the hard-coded array into a standard library interface
-      Setup syntactic sugar calls for indexing and setting into the array
-    Memory Types (Pointers, References, etc.)
-      Add in reference handling to the type system
-        Ensure that functions can support call-by-reference semantics
-        Allow for capture by reference within match statements
-      Implement the standard library modules for basic memory handling, etc.
-      Build up an implementation for pointers from that library
-        Dereference pointers when indexing with names not in the pointer interface
-      TODO: Figure out what else I need to for this
-    Library Types (Strings, Array, Range)
-      Implement correct utf-8 unicode string handling
-      Convert the primitive array type into full library solution
-      Hook up Range library solution for '..' typing
-      Ensure that ranges/arrays/strings all work with for-loop by default
+  Integer Types (Int, Bool, Char, Size, Byte)
+    Implement basic operators for all types (in accordance to need)
+    Implement byte type to have bit-specific operations
+    Look into whether Char should be changed to UnicodePoint or maintain C ascii compatibility
+    Write "typeful" implementation within standard library
+      Adapt type-checker to use the stdlib module instead of hard-coding behavior
+      Might need to add in "@extern" annotation for initial implementation
+	  Needs: Type Creation, Annotations, Modules, Standard Library, Hard-coded implementations
+    Figure out a way to write method implementations within Spero code (maybe using asm annotation)
+
+  Floating Point Type
+    Modify assembly generation to produce correct assembly for floating points
+    Ensure that int->float and float->int conversions work correctly
+    Write "typeful" implementation with stdlib module
+	Needs: Understanding of x86 float handling, IntegerTypes.typeful
+
+  Tuple and Function Types
+    Implement basic tuples as "offset"-grouped values
+	Implement lambda functions (ie. local functions)
+    Allow for functions to be considered as "first-order values" (ie. passed to functions, etc.)
+      Ensure that "call" syntactic sugar supports the correct semantics (don't have to hook it into the type)
+    Formalize the tuple and function typing rules within spero module
+      Extend the support and capabilities of tuples <- ???
+	Needs: Function Definition, Function Calling, Type Inference/Checking, Variables, IntegerTypes.typeful
+
+  Primitive Array Type (for views)
+    Implement a very basic understanding of arrays within the spero system (hard-coded)
+    Automatically translate all typed views into this basic array implementation
+    Look at abstracting some of the hard-coded array into a standard library interface
+    Setup syntactic sugar calls for indexing and setting into the array
+	Needs: x86 stack handling, Type Tracking, Sugars
+
+  Memory Types (Pointers, References, etc.)
+    Add in reference handling to the type system
+      Ensure that functions can support call-by-reference semantics
+	    Switch over to immutable-by-default values and variables (Note: Start off with mutable-by-default)
+      Allow for capture by reference within match statements
+	  Needs: Variable Tracking, mutability checking, overload resolution, pattern matching
+    Implement the standard library modules for basic memory handling, etc.
+	  Needs: Generic Type Creation, Basic OS interaction layers, Modules
+    Build up an implementation for pointers from that library
+      Dereference pointers when indexing with names not in the pointer interface
+	  Needs: Memory system, Type Inference, Checking
+    TODO: Figure out what else I need to for this
+
+  Library Types (Strings, Array, Range)
+    Implement correct utf-8 unicode string handling
+    Convert the primitive array type into full library solution
+    Hook up Range library solution for '..' typing
+    Ensure that ranges/arrays/strings all work with for-loop by default
+	Needs: Modules, Memory, Unicode knowledge, Char
+
   Type Checking
     Get type inference algorithm setup for assignments and function returns
       Extend this to basic argument checking for lambda functions (if possible)
+
     Add in type checking algorithm for operator calls to reject invalid combinations
       Adapt this to focus more on function argument/return overload matching
       Improve error handling for these rejections
+	  Needs: Operators, Basic Types, Basic Inference Engine
+
     Ensure that match "completeness" checking is implemented (all ADT decompositions are caught)
+
     Add in checking of function arguments/returns to reject invalid code
       Errors for overload resolution failures/argument type mismatch
+
+
 Type Instantiation
     Ensure that recognized literals (for basic types) are handled correctly in type inference
+	Needs: Type Inference
+
     Explicit construction of type instances
       Ensure that 'new' overloads are considered along with the primary constructor
       Ensure that generics can be inferred from the constructor
+	  Needs: Type Creation, Function Overload, Basic Generics
+
     Syntactic sugars
       Ensure that "drop" method is implicitly called at scope exit (and function return)
+	  Ensure that indexing works properly using the expected sugars
       Ensure that all other syntactic sugar methods are implemented/recognized properly
+	  Needs: Scope.closing, Sugar recognizing
+
+
 Modules
   Standard Library
     Determine the order/roles of program startup calls
@@ -221,18 +346,21 @@ Modules
       Figure out what types and functions are needed
       Figure out what interfaces are needed
     Layout the expected performance characteristics and behavior
+
   Import resolution
     Figure out how modules will be stored and accessed within the program
       Ensure the solution works with basic custom modules (in a heirarchial project)
       Generalize this solution to allow for easy packaging (not stored within the heirarchy)
     Setup the type-checker to automatically import some subsection of the standard library
     Start work on implementing spark, the package manager
+
   Module Definition
     Extend type checking to consider the qualified name (if not already done)
     Allow for declaring modules to "gate" files
       Ensure that visibility keywords work in this context
       Extend this system to allow for declaring multiple modules within one file
     Ensure the created "intermediary" files are stored corretly (how import resolution expects them)
+
   Foreign Function Interface
     Figure out a very basic FFI for possible quick implementation of C code
       Implement that interface within the spero library (std:ffi module)

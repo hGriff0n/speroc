@@ -1,4 +1,4 @@
-speroc v.0.1.0 - The reference compiler for the spero language
+speroc ver 0.1.0 - The reference compiler for the spero language
 
 Project Info:
 
