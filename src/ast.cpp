@@ -329,7 +329,7 @@ namespace spero::compiler::ast {
 		if (inst && inst->elems.size()) {
 			s << " [\n";
 			for (auto&& e : inst->elems)
-				e->prettyPrint(s, buf + 1) << '\n';
+				e->prettyPrint(s, buf + 2) << '\n';
 			s << std::string(buf, ' ') << "]";
 		}
 

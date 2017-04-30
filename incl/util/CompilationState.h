@@ -27,7 +27,7 @@ namespace spero::compiler {
 
 	class CompilationState {
 		std::deque<std::string> input_files;
-		std::vector<time_point> timing;
+		std::deque<time_point> timing;
 
 		public:
 			CompilationState(char** fst, char** snd) : input_files{ fst, snd } {}
