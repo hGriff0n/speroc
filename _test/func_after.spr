@@ -1,0 +1,6 @@
+
+
+def main = () -> add(3, 4)
+def add = (i :: Int, j :: Int) -> {
+    i + j
+}

@@ -16,11 +16,88 @@ literals:
       compile:
         fail: false
         files: [ 'error.spr' ]
+    - desc: ""
+      exec: 'add.exe'
+      compile:
+        files: [ 'add.spr' ]
+      tests:
+        - return: 7
+    - desc: ""
+      exec: 'sub.exe'
+      compile:
+        files: [ 'sub.spr' ]
+      tests:
+        - return: -1
+    - desc: ""
+      exec: 'orderOfOperations.exe'
+      compile:
+        files: [ 'orderOfOperations.spr' ]
+      tests:
+        - return: 19
+    - desc: ""
+      exec: 'variables.exe'
+      compile:
+        files: [ 'variables.spr' ]
+      tests:
+        - return: 3
+    - desc: ""
+      exec: 'var_ops.exe'
+      compile:
+        files: [ 'var_ops.spr' ]
+      tests:
+        - return: 12
+    - desc: ""
+      exec: 'bool.exe'
+      compile:
+        files: [ 'bool.spr' ]
+      tests:
+        - return: 1
+    - desc: ""
+      exec: 'fail_type.exe'
+      compile:
+        fail: true
+        files: [ 'fail_type.spr' ]
+    - desc: ""
+      exec: 'mut_fail.exe'
+      compile:
+        fail: true
+        files: [ 'mut_fail.spr' ]
+      tests:
+        - return: 12
+    - desc: ""
+      exec: 'mut_succ.exe'
+      compile:
+        files: [ 'mut_succ.spr' ]
+      tests:
+        - return: 12
       
 functions:
   desc: "calling, returning, and using functions"
   tags: ["func"]
-  runs: []
+  runs:
+    - desc: ""
+      exec: "func.exe"
+      compile:
+        files: [ 'func.spr' ]
+      tests:
+        - return: 7
+    - desc: ""
+      exec: 'func_type_error.exe'
+      compile:
+        fail: true
+        files: [ 'func_type_err.spr' ]
+    - desc: ""
+      exec: 'func_pointlness.exe'
+      compile:
+        files: [ 'func_pointless.spr' ]
+      tests:
+        return: 7
+    - desc: ""
+      exec: 'func_after.exe'
+      compile:
+        files: [ 'func_after.spr' ]
+      tests:
+        return: 7
 
 
 # TODO:

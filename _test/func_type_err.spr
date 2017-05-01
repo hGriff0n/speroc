@@ -1,0 +1,4 @@
+
+def foo = (String) ->3
+
+def main = () -> foo(3)
