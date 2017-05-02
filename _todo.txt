@@ -4,26 +4,22 @@ todo:
    project setup and organization
      write out spero readme for possible posting (on reddit)
      setup 'pre-commit' hook to run semantic versioning
-       setup automatic updating of readme and other docs using this hook
-         figure out how I can set up this system to force me to use it correctly
-   start working on the development plan (in _plan.txt)
-     come up with a lot of test files and runs
+       add in "tracking" of current major/minor/patch/etc. between commits
+ start working on the development plan (in _plan.txt)
+   come up with a lot of test files and runs
  fix the outstanding issues with the compiler
  add in exception/error handling to make the compiler/parser usable
    adapt the compilation state structure to include an error-reporting framework
      figure out what that structure will need
+	   error number and link to error location
 	 make sure to distinguish between errors and warnings
 	   setup interface to turn warnings into errors
-   hook up the compiler to stop on errors
-   improve reporting of the errors (long term project)
-     have basic "english" reasoning for the errors and where they occur
+   hook up parsing to report syntactical errors
  improve performance of the parsing stages
    create benchmark/performance suite for all stages
      improve logging interface/information
 	   link stages to information in a usable way
 	   improve reporting/collection of timing
-	 find a decent way to see the benchmark data
-	   hook up reporting to the command line interface
    improve collection and memory usage of location data
    look at using std::string_view instead of std::string everywhere
    look at using attributes in the code

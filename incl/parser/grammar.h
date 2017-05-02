@@ -208,7 +208,7 @@ namespace spero::parser::grammar {
 	struct for_l : seq<for_core, opt<k_do>, valexpr> {};
 	struct jumps : seq<jump_keys, opt<valexpr>> {};
 	struct case_if : seq<k_if, valexpr> {};
-	struct case_stmt : seq<opt<k_case>, sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("->"), ig_s, valexpr> {};
+	struct case_stmt : seq<k_case, sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("->"), ig_s, valexpr> {};
 	struct match_expr : seq<k_match, fncall, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_while : seq<while_core> {};

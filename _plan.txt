@@ -17,7 +17,7 @@ Current Project Plan
   Basic Mutability Tracking
   Basic Function Definition
   Basic Function Calling
-  Error/Exception handling and reprting
+  Error/Exception handling and reporting
   Improve system benchmark collection
   Improve command line interface collection
   ...

@@ -10,9 +10,14 @@ namespace spero {
 			auto opts = Options("speroc");
 
 			opts.add_options()
-				("i,inter", "Enter interactive mode")
-				("d,debug", "Enable debugging")
+				("i,interactive", "Enter interactive mode")
+				("g,debug", "Enable addition of debugging information to created binaries")
 				("t,nodel", "Prevent deletion of temporary files during compilation")
+				("v,verbose", "Turn on verbose reporting of the compilation progress")
+				("diagnostics", "Specify a file to send diagnostic information to", value<std::string>())
+				("emit", "List of temporary files that the compiler should not delete", value<std::string>())
+				("W,warn", "Turn compilation warnings into errors", value<std::string>()->default_value("default"))
+				("target", "Set the compilation target", value<std::string>()->default_value("win10"))
 				("o,out", "Specify output file", value<std::string>()->default_value("out.exe"));
 
 			return std::move(opts);

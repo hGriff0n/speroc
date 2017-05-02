@@ -59,9 +59,12 @@ int main(int argc, char* argv[]) {
 	} else {
 		parser::Stack res;
 
-		bool success = compile(state, res);
+		bool successful = compile(state, res);
 
-		return success;
+		// Perform error reporting if not successful
+		// TODO:
+
+		return successful;
 	}
 }
 

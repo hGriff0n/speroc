@@ -46,6 +46,8 @@ namespace spero::compiler {
 
 			// Basic state querying
 			virtual bool deleteTemporaryFiles();
+
+			// Error reporting/collection
 	};
 
 	// Special subtype to allow for passing around the parsed
