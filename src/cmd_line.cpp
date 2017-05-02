@@ -12,6 +12,7 @@ namespace spero {
 			opts.add_options()
 				("i,inter", "Enter interactive mode")
 				("d,debug", "Enable debugging")
+				("t,nodel", "Prevent deletion of temporary files during compilation")
 				("o,out", "Specify output file", value<std::string>()->default_value("out.exe"));
 
 			return std::move(opts);

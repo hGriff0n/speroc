@@ -34,23 +34,37 @@ namespace spero::compiler {
 		std::deque<time_point> timing;
 
 		public:
-			CompilationState(char** fst, char** snd) : input_files{ fst, snd } {}
+			CompilationState(char**, char**);
 
 			// Input/Output files
-			std::deque<std::string>& files() { return input_files; }
-			//const std::string& output() { return output_file; }
+			std::deque<std::string>& files();
+			virtual const std::string& output() =0;
 
 			// Time loggers
-			void logTime() { timing.emplace_back(std::chrono::system_clock::now()); }
-			std::pair<time_point, time_point> getCycle(size_t i) { return std::make_pair(timing.at(i), timing.at(i + 1)); }
+			void logTime();
+			std::pair<time_point, time_point> getCycle(size_t);
+
+			// Basic state querying
+			virtual bool deleteTemporaryFiles();
 	};
 
-	// Special subtype to allow for passing around the parsed "cxxopts::Options" class
-	// without introducing a dependency on including that header file
+	// Special subtype to allow for passing around the parsed
+	// "cxxopts::Options" class without introducing a dependency
+	// on cxxopts in subsequent header files that use CompilationState
 	template<class Option>
 	struct OptionState : CompilationState {
 		const Option opts;
 
-		OptionState(char** fst, char** snd, Option&& opts) : CompilationState{ fst, snd }, opts{ opts } {}
+		OptionState(char** fst, char** snd, Option&& opts)
+			: CompilationState{ fst, snd }, opts{ opts } {}
+
+		// Overrides
+		const std::string& output() {
+			return opts["out"].as<std::string>();
+		}
+
+		bool deleteTemporaryFiles() {
+			return !opts["nodel"].as<bool>();
+		}
 	};
 }

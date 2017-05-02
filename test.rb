@@ -75,10 +75,10 @@ yaml.each do |name, tests|
             # Generate strings for correctly calling the compiler from the runner
             in_files = compile['files'].map { |file| "./#{options[:dir]}/#{file}" }.join(' ')
             args = compile['args'].join(' ')
-            speroc_cmd = "./#{options[:dir]}/speroc #{in_files} -o #{compile['exec']} #{args}"
+            speroc_cmd = "./#{options[:dir]}/speroc #{in_files} -o #{compile['exec']} -t #{args}"
 
             # Generate a smaller string to simplify test print messages
-            simple_cmd = "speroc #{compile['files'].join(' ')} -o #{run['exec']} #{args}"
+            simple_cmd = "speroc #{compile['files'].join(' ')} -o #{run['exec']} -t #{args}"
 
 
             # Compile the program and report errors (if any)
@@ -89,6 +89,7 @@ yaml.each do |name, tests|
                 io.close
                 compile[:success] = $?.exitstatus == 0
 
+                puts "Compilation: #{compile['out'][0]}"
 
                 # If compilation failed when it should have succeeded
                 if !compile[:success] && !compile['fail']
@@ -118,6 +119,8 @@ yaml.each do |name, tests|
                 # Increment the number of run tests
                 run_tests += 1
             end
+
+            File.delete('./out.s') if File.exist?('./out.s')
         end
 
 

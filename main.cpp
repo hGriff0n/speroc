@@ -28,8 +28,6 @@ int main(int argc, char* argv[]) {
 
 	// Parse the command line arguments
 	auto state = cmd::parse(argc, argv);
-	//auto state = std::get<0>(tup);
-	//auto opts = std::get<1>(tup);
 
 
 	// Interactive mode for testing ast creation/parsing runs
@@ -45,7 +43,7 @@ int main(int argc, char* argv[]) {
 			if (input.substr(0, 2) == ":c") {
 				state.files()[0] = input.substr(3);
 
-				if (!compile(state, res, "out.exe")) {
+				if (compile(state, res)) {
 					std::cout << "Compilation Failed\n";
 					continue;
 				}
@@ -53,7 +51,7 @@ int main(int argc, char* argv[]) {
 			} else
 				std::tie(succ, res) = compiler::parse(input, state);
 
-			std::cout << "Parsing Succeeded: " << (succ ? "true" : "false") << '\n';
+			std::cout << "Parsing Succeeded: " << (succ ? "false" : "true") << '\n';
 			printAST(std::cout, res);
 		}
 
@@ -61,9 +59,9 @@ int main(int argc, char* argv[]) {
 	} else {
 		parser::Stack res;
 
-		bool success = compile(state, res, state.opts["out"].as<std::string>());
+		bool success = compile(state, res);
 
-		return !success;
+		return success;
 	}
 }
 
@@ -71,7 +69,7 @@ int main(int argc, char* argv[]) {
 /*
  * Implementation of compilation function 
  */
-bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack, std::string out_file) {
+bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack) {
 	using namespace spero;
 
 	// TODO: Initialize timing and other compilation logging structures
@@ -99,7 +97,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	 * Emit final codegen processes
 	 *   Note: If control reaches here, compilation should not fail
 	 */
-	if (succ) {
+	if (!succ) {
 		state.logTime();
 		compiler::codegen(ir, state.files()[0], "out.s", state);
 		state.logTime();
@@ -107,8 +105,13 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 
 		// Forward creation of the actual executable to some other compiler
 		state.logTime();
-		system((ASM_COMPILER" out.s -o " + out_file).c_str());
+		succ = system((ASM_COMPILER" out.s -o " + state.output()).c_str());
 		state.logTime();
+
+
+		// Delete the temporary file
+		if (state.deleteTemporaryFiles())
+			std::remove("out.s");
 	}
 
 	return succ;

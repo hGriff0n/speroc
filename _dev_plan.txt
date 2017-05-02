@@ -2,6 +2,7 @@ Compiler
   Interface
     Build up the command line interface (flags and everything)
 	  Add in an argument to turn warnings into errors (gradiated)
+	  Fix the command line arguments to have a better relation to their meaning
     Parsing out the interface into the compilation state/other structures
     Using the compilation state to control and modify compilation
 

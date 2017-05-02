@@ -6,9 +6,6 @@ todo:
      setup 'pre-commit' hook to run semantic versioning
        setup automatic updating of readme and other docs using this hook
          figure out how I can set up this system to force me to use it correctly
-   update compiler to automatically delete temporary files after compilation
-     add in command flag to stop this behavior
-	   adapt the test runner to use the flag in testing
    start working on the development plan (in _plan.txt)
      come up with a lot of test files and runs
  fix the outstanding issues with the compiler

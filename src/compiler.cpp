@@ -41,7 +41,7 @@ namespace spero::compiler {
 		if (!ast.size()) ast.emplace_back(std::make_unique<compiler::ast::Ast>(compiler::ast::Ast::Location{}));
 
 		// Return the completed ast
-		return std::make_tuple(succ, std::move(ast));
+		return std::make_tuple(!succ, std::move(ast));
 	}
 
 	std::tuple<bool, Stack> parse(std::string input, CompilationState& state) {

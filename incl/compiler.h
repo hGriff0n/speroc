@@ -22,5 +22,5 @@ namespace spero::compiler {
 
 
 namespace spero {
-	bool compile(compiler::CompilationState&, parser::Stack&, std::string);
+	bool compile(compiler::CompilationState&, parser::Stack&);
 }
