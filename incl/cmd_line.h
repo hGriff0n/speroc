@@ -7,13 +7,8 @@
 
 namespace spero {
 	namespace cmd {
-
-		cxxopts::Options getOptions();
-		compiler::CompilationState parse(int&, char**&);
-		compiler::CompilationState parse(cxxopts::Options&, int&, char**&);
-
-		// Future function to parse the command line into the compilation state
-		//auto parseCmd(int argc, char** argv);
+		// Parse the entire command line into the default compilation state
+		compiler::OptionState<cxxopts::Options> parse(int&, char**&);
 
 		//TODO:
 		// Need object to represent compile state (the command args)

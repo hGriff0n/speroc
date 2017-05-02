@@ -27,12 +27,13 @@ int main(int argc, char* argv[]) {
 	using namespace spero::parser;
 
 	// Parse the command line arguments
-	auto opts = cmd::getOptions();
-	auto state = cmd::parse(opts, argc, argv);
+	auto state = cmd::parse(argc, argv);
+	//auto state = std::get<0>(tup);
+	//auto opts = std::get<1>(tup);
 
 
 	// Interactive mode for testing ast creation/parsing runs
-	if (state.files().size() == 0 || opts["inter"].as<bool>()) {
+	if (state.files().size() == 0 || state.opts["inter"].as<bool>()) {
 		std::string input;
 
 		while (std::cout << "> " && getMultiline(std::cin, input)) {
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		parser::Stack res;
 
-		bool success = compile(state, res, opts["out"].as<std::string>());
+		bool success = compile(state, res, state.opts["out"].as<std::string>());
 
 		return !success;
 	}

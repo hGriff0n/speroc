@@ -17,17 +17,13 @@ namespace spero {
 			return std::move(opts);
 		}
 
-		spero::compiler::CompilationState parse(int& argc, char**& argv) {
-			// Parse out the command line
+		spero::compiler::OptionState<cxxopts::Options> parse(int& argc, char**& argv) {
+			// Use the cxxopts library to parse out basic interfaces
 			auto opts = getOptions();
 			opts.parse(argc, argv);
 
-			return parse(opts, argc, argv);
-		}
-
-		spero::compiler::CompilationState parse(cxxopts::Options& opts, int& argc, char**& argv) {
-			// Construct the compilation state from the parsed options
-			compiler::CompilationState state{ argv + 1, argv + argc };
+			// Construct the compilation state
+			compiler::OptionState<cxxopts::Options> state{ argv + 1, argv + argc, std::move(opts) };
 			argc = 1;
 
 			// init state
