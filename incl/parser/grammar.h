@@ -9,7 +9,7 @@ namespace spero::parser::grammar {
 	#define key(x) seq<pstr((x)), not_at<ascii::identifier_other>, ig_s> {}
 
 	// Forward Declarations
-	struct array; struct anot_expr; struct scope; struct atom; struct pattern;
+	struct _array; struct anot_expr; struct scope; struct atom; struct pattern;
 	struct var_pattern; struct valexpr; struct fn_dot_ctrl; struct inf_fn_type;
 	struct mut_type; struct con_tuple; struct range; struct expr;
 
@@ -84,7 +84,8 @@ namespace spero::parser::grammar {
 	struct name_eps : seq<eps> {};
 	struct name_path : seq<name_eps, star<name_path_part>> {};
 	struct typ_pointer : sor<one<'&'>, one<'*'>, two<'.'>, eps> {};
-	struct type : seq<name_path, disable<typ>, ig_s, opt<array>, typ_pointer, ig_s> {};
+	struct type : seq<name_path, disable<typ>, opt<_array>, typ_pointer, ig_s> {};
+	//struct type : seq<name_path, disable<typ>, typ_pointer, ig_s> {};
 	struct binding : sor<seq<name_path, disable<sor<var, typ>>, ig_s>, op> {};
 
 	//
@@ -105,7 +106,9 @@ namespace spero::parser::grammar {
 	//struct tuple : seq<oparen, opt<sequ<valexpr>>, if_then_else<cparen, eps, seq<err_tuple_no_close>>> {};
 	struct tuple : seq<oparen, opt<sequ<valexpr>>, cparen> {};
 	//struct array : seq<obrack, opt<sequ<valexpr>>, if_then_else<cbrack, eps, seq<err_array_no_close>>> {};
-	struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};
+	struct _array : seq<obrack, opt<sequ<valexpr>>, one<']'>> {};
+	//struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};
+	struct array : seq<_array, ig_s> {};
 	struct fn_rettype : if_then<at<mut_type>, seq<mut_type, ig_s, scope>> {};
 	struct op_forward : seq<op, opt<valexpr>> {};
 	struct fn_forward : seq<one<'.'>, sor<fn_dot_ctrl, op_forward, valexpr>> {};			// Don't need to anything for the valexpr case, will be handled in analysis
@@ -131,7 +134,7 @@ namespace spero::parser::grammar {
 	//
 	// anexpr = expr / keyword
 	// antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
-	struct unary : sor<one<'&'>, one<'!'>, one<'-'>, one<'~'>> {};
+	struct unary : seq<sor<one<'!'>, one<'-'>, one<'~'>>, not_at<one<'('>>> {};
 	struct annotation : seq<one<'@'>, var, not_at<one<'!'>>, opt<tuple>> {};
 	struct global_annotation : seq<one<'@'>, disable<var>, one<'!'>, opt<tuple>> {};
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
@@ -143,8 +146,9 @@ namespace spero::parser::grammar {
 	struct gen_variance : sor<one<'+'>, one<'-'>, eps> {};
 	struct gen_variadic : sor<two<'.'>, eps> {};
 	struct gen_subrel : sor<pstr("::"), pstr("!:"), one<'>'>, one<'<'>> {};
-	struct gen_subtype : seq<gen_subrel, ig_s, type> {};
-	struct gen_type : seq<typ, gen_variance, ig_s, gen_variadic, ig_s, opt<gen_subtype>> {};
+	struct gen_subtype : seq<gen_subrel, ig_s, type, star<one<'&'>, ig_s, type>> {};
+	struct gen_subrel_eps : eps {};
+	struct gen_type : seq<typ, gen_variance, ig_s, gen_variadic, ig_s, sor<gen_subtype, gen_subrel_eps>> {};
 	struct gen_val : seq<variable, opt<pstr("::"), ig_s, type>, opt<one<'='>, ig_s, expr>> {};
 	struct gen_part : sor<gen_type, gen_val> {};
 	struct generic : seq<obrack, sequ<gen_part>, cbrack> {};
@@ -208,7 +212,7 @@ namespace spero::parser::grammar {
 	struct for_l : seq<for_core, opt<k_do>, valexpr> {};
 	struct jumps : seq<jump_keys, opt<valexpr>> {};
 	struct case_if : seq<k_if, valexpr> {};
-	struct case_stmt : seq<k_case, sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("->"), ig_s, valexpr> {};
+	struct case_stmt : seq<opt<k_case>, sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("=>"), ig_s, valexpr> {};
 	struct match_expr : seq<k_match, fncall, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};
 	struct dot_while : seq<while_core> {};

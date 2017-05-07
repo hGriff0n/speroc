@@ -363,6 +363,36 @@ namespace spero::compiler::ast {
 		return ret->prettyPrint(s << '\n', buf + 2, "ret=");
 	}
 
+	AndType::AndType(std::deque<ptr<Type>> typs, Ast::Location loc)
+		: Type{ loc }, types{ std::move(typs) } {}
+	Visitor& AndType::visit(Visitor& v) {
+		v.acceptAndType(*this);
+		return v;
+	}
+	DEF_PRINTER(AndType) {
+		s << std::string(buf, ' ') << context << "ast.AndType";
+
+		for (auto&& t : types)
+			t->prettyPrint(s << '\n', buf + 2);
+
+		return s;
+	}
+
+	OrType::OrType(std::deque<ptr<Type>> typs, Ast::Location loc)
+		: Type{ loc }, types{ std::move(typs) } {}
+	Visitor& OrType::visit(Visitor& v) {
+		v.acceptOrType(*this);
+		return v;
+	}
+	DEF_PRINTER(OrType) {
+		s << std::string(buf, ' ') << context << "ast.OrType";
+
+		for (auto&& t : types)
+			t->prettyPrint(s << '\n', buf + 2);
+
+		return s;
+	}
+
 	Annotation::Annotation(ptr<BasicBinding> n, ptr<Tuple> t, Ast::Location loc)
 		: Ast{ loc }, name{ std::move(n) }, args{ std::move(t) } {}
 	Visitor& Annotation::visit(Visitor& v) {
@@ -391,15 +421,15 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	GenericPart::GenericPart(ptr<BasicBinding> n, ptr<Type> t, Ast::Location loc)
-		: Ast{ loc }, name{ std::move(n) }, type{ std::move(t) } {}
+	GenericPart::GenericPart(ptr<BasicBinding> n, Ast::Location loc)
+		: Ast{ loc }, name{ std::move(n) } {}
 	Visitor& GenericPart::visit(Visitor& v) {
 		v.acceptGenericPart(*this);
 		return v;
 	}
 
-	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, VarianceType var1, VarianceType var2, Ast::Location loc)
-		: GenericPart{ std::move(b), std::move(t), loc }, rel{ rel }, variadic{ var2 }, variance{ var1 } {}
+	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<AndType> t, RelationType rel, VarianceType var1, VarianceType var2, Ast::Location loc)
+		: GenericPart{ std::move(b), loc }, rel{ rel }, variadic{ var2 }, variance{ var1 }, impls{ std::move(t) } {}
 	Visitor& TypeGeneric::visit(Visitor& v) {
 		v.acceptTypeGeneric(*this);
 		return v;
@@ -408,12 +438,12 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.TypeGeneric (rel=" << rel._to_string()
 		  << ", variance=" << variance._to_string() << ", variadic=" << variadic._to_string() << ')';
 		name->prettyPrint(s << '\n', buf + 2, "binding=");
-		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+		if (impls && impls->types.size()) impls->prettyPrint(s << '\n', buf + 2, "type=");
 		return s;
 	}
 
 	ValueGeneric::ValueGeneric(ptr<BasicBinding> b, ptr<Type> t, ptr<ValExpr> v, Ast::Location loc)
-		: GenericPart{ std::move(b), std::move(t), loc }, value{ std::move(v) } {}
+		: GenericPart{ std::move(b), loc }, value{ std::move(v) }, type{ std::move(t) } {}
 	Visitor& ValueGeneric::visit(Visitor& v) {
 		v.acceptValueGeneric(*this);
 		return v;

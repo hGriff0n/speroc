@@ -99,23 +99,17 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: sentinel vals*
-			std::deque<ptr<ast::ValExpr>> vals;
-			while (util::at_node<ast::ValExpr>(s))
-				vals.push_front(util::pop<ast::ValExpr>(s));
-
+			auto vals = util::popSeq<ast::ValExpr>(s);
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::Tuple>(std::move(vals), mkLoc(in)));
 			// stack: tuple
 		}
 	};
-	template<> struct action<grammar::array> {
+	template<> struct action<grammar::_array> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: sentinel vals*
-			std::deque<ptr<ast::ValExpr>> vals;
-			while (util::at_node<ast::ValExpr>(s))
-				vals.push_front(util::pop<ast::ValExpr>(s));
-
+			auto vals = util::popSeq<ast::ValExpr>(s);
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::Array>(std::move(vals), mkLoc(in)));
 			// stack: array
@@ -319,10 +313,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: sentinel vals*
-			std::deque<ptr<ast::Stmt>> vals;
-			while (util::at_node<ast::Stmt>(s))
-				vals.push_front(util::pop<ast::Stmt>(s));
-
+			auto vals = util::popSeq<ast::Stmt>(s);
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::Block>(std::move(vals), mkLoc(in)));
 			// stack: block
@@ -407,10 +398,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: KWD var*
-			std::deque<ptr<ast::BasicBinding>> mod;
-			while (util::at_node<ast::BasicBinding>(s))
-				mod.push_front(util::pop<ast::BasicBinding>(s));
-
+			auto mod = util::popSeq<ast::BasicBinding>(s);
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::ModDec>(std::make_unique<ast::QualifiedBinding>(std::move(mod), mkLoc(in)), mkLoc(in)));
 			// stack: mod_dec
@@ -439,9 +427,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: sentinel type*
-			std::deque<ptr<ast::Type>> types;
-			while (util::at_node<ast::Type>(s))
-				types.push_front(util::pop<ast::Type>(s));
+			auto types = util::popSeq<ast::Type>(s);
 
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::TupleType>(std::move(types), mkLoc(in)));
@@ -485,22 +471,23 @@ namespace spero::parser::actions {
 			else  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUBTYPE, mkLoc(in)));
 		}
 	};
+	TOKEN(gen_subrel_eps, ast::RelationType::NA);
 	template<> struct action<grammar::gen_type> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: typ variance? variadic? (relation type)?
-			auto type = util::pop<ast::Type>(s);
-			auto rel = (type ? util::pop<ast::Token>(s) : nullptr);
+			auto typs = util::popSeq<ast::Type>(s);
+			auto rel_val = std::get<ast::RelationType>(util::pop<ast::Token>(s)->value);
 			auto variadic = util::pop<ast::Token>(s);
 			auto variance = util::pop<ast::Token>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
 
-			auto rel_val = rel ? std::get<ast::RelationType>(rel->value) : ast::RelationType::NA;
+			// Extract the token values from `seq` and `var`, accounting for possible syntactic non-inclusion
 			auto seq_val = variadic ? std::get<ast::VarianceType>(variadic->value) : ast::VarianceType::INVARIANT;
 			auto var_val = variance ? std::get<ast::VarianceType>(variance->value) : ast::VarianceType::INVARIANT;
 
 			s.emplace_back(std::make_unique<ast::TypeGeneric>(
-				std::move(name), std::move(type),
+				std::move(name), std::make_unique<ast::AndType>(std::move(typs), mkLoc(in)),
 				rel_val, seq_val, var_val, mkLoc(in)
 				));
 			// stack: generic
@@ -536,9 +523,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: sentinel ImportName*
-			std::deque<ptr<ast::ImportPiece>> imps;
-			while (util::at_node<ast::ImportPiece>(s))
-				imps.push_front(util::pop<ast::ImportPiece>(s));
+			auto imps = util::popSeq<ast::ImportPiece>(s);
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::ImportGroup>(std::move(imps), mkLoc(in)));
 			// stack: ImportGroup
@@ -566,9 +551,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: sentinel AssignPattern*
-			std::deque<ptr<ast::AssignPattern>> pat;
-			while (util::at_node<ast::AssignPattern>(s))
-				pat.push_front(util::pop<ast::AssignPattern>(s));
+			auto pat = util::popSeq<ast::AssignPattern>(s);
 
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::AssignTuple>(std::move(pat), mkLoc(in)));
@@ -630,9 +613,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: sentinel pattern*
-			std::deque<ptr<ast::Pattern>> vals;
-			while (util::at_node<ast::Pattern>(s))
-				vals.push_front(util::pop<ast::Pattern>(s));
+			auto vals = util::popSeq<ast::Pattern>(s);
 
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::PTuple>(std::move(vals), mkLoc(in)));
@@ -776,9 +757,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: sentinel variable*
-			std::deque<ptr<ast::ValExpr>> vals;
-			while (util::at_node<ast::Variable>(s))
-				vals.push_front(util::pop<ast::ValExpr>(s));
+			auto vals = util::popSeq<ast::ValExpr>(s);
 
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::Tuple>(std::move(vals), mkLoc(in)));
@@ -801,7 +780,7 @@ namespace spero::parser::actions {
 			// stack: binding generics* inf? (adt|tuple)* scope
 			auto body = util::pop<ast::Block>(s);
 
-			// Get the constructor list
+			// Get the constructor list (can't use `util::popSeq`)
 			std::deque<ptr<ast::Ast>> cons;
 			while (util::at_node<ast::Adt>(s) || util::at_node<ast::Tuple>(s))
 				cons.push_front(util::pop<ast::Ast>(s));
@@ -1046,9 +1025,7 @@ namespace spero::parser::actions {
 			if (if_guard) s.pop_back();
 
 			// Collect all patterns
-			std::deque<ptr<ast::Pattern>> pattern;
-			while (util::at_node<ast::Pattern>(s))
-				pattern.push_front(util::pop<ast::Pattern>(s));
+			auto pattern = util::popSeq<ast::Pattern>(s);
 
 			// And combine into a pattern tuple
 			ptr<ast::PTuple> pt;
@@ -1066,11 +1043,7 @@ namespace spero::parser::actions {
 		static void apply(const Input& in, Stack& s) {
 			// stack: token expr sentinel case+ cap
 			s.pop_back();
-
-			std::deque<ptr<ast::Case>> cases;
-			while (util::at_node<ast::Case>(s))
-				cases.push_front(util::pop<ast::Case>(s));
-
+			auto cases = util::popSeq<ast::Case>(s);
 			s.pop_back();
 
 			// stack: token expr
@@ -1086,10 +1059,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: expr token sentinel case+
-			std::deque<ptr<ast::Case>> cases;
-			while (util::at_node<ast::Case>(s))
-				cases.push_front(util::pop<ast::Case>(s));
-
+			auto cases = util::popSeq<ast::Case>(s);
 			s.pop_back();
 
 			// stack: expr token
@@ -1103,10 +1073,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: token sentinel case+
-			std::deque<ptr<ast::Case>> cases;
-			while (util::at_node<ast::Case>(s))
-				cases.push_front(util::pop<ast::Case>(s));
-
+			auto cases = util::popSeq<ast::Case>(s);
 			s.pop_back();
 
 			// stack: expr token
@@ -1245,9 +1212,7 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: USE imp*
-			std::deque<ptr<ast::ImportPiece>> imps;
-			while (util::at_node<ast::ImportPiece>(s))
-				imps.push_front(util::pop<ast::ImportPiece>(s));
+			auto imps = util::popSeq<ast::ImportPiece>(s);
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::ModImport>(std::move(imps), mkLoc(in)));
 			// stack: Import

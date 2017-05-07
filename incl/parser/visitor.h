@@ -52,6 +52,8 @@ namespace spero::compiler::ast {
 		DEF_ACCEPT(GenericType)
 		DEF_ACCEPT(TupleType)
 		DEF_ACCEPT(FuncType)
+		DEF_ACCEPT(AndType)
+		DEF_ACCEPT(OrType)
 
 		// Decorations
 		DEF_ACCEPT(Annotation)

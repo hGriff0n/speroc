@@ -1,13 +1,35 @@
 
 todo:
- figure out how the compiler is supposed to operate
-   project setup and organization
-     write out spero readme for possible posting (on reddit)
-     setup 'pre-commit' hook to run semantic versioning
-       add in "tracking" of current major/minor/patch/etc. between commits
+ fix the outstanding issues with the compiler
+   Work with the parser to see if lambdas can be created through '_' syntax
+   Add in to the parser the capability to represet 'T | V' nnd 'T & V' types (in type annotations)
+     Look at finding a way to resolve [[ () -> V "or" T ]] from [[ () -> "V or T" ]]
+	   Idea: Use '{}' to constrain the scope of function types
+	     "(T) -> V | T" = Function that takes a T and returns a V or a T (ie. function return type is greedy)
+		 "{(T) -> V} | T" = Function that takes a T and returns a V, or a T
+	   Rules About this Combination:
+		 "{U}" == "U" <- obviously
+		 "{U | V} | T" == "U | V | T" <- follows from math logic, looks hard to explain ('{}' might be taken as entire type)
+		 "{U & V} & T" == "U & V & T" <- same as with '|'
+     Modify lhs_inher to not utilize inf (maybe folowing directly from rhs_inher)
+	 Rework inf_* section to accomodate "T | V" typings
+	 Rework the related grammar actions to reflect the grammar changes
+	 Add in language to documentation to reflect the existence of these types
+   Add in syntax and ast code for performing pattern matching on types
+     Extend pat_var with "opt<inf>" rule (also transform to "seq<sor, opt>")
+	 Adapt the related action to account for the optional type
+	   May require pushing some extra state onto the stack
+	 Modify PNamed to handle the additional state
+	 Perform some more tests with the new grammar to make sure it looks alright (in relation to "V | T" types)
+   Double check whether I have fixed all the parsing issues with unary operators (being greedily interpreted)
+     "-" and "2 ++ -" fail to parse (but I wonder whether that is correct behavior)
+   See if I can get around the parsing differences for lhs and rhs currying
+     currying the lhs of a BinOp => creating a new function (but this is only in application really, they still "evaluate" to the same thing, returning a partially applied function)
+	 currying the rhs of a BinOp => calling the BinOp with only one arg
+	   might end up transforming them both to function calls (tbh)
  start working on the development plan (in _plan.txt)
    come up with a lot of test files and runs
- fix the outstanding issues with the compiler
+   go back over the dev_work stuff (bring it up to date, make more diverse tests)
  add in exception/error handling to make the compiler/parser usable
    adapt the compilation state structure to include an error-reporting framework
      figure out what that structure will need
@@ -23,6 +45,7 @@ todo:
    improve collection and memory usage of location data
    look at using std::string_view instead of std::string everywhere
    look at using attributes in the code
+   look at adding a way to easily generate tests/documentation
  answer the questions/improvements below
  exhaustively work over the language design to eliminate any issues/oversights
    explore the type system intricately
@@ -32,26 +55,6 @@ todo:
  move over to using llvm ir (and libraries)
    switch out x86 codegen for llvm ir (make sure this is a benefit)
    send the rest of the ir over to clang/llvm (need to wait for an update for VS 2017)
-
- errors:
-   "-" is interpreted as a unary way to greedily
-     "-" and "2 ++ -" fail to parse
-     "-(3, 4)" is a UnaryOp node instead of a FnCall
-       this could possibly be resolved in analysis though (maybe in construction)
-   possibly add in "error" field for test.compile struct (file to compare compilation errors to)
-
- language questions:
-   look into changing rhs operator currying to have same semantics as lhs operator currying
-     the major problem is in parsing issues and mitigating them
-   figure out how concurrency is going to be handled
-     should a yield without a wait equate to a straight return ???
-   determine sugaring operations
-   figure out the translation of operators fully
-     look at scala's handling of '=' for a possible idea
-   look into possibly allowing operators to not require parenthesis in indexing
-     allow "3.+ 4" instead of "3.+(4)"
-       difficult to parse though
-   how do unary operators get specialized ???
 
  parser improvements:
    re-enable "::" syntax for anonymous types
@@ -66,14 +69,13 @@ todo:
    look into moving pretty printing into the visitor model
    have the moduleDec rule collect everything as a single string
 
-Fix Spero
-  Range grammar interfered with sequence grammar on the ',' (step)
-  Figure out a better way to handle the duplication between rhs_inher and adt
-    The old grammar causes the type name to be pushed on the stack twice
-      I fixed this by adding the 'if<at>' rule, but I want to have a more focused rule
+ tester improvements:
+   look at adding "error" field to test.compile struct that specifies a file to compare compilation errors with
 
-Fixes Waiting for Other Features
-  In-place modification of containers using for loops/iterators
-    Waiting for: Implementation of standard containers and iterators
+ Fix Spero
+   Range grammar interfered with sequence grammar on the ',' (step)
+   Figure out a better way to handle the duplication between rhs_inher and adt
+     The old grammar causes the type name to be pushed on the stack twice
+       I fixed this by adding the 'if<at>' rule, but I want to have a more focused rule
 
-Breaking Codes
+Icon at www.iconfinder.com/icons/606025/ancient_antique_historic_roman_rome_helmet_vintage_warrior_icon

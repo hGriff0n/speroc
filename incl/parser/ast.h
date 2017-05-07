@@ -400,7 +400,7 @@ namespace spero::compiler::ast {
 
 
 	/*
-	 * Instance class for binding a value in a pattern match
+	 * Instance class for binding to a variable in a pattern match
 	 *
 	 * Extends: Pattern
 	 *
@@ -503,7 +503,7 @@ namespace spero::compiler::ast {
 	/*
 	 * Type instance class that represents a tuple of types
 	 *
-	 * Extends: SourceType
+	 * Extends: Sequence<Type>
 	 *
 	 * Exports:
 	 *   elems - the collection of types that construct the tuple
@@ -519,7 +519,7 @@ namespace spero::compiler::ast {
 	/*
 	 * Type instance class that represents a function object
 	 *
-	 * Extends: SourceType
+	 * Extends: Type
 
 	 * Exports:
 	 *   args - the tuple type that represents the functions arguments
@@ -530,6 +530,42 @@ namespace spero::compiler::ast {
 		ptr<Type> ret;
 
 		FuncType(ptr<TupleType>, ptr<Type>, Ast::Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+
+	/*
+	 * Type instance class that represents a conjunction of several types
+	 *
+	 * Extends: Type
+	 *
+	 * Exports:
+	 *   types - the collection of individual types
+	 */
+	struct AndType : Type {
+		std::deque<ptr<Type>> types;
+
+		AndType(std::deque<ptr<Type>>, Ast::Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+
+	/*
+	 * Type instance class that represents a disjunction of several types
+	 *
+	 * Extends: Type
+	 *
+	 * Exports:
+	 *   types - the collection of individual types
+	 */
+	struct OrType : Type {
+		std::deque<ptr<Type>> types;
+
+		OrType(std::deque<ptr<Type>>, Ast::Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -588,15 +624,14 @@ namespace spero::compiler::ast {
 	 */
 	struct GenericPart : Ast {
 		ptr<BasicBinding> name;
-		ptr<Type> type;
 
-		GenericPart(ptr<BasicBinding>, ptr<Type>, Ast::Location);
+		GenericPart(ptr<BasicBinding>, Ast::Location);
 		virtual Visitor& visit(Visitor&);
 	};
 
 
 	/*
-	 * Instance class for generics on typing information
+	 * Instance class for generics that require a type
 	 *
 	 * Extends: GenericPart
 	 *
@@ -608,8 +643,9 @@ namespace spero::compiler::ast {
 		RelationType rel;
 		VarianceType variance;
 		VarianceType variadic;
+		ptr<AndType> impls;
 
-		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType, VarianceType, Ast::Location);
+		TypeGeneric(ptr<BasicBinding>, ptr<AndType>, RelationType, VarianceType, VarianceType, Ast::Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -617,7 +653,7 @@ namespace spero::compiler::ast {
 
 
 	/*
-	 * Instance class for generics on value information
+	 * Instance class for generics that require a value
 	 *
 	 * Extends: GenericPart
 	 *
@@ -626,6 +662,7 @@ namespace spero::compiler::ast {
 	 */
 	struct ValueGeneric : GenericPart {
 		ptr<ValExpr> value;
+		ptr<Type> type;
 
 		ValueGeneric(ptr<BasicBinding>, ptr<Type>, ptr<ValExpr>, Ast::Location);
 

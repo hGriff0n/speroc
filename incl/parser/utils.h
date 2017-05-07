@@ -76,4 +76,15 @@ namespace spero::util {
 	auto findFirst(Stack& stack) {
 		return findFirst<Node>(std::begin(stack), std::end(stack));
 	}
+
+	/*
+	 * Constructs a deque and fills it with the requested node type
+	 */
+	template<class T, class Stack>
+	auto popSeq(Stack& s) {
+		std::deque<std::unique_ptr<T>> ret;
+		while (util::at_node<T>(s))
+			ret.push_front(util::pop<T>(s));
+		return std::move(ret);
+	}
 }
