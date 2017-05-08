@@ -276,8 +276,10 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(PNamed) {
 		s << std::string(buf, ' ') << context << "ast.PNamed (capture=" << cap._to_string() << ')';
-		//if (type) type->prettyPrint(s, )
-		return name->prettyPrint(s, 1);
+		name->prettyPrint(s, 1);
+		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+
+		return s;
 	}
 
 	PAdt::PAdt(ptr<BasicBinding> n, ptr<PTuple> as, Ast::Location loc)

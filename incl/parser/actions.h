@@ -680,9 +680,6 @@ namespace spero::parser::actions {
 			if (tkn) {
 				if (std::holds_alternative<ast::CaptureType>(tkn->value))
 					pat->cap = std::get<ast::CaptureType>(tkn->value);
-				//if (std::holds_alternative<ast::KeywordType>(tkn->value)
-				//&& std::get<ast::KeywordType>(tkn->value) == +ast::KeywordType::MUT)
-				//pat->cap = ast::CaptureType::MUT;
 
 				else
 					s.push_back(std::move(tkn));

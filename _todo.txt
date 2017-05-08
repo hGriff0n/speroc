@@ -15,12 +15,6 @@ todo:
 	 Rework inf_* section to accomodate "T | V" typings
 	 Rework the related grammar actions to reflect the grammar changes
 	 Add in language to documentation to reflect the existence of these types
-   Add in syntax and ast code for performing pattern matching on types
-     Extend pat_var with "opt<inf>" rule (also transform to "seq<sor, opt>")
-	 Adapt the related action to account for the optional type
-	   May require pushing some extra state onto the stack
-	 Modify PNamed to handle the additional state
-	 Perform some more tests with the new grammar to make sure it looks alright (in relation to "V | T" types)
    See if I can get around the parsing differences for lhs and rhs currying
      currying the lhs of a BinOp => creating a new function (but this is only in application really, they still "evaluate" to the same thing, returning a partially applied function)
 	 currying the rhs of a BinOp => calling the BinOp with only one arg

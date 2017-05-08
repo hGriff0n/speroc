@@ -173,8 +173,7 @@ namespace spero::parser::grammar {
 	struct tuple_pat : seq<oparen, sequ<pattern>, one<')'>> {};
 	struct pat_adt : seq<typ, opt<tuple_pat>> {};
 	struct pat_tuple : seq<opt<disable<capture_dec>>, ig_s, tuple_pat> {};
-	//struct pat_var : seq<opt<capture_dec>, ig_s, var, ig_s, opt<inf>> {};
-	struct pat_var : seq<opt<capture_dec>, ig_s, var> {};
+	struct pat_var : seq<opt<capture_dec>, ig_s, var, opt<ig_s, inf>> {};
 	struct pat_val : sor<hex, bin, num, str, character, b_false, b_true, array> {};
 	struct pat_any : seq<placeholder> {};
 	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt, pat_val> {};
