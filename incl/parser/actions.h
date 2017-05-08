@@ -95,6 +95,12 @@ namespace spero::parser::actions {
 			s.emplace_back(std::make_unique<ast::Bool>(true, mkLoc(in)));
 		}
 	};
+	template<> struct action<grammar::lambda_placeholder> {
+		template<class Input>
+		static void apply(const Input& in, Stack& s) {
+			s.emplace_back(std::make_unique<ast::Future>(true, mkLoc(in)));
+		}
+	};
 	template<> struct action<grammar::tuple> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
@@ -125,7 +131,6 @@ namespace spero::parser::actions {
 			// stack: fnbody
 		}
 	};
-	// Moved here from above fneps action to enable op_forward action
 	template<> struct action<grammar::fnseq> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {

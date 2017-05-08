@@ -124,7 +124,8 @@ namespace spero::parser::grammar {
 	//struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};
 	struct scope : seq<obrace, star<anot_expr>, cbrace> {};
 	struct wait_stmt : seq<k_wait, valexpr> {};
-	struct atom : seq<sor<scope, wait_stmt, lit, binding>, ig_s> {};
+	struct lambda_placeholder : seq<placeholder> {};
+	struct atom : seq<sor<scope, wait_stmt, lit, binding, lambda_placeholder>, ig_s> {};
 	struct fnseq : sor<seq<array, opt<anon_type>, opt<tuple>>, seq<anon_type, opt<tuple>>, tuple> {};
 	struct fneps : eps {};
 	struct fncall : seq<atom, star<fnseq>, fneps> {};
