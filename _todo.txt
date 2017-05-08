@@ -21,8 +21,6 @@ todo:
 	   May require pushing some extra state onto the stack
 	 Modify PNamed to handle the additional state
 	 Perform some more tests with the new grammar to make sure it looks alright (in relation to "V | T" types)
-   Double check whether I have fixed all the parsing issues with unary operators (being greedily interpreted)
-     "-" and "2 ++ -" fail to parse (but I wonder whether that is correct behavior)
    See if I can get around the parsing differences for lhs and rhs currying
      currying the lhs of a BinOp => creating a new function (but this is only in application really, they still "evaluate" to the same thing, returning a partially applied function)
 	 currying the rhs of a BinOp => calling the BinOp with only one arg

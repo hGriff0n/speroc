@@ -341,9 +341,23 @@ namespace spero::parser::actions {
 			if (name)
 				s.emplace_back(std::make_unique<ast::Variable>(std::move(name), mkLoc(in)));
 
-
 			if (sentinel_on_top) s.emplace_back(ast::Sentinel{});
 			// stack: fncall | expr
+		}
+	};
+	template<> struct action<grammar::unary_op> {
+		template<class Input>
+		static void apply(const Input& in, Stack& s) {
+			// stack: token
+			s.pop_back();
+			auto loc = mkLoc(in);
+			s.emplace_back(
+				std::make_unique<ast::Variable>(
+					std::make_unique<ast::QualifiedBinding>(
+						std::make_unique<ast::BasicBinding>(
+							in.string(), ast::BindingType::OPERATOR, loc)
+						, loc), loc));
+			// stack: expr
 		}
 	};
 
