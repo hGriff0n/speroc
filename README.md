@@ -1,10 +1,10 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1c08fe8c6e794791be42f4ff509bf846)](https://www.codacy.com/app/ghooper96/speroc?utm_source=github.com&utm_medium=referral&utm_content=hGriff0n/speroc&utm_campaign=badger)
 
-speroc ver 0.1.9 - The reference compiler for the spero language
+speroc ver 0.1.10 - The reference compiler for the spero language
 
 Project Info:
 
-    size: 3047 sloc
+    size: 3071 sloc
     12 .h files, 7 .cpp files, 1 .rb files
 
 Libraries Used:

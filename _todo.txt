@@ -1,14 +1,6 @@
 
 todo:
  fix the outstanding issues with the compiler
-   Add in to the parser the capability to represet 'T | V' nnd 'T & V' types (in type annotations)
-	 Add in rules for '{}' syntax to disambiguate (delimeate) function returns
-     Modify lhs_inher to not utilize inf (maybe folowing directly from rhs_inher)
-	   Need to prevent inheritance from and/or types
-	 Rework inf_* section to accomodate "T | V" typings
-	   Make sure this works for functions as well (ie "-> T {}" syntax)
-	 Rework the related grammar actions to reflect the grammar changes
-	 Add in language to documentation to reflect the existence of these types
    See if I can get around the parsing differences for lhs and rhs currying
      currying the lhs of a BinOp => creating a new function (but this is only in application really, they still "evaluate" to the same thing, returning a partially applied function)
 	 currying the rhs of a BinOp => calling the BinOp with only one arg
@@ -16,6 +8,8 @@ todo:
    Work with the parser to try and improve the ability to generate the lambda functions from the lambda_placeholder rule
      May involve creating a specific ast node, or adding to ast.Future
 	 Look into the impact of using '_' as a catch all character in match statements (could lead to assumptions that you can use that value)
+   See if I can improve the lookahead for `fn_rettype`
+     Will also need to adjust the '{}' syntax ???		# maybe use `inf_narrow` instead of `inf_mut_type`
  start working on the development plan (in _plan.txt)
    come up with a lot of test files and runs
    go back over the dev_work stuff (bring it up to date, make more diverse tests)

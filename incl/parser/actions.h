@@ -368,17 +368,25 @@ namespace spero::parser::actions {
 
 
 	// Decorators
-	template<> struct action<grammar::type> {
+	template<> struct action<grammar::_type> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
-			// stack: qualname array? ptr
-			auto tkn = util::pop<ast::Token>(s);
+			// stack: qualname array?
 			auto inst = util::pop<ast::Array>(s);
 			auto name = util::pop<ast::QualifiedBinding>(s);
 
-			s.emplace_back(std::make_unique<ast::GenericType>(std::move(name), std::move(inst), std::get<ast::PtrStyling>(tkn->value), mkLoc(in)));
+			s.emplace_back(std::make_unique<ast::GenericType>(std::move(name), std::move(inst), ast::PtrStyling::NA, mkLoc(in)));
+			// stack: type
 		}
-		//
+	};
+	template<> struct action<grammar::type> {
+		template<class Input>
+		static void apply(const Input& in, Stack& s) {
+			// stack: type ptr
+			auto tkn = util::pop<ast::Token>(s);
+			util::view_as<ast::GenericType>(s.back())->_ptr = std::get<ast::PtrStyling>(tkn->value);
+			// stack: type
+		}
 	};
 	template<> struct action<grammar::unary> {
 		template<class Input>
@@ -423,26 +431,7 @@ namespace spero::parser::actions {
 			// stack: mod_dec
 		}
 	};
-	template<> struct action<grammar::mut_type> {
-		template<class Input>
-		static void apply(const Input& in, Stack& s) {
-			// stack: mut? type
-			auto type = util::pop<ast::Type>(s);
-
-			auto tkn = util::pop<ast::Token>(s);
-			if (tkn) {
-				type->is_mut = std::holds_alternative<ast::KeywordType>(tkn->value)
-					&& std::get<ast::KeywordType>(tkn->value) == +ast::KeywordType::MUT;
-
-				if (!type->is_mut)
-					s.push_back(std::move(tkn));
-			}
-
-			s.push_back(std::move(type));
-			// stack: type
-		}
-	};
-	template<> struct action<grammar::type_tuple> {
+	template<> struct action<grammar::inf_tuple_type> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: sentinel type*
@@ -458,15 +447,47 @@ namespace spero::parser::actions {
 		static void apply(const Input& in, Stack& s) {
 			// stack: tuple type
 			auto ret = util::pop<ast::Type>(s);
-			auto args = util::pop<ast::TupleType>(s);
-
-			if (args)
-				s.emplace_back(std::make_unique<ast::FuncType>(std::move(args), std::move(ret), mkLoc(in)));
-			else
-				s.emplace_back(std::move(ret));
+			s.emplace_back(std::make_unique<ast::FuncType>(util::pop<ast::TupleType>(s), std::move(ret), mkLoc(in)));
 			// stack: fntype
 		}
 	};
+	SENTINEL(inf_eps);
+	template<> struct action<grammar::inf_mut_type> {
+		template<class Input>
+		static void apply(const Input& in, Stack& s) {
+			// stack: type
+			if (in.string()[0] == 'm') util::view_as<ast::Type>(s.back())->is_mut = true;
+			// stack: type
+		}
+	};
+	template<> struct action<grammar::_inf_junc_and> {
+		template<class Input>
+		static void apply(const Input& in, Stack& s) {
+			// stack: sentinel type*
+			auto types = util::popSeq<ast::Type>(s);
+			s.emplace_back(std::make_unique<ast::AndType>(std::move(types), mkLoc(in)));
+			// stack: sentinel andtype
+		}
+	};
+	template<> struct action<grammar::_inf_junc_or> {
+		template<class Input>
+		static void apply(const Input& in, Stack& s) {
+			// stack: sentinel type*
+			auto types = util::popSeq<ast::Type>(s);
+			s.emplace_back(std::make_unique<ast::OrType>(std::move(types), mkLoc(in)));
+			// stack: sentinel ortype
+		}
+	};
+	template<> struct action<grammar::inf_type> {
+		template<class Input>
+		static void apply(const Input& in, Stack& s) {
+			// stack: sentinel type
+			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
+			s.pop_back();
+			// stack: type
+		}
+	};
+
 	template<> struct action<grammar::gen_variance> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {

@@ -10,8 +10,8 @@ namespace spero::parser::grammar {
 
 	// Forward Declarations
 	struct _array; struct anot_expr; struct scope; struct atom; struct pattern;
-	struct var_pattern; struct valexpr; struct fn_dot_ctrl; struct inf_fn_type;
-	struct mut_type; struct con_tuple; struct expr; struct binary_expr;
+	struct var_pattern; struct valexpr; struct fn_dot_ctrl; struct inf_type;
+	struct con_tuple; struct expr; struct binary_expr; struct inf_mut_type;
 
 	// Ignore Characters
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
@@ -85,7 +85,8 @@ namespace spero::parser::grammar {
 	struct name_eps : seq<eps> {};
 	struct name_path : seq<name_eps, star<name_path_part>> {};
 	struct typ_pointer : sor<one<'&'>, one<'*'>, two<'.'>, eps> {};
-	struct type : seq<name_path, disable<typ>, opt<_array>, typ_pointer, ig_s> {};
+	struct _type : seq<name_path, disable<typ>, opt<_array>> {};
+	struct type : seq<_type, typ_pointer, ig_s> {};
 	struct binding : sor<seq<name_path, disable<sor<var, typ>>, ig_s>, op> {};
 
 	//
@@ -109,7 +110,7 @@ namespace spero::parser::grammar {
 	struct _array : seq<obrack, opt<sequ<valexpr>>, one<']'>> {};
 	//struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};
 	struct array : seq<_array, ig_s> {};
-	struct fn_rettype : if_then<at<mut_type>, seq<mut_type, ig_s, scope>> {};
+	struct fn_rettype : if_then<at<inf_mut_type>, seq<inf_mut_type, ig_s, scope>> {};
 	struct op_forward : seq<op, opt<valexpr>> {};
 	struct fn_forward : seq<one<'.'>, sor<fn_dot_ctrl, op_forward, valexpr>> {};			// Don't need to anything for the valexpr case, will be handled in analysis
 	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};
@@ -140,11 +141,18 @@ namespace spero::parser::grammar {
 	struct annotation : seq<one<'@'>, var, not_at<one<'!'>>, opt<tuple>> {};
 	struct global_annotation : seq<one<'@'>, disable<var>, one<'!'>, opt<tuple>> {};
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};
-	struct mut_type : seq<opt<k_mut>, type> {};		// mut_type doesn't match type tuples
-	struct inf_type : sor<mut_type, inf_fn_type> {};
-	struct type_tuple : seq<oparen, sequ<inf_type>, cparen> {};
-	struct inf_fn_type : seq<type_tuple, opt<ig_s, pstr("->"), ig_s, inf_type>> {};
-	struct inf : seq<pstr("::"), ig_s, inf_type> {};
+	struct inf_tuple_type : seq<oparen, sequ<inf_type>, cparen> {};																	// Match a tuple of inference types
+	struct inf_fn_type : seq<pstr("->"), ig_s, inf_type> {};																		// Rule for constructing function types	
+	struct inf_tuple_or_fn : seq<inf_tuple_type, opt<inf_fn_type>> {};																// Match a tuple and an optional function return
+	struct inf_eps : eps {};																										// Put a sentinel on the stack for various transforms
+	struct inf_mut_type : seq<opt<disable<k_mut>>, sor<inf_tuple_or_fn, type>> {};													// Append type mutability
+	struct inf_narrow : if_then_else<disable<obrace>, seq<inf_type, cbrace>, inf_mut_type> {};										// Optionally add braces to create complex junctions
+	struct _inf_junc_and : plus<one<'&'>, ig_s, inf_narrow> {};																		// Match a sequence of and types
+	struct inf_junc_and : seq<inf_narrow, opt<_inf_junc_and>> {};																	// Rule to pass-by andtype if no '&'
+	struct _inf_junc_or : plus<one<'|'>, ig_s, inf_junc_and> {};																	// Match a sequence of or types (accounting for and precedence)
+	struct inf_junc_or : seq<inf_junc_and, opt<_inf_junc_or>> {};																	// Rule to pass-by ortype if no '|'
+	struct inf_type : seq<inf_eps, inf_junc_or> {};																					// Push a sentinel on the stack for matching
+	struct inf : seq<pstr("::"), ig_s, inf_type> {};																				// Type inference syntax
 	struct gen_variance : sor<one<'+'>, one<'-'>, eps> {};
 	struct gen_variadic : sor<two<'.'>, eps> {};
 	struct gen_subrel : sor<pstr("::"), pstr("!:"), one<'>'>, one<'<'>> {};
@@ -182,14 +190,14 @@ namespace spero::parser::grammar {
 	//
 	// Assignment Grammar
 	//
-	struct adt_con : seq<typ, opt<type_tuple>, ig_s> {};
+	struct adt_con : seq<typ, opt<inf_tuple_type>, ig_s> {};
 	struct named_arg : seq<var, ig_s, opt<inf>> {};
 	struct con_tuple : seq<oparen, opt<sequ<named_arg>>, cparen> {};
 	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<con_tuple, disable<adt_con>, eps>> {};
 	struct in_binding : seq<k_in, ig_s, valexpr> {};
 	struct assign_val : seq<one<'='>, ig_s, valexpr, opt<in_binding>> {};
 	struct var_assign : seq<var_pattern, ig_s, opt<generic>, sor<seq<inf, opt<assign_val>>, assign_val>> {};
-	struct lhs_inher : seq<inf, one<'='>, ig_s, opt<k_mut>> {};
+	struct lhs_inher : seq<two<':'>, ig_s, type, ig_s, one<'='>, ig_s, opt<k_mut>> {};
 	//struct rhs_inf : seq<typ, ig_s, two<':'>, ig_s> {};
 	struct rhs_inf : if_then<at<typ, ig_s, two<':'>>, seq<typ, ig_s, two<':'>, ig_s>> {};
 	struct rhs_inher : seq<one<'='>, ig_s, opt<k_mut>, opt<rhs_inf>> {};
