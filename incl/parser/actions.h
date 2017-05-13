@@ -98,7 +98,7 @@ namespace spero::parser::actions {
 	template<> struct action<grammar::lambda_placeholder> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
-			s.emplace_back(std::make_unique<ast::Future>(true, mkLoc(in)));
+			s.emplace_back(std::make_unique<ast::Future>(false, mkLoc(in)));
 		}
 	};
 	template<> struct action<grammar::tuple> {
@@ -157,9 +157,11 @@ namespace spero::parser::actions {
 			// stack: bind expr
 
 			if (!util::is_type<ast::Tuple>(s.back())) {
+				auto left = util::pop<ast::ValExpr>(s);
+
 				std::deque<ptr<ast::ValExpr>> args;
 				args.push_back(std::make_unique<ast::Future>(true, mkLoc(in)));
-				args.push_back(std::move(util::pop<ast::ValExpr>(s)));
+				args.push_back(left ? std::move(left) : std::make_unique<ast::Future>(true, mkLoc(in)));
 
 				s.emplace_back(std::make_unique<ast::Tuple>(std::move(args), mkLoc(in)));
 
@@ -182,8 +184,11 @@ namespace spero::parser::actions {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {
 			// stack: fnbody | expr
-			if (!util::at_node<ast::FnBody>(s))
-				s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false, mkLoc(in)));
+			if (!util::at_node<ast::FnBody>(s)) {
+				auto body = util::pop<ast::ValExpr>(s);
+				while (!util::at_node<ast::Tuple>(s)) s.pop_back();
+				s.emplace_back(std::make_unique<ast::FnBody>(std::move(body), false, mkLoc(in)));
+			}
 			// stack: fnbody
 		}
 	};

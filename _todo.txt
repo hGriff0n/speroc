@@ -1,19 +1,13 @@
 
 todo:
  fix the outstanding issues with the compiler
-   See if I can get around the parsing differences for lhs and rhs currying
-     currying the lhs of a BinOp => creating a new function (but this is only in application really, they still "evaluate" to the same thing, returning a partially applied function)
-	 currying the rhs of a BinOp => calling the BinOp with only one arg
-	   might end up transforming them both to function calls (tbh)
-   Work with the parser to try and improve the ability to generate the lambda functions from the lambda_placeholder rule
-     May involve creating a specific ast node, or adding to ast.Future
-	 Look into the impact of using '_' as a catch all character in match statements (could lead to assumptions that you can use that value)
-   See if I can improve the lookahead for `fn_rettype`
-     Will also need to adjust the '{}' syntax ???		# maybe use `inf_narrow` instead of `inf_mut_type`
+   Extend "use <> as <>" to allow for junction types (maybe mut types too)
+     A bit difficult as the current specification is focused around basic naming
+	 Maybe rework the module import system entirely (particularly the ast) ???
  start working on the development plan (in _plan.txt)
    come up with a lot of test files and runs
    go back over the dev_work stuff (bring it up to date, make more diverse tests)
-   see if there are any additional issues in my notes
+   see if there are any additional issues in my paper notes
  add in exception/error handling to make the compiler/parser usable
    adapt the compilation state structure to include an error-reporting framework
      figure out what that structure will need
@@ -51,6 +45,11 @@ todo:
    look into replacing 'std::string' with 'std::string_view' for ast prettyPrint
    look into moving pretty printing into the visitor model
    have the moduleDec rule collect everything as a single string
+
+ compiler improvements:
+   add in analysis passes for "_" lambdas utilizing ast.Future
+     if "forwarded_from_fn" is false, then it is a lambda usage
+	 also look at ways of pruning the creation of these "temporaries"
 
  tester improvements:
    look at adding "error" field to test.compile struct that specifies a file to compare compilation errors with
