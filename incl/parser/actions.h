@@ -235,6 +235,7 @@ namespace spero::parser::actions {
 			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::VARIABLE, mkLoc(in)));
 		}
 	};
+	INHERIT(var_core, var);
 	template<> struct action<grammar::typ> {
 		template<class Input>
 		static void apply(const Input& in, Stack& s) {

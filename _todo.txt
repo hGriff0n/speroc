@@ -1,9 +1,5 @@
 
 todo:
- fix the outstanding issues with the compiler
-   Extend "use <> as <>" to allow for junction types (maybe mut types too)
-     A bit difficult as the current specification is focused around basic naming
-	 Maybe rework the module import system entirely (particularly the ast) ???
  start working on the development plan (in _plan.txt)
    come up with a lot of test files and runs
    go back over the dev_work stuff (bring it up to date, make more diverse tests)
@@ -50,6 +46,7 @@ todo:
    add in analysis passes for "_" lambdas utilizing ast.Future
      if "forwarded_from_fn" is false, then it is a lambda usage
 	 also look at ways of pruning the creation of these "temporaries"
+   modify module import syntax to allow for easy type aliasing
 
  tester improvements:
    look at adding "error" field to test.compile struct that specifies a file to compare compilation errors with

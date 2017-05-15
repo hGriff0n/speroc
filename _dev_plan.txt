@@ -309,6 +309,10 @@ Type System
     Ensure that ranges/arrays/strings all work with for-loop by default
 	Needs: Modules, Memory, Unicode knowledge, Char
 
+  Type Aliasing
+    Rework the module import syntax to allow for easy creation of type aliases (particularly in relation to junction types)
+	  Might be okay with adding an additional syntax (or even an annotation)
+
   Type Checking
     Get type inference algorithm setup for assignments and function returns
       Extend this to basic argument checking for lambda functions (if possible)

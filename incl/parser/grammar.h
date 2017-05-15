@@ -5,8 +5,8 @@
 
 namespace spero::parser::grammar {
 	using namespace pegtl;
-	#define pstr(x) pegtl_string_t((x))
-	#define key(x) seq<pstr((x)), not_at<ascii::identifier_other>, ig_s> {}
+#define pstr(x) pegtl_string_t((x))
+#define key(x) seq<pstr((x)), not_at<ascii::identifier_other>, ig_s> {}
 
 	// Forward Declarations
 	struct _array; struct anot_expr; struct scope; struct atom; struct pattern;
@@ -74,6 +74,7 @@ namespace spero::parser::grammar {
 	//
 	// Language Bindings
 	//
+	struct var_core : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
 	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>, sor<one<'!'>, one<'?'>, eps>> {};						// 
 	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};																	// 
 	struct op_characters : sor<one<'!'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,						// 
@@ -139,8 +140,8 @@ namespace spero::parser::grammar {
 	// antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
 	struct unary : seq<sor<one<'!'>, one<'-'>, one<'~'>>, not_at<one<'('>>> {};														// 
 	struct unary_op : seq<at<unary>, any> {};																						// 
-	struct annotation : seq<one<'@'>, var, not_at<one<'!'>>, opt<tuple>> {};														// 
-	struct global_annotation : seq<one<'@'>, disable<var>, one<'!'>, opt<tuple>> {};												// 
+	struct annotation : seq<one<'@'>, var_core, not_at<one<'!'>>, opt<tuple>> {};														// 
+	struct global_annotation : seq<one<'@'>, disable<var_core>, one<'!'>, opt<tuple>> {};												// 
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};																		// 
 	struct inf_tuple_type : seq<oparen, sequ<inf_type>, cparen> {};																	// Match a tuple of inference types
 	struct inf_fn_type : seq<pstr("->"), ig_s, inf_type> {};																		// Rule for constructing function types	
@@ -169,9 +170,9 @@ namespace spero::parser::grammar {
 	template<class Gram>
 	struct inst_rebind : if_then_else<at<obrack>, seq<array, ig_s, pstr("as"), ig_s, Gram>, opt<pstr("as"), ig_s, Gram>> {};		// 
 	struct use_rebind : sor<seq<disable<use_one>, ig_s, inst_rebind<var>>, seq<use_typ, ig_s, inst_rebind<typ>>> {};				// 
-	struct alt_rebind : sor<seq<use_one, ig_s, inst_rebind<var>, ig_s>, seq<use_typ, ig_s, inst_rebind<typ>, ig_s>> {};				// 
+	struct alt_rebind : sor<seq<use_one, ig_s, inst_rebind<var>, ig_s>, seq<use_typ, ig_s, inst_rebind<typ>, ig_s>> {};				// Rewrite of 'use_rebind' that triggers the action for 'use_one'
 	struct use_many : seq<obrace, sequ<alt_rebind>, cbrace> {};																		// 
-	struct use_final : sor<seq<use_any, opt<one<':'>, use_any>>, use_many, use_rebind> {};											// 
+	struct use_final : sor<seq<use_any, opt<one<':'>, use_any>>, use_many, use_rebind> {};											// (_:_)/{.*}/(t as t)
 
 	//
 	// Patterns
