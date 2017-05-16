@@ -184,8 +184,11 @@ namespace spero::compiler::ast {
 	// This section contains the nodes representing value-types that are compile-time recognizable
 	//
 
+	struct Literal : ValExpr {
+		Literal(Ast::Location);
+	};
 
-	struct Bool : ValExpr {
+	struct Bool : Literal {
 		bool val;
 		Bool(bool, Ast::Location);
 
@@ -193,7 +196,7 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
-	struct Byte : ValExpr {
+	struct Byte : Literal {
 		unsigned long val;
 		Byte(std::string, int, Ast::Location);
 
@@ -201,7 +204,7 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
-	struct Float : ValExpr {
+	struct Float : Literal {
 		double val;
 		Float(std::string, Ast::Location);
 
@@ -209,7 +212,7 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
-	struct Int : ValExpr {
+	struct Int : Literal {
 		long val;
 		Int(std::string, Ast::Location);
 
@@ -217,7 +220,7 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
-	struct Char : ValExpr {
+	struct Char : Literal {
 		char val;
 		Char(char, Ast::Location);
 
@@ -743,6 +746,7 @@ namespace spero::compiler::ast {
 		ptr<BasicBinding> name;
 		ptr<BasicBinding> new_name;
 		ptr<Array> generic_inst;
+		//ptr<Type> type;
 
 		ImportName(ptr<BasicBinding>, Ast::Location);
 
@@ -1043,7 +1047,8 @@ namespace spero::compiler::ast {
 	struct BinOpCall : ValExpr {
 		ptr<ValExpr> lhs;
 		ptr<ValExpr> rhs;
-		ptr<QualifiedBinding> op;
+		//ptr<QualifiedBinding> op;
+		std::string op;
 
 		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, ptr<QualifiedBinding>, Ast::Location);
 

@@ -41,7 +41,7 @@ yaml = YAML.load_file("./#{options[:dir]}/#{options[:file]}")
 yaml.each do |name, tests|
 
     # Skip this test group if specified
-    in_cmd_tags = (tests['tags'] & ARGV)
+    in_cmd_tags = !(tests['tags'] & ARGV).empty?
     next if options[:ignore] && in_cmd_tags
     next if !options[:ignore] && !in_cmd_tags
 

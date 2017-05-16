@@ -25,13 +25,20 @@ Stream& getMultiline(Stream&, std::string&);
 int main(int argc, char* argv[]) {
 	using namespace spero;
 	using namespace spero::parser;
+	
+	// Automatically add in "interactive" and "nodel" flags for debug running
+	if (argc == 1) {
+		argc = 3;
+		argv = new char*[3]{ "speroc.exe", "-i", "-t" };
+	}
+
 
 	// Parse the command line arguments
 	auto state = cmd::parse(argc, argv);
 
 
 	// Interactive mode for testing ast creation/parsing runs
-	if (state.files().size() == 0 || state.opts["inter"].as<bool>()) {
+	if (state.opts["interactive"].as<bool>()) {
 		std::string input;
 
 		while (std::cout << "> " && getMultiline(std::cin, input)) {
@@ -40,19 +47,25 @@ int main(int argc, char* argv[]) {
 			bool succ;
 			parser::Stack res;
 
-			if (input.substr(0, 2) == ":c") {
-				state.files()[0] = input.substr(3);
+			try {
+				if (input.substr(0, 2) == ":c") {
+					if (state.files().size() == 0) state.files().push_back("");
+					state.files()[0] = input.substr(3);
 
-				if (compile(state, res)) {
-					std::cout << "Compilation Failed\n";
-					continue;
-				}
+					if (succ = compile(state, res)) {
+						std::cout << "Compilation Failed\n";
+						continue;
+					}
 
-			} else
-				std::tie(succ, res) = compiler::parse(input, state);
+				} else
+					std::tie(succ, res) = compiler::parse(input, state);
 
-			std::cout << "Parsing Succeeded: " << (succ ? "false" : "true") << '\n';
-			printAST(std::cout, res);
+				std::cout << "Parsing Succeeded: " << (succ ? "false" : "true") << '\n';
+				printAST(std::cout, res);
+
+			} catch (std::exception& e) {
+				std::cout << e.what() << '\n';
+			}
 		}
 
 	// Compiler run
@@ -113,6 +126,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 
 
 		// Delete the temporary file
+		bool del_files = state.deleteTemporaryFiles();
 		if (state.deleteTemporaryFiles())
 			std::remove("out.s");
 	}

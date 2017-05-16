@@ -10,6 +10,7 @@ Current Project State
 Current Project Plan
   Basic Operator Assembly (for int types)
   x86 Register Analysis
+    Improve register allocation
   Basic Variables
   More Basic Types
   Extending Operators for basic types

@@ -1,20 +1,38 @@
 #include "codegen/AsmGenerator.h"
+#include "parser/utils.h"
+
+/*
+ * Utility function to simplify emission of assembly instructions in several cases
+ */
+template<class T, class=std::enable_if_t<std::is_integral_v<T> && !std::is_convertible_v<T, std::string>>>
+std::ostream& issueStore(std::ostream& s, const T& val, std::string loc) {
+	return s << "\tmov $" << val << ", " << loc << '\n';
+}
+std::ostream& issueStore(std::ostream& s, std::string val, std::string loc) {
+	return s << "\tmov " << val << ", " << loc << '\n';
+}
+
 
 namespace spero::compiler::gen {
-	AsmGenerator::AsmGenerator(std::ostream& s) : out{ s } {}
+	AsmGenerator::AsmGenerator(std::ostream& s) : out{ s }, curr_reg{ "eax" } {}
 
+
+	// Base Nodes
 	void AsmGenerator::accept(ast::Ast&) {}
 
+
+	// Literals
 	void AsmGenerator::acceptBool(ast::Bool& b) {
 		if (b.val)
-			out << "\tmov $" << b.val << ", %al\n";
+			issueStore(out, b.val, "%al");
 
 		else
-			out << "\txor %eax, %eax\n";
+			out << "\txor %" << curr_reg << ", %" << curr_reg << '\n';
 	}
 
 	void AsmGenerator::acceptByte(ast::Byte& b) {
-		out << "\txor %eax, %eax\n\tmov $" << b.val << ", %eax\n";
+		out << "\txor %" << curr_reg << ", %" << curr_reg << "\n";
+		issueStore(out, b.val, curr_reg);
 	}
 
 	void AsmGenerator::acceptFloat(ast::Float& f) {
@@ -28,18 +46,31 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::acceptInt(ast::Int& i) {
-		out << "\tmov $" << i.val << ", %eax\n";
+		issueStore(out, i.val, curr_reg);
 	}
 
 	void AsmGenerator::acceptChar(ast::Char& c) {
-		out << "\tmov $" << c.val << ", %al\n";
+		issueStore(out, c.val, "%al");
 	}
 
+
+	// Names
+
+
+	// Types
+
+
+	// Decorations
+
+
+	// Control
 	void AsmGenerator::acceptBlock(ast::Block& b) {
 		for (auto& stmt : b.elems)
 			stmt->visit(*this);
 	}
 
+
+	// Statements
 	void AsmGenerator::acceptFnBody(ast::FnBody& f) {
 		// Print function enter code
 		out << "LFB0:\n"
@@ -57,7 +88,30 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::acceptBinOpCall(ast::BinOpCall& b) {
+		auto left_reg = (curr_reg == "eax") ? "ebx" : "eax";
+		auto save_reg = curr_reg;
 
+		b.lhs->visit(*this);
+		
+		curr_reg = left_reg;
+		b.rhs->visit(*this);
+
+		curr_reg = save_reg;
+
+		if (b.op == "+") {
+			out << "\tadd %";
+
+		} else if (b.op == "-") {
+			out << "\tsub %";
+
+		} else if (b.op == "*") {
+			out << "\timul %";
+
+		} else if (b.op == "/") {
+			out << "\tcdq\n\tidiv %";
+		}
+
+		out << left_reg << ", %" << curr_reg << '\n';
 	}
 
 	void AsmGenerator::acceptVarAssign(ast::VarAssign& v) {

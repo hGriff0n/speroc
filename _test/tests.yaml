@@ -10,7 +10,7 @@ literals:
         files: [ 'first.spr' ]
       tests:
         - return: 5
-        - return: 42
+        # - return: 42
     - desc: ""
       exec: 'err.exe'
       compile:
@@ -27,7 +27,7 @@ literals:
       compile:
         files: [ 'sub.spr' ]
       tests:
-        - return: -1
+        - return: 1
     - desc: ""
       exec: 'orderOfOperations.exe'
       compile:

@@ -1,7 +1,7 @@
 
 todo:
  start working on the development plan (in _plan.txt)
-   come up with a lot of test files and runs
+   Rework literals to just write their value directly (no loading into register)
    go back over the dev_work stuff (bring it up to date, make more diverse tests)
    see if there are any additional issues in my paper notes
  add in exception/error handling to make the compiler/parser usable

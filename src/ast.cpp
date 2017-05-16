@@ -77,7 +77,9 @@ namespace spero::compiler::ast {
 		return Stmt::prettyPrint(s, buf);
 	}
 
-	Bool::Bool(bool b, Ast::Location loc) : ValExpr{ loc }, val{ b } {}
+	Literal::Literal(Ast::Location loc) : ValExpr{ loc } {}
+
+	Bool::Bool(bool b, Ast::Location loc) : Literal{ loc }, val{ b } {}
 	Visitor& Bool::visit(Visitor& v) {
 		v.acceptBool(*this);
 		return v;
@@ -88,7 +90,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	Byte::Byte(std::string num, int base, Ast::Location loc) : ValExpr{ loc }, val{ std::stoul(num, nullptr, base) } {}
+	Byte::Byte(std::string num, int base, Ast::Location loc) : Literal{ loc }, val{ std::stoul(num, nullptr, base) } {}
 	Visitor& Byte::visit(Visitor& v) {
 		v.acceptByte(*this);
 		return v;
@@ -99,7 +101,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	Float::Float(std::string num, Ast::Location loc) : ValExpr{ loc }, val{ std::stof(num) } {}
+	Float::Float(std::string num, Ast::Location loc) : Literal{ loc }, val{ std::stof(num) } {}
 	Visitor& Float::visit(Visitor& v) {
 		v.acceptFloat(*this);
 		return v;
@@ -110,7 +112,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	Int::Int(std::string num, Ast::Location loc) : ValExpr{ loc }, val{ std::stoi(num) } {}
+	Int::Int(std::string num, Ast::Location loc) : Literal{ loc }, val{ std::stoi(num) } {}
 	Visitor& Int::visit(Visitor& v) {
 		v.acceptInt(*this);
 		return v;
@@ -121,7 +123,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	Char::Char(char c, Ast::Location loc) : ValExpr{ loc }, val{ c } {}
+	Char::Char(char c, Ast::Location loc) : Literal{ loc }, val{ c } {}
 	Visitor& Char::visit(Visitor& v) {
 		v.acceptChar(*this);
 		return v;
@@ -748,15 +750,14 @@ namespace spero::compiler::ast {
 	}
 
 	BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, ptr<QualifiedBinding> op, Ast::Location loc)
-		: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ std::move(op) } {}
+		: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ op->elems.back()->name } {}
 	Visitor& BinOpCall::visit(Visitor& v) {
 		v.acceptBinOpCall(*this);
 		return v;
 	}
 	DEF_PRINTER(BinOpCall) {
-		s << std::string(buf, ' ') << context << "ast.BinOpCall (";
-		ValExpr::prettyPrint(s, buf);
-		op->prettyPrint(s << '\n', buf + 2, "op=");
+		s << std::string(buf, ' ') << context << "ast.BinOpCall (op=" << op;
+		ValExpr::prettyPrint(s << ", ", buf);
 		lhs->prettyPrint(s << '\n', buf + 2, "lhs=");
 		return rhs->prettyPrint(s << '\n', buf + 2, "rhs=");
 	}
