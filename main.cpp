@@ -56,6 +56,10 @@ int main(int argc, char* argv[]) {
 						std::cout << "Compilation Failed\n";
 						continue;
 					}
+					
+					std::ifstream out{ "out.s" };
+					while (std::getline(out, input))
+						std::cout << input << '\n';
 
 				} else
 					std::tie(succ, res) = compiler::parse(input, state);

@@ -32,7 +32,7 @@ namespace spero::compiler::gen {
 
 	void AsmGenerator::acceptByte(ast::Byte& b) {
 		out << "\txor %" << curr_reg << ", %" << curr_reg << "\n";
-		issueStore(out, b.val, curr_reg);
+		issueStore(out, b.val, "%" + curr_reg);
 	}
 
 	void AsmGenerator::acceptFloat(ast::Float& f) {
@@ -46,7 +46,7 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::acceptInt(ast::Int& i) {
-		issueStore(out, i.val, curr_reg);
+		issueStore(out, i.val, "%" + curr_reg);
 	}
 
 	void AsmGenerator::acceptChar(ast::Char& c) {
@@ -88,30 +88,27 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::acceptBinOpCall(ast::BinOpCall& b) {
-		auto left_reg = (curr_reg == "eax") ? "ebx" : "eax";
-		auto save_reg = curr_reg;
-
+		// Evaluate the left hand and store it on the stack
 		b.lhs->visit(*this);
+		out << "\tpush %eax\n";
 		
-		curr_reg = left_reg;
+		// Evaluate the right hand
 		b.rhs->visit(*this);
 
-		curr_reg = save_reg;
 
 		if (b.op == "+") {
-			out << "\tadd %";
+			out << "\tadd (%esp), %" << curr_reg << "\n\tadd $4, %esp\n";
 
 		} else if (b.op == "-") {
-			out << "\tsub %";
+			out << "\tsub %" << curr_reg << ", (%esp)\n\tpop %" << curr_reg << '\n';
 
 		} else if (b.op == "*") {
-			out << "\timul %";
+			out << "\timul (%esp), %" << curr_reg << "\n\tadd $4, %esp\n";
 
 		} else if (b.op == "/") {
-			out << "\tcdq\n\tidiv %";
+			out << "\tcdq\n\tidiv (%esp), %" << curr_reg << "\n\tadd $4, %esp\n";
 		}
 
-		out << left_reg << ", %" << curr_reg << '\n';
 	}
 
 	void AsmGenerator::acceptVarAssign(ast::VarAssign& v) {
