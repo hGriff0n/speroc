@@ -82,14 +82,13 @@ yaml.each do |name, tests|
 
 
             # Compile the program and report errors (if any)
+            puts "Compilation: #{compile['exec'].split('/')[-1]}"
             IO.popen(speroc_cmd) do |io|
 
                 # Capture any compilation errors and close the process
                 compile['out'] = io.readlines
                 io.close
                 compile[:success] = $?.exitstatus == 0
-
-                puts "Compilation: #{compile['out'][0]}"
 
                 # If compilation failed when it should have succeeded
                 if !compile[:success] && !compile['fail']

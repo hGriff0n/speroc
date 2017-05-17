@@ -8,9 +8,10 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  Basic Operator Assembly (for int types)
-  x86 Register Analysis
+  x86 Register Analysis/Instruction Issuance
     Improve register allocation
+	Add in flag/tracking (see when a flag got set and match it to the register/value)
+	Add in instruction issuance functions
   Basic Variables
   More Basic Types
   Extending Operators for basic types

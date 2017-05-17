@@ -100,6 +100,8 @@ namespace spero::compiler::gen {
 			out << "\tadd (%esp), %" << curr_reg << "\n\tadd $4, %esp\n";
 
 		} else if (b.op == "-") {
+			// Sub's a bit special because of the order of operations
+			// This gets performed on the "on-stack" value, so I need to pop the stack to fix
 			out << "\tsub %" << curr_reg << ", (%esp)\n\tpop %" << curr_reg << '\n';
 
 		} else if (b.op == "*") {
@@ -109,6 +111,20 @@ namespace spero::compiler::gen {
 			out << "\tcdq\n\tidiv (%esp), %" << curr_reg << "\n\tadd $4, %esp\n";
 		}
 
+	}
+
+	void AsmGenerator::acceptUnaryOpApp(ast::UnaryOpApp& u) {
+		// Evaluate the expression
+		u.expr->visit(*this);
+
+		switch (u.op) {
+			case ast::UnaryType::MINUS:
+				out << "\neg %" << curr_reg << '\n';
+				break;
+			case ast::UnaryType::NOT:
+				out << "\ttest %" << curr_reg << ", %" << curr_reg << '\n';				// If the 'zero flag' isn't set yet
+				out << "\tsetz %" << curr_reg << '\n';									// If the 'zero flag' is set
+		}
 	}
 
 	void AsmGenerator::acceptVarAssign(ast::VarAssign& v) {

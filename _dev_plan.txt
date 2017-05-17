@@ -1,4 +1,9 @@
 Compiler
+  Internals
+    Develop multiple irs to complement/replace ast
+	  Control Flow Graph
+	  SSA
+
   Interface
     Build up the command line interface (flags and everything)
 	  Add in an argument to turn warnings into errors (gradiated)
@@ -39,8 +44,7 @@ Annotations
 
 Operators
   Basic (direct to asm) for basic (number) types
-    Needs: Implementation of the AsmGenerator, Basic Register Analysis
-	Be sure to implement binary and unary operations
+	Improve the process of register allocation
 
   Full Binary Operations
     Convert operators from direct codegen to method calls

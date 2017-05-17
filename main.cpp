@@ -57,6 +57,7 @@ int main(int argc, char* argv[]) {
 						continue;
 					}
 					
+					// Print out the generated assembly
 					std::ifstream out{ "out.s" };
 					while (std::getline(out, input))
 						std::cout << input << '\n';
