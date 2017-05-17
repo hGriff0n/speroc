@@ -1,12 +1,12 @@
 #pragma once
 
 #include "parser/visitor.h"
+#include "AsmEmitter.h"
 
 namespace spero::compiler::gen {
 
 	class AsmGenerator : public ast::Visitor {
-		std::ostream& out;
-		std::string curr_reg;
+		AsmEmitter assm;
 
 		public:
 			AsmGenerator(std::ostream&);

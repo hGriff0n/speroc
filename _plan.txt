@@ -9,14 +9,19 @@ Current Project State
 
 Current Project Plan
   x86 Register Analysis/Instruction Issuance
-    Improve register allocation
-	Add in flag/tracking (see when a flag got set and match it to the register/value)
-	Add in instruction issuance functions
+	Assembly Emitter structure to handle instruction emitting in code
+	  Allow for querying of which cpu flags are set/not (particularly for matching to register/value)
+	  Improve the naming of arguments
   Basic Variables
-  More Basic Types
-  Extending Operators for basic types
-  Type Inference
+    variable tracking structure (eventually move to analysis stages ???)
+  Improving Assembly generation for operators
+    Perform direct usage if possible (ie. "3 + 4" -> "mov 3, eax;add 4, eax;" not "mov 3, eax; push eax; mov 4, eax; add (esp), eax; add 4, esp;")
+	  Also directly utilizes stack locations for adding/storing variables
   Basic Mutability Tracking
+  Basic Types
+    value/variable => type
+  Type Inference
+    explicit annotations within the ast
   Basic Function Definition
   Basic Function Calling
   Error/Exception handling and reporting

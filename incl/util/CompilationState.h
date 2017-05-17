@@ -16,9 +16,6 @@ namespace spero::compiler::ast {
 
 namespace spero::parser {
 	using Stack = std::deque<compiler::ptr<compiler::ast::Ast>>;
-
-	// Helper function to print out the ast
-	std::ostream& printAST(std::ostream&, const Stack&);
 }
 
 

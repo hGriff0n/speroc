@@ -3,38 +3,21 @@
 #include "pegtl/analyze.hh"
 #include "codegen/AsmGenerator.h"
 
-namespace spero::parser {
-	std::ostream& printAST(std::ostream& s, const Stack& stack) {
-		for (const auto& node : stack)
-			if (node) node->prettyPrint(s, 0) << '\n';
-			else s << "nullptr\n";
-
-			return s << '\n';
-	}
-}
-
-namespace spero::util {
-	std::string escape(std::string s) {
-		return s;
-	}
+std::string spero::util::escape(std::string s) {
+	return s;
 }
 
 namespace spero::compiler {
 	using namespace parser;
 
-	std::tuple<bool, Stack> parse_impl(std::string input, CompilationState& state, bool is_filename) {
+	template<class Fn>
+	std::tuple<bool, Stack> parse_impl(Fn&& parse) {
 		// Setup parser state
 		Stack ast;
 		ast.emplace_back(compiler::ast::Sentinel{});
 
-		// TODO: Report starting parsing run
-
 		// Perform a parsing run, switching on whether the input is a file or not
-		auto succ = is_filename
-			? pegtl::parse_file<grammar::program, actions::action, control::control>(input, ast)
-			: pegtl::parse_string<grammar::program, actions::action, control::control>(input, "me", ast);
-
-		// TODO: Report ending parsing run
+		auto succ = parse(ast);
 
 		// Maintain the ast stack invariants (no nullptr [at 0], non-empty)
 		ast.pop_front();
@@ -45,17 +28,19 @@ namespace spero::compiler {
 	}
 
 	std::tuple<bool, Stack> parse(std::string input, CompilationState& state) {
-		return parse_impl(input, state, false);
+		return parse_impl([&input](Stack& ast) { return pegtl::parse_string<grammar::program, actions::action, control::control>(input, "me", ast); });
 	}
 
 	std::tuple<bool, Stack> parseFile(std::string file, CompilationState& state) {
-		return parse_impl(file, state, true);
+		return parse_impl([&file](Stack& ast) { return pegtl::parse_file<grammar::program, actions::action, control::control>(file, ast); });
 	}
 
+
 	// Perform the various analysis stages
-	IR_t analyze(spero::parser::Stack& s, CompilationState& state) {
+	IR_t analyze(spero::parser::Stack s, CompilationState& state, bool& failed) {
 		return std::move(s);
 	}
+
 
 	// Perform the final compilation stages (produces direct assembly code)
 	void codegen(IR_t& s, std::string in, std::string out, CompilationState& state) {

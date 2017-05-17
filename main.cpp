@@ -15,6 +15,9 @@
 template <class Stream>
 Stream& getMultiline(Stream&, std::string&);
 
+// Helper function to print out the ast structure
+std::ostream& printAST(std::ostream& s, const spero::parser::Stack&);
+
 
 /*
  * Run the compiler and it's command-line interface
@@ -88,20 +91,22 @@ int main(int argc, char* argv[]) {
 
 
 /*
- * Implementation of compilation function 
+ * Implementation of compilation function
+ * Defined in 'main.cpp' for reasons
  */
 bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack) {
 	using namespace spero;
 
 	// TODO: Initialize timing and other compilation logging structures
-	bool succ;
+	// TODO: Move to a more explicit check (ie. how many errors does the structure have?)
+	bool failed;
 
 
 	/*
 	 * Perform parsing and initial recognization checks
 	 */
 	state.logTime();
-	std::tie(succ, stack) = compiler::parseFile(state.files()[0], state);
+	std::tie(failed, stack) = compiler::parseFile(state.files()[0], state);
 	state.logTime();
 
 
@@ -111,14 +116,14 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	 * Don't mark this as a separate "phase" for timing purposes
 	 * The sub-phases perform their own timing passes
 	 */
-	auto ir = compiler::analyze(stack, state);
+	auto ir = compiler::analyze(std::move(stack), state, failed);
 
 	
 	/*
 	 * Emit final codegen processes
 	 *   Note: If control reaches here, compilation should not fail
 	 */
-	if (!succ) {
+	if (!failed) {
 		state.logTime();
 		compiler::codegen(ir, state.files()[0], "out.s", state);
 		state.logTime();
@@ -126,7 +131,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 
 		// Forward creation of the actual executable to some other compiler
 		state.logTime();
-		succ = system((ASM_COMPILER" out.s -o " + state.output()).c_str());
+		failed = system((ASM_COMPILER" out.s -o " + state.output()).c_str());
 		state.logTime();
 
 
@@ -136,7 +141,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 			std::remove("out.s");
 	}
 
-	return succ;
+	return failed;
 }
 
 
@@ -153,4 +158,13 @@ Stream& getMultiline(Stream& in, std::string& s) {
 	}
 
 	return in;
+}
+
+
+std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
+	for (const auto& node : stack)
+		if (node) node->prettyPrint(s, 0) << '\n';
+		else s << "nullptr\n";
+
+		return s << '\n';
 }

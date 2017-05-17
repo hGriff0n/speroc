@@ -1,21 +1,9 @@
 #include "codegen/AsmGenerator.h"
 #include "parser/utils.h"
 
-/*
- * Utility function to simplify emission of assembly instructions in several cases
- */
-template<class T, class=std::enable_if_t<std::is_integral_v<T> && !std::is_convertible_v<T, std::string>>>
-std::ostream& issueStore(std::ostream& s, const T& val, std::string loc) {
-	return s << "\tmov $" << val << ", " << loc << '\n';
-}
-std::ostream& issueStore(std::ostream& s, std::string val, std::string loc) {
-	return s << "\tmov " << val << ", " << loc << '\n';
-}
-
-
 namespace spero::compiler::gen {
-	AsmGenerator::AsmGenerator(std::ostream& s) : out{ s }, curr_reg{ "eax" } {}
-
+	AsmGenerator::AsmGenerator(std::ostream& s) : assm{ s } {}
+	
 
 	// Base Nodes
 	void AsmGenerator::accept(ast::Ast&) {}
@@ -23,34 +11,32 @@ namespace spero::compiler::gen {
 
 	// Literals
 	void AsmGenerator::acceptBool(ast::Bool& b) {
+		Register eax{ "eax" };
 		if (b.val)
-			issueStore(out, b.val, "%al");
+			assm.mov(b.val, eax);
 
 		else
-			out << "\txor %" << curr_reg << ", %" << curr_reg << '\n';
+			assm._xor(eax, eax);
 	}
 
 	void AsmGenerator::acceptByte(ast::Byte& b) {
-		out << "\txor %" << curr_reg << ", %" << curr_reg << "\n";
-		issueStore(out, b.val, "%" + curr_reg);
+		Register eax{ "eax" };
+		assm._xor(eax, eax);
+		assm.mov(b.val, eax);
 	}
 
 	void AsmGenerator::acceptFloat(ast::Float& f) {
-		/* clang -O1
-		.LCPI5_0:
-			.quad   4601778099247172813     # double 0.45000000000000001
-		ret_float():                          # @ret_float()
-			movsd   xmm0, qword ptr [rip + .LCPI5_0] # xmm0 = mem[0],zero
-			ret
-		*/
+		
 	}
 
 	void AsmGenerator::acceptInt(ast::Int& i) {
-		issueStore(out, i.val, "%" + curr_reg);
+		Register eax{ "eax" };
+		assm.mov(i.val, eax);
 	}
 
 	void AsmGenerator::acceptChar(ast::Char& c) {
-		issueStore(out, c.val, "%al");
+		Register al{ "al" };
+		assm.mov(c.val, al);
 	}
 
 
@@ -72,71 +58,103 @@ namespace spero::compiler::gen {
 
 	// Statements
 	void AsmGenerator::acceptFnBody(ast::FnBody& f) {
+		Register ebp{ "ebp" }, esp{ "esp" }, eax{ "eax" };
+
 		// Print function enter code
-		out << "LFB0:\n"
-			<< "\tpush %ebp\n"
-			<< "\tmov %esp, %ebp\n"
-			<< "\tpush %eax\n";
+		assm.emitLabel("LFB0");
+		assm.push(ebp);
+		assm.mov(esp, ebp);
+		assm.push(eax);
 
 		// Print the body
 		f.body->visit(*this);
 
 		// Print function tail/endlog
-		out << "\tleave\n"
-			<< "\tret\n"
-			<< "LFE0:\n";
+		assm.leave();
+		assm.ret();
+		assm.emitLabel("LFE0");
 	}
 
 	void AsmGenerator::acceptBinOpCall(ast::BinOpCall& b) {
-		// Evaluate the left hand and store it on the stack
+		Register eax{ "eax" };
+		Register esp{ "esp" };
+
+		// Evaluate the left side and store it on the stack
 		b.lhs->visit(*this);
-		out << "\tpush %eax\n";
-		
-		// Evaluate the right hand
+		assm.push(eax);
+
+		// Evaluate the right side
 		b.rhs->visit(*this);
 
-
+		// Perform the operator call
 		if (b.op == "+") {
-			out << "\tadd (%esp), %" << curr_reg << "\n\tadd $4, %esp\n";
+			assm.add(esp.at(), eax);
+			assm.add(4, esp);
 
 		} else if (b.op == "-") {
-			// Sub's a bit special because of the order of operations
-			// This gets performed on the "on-stack" value, so I need to pop the stack to fix
-			out << "\tsub %" << curr_reg << ", (%esp)\n\tpop %" << curr_reg << '\n';
+			assm.sub(eax, esp.at());
+			assm.pop(eax);
 
 		} else if (b.op == "*") {
-			out << "\timul (%esp), %" << curr_reg << "\n\tadd $4, %esp\n";
+			assm.imul(esp.at(), eax);
+			assm.add(4, esp);
 
 		} else if (b.op == "/") {
-			out << "\tcdq\n\tidiv (%esp), %" << curr_reg << "\n\tadd $4, %esp\n";
-		}
+			assm.cdq();
+			assm.idiv(esp.at(), eax);
+			assm.add(4, esp);
 
+		} else if (b.op == "==") {
+			assm.cmp(eax, esp.at());
+			assm.setz(eax);
+			assm.add(4, esp);
+
+		} else if (b.op == "<") {
+			assm.cmp(eax, esp.at());
+			assm.setl(eax);
+			assm.add(4, esp);
+		
+		} else if (b.op == ">") {
+
+		} else if (b.op == "!=") {
+			
+		} else if (b.op == "<=") {
+
+		} else if (b.op == ">=") {
+
+		}
 	}
 
 	void AsmGenerator::acceptUnaryOpApp(ast::UnaryOpApp& u) {
 		// Evaluate the expression
 		u.expr->visit(*this);
 
+		Register eax{ "eax" };
+
+		// Perform the operator call
+		// TODO: Perform type-based function lookup
 		switch (u.op) {
 			case ast::UnaryType::MINUS:
-				out << "\neg %" << curr_reg << '\n';
+				assm.neg(eax);
 				break;
 			case ast::UnaryType::NOT:
-				out << "\ttest %" << curr_reg << ", %" << curr_reg << '\n';				// If the 'zero flag' isn't set yet
-				out << "\tsetz %" << curr_reg << '\n';									// If the 'zero flag' is set
+				if (!assm.wasZeroSet())				// Insert a 'test' instruction if the 'zero flag' isn't set
+					assm.test(eax, eax);
+
+				assm.setz(eax);
 		}
 	}
 
 	void AsmGenerator::acceptVarAssign(ast::VarAssign& v) {
 		// Print out function data
-		out << "\t.p2align 4, 0x90\n"
-			<< "\t.globl _main\n"								// This is rather hard to get at
-			<< "\t.def _main; .scl 2; .type 32; .endef\n"
-			<< "_main:\n";
+		assm.emit("\t.p2align 4, 0x90");
+		assm.emit("\t.globl _main\n");
+		assm.emit("\t.def _main; .scl 2; .type 32; .endef\n");
+		assm.emitLabel("_main");
 
 		v.expr->visit(*this);
 
 		// Print function ident information
-		out << "\t.ident \"speroc: 0.0.1 (Windows 2016)\"";
+		assm.emit("\t.ident \"speroc: 0.0.15 (Windows 2017)\"");
 	}
 }
