@@ -9,9 +9,7 @@ Current Project State
 
 Current Project Plan
   x86 Register Analysis/Instruction Issuance
-	Assembly Emitter structure to handle instruction emitting in code
-	  Allow for querying of which cpu flags are set/not (particularly for matching to register/value)
-	  Improve the naming of arguments
+	Look at throwing exceptions if AsmEmitter tries to emit an instruction that can't be done properly
   Basic Variables
     variable tracking structure (eventually move to analysis stages ???)
   Improving Assembly generation for operators

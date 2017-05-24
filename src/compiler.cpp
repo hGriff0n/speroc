@@ -21,7 +21,9 @@ namespace spero::compiler {
 
 		// Maintain the ast stack invariants (no nullptr [at 0], non-empty)
 		ast.pop_front();
-		if (!ast.size()) ast.emplace_back(std::make_unique<compiler::ast::Ast>(compiler::ast::Ast::Location{}));
+		if (!ast.size()) {
+			ast.emplace_back(std::make_unique<compiler::ast::Ast>(compiler::ast::Ast::Location{}));
+		}
 
 		// Return the completed ast
 		return std::make_tuple(!succ, std::move(ast));
@@ -53,8 +55,9 @@ namespace spero::compiler {
 		auto visitor = spero::compiler::gen::AsmGenerator{ o };
 
 		// Print everything directly to the file
-		for (const auto& node : s)
+		for (const auto& node : s) {
 			node->visit(visitor);
+		}
 
 		o << '\n';
 	}

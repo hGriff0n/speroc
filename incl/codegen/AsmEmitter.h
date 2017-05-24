@@ -24,50 +24,57 @@ namespace spero::compiler::gen {
 			AsmEmitter(std::ostream&);
 
 			// Query whether the last instruction may have set one of the flags
-			bool wasCarrySet();
-			bool wasParitySet();
-			bool wasZeroSet();
-			bool wasSignSet();
-			bool wasOverflowSet();
+			bool carrySet();
+			bool paritySet();
+			bool zeroSet();
+			bool signSet();
+			bool overflowSet();
 
 			// Labels
 			void emit(std::string&&);
 			void emitLabel(std::string&&);
 
 			// Push/pop instructions
-			void push(Register&);
-			void pop();
-			void pop(Register&);
+			void push(const Register&);
+			void popByte(size_t);					// Need this to work with differently sized types
+			void pop(const Register&);
 
 			// Mov instructions
-			void mov(Register&, Register&);
-			void mov(int, Register&);
+			void mov(const Register&, const Register&);
+			void mov(int, const Register&);
 		
 			// Add instructions
 			void add(Memory&, Register&);
 			void add(int, Register&);
 
 			// Sub instructions
-			void sub(Register&, Memory&);
-			void neg(Register&);
+			void sub(const Register&, const Memory&);
+			void neg(const Register&);
 
 			// Mul instructions
-			void imul(Memory&, Register&);
+			void imul(const Memory&, const Register&);
 			
 			// Div instructions
-			void idiv(Memory&, Register&);
+			void idiv(const Memory&, const Register&);
 			void cdq();
 
 			// Logical instructions
-			void _xor(Register&, Register&);
+			void _xor(const Register&, const Register&);
+			void not(const Register&);
+			void _or(const Memory&, const Register&);
 
 			// Test/Compare instructions
-			void test(Register&, Register&);
-			void cmp(Register&, Memory&);
+			void test(const Register&, const Register&);
+			void cmp(const Register&, const Memory&);
+			void cmp(const Memory&, const Register&);
 
 			// Set instructions
-			void setz(Register&);
-			void setl(Register&);
+			void setz(const Register&);					// Look into adding exception if the ZF flag isn't set
+			void setnz(const Register&);
+			void setl(const Register&);
+			void setl(const Memory&);
+			void setg(const Register&);
+			void setle(const Register&);
 
 			// Control flow
 			void ret();

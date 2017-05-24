@@ -47,10 +47,10 @@ int main(int argc, char* argv[]) {
 		while (std::cout << "> " && getMultiline(std::cin, input)) {
 			if (input == ":q") break;
 
-			bool succ;
-			parser::Stack res;
-
 			try {
+				bool succ;
+				parser::Stack res;
+
 				if (input.substr(0, 2) == ":c") {
 					if (state.files().size() == 0) state.files().push_back("");
 					state.files()[0] = input.substr(3);
@@ -62,11 +62,13 @@ int main(int argc, char* argv[]) {
 					
 					// Print out the generated assembly
 					std::ifstream out{ "out.s" };
-					while (std::getline(out, input))
+					while (std::getline(out, input)) {
 						std::cout << input << '\n';
+					}
 
-				} else
+				} else {
 					std::tie(succ, res) = compiler::parse(input, state);
+				}
 
 				std::cout << "Parsing Succeeded: " << (succ ? "false" : "true") << '\n';
 				printAST(std::cout, res);
@@ -118,7 +120,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	 */
 	auto ir = compiler::analyze(std::move(stack), state, failed);
 
-	
+
 	/*
 	 * Emit final codegen processes
 	 *   Note: If control reaches here, compilation should not fail
@@ -137,8 +139,9 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 
 		// Delete the temporary file
 		bool del_files = state.deleteTemporaryFiles();
-		if (state.deleteTemporaryFiles())
+		if (state.deleteTemporaryFiles()) {
 			std::remove("out.s");
+		}
 	}
 
 	return failed;
@@ -148,11 +151,15 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 template <class Stream>
 Stream& getMultiline(Stream& in, std::string& s) {
 	std::getline(in, s);
-	if (s == ":q") return in;
+	if (s == ":q") {
+		return in;
+	}
 
 	std::string tmp;
 	while (std::getline(in, tmp)) {
-		if (tmp == "") return in;
+		if (tmp == "") {
+			return in;
+		}
 
 		s += "\n" + tmp;
 	}
@@ -163,8 +170,11 @@ Stream& getMultiline(Stream& in, std::string& s) {
 
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
 	for (const auto& node : stack)
-		if (node) node->prettyPrint(s, 0) << '\n';
-		else s << "nullptr\n";
+		if (node) {
+			node->prettyPrint(s, 0) << '\n';
+		} else {
+			s << "nullptr\n";
+		}
 
 		return s << '\n';
 }
