@@ -9,18 +9,14 @@ namespace spero::compiler::gen::arch {
 	struct Literal;
 
 	class Operand {
-		const char id;
+		protected:
+			Operand(char);
+			const char id;
 
 		public:
-			Operand(char);
+			enum { REG, MEM, LIT };
 
-			enum {
-				REG,
-				MEM,
-				LIT
-			};
-
-			// This is very hacky
+			// This is very hacky, but may be necessary
 			template<class Stream>
 			friend Stream& operator<<(Stream& s, const Operand& op) {
 				switch (op.id) {
@@ -45,24 +41,26 @@ namespace spero::compiler::gen::arch {
 	struct Memory : Operand {
 		Register& reg;
 		int offset;
-
 		Memory(Register&, int);
 	};
 
 	struct Register : Operand {
 		std::string name;
-
 		Register(std::string);
-
 		Memory at(int=0);
 	};
 
 	struct Literal : Operand {
 		int val;
-
 		Literal(int);
 	};
 
+
+	// An enable_if template to ensure that operand types are valid
+	//template<class Op>
+	//using is_op_t = std::enable_if_t<std::is_base_of_v<Operand, Op>>;
+	//template<class L, class R>
+	//using if_asm_pair_t = std::enable_if_t<std::is_base_of_v<Operand, L> && std::is_base_of_v<Operand, R>>;
 
 
 }

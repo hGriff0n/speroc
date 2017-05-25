@@ -25,11 +25,11 @@ namespace spero::compiler::gen {
 		return flags[ZF];
 	}
 
-	void AsmEmitter::emit(std::string&& str) {
+	void AsmEmitter::write(std::string&& str) {
 		out << str << '\n';
 	}
 
-	void AsmEmitter::emitLabel(std::string&& label) {
+	void AsmEmitter::label(std::string&& label) {
 		out << label << ":\n";
 	}
 
@@ -58,20 +58,20 @@ namespace spero::compiler::gen {
 		flags.reset();
 	}
 
-	void AsmEmitter::mov(int num, const Register& dest) {
-		out << "\tmov $" << num << ", " << dest << '\n';
+	void AsmEmitter::mov(Literal num, const Register& dest) {
+		out << "\tmov " << num << ", " << dest << '\n';
 		
 		flags.reset();
 	}
 
-	void AsmEmitter::add(Memory& m, Register& r) {
-		out << "\tadd " << m.offset << "(%" << m.reg.name << "), %" << r.name << '\n';
+	void AsmEmitter::add(const Memory& src, const Register& dest) {
+		out << "\tadd " << src << ", " << dest << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::add(int num, Register& r) {
-		out << "\tadd $" << num << ", %" << r.name << '\n';
+	void AsmEmitter::add(Literal num, const Register& dest) {
+		out << "\tadd " << num << ", " << dest << '\n';
 
 		flags |= ALL_FLAGS;
 	}

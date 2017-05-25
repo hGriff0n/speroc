@@ -8,8 +8,6 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  x86 Register Analysis/Instruction Issuance
-	Look at throwing exceptions if AsmEmitter tries to emit an instruction that can't be done properly
   Basic Variables
     variable tracking structure (eventually move to analysis stages ???)
   Improving Assembly generation for operators
@@ -26,4 +24,7 @@ Current Project Plan
   Improve system benchmark collection
   Improve command line interface collection
   ...
-  Converting Operators into function calls [ <- Needs mutability checking and references ]
+  Converting Operators into function calls [ <- Needs mutability checking and references
+
+
+# Note: Can take template+static_assert, or protected+public approaches to restrict allowable combinations

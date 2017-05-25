@@ -2,7 +2,7 @@
 #include "parser/utils.h"
 
 namespace spero::compiler::gen {
-	AsmGenerator::AsmGenerator(std::ostream& s) : assm{ s } {}
+	AsmGenerator::AsmGenerator(std::ostream& s) : emit{ s } {}
 	
 
 	// Base Nodes
@@ -12,31 +12,32 @@ namespace spero::compiler::gen {
 	// Literals
 	void AsmGenerator::acceptBool(ast::Bool& b) {
 		Register eax{ "eax" };
-		if (b.val)
-			assm.mov(b.val, eax);
+		if (b.val) {
+			emit.mov(b.val, eax);
 
-		else
-			assm._xor(eax, eax);
+		} else {
+			emit._xor(eax, eax);
+		}
 	}
 
 	void AsmGenerator::acceptByte(ast::Byte& b) {
 		Register eax{ "eax" };
-		assm._xor(eax, eax);
-		assm.mov(b.val, eax);
+		emit._xor(eax, eax);
+		emit.mov(b.val, eax);
 	}
 
 	void AsmGenerator::acceptFloat(ast::Float& f) {
-		
+		//
 	}
 
 	void AsmGenerator::acceptInt(ast::Int& i) {
 		Register eax{ "eax" };
-		assm.mov(i.val, eax);
+		emit.mov(i.val, eax);
 	}
 
 	void AsmGenerator::acceptChar(ast::Char& c) {
 		Register al{ "al" };
-		assm.mov(c.val, al);
+		emit.mov(c.val, al);
 	}
 
 
@@ -51,8 +52,9 @@ namespace spero::compiler::gen {
 
 	// Control
 	void AsmGenerator::acceptBlock(ast::Block& b) {
-		for (auto& stmt : b.elems)
+		for (auto& stmt : b.elems) {
 			stmt->visit(*this);
+		}
 	}
 
 
@@ -61,18 +63,18 @@ namespace spero::compiler::gen {
 		Register ebp{ "ebp" }, esp{ "esp" }, eax{ "eax" };
 
 		// Print function enter code
-		assm.emitLabel("LFB0");
-		assm.push(ebp);
-		assm.mov(esp, ebp);
-		assm.push(eax);
+		emit.label("LFB0");
+		emit.push(ebp);
+		emit.mov(esp, ebp);
+		emit.push(eax);
 
 		// Print the body
 		f.body->visit(*this);
 
 		// Print function tail/endlog
-		assm.leave();
-		assm.ret();
-		assm.emitLabel("LFE0");
+		emit.leave();
+		emit.ret();
+		emit.label("LFE0");
 	}
 
 	void AsmGenerator::acceptBinOpCall(ast::BinOpCall& b) {
@@ -81,47 +83,60 @@ namespace spero::compiler::gen {
 
 		// Evaluate the left side and store it on the stack
 		b.lhs->visit(*this);
-		assm.push(eax);
+		emit.push(eax);
 
 		// Evaluate the right side
 		b.rhs->visit(*this);
 
 		// Perform the operator call
 		if (b.op == "+") {
-			assm.add(esp.at(), eax);
-			assm.add(4, esp);
+			emit.add(esp.at(), eax);
+			emit.popByte(1);
 
 		} else if (b.op == "-") {
-			assm.sub(eax, esp.at());
-			assm.pop(eax);
+			emit.sub(eax, esp.at());
+			emit.pop(eax);
 
 		} else if (b.op == "*") {
-			assm.imul(esp.at(), eax);
-			assm.add(4, esp);
+			emit.imul(esp.at(), eax);
+			emit.popByte(1);
 
 		} else if (b.op == "/") {
-			assm.cdq();
-			assm.idiv(esp.at(), eax);
-			assm.add(4, esp);
+			emit.cdq();
+			emit.idiv(esp.at(), eax);
+			emit.popByte(1);
 
 		} else if (b.op == "==") {
-			assm.cmp(eax, esp.at());
-			assm.setz(eax);
-			assm.add(4, esp);
+			emit.cmp(eax, esp.at());
+			emit.setz(eax);
+			emit.popByte(1);
 
 		} else if (b.op == "<") {
-			assm.cmp(eax, esp.at());
-			assm.setl(eax);
-			assm.add(4, esp);
+			emit.cmp(eax, esp.at());
+			emit.setl(eax);
+			emit.popByte(1);
 		
 		} else if (b.op == ">") {
+			emit.cmp(esp.at(), eax);
+			emit.setl(eax);
+			//emit.cmp(eax, esp.at());
+			//emit.setg(eax);
+			emit.popByte(1);
 
 		} else if (b.op == "!=") {
-			
+			emit.cmp(eax, esp.at());
+			emit.setnz(eax);
+			emit.popByte(1);
+
 		} else if (b.op == "<=") {
+			emit.cmp(eax, esp.at());
+			emit.setle(eax);
+			emit.popByte(1);
 
 		} else if (b.op == ">=") {
-
+			emit.cmp(esp.at(), eax);
+			emit.setle(eax);
+			emit.popByte(1);
 		}
 	}
 
@@ -135,26 +150,26 @@ namespace spero::compiler::gen {
 		// TODO: Perform type-based function lookup
 		switch (u.op) {
 			case ast::UnaryType::MINUS:
-				assm.neg(eax);
+				emit.neg(eax);
 				break;
 			case ast::UnaryType::NOT:
-				if (!assm.wasZeroSet())				// Insert a 'test' instruction if the 'zero flag' isn't set
-					assm.test(eax, eax);
-
-				assm.setz(eax);
+				if (!emit.zeroSet()) {				// Insert a 'test' instruction if the 'zero flag' isn't set
+					emit.test(eax, eax);
+				}
+				emit.setz(eax);
 		}
 	}
 
 	void AsmGenerator::acceptVarAssign(ast::VarAssign& v) {
 		// Print out function data
-		assm.emit("\t.p2align 4, 0x90");
-		assm.emit("\t.globl _main\n");
-		assm.emit("\t.def _main; .scl 2; .type 32; .endef\n");
-		assm.emitLabel("_main");
+		emit.write("\t.p2align 4, 0x90");
+		emit.write("\t.globl _main\n");
+		emit.write("\t.def _main; .scl 2; .type 32; .endef\n");
+		emit.label("_main");
 
 		v.expr->visit(*this);
 
 		// Print function ident information
-		assm.emit("\t.ident \"speroc: 0.0.15 (Windows 2017)\"");
+		emit.write("\t.ident \"speroc: 0.0.15 (Windows 2017)\"");
 	}
 }

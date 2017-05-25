@@ -7,8 +7,15 @@
 namespace spero::compiler::gen {
 	using namespace arch;
 
+// Macros to simplify emitter definitions
 #define CPU_FLAG static constexpr size_t
 
+	/* TODO:
+     *   Adapt 'popByte' to consider differently sized types (dword v. qword)
+	 *   Add in ability to match register and value sizes (ie. %al can't hold INT_MAX)
+	 */
+
+	//[[ maybe_unused ]]
 	class AsmEmitter {
 		std::ostream& out;
 		std::bitset<5> flags;
@@ -31,21 +38,21 @@ namespace spero::compiler::gen {
 			bool overflowSet();
 
 			// Labels
-			void emit(std::string&&);
-			void emitLabel(std::string&&);
+			void write(std::string&&);
+			void label(std::string&&);
 
 			// Push/pop instructions
 			void push(const Register&);
-			void popByte(size_t);					// Need this to work with differently sized types
+			void popByte(size_t);
 			void pop(const Register&);
 
 			// Mov instructions
 			void mov(const Register&, const Register&);
-			void mov(int, const Register&);
+			void mov(Literal, const Register&);
 		
 			// Add instructions
-			void add(Memory&, Register&);
-			void add(int, Register&);
+			void add(Literal, const Register&);
+			void add(const Memory&, const Register&);
 
 			// Sub instructions
 			void sub(const Register&, const Memory&);
@@ -69,7 +76,7 @@ namespace spero::compiler::gen {
 			void cmp(const Memory&, const Register&);
 
 			// Set instructions
-			void setz(const Register&);					// Look into adding exception if the ZF flag isn't set
+			void setz(const Register&);
 			void setnz(const Register&);
 			void setl(const Register&);
 			void setl(const Memory&);

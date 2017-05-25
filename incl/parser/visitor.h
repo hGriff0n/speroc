@@ -14,6 +14,7 @@ namespace spero::compiler::ast {
 	 *   accept - method that is called if an overload for the AST type is not provided
 	 *       in the child type. This method must be provided to instantiate the type
 	 */
+	//[[ maybe_unused ]]
 	struct Visitor {
 		inline virtual void accept(Ast& t) =0;
 

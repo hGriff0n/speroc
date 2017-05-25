@@ -57,8 +57,9 @@ namespace spero::compiler::ast {
 		return v;
 	}
 	DEF_PRINTER(Stmt) {
-		for (auto&& a : annots)
+		for (auto&& a : annots) {
 			a->prettyPrint(s << '\n', buf + 2);
+		}
 
 		return s;
 	}
@@ -152,10 +153,13 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(Tuple) {
 		s << std::string(buf, ' ') << context << "ast.Tuple" << elems.size() << " (";
-		for (auto&& e : elems)
+		for (auto&& e : elems) {
 			e->prettyPrint(s << '\n', buf + 2) << ",";
+		}
 
-		if (elems.size()) s << '\n' << std::string(buf, ' ');
+		if (elems.size()) {
+			s << '\n' << std::string(buf, ' ');
+		}
 		return s << ')';
 	}
 
@@ -166,10 +170,13 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(Array) {
 		s << std::string(buf, ' ') << context << "ast.Array" << elems.size() << " [type={}] [";
-		for (auto&& e : elems)
+		for (auto&& e : elems) {
 			e->prettyPrint(s << '\n', buf + 2) << ",";
+		}
 
-		if (elems.size()) s << '\n' << std::string(buf, ' ');
+		if (elems.size()) {
+			s << '\n' << std::string(buf, ' ');
+		}
 		return s << ']';
 	}
 
@@ -180,10 +187,13 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(Block) {
 		s << std::string(buf, ' ') << context << "ast.Block (size=" << elems.size() << ") {";
-		for (auto&& e : elems)
+		for (auto&& e : elems) {
 			e->prettyPrint(s << '\n', buf + 2);
+		}
 
-		if (elems.size()) s << '\n' << std::string(buf, ' ');
+		if (elems.size()) {
+			s << '\n' << std::string(buf, ' ');
+		}
 		return s << '}';
 	}
 
@@ -206,8 +216,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(QualifiedBinding) {
 		s << std::string(buf, ' ') << context << "ast.QualifiedBinding " << elems.front()->name;
 
-		for (auto p = std::begin(elems) + 1; p != std::end(elems); ++p)
+		for (auto p = std::begin(elems) + 1; p != std::end(elems); ++p) {
 			s << ":" << p->get()->name;
+		}
 
 		return s;
 	}
@@ -245,8 +256,9 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(AssignTuple) {
 		s << std::string(buf, ' ') << context << "ast.AssignTuple" << elems.size() << "(\n";
-		for (auto&& var : elems)
+		for (auto&& var : elems) {
 			var->prettyPrint(s, buf + 2) << '\n';
+		}
 		return s << std::string(buf, ' ') << ')';
 	}
 
@@ -266,8 +278,9 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(PTuple) {
 		s << std::string(buf, ' ') << context << "ast.PTuple" << elems.size() << " (capture=" << cap._to_string() << ") (\n";
-		for (auto&& p : elems)
+		for (auto&& p : elems) {
 			p->prettyPrint(s, buf + 2) << '\n';
+		}
 		return s << std::string(buf, ' ') << ')';
 	}
 
@@ -279,7 +292,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(PNamed) {
 		s << std::string(buf, ' ') << context << "ast.PNamed (capture=" << cap._to_string() << ')';
 		name->prettyPrint(s, 1);
-		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+		if (type) {
+			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}
 
 		return s;
 	}
@@ -293,7 +308,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(PAdt) {
 		s << std::string(buf, ' ') << context << "ast.PAdt";
 		name->prettyPrint(s, 1, "(type=") << ')';
-		if (args) args->prettyPrint(s << '\n', buf + 2);
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 2);
+		}
 		return s;
 	}
 
@@ -332,8 +349,9 @@ namespace spero::compiler::ast {
 
 		if (inst && inst->elems.size()) {
 			s << " [\n";
-			for (auto&& e : inst->elems)
+			for (auto&& e : inst->elems) {
 				e->prettyPrint(s, buf + 2) << '\n';
+			}
 			s << std::string(buf, ' ') << "]";
 		}
 
@@ -348,8 +366,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(TupleType) {
 		s << std::string(buf, ' ') << context << "ast.TupleType" << elems.size() << "(";
 
-		for (auto&& t : elems)
+		for (auto&& t : elems) {
 			t->prettyPrint(s << '\n', buf + 2);
+		}
 
 		return s << '\n' << std::string(buf, ' ') << ')';
 	}
@@ -376,8 +395,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(AndType) {
 		s << std::string(buf, ' ') << context << "ast.AndType";
 
-		for (auto&& t : types)
+		for (auto&& t : types) {
 			t->prettyPrint(s << '\n', buf + 2);
+		}
 
 		return s;
 	}
@@ -391,8 +411,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(OrType) {
 		s << std::string(buf, ' ') << context << "ast.OrType";
 
-		for (auto&& t : types)
+		for (auto&& t : types) {
 			t->prettyPrint(s << '\n', buf + 2);
+		}
 
 		return s;
 	}
@@ -407,7 +428,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Annotation name=";
 		name->prettyPrint(s, 0);
 
-		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 2, "args=");
+		}
 		return s;
 	}
 
@@ -421,7 +444,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.LocalAnnotation name=";
 		name->prettyPrint(s, 0);
 
-		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 2, "args=");
+		}
 		return s;
 	}
 
@@ -442,7 +467,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.TypeGeneric (rel=" << rel._to_string()
 		  << ", variance=" << variance._to_string() << ", variadic=" << variadic._to_string() << ')';
 		name->prettyPrint(s << '\n', buf + 2, "binding=");
-		if (impls && impls->types.size()) impls->prettyPrint(s << '\n', buf + 2, "type=");
+		if (impls && impls->types.size()) {
+			impls->prettyPrint(s << '\n', buf + 2, "type=");
+		}
 		return s;
 	}
 
@@ -455,8 +482,12 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(ValueGeneric) {
 		s << std::string(buf, ' ') << context << "ast.ValueGeneric (type=" << (type != nullptr) << ", val=" << (value != nullptr) << ')';
 		name->prettyPrint(s << '\n', buf + 2, "binding=");
-		if (value) value->prettyPrint(s << '\n', buf + 2, "def=");
-		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+		if (value) {
+			value->prettyPrint(s << '\n', buf + 2, "def=");
+		}
+		if (type) {
+			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}
 		return s;
 	}
 
@@ -469,7 +500,9 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(TypeExt) {
 		s << std::string(buf, ' ') << context << "ast.TypeExt";
-		if (cons) cons->prettyPrint(s << '\n', buf + 2, "cons=");
+		if (cons) {
+			cons->prettyPrint(s << '\n', buf + 2, "cons=");
+		}
 		return body->prettyPrint(s << '\n', buf + 2, "type=");
 	}
 
@@ -482,7 +515,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(Case) {
 		s << std::string(buf, ' ') << context << "ast.Case";
 		vars->prettyPrint(s << '\n', buf + 2, "pattern=");
-		if (if_guard) if_guard->prettyPrint(s << '\n', buf + 2, "if=");
+		if (if_guard) {
+			if_guard->prettyPrint(s << '\n', buf + 2, "if=");
+		}
 		return expr->prettyPrint(s << '\n', buf + 2, "expr=");
 	}
 
@@ -511,8 +546,9 @@ namespace spero::compiler::ast {
 
 			if (generic_inst && generic_inst->elems.size()) {
 				s << " [\n";
-				for (auto&& e : generic_inst->elems)
+				for (auto&& e : generic_inst->elems) {
 					e->prettyPrint(s, buf + 3) << '\n';
+				}
 				s << std::string(buf + 2, ' ') << ']';
 			}
 		}
@@ -528,8 +564,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(ImportGroup) {
 		s << std::string(buf, ' ') << context << "ast.ImportGroup (size=" << elems.size() << ')';
 
-		for (auto&& imp : elems)
+		for (auto&& imp : elems) {
 			imp->prettyPrint(s << '\n', buf + 2);
+		}
 
 		return s;
 	}
@@ -544,7 +581,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Adt (name=";
 		name->prettyPrint(s, 0) << ")";
 
-		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 2, "args=");
+		}
 		return s;
 	}
 
@@ -623,7 +662,9 @@ namespace spero::compiler::ast {
 			branch.second->prettyPrint(s << '\n', buf + 4, "body=");
 		}
 
-		if (else_branch) else_branch->prettyPrint(s << '\n', buf + 2, "else=");
+		if (else_branch) {
+			else_branch->prettyPrint(s << '\n', buf + 2, "else=");
+		}
 
 		return s;
 	}
@@ -640,8 +681,9 @@ namespace spero::compiler::ast {
 
 		switch_expr->prettyPrint(s << '\n', buf + 2, "switch=");
 
-		for (auto&& c : cases)
+		for (auto&& c : cases) {
 			c->prettyPrint(s << '\n', buf + 2, "case=");
+		}
 
 		return s;
 	}
@@ -661,7 +703,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Wait (";
 		ValExpr::prettyPrint(s, buf);
 
-		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		if (expr) {
+			expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		}
 		return s;
 	}
 
@@ -674,7 +718,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Break (";
 		ValExpr::prettyPrint(s, buf);
 
-		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		if (expr) {
+			expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		}
 		return s;
 	}
 
@@ -687,7 +733,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Continue (";
 		ValExpr::prettyPrint(s, buf);
 
-		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		if (expr) {
+			expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		}
 		return s;
 	}
 
@@ -700,7 +748,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Return (";
 		ValExpr::prettyPrint(s, buf);
 
-		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		if (expr) {
+			expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		}
 		return s;
 	}
 
@@ -713,7 +763,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Yield (";
 		ValExpr::prettyPrint(s, buf);
 
-		if (expr) expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		if (expr) {
+			expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		}
 		return s;
 	}
 
@@ -726,8 +778,12 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.FnBody (fwd=" << (forward ? "true, " : "false, ");
 		ValExpr::prettyPrint(s, buf);
 
-		if (ret) ret->prettyPrint(s << '\n', buf + 2, "returns=");
-		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
+		if (ret) {
+			ret->prettyPrint(s << '\n', buf + 2, "returns=");
+		}
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 2, "args=");
+		}
 		return body->prettyPrint(s << '\n', buf + 2, "expr=");
 	}
 
@@ -743,9 +799,15 @@ namespace spero::compiler::ast {
 		ValExpr::prettyPrint(s, buf) << '\n';
 		caller->prettyPrint(s, buf + 2, "caller=");
 
-		if (anon) anon->prettyPrint(s << '\n', buf + 2, "anon=");
-		if (args) args->prettyPrint(s << '\n', buf + 2, "args=");
-		if (inst) inst->prettyPrint(s << '\n', buf + 2, "inst=");
+		if (anon) {
+			anon->prettyPrint(s << '\n', buf + 2, "anon=");
+		}
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 2, "args=");
+		}
+		if (inst) {
+			inst->prettyPrint(s << '\n', buf + 2, "inst=");
+		}
 		return s;
 	}
 
@@ -773,8 +835,10 @@ namespace spero::compiler::ast {
 		ValExpr::prettyPrint(s, buf);
 
 		start->prettyPrint(s << '\n', buf + 2, "start=");
-		//if (step) step->prettyPrint(s << '\n', buf + 2, "step=");
-		if (stop) stop->prettyPrint(s << '\n', buf + 2, "stop=");
+		//if (step) { step->prettyPrint(s << '\n', buf + 2, "step="); }
+		if (stop) {
+			stop->prettyPrint(s << '\n', buf + 2, "stop=");
+		}
 		return s;
 	}
 
@@ -801,13 +865,16 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Interface (vis=" << vis._to_string() << ')';
 		name->prettyPrint(s << '\n', buf + 2, "var=");
 
-		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+		if (type) {
+			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}
 
 		if (generics.size()) {
 			s << '\n' << std::string(buf + 2, ' ') << "Generic Typing (size=" << generics.size() << ") [";
 
-			for (auto&& g : generics)
+			for (auto&& g : generics) {
 				g->prettyPrint(s << '\n', buf + 4);
+			}
 
 			s << '\n' << std::string(buf + 2, ' ') << ']';
 		}
@@ -825,13 +892,16 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.TypeAssign (vis=" << vis._to_string() << ", mut=" << mutable_only << ')';
 		name->prettyPrint(s << '\n', buf + 2, "var=");
 
-		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+		if (type) {
+			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}
 
 		if (generics.size()) {
 			s << '\n' << std::string(buf + 2, ' ') << "Generic Typing (size=" << generics.size() << ") [";
 
-			for (auto&& g : generics)
+			for (auto&& g : generics) {
 				g->prettyPrint(s << '\n', buf + 4);
+			}
 
 			s << '\n' << std::string(buf + 2, ' ') << ']';
 		}
@@ -839,8 +909,9 @@ namespace spero::compiler::ast {
 		if (cons.size()) {
 			s << '\n' << std::string(buf + 2, ' ') << "Constructor List (size=" << cons.size() << ") [";
 
-			for (auto&& con : cons)
+			for (auto&& con : cons) {
 				con->prettyPrint(s << '\n', buf + 4);
+			}
 
 			s << '\n' << std::string(buf + 2, ' ') << ']';
 		}
@@ -857,13 +928,16 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(VarAssign) {
 		s << std::string(buf, ' ') << context << "ast.VarAssign (vis=" << vis._to_string() << ')';
 		name->prettyPrint(s << '\n', buf + 2, "var=");
-		if (type) type->prettyPrint(s << '\n', buf + 2, "type=");
+		if (type) {
+			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}
 
 		if (generics.size()) {
 			s << '\n' << std::string(buf + 2, ' ') << "Generic Typing (size=" << generics.size() << ") [";
 
-			for (auto&& g : generics)
+			for (auto&& g : generics) {
 				g->prettyPrint(s << '\n', buf + 4);
+			}
 
 			s << '\n' << std::string(buf + 2, ' ') << ']';
 		}
@@ -891,7 +965,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(ImplExpr) {
 		s << std::string(buf, ' ') << context << "ast.ImplExpr\n";
 		type->prettyPrint(s, buf + 2, "type=") << ")\n";
-		if (impls) impls->prettyPrint(s, buf + 2, "impl=");
+		if (impls) {
+			impls->prettyPrint(s, buf + 2, "impl=");
+		}
 		return Stmt::prettyPrint(s, buf + 2);
 	}
 
@@ -915,8 +991,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.ModImport";
 		Stmt::prettyPrint(s, buf + 2);
 
-		for (auto&& p : elems)
+		for (auto&& p : elems) {
 			p->prettyPrint(s << '\n', buf + 2);
+		}
 
 		return s;
 	}
@@ -931,8 +1008,9 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.IndexSequence (";
 		ValExpr::prettyPrint(s, buf);
 
-		for (auto&& e : elems)
+		for (auto&& e : elems) {
 			e->prettyPrint(s << '\n', buf + 2, "idx=");
+		}
 
 		return s;
 	}

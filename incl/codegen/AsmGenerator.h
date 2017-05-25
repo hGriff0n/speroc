@@ -6,7 +6,7 @@
 namespace spero::compiler::gen {
 
 	class AsmGenerator : public ast::Visitor {
-		AsmEmitter assm;
+		AsmEmitter emit;
 
 		public:
 			AsmGenerator(std::ostream&);
