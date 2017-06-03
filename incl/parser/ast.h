@@ -284,6 +284,8 @@ namespace spero::compiler::ast {
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+
+		std::string toString();
 	};
 
 
@@ -298,6 +300,8 @@ namespace spero::compiler::ast {
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+
+		std::string toString();
 	};
 
 

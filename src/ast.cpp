@@ -206,6 +206,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(BasicBinding) {
 		return s << std::string(buf, ' ') << context << "ast.BasicBinding (var=" << name << ", type=" << type._to_string() << ")";
 	}
+	std::string BasicBinding::toString() {
+		return name;
+	}
 
 	QualifiedBinding::QualifiedBinding(ptr<BasicBinding> b, Ast::Location loc) : Sequence{ MK_DEQUE(std::move(b)), loc } {}
 	QualifiedBinding::QualifiedBinding(std::deque<ptr<BasicBinding>> ps, Ast::Location loc) : Sequence{ std::move(ps), loc } {}
@@ -214,13 +217,16 @@ namespace spero::compiler::ast {
 		return v;
 	}
 	DEF_PRINTER(QualifiedBinding) {
-		s << std::string(buf, ' ') << context << "ast.QualifiedBinding " << elems.front()->name;
+		return s << std::string(buf, ' ') << context << "ast.QualifiedBinding " << toString();
+	}
+	std::string QualifiedBinding::toString() {
+		std::string result = elems.front()->toString();
 
 		for (auto p = std::begin(elems) + 1; p != std::end(elems); ++p) {
-			s << ":" << p->get()->name;
+			result += ":" + p->get()->toString();
 		}
 
-		return s;
+		return result;
 	}
 
 	Variable::Variable(ptr<QualifiedBinding> n, Ast::Location loc) : ValExpr{ loc }, name{ std::move(n) } {}

@@ -2,11 +2,20 @@
 
 #include "parser/visitor.h"
 #include "AsmEmitter.h"
+#include "SymTable.h"
 
 namespace spero::compiler::gen {
 
+	/*
+	 * Visitor class to control basic emission of assembly code
+	 *
+	 * TODO: Split off some data into analysis phases
+	 * TODO: Rewrite to utilize different IR structure
+	 */
 	class AsmGenerator : public ast::Visitor {
 		AsmEmitter emit;
+		analysis::SymTable globals;
+		analysis::SymTable* current = &globals;
 
 		public:
 			AsmGenerator(std::ostream&);
@@ -23,6 +32,9 @@ namespace spero::compiler::gen {
 			//virtual void acceptString(ast::String&) final;
 
 			// Names
+			virtual void acceptVariable(ast::Variable&) final;
+			virtual void acceptAssignName(ast::AssignName&) final;
+			virtual void acceptAssignTuple(ast::AssignTuple&) final;
 
 			// Types
 

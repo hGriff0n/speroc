@@ -42,46 +42,49 @@ namespace spero::compiler::gen {
 			void label(std::string&&);
 
 			// Push/pop instructions
-			void push(const Register&);
+			void push(Register&);
+			void pushByte(size_t);
+			void pop(Register&);
 			void popByte(size_t);
-			void pop(const Register&);
 
 			// Mov instructions
-			void mov(const Register&, const Register&);
-			void mov(Literal, const Register&);
+			void mov(Register&, Register&);
+			void mov(Literal, Register&);
+			void mov(Memory&, Register&);
+			void mov(Register&, Memory&);
 		
 			// Add instructions
-			void add(Literal, const Register&);
-			void add(const Memory&, const Register&);
+			void add(Literal, Register&);
+			void add(Memory&, Register&);
 
 			// Sub instructions
-			void sub(const Register&, const Memory&);
-			void neg(const Register&);
+			void sub(Register&, Memory&);
+			void neg(Register&);
 
 			// Mul instructions
-			void imul(const Memory&, const Register&);
+			void imul(Memory&, Register&);
 			
 			// Div instructions
-			void idiv(const Memory&, const Register&);
+			void idiv(Memory&, Register&);
 			void cdq();
 
 			// Logical instructions
-			void _xor(const Register&, const Register&);
-			void not(const Register&);
-			void _or(const Memory&, const Register&);
+			void _xor(Register&, Register&);
+			void not(Register&);
+			void _or(Memory&, Register&);
 
 			// Test/Compare instructions
-			void test(const Register&, const Register&);
-			void cmp(const Register&, const Memory&);
-			void cmp(const Memory&, const Register&);
+			void test(Register&, Register&);
+			void cmp(Register&, Memory&);
+			void cmp(Memory&, Register&);
 
 			// Set instructions
-			void setz(const Register&);
-			void setnz(const Register&);
-			void setl(const Register&);
-			void setl(const Memory&);
-			void setg(const Register&);
-			void setle(const Register&);
+			void setz(Register&);
+			void setnz(Register&);
+			void setl(Register&);
+			void setl(Memory&);
+			void setg(Register&);
+			void setle(Register&);
 
 			// Control flow
 			void ret();

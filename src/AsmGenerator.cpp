@@ -42,6 +42,35 @@ namespace spero::compiler::gen {
 
 
 	// Names
+	void AsmGenerator::acceptVariable(ast::Variable& v) {
+		auto var = v.name->toString();
+		auto loc = globals.getVar(var);
+		
+		if (loc) {
+			Register eax{ "eax" };
+			Register esp{ "esp" };
+			emit.mov(esp.at(loc.value()), eax);
+
+		} else {
+			// error
+		}
+	}
+	
+	void AsmGenerator::acceptAssignName(ast::AssignName& n) {
+		// TODO: Get Offset
+		int loc = 0;
+		globals.insert(n.var->toString(), loc);
+		
+		// Store variable on the stack
+		Register eax{ "eax" };
+		//Register esp{ "ebp" };
+		//emit.mov(eax, esp.at(loc));
+		emit.push(eax);
+	}
+
+	void AsmGenerator::acceptAssignTuple(ast::AssignTuple& t) {
+
+	}
 
 
 	// Types
@@ -52,9 +81,15 @@ namespace spero::compiler::gen {
 
 	// Control
 	void AsmGenerator::acceptBlock(ast::Block& b) {
+		// TODO: Reserve stack space
+		//Register eax{ "eax" };
+		//emit.add(4 * b.locals.getCount(), eax);
+
 		for (auto& stmt : b.elems) {
 			stmt->visit(*this);
 		}
+
+		// TODO: Clean up stack space
 	}
 
 
@@ -117,10 +152,8 @@ namespace spero::compiler::gen {
 			emit.popByte(1);
 		
 		} else if (b.op == ">") {
-			emit.cmp(esp.at(), eax);
-			emit.setl(eax);
-			//emit.cmp(eax, esp.at());
-			//emit.setg(eax);
+			emit.cmp(eax, esp.at());
+			emit.setg(eax);
 			emit.popByte(1);
 
 		} else if (b.op == "!=") {
@@ -161,15 +194,23 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::acceptVarAssign(ast::VarAssign& v) {
-		// Print out function data
-		emit.write("\t.p2align 4, 0x90");
-		emit.write("\t.globl _main\n");
-		emit.write("\t.def _main; .scl 2; .type 32; .endef\n");
-		emit.label("_main");
+		// if the body is a function
+		if (util::is_type<ast::FnBody>(v.expr)) {
 
-		v.expr->visit(*this);
+			// Print out function data
+			emit.write("\t.p2align 4, 0x90");
+			emit.write("\t.globl _main\n");
+			emit.write("\t.def _main; .scl 2; .type 32; .endef\n");
+			emit.label("_main");
 
-		// Print function ident information
-		emit.write("\t.ident \"speroc: 0.0.15 (Windows 2017)\"");
+			v.expr->visit(*this);
+
+			// Print function ident information
+			emit.write("\t.ident \"speroc: 0.0.15 (Windows 2017)\"");
+
+		} else {
+			v.expr->visit(*this);
+			v.name->visit(*this);
+		}
 	}
 }

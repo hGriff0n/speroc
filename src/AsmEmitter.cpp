@@ -33,13 +33,20 @@ namespace spero::compiler::gen {
 		out << label << ":\n";
 	}
 
-	void AsmEmitter::push(const Register& r) {
+	void AsmEmitter::push(Register& r) {
 		out << "\tpush " << r << '\n';
 		
 		flags.reset();
 	}
 
-	void AsmEmitter::pop(const Register& r) {
+	void AsmEmitter::pushByte(size_t n) {
+		Register esp{ "esp" };
+		out << "\tadd $" << (n * 4) << ", " << esp << '\n';
+
+		flags.reset();
+	}
+
+	void AsmEmitter::pop(Register& r) {
 		out << "\tpop " << r << '\n';
 		
 		flags.reset();
@@ -52,43 +59,55 @@ namespace spero::compiler::gen {
 		flags.reset();
 	}
 
-	void AsmEmitter::mov(const Register& src, const Register& dest) {
+	void AsmEmitter::mov(Register& src, Register& dest) {
 		out << "\tmov " << src << ", " << dest << '\n';
 
 		flags.reset();
 	}
 
-	void AsmEmitter::mov(Literal num, const Register& dest) {
+	void AsmEmitter::mov(Literal num, Register& dest) {
 		out << "\tmov " << num << ", " << dest << '\n';
 		
 		flags.reset();
 	}
 
-	void AsmEmitter::add(const Memory& src, const Register& dest) {
+	void AsmEmitter::mov(Memory& src, Register& dest) {
+		out << "\tmov " << src << ", " << dest << '\n';
+
+		flags.reset();
+	}
+
+	void AsmEmitter::mov(Register& src, Memory& dest) {
+		out << "\tmov " << src << ", " << dest << '\n';
+
+		flags.reset();
+	}
+
+	void AsmEmitter::add(Memory& src, Register& dest) {
 		out << "\tadd " << src << ", " << dest << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::add(Literal num, const Register& dest) {
+	void AsmEmitter::add(Literal num, Register& dest) {
 		out << "\tadd " << num << ", " << dest << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::sub(const Register& src, const Memory& dest) {
+	void AsmEmitter::sub(Register& src, Memory& dest) {
 		out << "\tsub " << src << ", " << dest << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::neg(const Register& dest) {
+	void AsmEmitter::neg(Register& dest) {
 		out << "\tneg " << dest << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::imul(const Memory& src, const Register& dest) {
+	void AsmEmitter::imul(Memory& src, Register& dest) {
 		out << "\timul " << src << ", " << dest << '\n';
 
 		flags.reset();
@@ -102,67 +121,67 @@ namespace spero::compiler::gen {
 		flags.reset();
 	}
 
-	void AsmEmitter::idiv(const Memory& src, const Register& dest) {
+	void AsmEmitter::idiv(Memory& src, Register& dest) {
 		out << "\tidiv " << src << ", " << dest << '\n';
 
 		flags.reset();
 	}
 
-	void AsmEmitter::_xor(const Register& src, const Register& dest) {
+	void AsmEmitter::_xor(Register& src, Register& dest) {
 		out << "\txor " << src << ", " << dest << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::_or(const Memory& src, const Register& dest) {
+	void AsmEmitter::_or(Memory& src, Register& dest) {
 		out << "\tor " << src << ", " << dest << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::not(const Register& src) {
+	void AsmEmitter::not(Register& src) {
 		out << "\tnot " << src << '\n';
 	}
 
-	void AsmEmitter::test(const Register& left, const Register& right) {
+	void AsmEmitter::test(Register& left, Register& right) {
 		out << "\ttest " << left << ", " << right << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::cmp(const Register& left, const Memory& right) {
+	void AsmEmitter::cmp(Register& left, Memory& right) {
 		out << "\tcmp " << left << ", " << right << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::cmp(const Memory& left, const Register& right) {
+	void AsmEmitter::cmp(Memory& left, Register& right) {
 		out << "\tcmp " << left << ", " << right << '\n';
 
 		flags |= ALL_FLAGS;
 	}
 
-	void AsmEmitter::setz(const Register& dest) {
+	void AsmEmitter::setz(Register& dest) {
 		out << "\tsetz " << dest << '\n';
 	}
 
-	void AsmEmitter::setnz(const Register& dest) {
+	void AsmEmitter::setnz(Register& dest) {
 		out << "\tsetnz " << dest << '\n';
 	}
 
-	void AsmEmitter::setl(const Register& dest) {
+	void AsmEmitter::setl(Register& dest) {
 		out << "\tsetl " << dest << '\n';
 	}
 
-	void AsmEmitter::setl(const Memory& dest) {
+	void AsmEmitter::setl(Memory& dest) {
 		out << "\tsetl " << dest << '\n';
 	}
 
-	void AsmEmitter::setg(const Register& dest) {
+	void AsmEmitter::setg(Register& dest) {
 		out << "\tsetg " << dest << '\n';
 	}
 
-	void AsmEmitter::setle(const Register& dest) {
+	void AsmEmitter::setle(Register& dest) {
 		out << "\tsetle " << dest << '\n';
 	}
 
