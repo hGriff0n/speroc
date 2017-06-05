@@ -14,8 +14,9 @@ namespace spero::compiler::analysis {
 	}
 
 	std::optional<int> SymTable::getVar(std::string name) {
-		if (var_data.count(name))
+		if (var_data.count(name)) {
 			return var_data[name].loc;
+		}
 
 		return {};
 	}

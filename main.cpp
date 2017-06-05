@@ -1,9 +1,11 @@
 #pragma warning(disable : 4503)
 
 #include <iostream>
-#include "compiler.h"
+#include <unordered_map>
 
+#include "compiler.h"
 #include "parser/ast.h"
+
 #include "cmd_line.h"
 #include "util/utils.h"
 
@@ -43,31 +45,69 @@ int main(int argc, char* argv[]) {
 	// Interactive mode for testing ast creation/parsing runs
 	if (state.opts["interactive"].as<bool>()) {
 		std::string input;
+		std::unordered_map<std::string, bool> flags;
 
 		while (std::cout << "> " && getMultiline(std::cin, input)) {
-			if (input == ":q") break;
-
 			try {
 				bool succ;
 				parser::Stack res;
 
-				if (input.substr(0, 2) == ":c") {
-					if (state.files().size() == 0) state.files().push_back("");
+				std::string command = input.substr(0, 2);
+
+				// Compile a file
+				if (command == ":c") {
+					if (state.files().size() == 0) { state.files().push_back(""); }
 					state.files()[0] = input.substr(3);
 
 					if (succ = compile(state, res)) {
 						std::cout << "Compilation Failed\n";
 						continue;
 					}
-					
+
 					// Print out the generated assembly
 					std::ifstream out{ "out.s" };
 					while (std::getline(out, input)) {
 						std::cout << input << '\n';
 					}
 
+				// Load and parse a file
+				} else if (command == ":l") {
+					if (state.files().size() == 0) { state.files().push_back(""); }
+					state.files()[0] = input.substr(3);
+
+					std::tie(succ, res) = compiler::parseFile(state.files()[0], state);
+
+				// Set an interactive flag
+				} else if (command == ":s") {
+					auto flag = input.substr(3);
+					flags[flag] = !flags[flag];
+					continue;
+
+				// Quit
+				} else if (command == ":q") {
+					break;
+
+				// Run the interactive mode
 				} else {
 					std::tie(succ, res) = compiler::parse(input, state);
+
+					// If I want to see the generated assembly
+					if (flags["compile"]) {
+						// Analyze and compile the code
+						auto ir = compiler::analyze(std::move(res), state);
+						compiler::codegen(ir, "interactive", "out.s", state, false);
+
+						// Print out the generated assembly
+						std::ifstream out{ "out.s" };
+						while (std::getline(out, input)) {
+							std::cout << input << '\n';
+						}
+						std::remove("out.s");
+
+						// Reset `res` and `succ` for future usage
+						res = std::move(ir);
+						succ = state.failed();
+					}
 				}
 
 				std::cout << "Parsing Succeeded: " << (succ ? "false" : "true") << '\n';
@@ -100,16 +140,20 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	using namespace spero;
 
 	// TODO: Initialize timing and other compilation logging structures
-	// TODO: Move to a more explicit check (ie. how many errors does the structure have?)
-	bool failed;
 
 
 	/*
 	 * Perform parsing and initial recognization checks
 	 */
-	state.logTime();
-	std::tie(failed, stack) = compiler::parseFile(state.files()[0], state);
-	state.logTime();
+	{
+		size_t failed;
+
+		state.logTime();
+		std::tie(failed, stack) = compiler::parseFile(state.files()[0], state);
+		state.logTime();
+
+		state.setStatus(failed);
+	}
 
 
 	/*
@@ -118,33 +162,44 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	 * Don't mark this as a separate "phase" for timing purposes
 	 * The sub-phases perform their own timing passes
 	 */
-	auto ir = compiler::analyze(std::move(stack), state, failed);
+	auto ir = (!state.failed())
+		? compiler::analyze(std::move(stack), state)
+		: spero::compiler::IR_t{};
 
 
 	/*
-	 * Emit final codegen processes
-	 *   Note: If control reaches here, compilation should not fail
+	 * Generate the boundary ir for the external tools
+	 * 
+	 * speroc does not handle the generation of executables
+	 * and other binary files, prefering to pass those stages
+	 * off to some existing system tool that is guaranteed to work
 	 */
-	if (!failed) {
+	if (!state.failed()) {
 		state.logTime();
 		compiler::codegen(ir, state.files()[0], "out.s", state);
 		state.logTime();
+	}
 
 
-		// Forward creation of the actual executable to some other compiler
+	/*
+	 * Send the boundary ir off to the final compilation phase
+	 *
+	 * NOTE: Currently speroc uses `gcc` for final compilation
+	 *   I will be moving over to LLVM (and the LLVM IR) in the future
+	 */
+	if (!state.failed() && state.produceExe()) {
 		state.logTime();
-		failed = system((ASM_COMPILER" out.s -o " + state.output()).c_str());
+		state.setStatus(system((ASM_COMPILER" out.s -o " + state.output()).c_str()));
 		state.logTime();
 
 
 		// Delete the temporary file
-		bool del_files = state.deleteTemporaryFiles();
 		if (state.deleteTemporaryFiles()) {
 			std::remove("out.s");
 		}
 	}
 
-	return failed;
+	return state.failed();
 }
 
 
@@ -169,12 +224,13 @@ Stream& getMultiline(Stream& in, std::string& s) {
 
 
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
-	for (const auto& node : stack)
+	for (const auto& node : stack) {
 		if (node) {
 			node->prettyPrint(s, 0) << '\n';
 		} else {
 			s << "nullptr\n";
 		}
+	}
 
-		return s << '\n';
+	return s << '\n';
 }

@@ -27,22 +27,23 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(Token) {
 		s << std::string(buf, ' ') << context << "ast.Token ";
 
-		if (std::holds_alternative<KeywordType>(value))
+		if (std::holds_alternative<KeywordType>(value)) {
 			return s << std::get<KeywordType>(value)._to_string();
-		else if (std::holds_alternative<PtrStyling>(value))
+		} else if (std::holds_alternative<PtrStyling>(value)) {
 			return s << std::get<PtrStyling>(value)._to_string();
-		else if (std::holds_alternative<VarianceType>(value))
+		} else if (std::holds_alternative<VarianceType>(value)) {
 			return s << std::get<VarianceType>(value)._to_string();
-		else if (std::holds_alternative<RelationType>(value))
+		} else if (std::holds_alternative<RelationType>(value)) {
 			return s << std::get<RelationType>(value)._to_string();
-		else if (std::holds_alternative<VisibilityType>(value))
+		} else if (std::holds_alternative<VisibilityType>(value)) {
 			return s << std::get<VisibilityType>(value)._to_string();
-		else if (std::holds_alternative<BindingType>(value))
+		} else if (std::holds_alternative<BindingType>(value)) {
 			return s << std::get<BindingType>(value)._to_string();
-		else if (std::holds_alternative<UnaryType>(value))
+		} else if (std::holds_alternative<UnaryType>(value)) {
 			return s << std::get<UnaryType>(value)._to_string();
-		else
+		} else {
 			return s << "err";
+		}
 	}
 
 	Type::Type(Ast::Location loc) : Ast{ loc } {}
@@ -72,8 +73,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(ValExpr) {
 		s << "mut=" << is_mut << ')';
 
-		if (type)
+		if (type) {
 			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}
 
 		return Stmt::prettyPrint(s, buf);
 	}
@@ -1004,8 +1006,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	Index::Index(ptr<ValExpr> l, ptr<ValExpr> r, Ast::Location loc)
-		: Sequence{ MK_DEQUE(std::move(l), std::move(r)), loc } {}
+	Index::Index(ptr<ValExpr> lhs, ptr<ValExpr> rhs, Ast::Location loc)
+		: Sequence{ MK_DEQUE(std::move(lhs), std::move(rhs)), loc } {}
 	Visitor& Index::visit(Visitor& v) {
 		v.acceptIndex(*this);
 		return v;

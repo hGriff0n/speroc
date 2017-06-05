@@ -150,7 +150,7 @@ namespace spero::compiler::gen {
 			emit.cmp(eax, esp.at());
 			emit.setl(eax);
 			emit.popByte(1);
-		
+
 		} else if (b.op == ">") {
 			emit.cmp(eax, esp.at());
 			emit.setg(eax);
@@ -195,6 +195,8 @@ namespace spero::compiler::gen {
 
 	void AsmGenerator::acceptVarAssign(ast::VarAssign& v) {
 		// if the body is a function
+		// TODO: Adding support for functions may require moving this to a separate stage
+		// TODO: Type checking will definitely require additional stages
 		if (util::is_type<ast::FnBody>(v.expr)) {
 
 			// Print out function data
@@ -209,8 +211,8 @@ namespace spero::compiler::gen {
 			emit.write("\t.ident \"speroc: 0.0.15 (Windows 2017)\"");
 
 		} else {
-			v.expr->visit(*this);
-			v.name->visit(*this);
+			v.expr->visit(*this);		// Push the expression value onto the stack
+			v.name->visit(*this);		// Store the location in the variable
 		}
 	}
 }

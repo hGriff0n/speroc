@@ -10,6 +10,7 @@ Compiler
 	  Fix the command line arguments to have a better relation to their meaning
     Parsing out the interface into the compilation state/other structures
     Using the compilation state to control and modify compilation
+	  Improve the interface for interacting with the compilation flags
 
   Errors and reporting
     Recognizing syntax errors in the parser

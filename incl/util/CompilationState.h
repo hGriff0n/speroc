@@ -4,6 +4,8 @@
 #include <memory>
 #include <deque>
 
+#define abstract =0;
+
 
 // Forward Declarations
 namespace spero::compiler {
@@ -25,26 +27,34 @@ namespace spero::compiler {
 	/*
 	 * Base class to define the interaction point for querying the
 	 * specified compilation state from all parts of the compiler
+	 *
+	 * TODO: Adapt failure state/etc. to use reporting structure (ie. # errors)
 	 */
 	class CompilationState {
 		std::deque<std::string> input_files;
 		std::deque<time_point> timing;
+		size_t curr_failure_state;
 
 		public:
 			CompilationState(char**, char**);
 
 			// Input/Output files
 			std::deque<std::string>& files();
-			virtual const std::string& output() =0;
+			virtual const std::string& output() abstract;
 
 			// Time loggers
 			void logTime();
 			std::pair<time_point, time_point> getCycle(size_t);
 
 			// Basic state querying
-			virtual bool deleteTemporaryFiles();
+			virtual bool deleteTemporaryFiles() abstract;
 
 			// Error reporting/collection
+			void setStatus(size_t);
+			size_t failed();
+
+			// Compilation Stage Control
+			bool produceExe() absract;
 	};
 
 	// Special subtype to allow for passing around the parsed
@@ -64,6 +74,10 @@ namespace spero::compiler {
 
 		bool deleteTemporaryFiles() {
 			return !opts["nodel"].as<bool>();
+		}
+
+		bool produceExe() {
+			return !opts["asm"].as<bool>();
 		}
 	};
 }

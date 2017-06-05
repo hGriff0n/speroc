@@ -9,18 +9,31 @@ Current Project State
 
 Current Project Plan
   Basic Variables
-    variable tracking structure (eventually move to analysis stages ???)
+    Ensure symbol table can support multiple variables
+	Move symtable into scope/functions and ensure support works
+	Look at moving symbol table to types and seeing how that'll work
   Improving Assembly generation for operators
     Perform direct usage if possible (ie. "3 + 4" -> "mov 3, eax;add 4, eax;" not "mov 3, eax; push eax; mov 4, eax; add (esp), eax; add 4, esp;")
-	  Also directly utilizes stack locations for adding/storing variables
+	  Also directly utilize stack locations for adding/storing variables
   Basic Mutability Tracking
+    Create "check_mutability" analysis phase
+	Create some test code to test the mutability checking
+	Move sym table collection into an analysis phase
+  Add error/exception handling and reporting
+    Add in storage and reporting structures to CompilationState
+	Adapt the analysis and codegen phases to report errors to the CompilationState
+	Work on error formatting and display onto the command line
+	Adapt the parser and grammar to report errors
+	  Ensure that as many syntax mistakes are caught as posible
+	Adapt the stages to be exception safe 
+	  Add in "noexcept" declarations
+	  Ensure that everything is "const" declared (if possible)
   Basic Types
     value/variable => type
   Type Inference
     explicit annotations within the ast
   Basic Function Definition
   Basic Function Calling
-  Error/Exception handling and reporting
   Improve system benchmark collection
   Improve command line interface collection
   ...

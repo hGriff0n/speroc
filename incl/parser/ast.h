@@ -6,6 +6,7 @@
 #include <string>
 #include "enum.h"
 
+#define abstract =0
 
 namespace spero::compiler {
 	// Cut down on typing for unique_ptr

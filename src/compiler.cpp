@@ -11,7 +11,7 @@ namespace spero::compiler {
 	using namespace parser;
 
 	template<class Fn>
-	std::tuple<bool, Stack> parse_impl(Fn&& parse) {
+	std::tuple<size_t, Stack> parse_impl(Fn&& parse) {
 		// Setup parser state
 		Stack ast;
 		ast.emplace_back(compiler::ast::Sentinel{});
@@ -29,28 +29,30 @@ namespace spero::compiler {
 		return std::make_tuple(!succ, std::move(ast));
 	}
 
-	std::tuple<bool, Stack> parse(std::string input, CompilationState& state) {
+	std::tuple<size_t, Stack> parse(std::string input, CompilationState& state) {
 		return parse_impl([&input](Stack& ast) { return pegtl::parse_string<grammar::program, actions::action, control::control>(input, "me", ast); });
 	}
 
-	std::tuple<bool, Stack> parseFile(std::string file, CompilationState& state) {
+	std::tuple<size_t, Stack> parseFile(std::string file, CompilationState& state) {
 		return parse_impl([&file](Stack& ast) { return pegtl::parse_file<grammar::program, actions::action, control::control>(file, ast); });
 	}
 
 
 	// Perform the various analysis stages
-	IR_t analyze(spero::parser::Stack s, CompilationState& state, bool& failed) {
+	IR_t analyze(spero::parser::Stack s, CompilationState& state) {
 		return std::move(s);
 	}
 
 
 	// Perform the final compilation stages (produces direct assembly code)
-	void codegen(IR_t& s, std::string in, std::string out, CompilationState& state) {
+	void codegen(IR_t& s, std::string in, std::string out, CompilationState& state, bool output_header) {
 		// Open the output file
 		std::ofstream o{ out };
 
 		// Output file header information
-		o << "\t.file \"" << in << "\"\n.text\n";
+		if (output_header) {
+			o << "\t.file \"" << in << "\"\n.text\n";
+		}
 
 		auto visitor = spero::compiler::gen::AsmGenerator{ o };
 

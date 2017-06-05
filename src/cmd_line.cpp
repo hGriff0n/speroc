@@ -14,6 +14,7 @@ namespace spero {
 				("g,debug", "Enable addition of debugging information to created binaries")
 				("t,nodel", "Prevent deletion of temporary files during compilation")
 				("v,verbose", "Turn on verbose reporting of the compilation progress")
+				("C,asm", "Stop compilation at the assembly source file")
 				("diagnostics", "Specify a file to send diagnostic information to", value<std::string>())
 				("emit", "List of temporary files that the compiler should not delete", value<std::string>())
 				("W,warn", "Turn compilation warnings into errors", value<std::string>()->default_value("default"))
