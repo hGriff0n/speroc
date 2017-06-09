@@ -40,8 +40,8 @@ end
 yaml = YAML.load_file("./#{options[:dir]}/#{options[:file]}")
 yaml.each do |name, tests|
 
-    # Skip this test group if specified
-    in_cmd_tags = !(tests['tags'] & ARGV).empty?
+    # Skip this test group if specified (assume everything is specified if nothing is)
+    in_cmd_tags = ARGV.empty? || !(tests['tags'] & ARGV).empty?
     next if options[:ignore] && in_cmd_tags
     next if !options[:ignore] && !in_cmd_tags
 
@@ -124,6 +124,7 @@ yaml.each do |name, tests|
 
 
         # Run over all tests if compilation succeeded (or the executable already existed)
+        next unless run['tests']
         run['tests'].each do |test|
 
             # Setup test defaults and variables

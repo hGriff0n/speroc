@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
 					state.files()[0] = input.substr(3);
 
 					if (succ = compile(state, res)) {
-						std::cout << "Compilation Failed\n";
+						std::cout << "Compilation Failed " << state.failed() << '\n';
 						continue;
 					}
 
@@ -190,6 +190,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	if (!state.failed() && state.produceExe()) {
 		state.logTime();
 		state.setStatus(system((ASM_COMPILER" out.s -o " + state.output()).c_str()));
+		if (state.failed()) { state.setStatus(4); }
 		state.logTime();
 
 

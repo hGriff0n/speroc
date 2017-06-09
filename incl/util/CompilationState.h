@@ -33,7 +33,7 @@ namespace spero::compiler {
 	class CompilationState {
 		std::deque<std::string> input_files;
 		std::deque<time_point> timing;
-		size_t curr_failure_state;
+		size_t curr_failure_state = 0;
 
 		public:
 			CompilationState(char**, char**);
@@ -54,7 +54,7 @@ namespace spero::compiler {
 			size_t failed();
 
 			// Compilation Stage Control
-			bool produceExe() absract;
+			virtual bool produceExe() abstract;
 	};
 
 	// Special subtype to allow for passing around the parsed
