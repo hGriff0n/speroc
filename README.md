@@ -1,6 +1,6 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1c08fe8c6e794791be42f4ff509bf846)](https://www.codacy.com/app/ghooper96/speroc?utm_source=github.com&utm_medium=referral&utm_content=hGriff0n/speroc&utm_campaign=badger)
 
-speroc ver 0.2.2 - The reference compiler for the spero language
+speroc ver 0.2.3 - The reference compiler for the spero language
 
 Project Info:
 

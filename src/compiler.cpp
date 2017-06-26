@@ -51,10 +51,10 @@ namespace spero::compiler {
 
 		// Output file header information
 		if (output_header) {
-			o << "\t.file \"" << in << "\"\n.text\n";
+			o << "\t.file \"" << in << "\"\n.text\n\t.p2align 4, 0x90\n";
 		}
 
-		auto visitor = spero::compiler::gen::AsmGenerator{ o };
+		auto visitor = spero::compiler::gen::AsmGenerator{ o, state };
 
 		// Print everything directly to the file
 		for (const auto& node : s) {

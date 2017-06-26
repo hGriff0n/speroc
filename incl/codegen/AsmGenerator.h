@@ -3,6 +3,7 @@
 #include "parser/visitor.h"
 #include "AsmEmitter.h"
 #include "SymTable.h"
+#include "../util/CompilationState.h"
 
 namespace spero::compiler::gen {
 
@@ -14,11 +15,13 @@ namespace spero::compiler::gen {
 	 */
 	class AsmGenerator : public ast::Visitor {
 		AsmEmitter emit;
+		CompilationState& state;
+
 		analysis::SymTable globals;
 		analysis::SymTable* current = &globals;
 
 		public:
-			AsmGenerator(std::ostream&);
+			AsmGenerator(std::ostream&, CompilationState&);
 
 			// Base Nodes
 			virtual void accept(ast::Ast&) final;

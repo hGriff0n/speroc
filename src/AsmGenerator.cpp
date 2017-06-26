@@ -2,7 +2,7 @@
 #include "parser/utils.h"
 
 namespace spero::compiler::gen {
-	AsmGenerator::AsmGenerator(std::ostream& s) : emit{ s } {}
+	AsmGenerator::AsmGenerator(std::ostream& s, CompilationState& state) : emit{ s }, state{ state } {}
 	
 
 	// Base Nodes
@@ -200,7 +200,6 @@ namespace spero::compiler::gen {
 		if (util::is_type<ast::FnBody>(v.expr)) {
 
 			// Print out function data
-			emit.write("\t.p2align 4, 0x90");
 			emit.write("\t.globl _main\n");
 			emit.write("\t.def _main; .scl 2; .type 32; .endef\n");
 			emit.label("_main");
