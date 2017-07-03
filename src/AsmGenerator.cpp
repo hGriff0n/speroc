@@ -1,5 +1,5 @@
 #include "codegen/AsmGenerator.h"
-#include "parser/utils.h"
+#include "util/parser.h"
 
 namespace spero::compiler::gen {
 	AsmGenerator::AsmGenerator(std::ostream& s, CompilationState& state) : emit{ s }, state{ state } {}
@@ -12,6 +12,7 @@ namespace spero::compiler::gen {
 	// Literals
 	void AsmGenerator::acceptBool(ast::Bool& b) {
 		Register eax{ "eax" };
+		
 		if (b.val) {
 			emit.mov(b.val, eax);
 
@@ -48,8 +49,8 @@ namespace spero::compiler::gen {
 		
 		if (loc) {
 			Register eax{ "eax" };
-			Register esp{ "esp" };
-			emit.mov(esp.at(loc.value()), eax);
+			Register ebp{ "ebp" };
+			emit.mov(ebp.at(loc.value()), eax);
 
 		} else {
 			// error
@@ -58,14 +59,14 @@ namespace spero::compiler::gen {
 	
 	void AsmGenerator::acceptAssignName(ast::AssignName& n) {
 		// TODO: Get Offset
-		int loc = 0;
+		int loc = -4 * (globals.getCount() + 2);
 		globals.insert(n.var->toString(), loc);
 		
 		// Store variable on the stack
 		Register eax{ "eax" };
-		//Register esp{ "ebp" };
-		//emit.mov(eax, esp.at(loc));
 		emit.push(eax);
+		//Register ebp{ "ebp" };
+		//emit.mov(eax, ebp.at(loc));
 	}
 
 	void AsmGenerator::acceptAssignTuple(ast::AssignTuple& t) {
@@ -167,8 +168,8 @@ namespace spero::compiler::gen {
 			emit.popByte(1);
 
 		} else if (b.op == ">=") {
-			emit.cmp(esp.at(), eax);
-			emit.setle(eax);
+			emit.cmp(eax, esp.at());
+			emit.setge(eax);
 			emit.popByte(1);
 		}
 	}

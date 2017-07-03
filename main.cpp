@@ -184,7 +184,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	/*
 	 * Send the boundary ir off to the final compilation phase
 	 *
-	 * NOTE: Currently speroc uses `gcc` for final compilation
+	 * NOTE: Currently speroc uses `g++` for final compilation
 	 *   I will be moving over to LLVM (and the LLVM IR) in the future
 	 */
 	if (!state.failed() && state.produceExe()) {
