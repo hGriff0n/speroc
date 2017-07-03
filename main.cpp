@@ -10,7 +10,8 @@
 #include "util/utils.h"
 
 
-#define ASM_COMPILER "gcc"
+// TODO: Convert to using llvm (if only it worked on windows)
+#define ASM_COMPILER "g++"
 
 
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
@@ -124,8 +125,7 @@ int main(int argc, char* argv[]) {
 
 		bool successful = compile(state, res);
 
-		// Perform error reporting if not successful
-		// TODO:
+		// TODO: Perform error reporting if not successful
 
 		return successful;
 	}

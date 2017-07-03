@@ -8,8 +8,10 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
+  Come up with a quicker way of launching the command prompt into the speroc directory
   Basic Variables
     Ensure symbol table can support multiple variables
+  Look at creating an x86 interpreter (using rust) to optimize the command line dev environment
 	Move symtable into scope/functions and ensure support works
 	Look at moving symbol table to types and seeing how that'll work
   Improving Assembly generation for operators

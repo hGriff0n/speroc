@@ -12,6 +12,8 @@ _test/tmp
 out\.s
 
 _gcc/
+_test/tmp
+_test/_tmp
 
 hooks\.lnk
 

@@ -1,5 +1,6 @@
 require 'yaml'
 require 'optparse'
+require 'fileutils'
 
 # TODO:
 #  Work on the displaying of the test cases (I don't quite like the look)
@@ -19,6 +20,8 @@ OptionParser.new do |opt|
     opt.on("-o", "--out [DIR]") { |d| options[:out_dir] = d }
 end.parse!
 
+# Create the output directories
+FileUtils::mkdir_p "./#{options[:dir]}/#{options[:out_dir]}"
 
 # convert the remaining args to lowercase (same as tags)
 ARGV.map! {|s| s.downcase}
@@ -75,7 +78,7 @@ yaml.each do |name, tests|
             # Generate strings for correctly calling the compiler from the runner
             in_files = compile['files'].map { |file| "./#{options[:dir]}/#{file}" }.join(' ')
             args = compile['args'].join(' ')
-            speroc_cmd = "./#{options[:dir]}/speroc #{in_files} -o #{compile['exec']} -t #{args}"
+            speroc_cmd = "./#{options[:dir]}/speroc #{in_files} -o ./#{compile['exec']} -t #{args}"
 
             # Generate a smaller string to simplify test print messages
             simple_cmd = "speroc #{compile['files'].join(' ')} -o #{run['exec']} -t #{args}"

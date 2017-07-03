@@ -3,8 +3,9 @@ todo:
  start working on the development plan (in _plan.txt)
    Rework literals to just write their value directly (no loading into register)
    Merge "parser/utils.h" with "util/utils.h" (or "util/parser.h")
-   go back over the dev_work stuff (bring it up to date, make more diverse tests)
+   Work on the testing framework/runners a bit (make more diverse tests)
    see if there are any additional issues in my paper notes
+ rewrite the grammar file to match the real grammar
  add in exception/error handling to make the compiler/parser usable
    adapt the compilation state structure to include an error-reporting framework
      figure out what that structure will need
