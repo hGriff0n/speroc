@@ -177,12 +177,16 @@ namespace spero::compiler::gen {
 		out << "\tsetl " << dest << '\n';
 	}
 
+	void AsmEmitter::setle(Register& dest) {
+		out << "\tsetle " << dest << '\n';
+	}
+
 	void AsmEmitter::setg(Register& dest) {
 		out << "\tsetg " << dest << '\n';
 	}
 
-	void AsmEmitter::setle(Register& dest) {
-		out << "\tsetle " << dest << '\n';
+	void AsmEmitter::setge(Register& dest) {
+		out << "\tsetge " << dest << '\n';
 	}
 
 	void AsmEmitter::leave() {

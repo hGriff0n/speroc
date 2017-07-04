@@ -19,16 +19,19 @@ namespace spero::compiler::analysis {
 	class SymTable {
 		std::unordered_map<std::string, impl::Data> var_data;
 		SymTable* parent;
+		int ebp_offset = 0;
 
 		public:
 			SymTable();
-			SymTable(SymTable*);
 			~SymTable();
 
 			void insert(std::string, int);
 			std::optional<int> getVar(std::string);
 
 			size_t getCount();
+
+			void setParent(SymTable*, bool=false);
+			SymTable* getParent();
 	};
 
 }

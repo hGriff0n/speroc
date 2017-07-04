@@ -3,5 +3,6 @@
 def main = () -> {
     let a = 3
     let b = 4
-    a * b
+    let c = 5
+    a * b * c
 }

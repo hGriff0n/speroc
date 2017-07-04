@@ -2,7 +2,6 @@
 
 #include "parser/visitor.h"
 #include "AsmEmitter.h"
-#include "SymTable.h"
 #include "../util/CompilationState.h"
 
 namespace spero::compiler::gen {

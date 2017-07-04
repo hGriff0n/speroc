@@ -45,13 +45,19 @@ literals:
       compile:
         files: [ 'var_ops.spr' ]
       tests:
-        - return: 12
+        - return: 60
     - desc: ""
       exec: 'bool.exe'
       compile:
         files: [ 'bool.spr' ]
       tests:
         - return: 1
+    - desc: ""
+      exec: 'scoped.exe'
+      compile:
+        files: [ 'scoped.spr' ]
+      tests:
+        - return: 15
     - desc: ""
       exec: 'fail_type.exe'
       compile:
