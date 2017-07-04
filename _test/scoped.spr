@@ -1,0 +1,7 @@
+def main = () -> {
+    let a = 4
+    {
+        let a = 15
+        a
+    }
+}

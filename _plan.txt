@@ -8,12 +8,35 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  Come up with a quicker way of launching the command prompt into the speroc directory
-  Basic Variables
-    Ensure symbol table can support multiple variables
   Look at creating an x86 interpreter (using rust) to optimize the command line dev environment
-	Move symtable into scope/functions and ensure support works
-	Look at moving symbol table to types and seeing how that'll work
+    TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
+  Extend SymTable working to scopes (ie. have scoped declarations)
+    Have a 'SymTable*' in the AsmGenerator structure (<- already done)
+	When entering a Scoped context, load the scope's symtable to the AsmGenerator (<- done)
+	Add in code to SymTable::getVar to perform scoped lookup (<- done)
+	  Add in code to offset scoped lookup properly (<- done)
+	When exiting a Scoped context, the old symtable is restored in the AsmGenerator (<- done)
+	Add in really basic scope cleanup code (ie. pop) (<- done)
+	Variable/Fn lookup continues as before, just index into the symtable (<- done)
+	TODO: Add in handling of '=' when the lhs is a variable
+	TODO: Add in scope 'return value' code
+  Extend SymTable working into functions
+    Look at possibly modifying the ast to force function wrapping (except possibly in forwarded contexts)
+	  Actually, declarations really only make sense (and are somewhat only possible) in functions that already have a scope
+	  For all functions, unless a scope is linked by a following block, assume the scope is 'current'
+	TODO: Need to extend function symtable support with the function arguments
+	TODO: Need to modify 'ebp_offset' setting of the symtable, to change for 
+  Extend SymTable working into types
+    Ensure that order-of-declaration errors can be caught and reported in functions/scopes
+    TODO: Figure out how to prevent accessing variables that are declared after the current statement
+	  Well there are some contexts that I want to enable that behavior and some that I don't
+	  Function bodys and normal scopes have this behavior, types and globals don't
+	    Sometimes functions don't have an associated block, may need to modify ast to add one in
+	  TypeAssign is set to take a block for defining the methods (can't rely on ast behavior, need to track in_type_or_global)
+		But Variables are going to be tracked in one pass, can't utilize a 'in_type_or_global' flag
+	    I'll need to track the "statement" id (or something like that) when working through the ast
+	  There's a possibility I could put this into a CFG-style pass, but I feel that doesn't handle some cases (particularly mutability shadowing)
+		(ie. "let a = mut a" is an analysis stage only, "let a = b + a" is a value change, though it can reuse the old address)
   Improving Assembly generation for operators
     Perform direct usage if possible (ie. "3 + 4" -> "mov 3, eax;add 4, eax;" not "mov 3, eax; push eax; mov 4, eax; add (esp), eax; add 4, esp;")
 	  Also directly utilize stack locations for adding/storing variables

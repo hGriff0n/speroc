@@ -83,8 +83,9 @@ namespace spero::compiler::gen {
 			void setnz(Register&);
 			void setl(Register&);
 			void setl(Memory&);
-			void setg(Register&);
 			void setle(Register&);
+			void setg(Register&);
+			void setge(Register&);
 
 			// Control flow
 			void ret();

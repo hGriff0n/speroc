@@ -45,7 +45,7 @@ namespace spero::compiler::gen {
 	// Names
 	void AsmGenerator::acceptVariable(ast::Variable& v) {
 		auto var = v.name->toString();
-		auto loc = globals.getVar(var);
+		auto loc = current->getVar(var);
 		
 		if (loc) {
 			Register eax{ "eax" };
@@ -58,9 +58,9 @@ namespace spero::compiler::gen {
 	}
 	
 	void AsmGenerator::acceptAssignName(ast::AssignName& n) {
-		// TODO: Get Offset
-		int loc = -4 * (globals.getCount() + 2);
-		globals.insert(n.var->toString(), loc);
+		// TODO: Improve variable storage
+		int loc = -4 * (current->getCount() + 2);
+		current->insert(n.var->toString(), loc);
 		
 		// Store variable on the stack
 		Register eax{ "eax" };
@@ -85,12 +85,19 @@ namespace spero::compiler::gen {
 		// TODO: Reserve stack space
 		//Register eax{ "eax" };
 		//emit.add(4 * b.locals.getCount(), eax);
+		
+		// Initialize current
+		b.locals.setParent(current, true);
+		current = &b.locals;
 
+		// Emit the code for the function body
 		for (auto& stmt : b.elems) {
 			stmt->visit(*this);
 		}
 
-		// TODO: Clean up stack space
+		// Very basic stack cleanup code (just pop all the variables off the stack)
+		emit.popByte(current->getCount());
+		current = current->getParent();
 	}
 
 
@@ -171,6 +178,7 @@ namespace spero::compiler::gen {
 			emit.cmp(eax, esp.at());
 			emit.setge(eax);
 			emit.popByte(1);
+
 		}
 	}
 

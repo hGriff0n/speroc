@@ -1,4 +1,2 @@
 
-# Currently failing due to '2' being placed into eax
-# Then '4' being placed into eax (overwritting 2)
 def main = () -> 2 + 3 * 4 + 5

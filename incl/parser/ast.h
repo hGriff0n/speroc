@@ -5,6 +5,7 @@
 #include <deque>
 #include <string>
 #include "enum.h"
+#include "SymTable.h"
 
 namespace spero::compiler {
 	// Cut down on typing for unique_ptr
@@ -251,6 +252,8 @@ namespace spero::compiler::ast {
 
 	struct Block : Sequence<Stmt, ValExpr> {
 		Block(std::deque<ptr<Stmt>>, Ast::Location);
+
+		analysis::SymTable locals;
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
