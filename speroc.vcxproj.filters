@@ -1,0 +1,221 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\parser">
+      <UniqueIdentifier>{ee331ba1-3129-4fc0-bf3c-5a135de94c1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\utils">
+      <UniqueIdentifier>{c4f25476-3d6e-4bb0-924f-b27776952f6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\codegen">
+      <UniqueIdentifier>{4f8af7c7-fd55-477c-b049-b63289dc4cba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\interface">
+      <UniqueIdentifier>{dcc9221b-6b30-4bf5-a6c9-2e9f9fe6bfba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\codegen">
+      <UniqueIdentifier>{d6e02f0b-5f06-44f7-9aeb-c590e8ea0495}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\parser">
+      <UniqueIdentifier>{de70d3d5-d595-451e-b995-c97f445877df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\interface">
+      <UniqueIdentifier>{f5f2743f-ebed-4e1f-8d73-3a9d97e31089}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\legal">
+      <UniqueIdentifier>{2d930373-c4b6-44d6-83f8-f5950cc28caf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\test runner">
+      <UniqueIdentifier>{a0c69425-e216-45f4-8a4f-3abe4c23b937}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\test runner\default">
+      <UniqueIdentifier>{5c7994ce-bd01-4a14-a901-5bbbff2d44a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\test runner\default\files">
+      <UniqueIdentifier>{767c345a-27cc-4fb0-9bba-acd2dd7c147b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\interpreter">
+      <UniqueIdentifier>{3f025008-e431-4bb0-8446-6648dd29c845}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\compiler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SymTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\arch.cpp">
+      <Filter>Source Files\codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AsmEmitter.cpp">
+      <Filter>Source Files\codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AsmGenerator.cpp">
+      <Filter>Source Files\codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ast.cpp">
+      <Filter>Source Files\parser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cmd_line.cpp">
+      <Filter>Source Files\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CompilationState.cpp">
+      <Filter>Source Files\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="_dev_plan.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="_plan.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="_todo.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LICENSE">
+      <Filter>Resource Files\legal</Filter>
+    </None>
+    <None Include="README.md">
+      <Filter>Resource Files\legal</Filter>
+    </None>
+    <None Include="test.rb">
+      <Filter>Resource Files\test runner</Filter>
+    </None>
+    <None Include="_test\tests.yaml">
+      <Filter>Resource Files\test runner\default</Filter>
+    </None>
+    <None Include="_test\variables.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\add.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\bool.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\error.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\fail_type.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\first.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\func.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\func_after.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\func_pointless.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\func_type_err.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\mut_fail.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\mut_succ.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\orderOfOperations.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\sub.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="_test\var_ops.spr">
+      <Filter>Resource Files\test runner\default\files</Filter>
+    </None>
+    <None Include="grammar.md">
+      <Filter>Resource Files\legal</Filter>
+    </None>
+    <None Include="x86_inter\src\emu.rs">
+      <Filter>Resource Files\interpreter</Filter>
+    </None>
+    <None Include="x86_inter\src\inter.rs">
+      <Filter>Resource Files\interpreter</Filter>
+    </None>
+    <None Include="x86_inter\src\lib.rs">
+      <Filter>Resource Files\interpreter</Filter>
+    </None>
+    <None Include="x86_inter\src\main.rs">
+      <Filter>Resource Files\interpreter</Filter>
+    </None>
+    <None Include="x86_inter\src\parse.rs">
+      <Filter>Resource Files\interpreter</Filter>
+    </None>
+    <None Include="x86_inter\src\view.rs">
+      <Filter>Resource Files\interpreter</Filter>
+    </None>
+    <None Include="x86_inter\src\x86.rs">
+      <Filter>Resource Files\interpreter</Filter>
+    </None>
+    <None Include="x86_inter\src\ximpl.rs">
+      <Filter>Resource Files\interpreter</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="incl\compiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\SymTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\actions.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\ast.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\grammar.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\util\utils.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\codegen\arch.h">
+      <Filter>Header Files\codegen</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\codegen\AsmEmitter.h">
+      <Filter>Header Files\codegen</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\codegen\AsmGenerator.h">
+      <Filter>Header Files\codegen</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\cmd_line.h">
+      <Filter>Header Files\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\util\CompilationState.h">
+      <Filter>Header Files\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\util\parser.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\util\string.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\visitor.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

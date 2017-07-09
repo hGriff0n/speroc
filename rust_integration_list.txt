@@ -1,0 +1,20 @@
+Note: This integration checklist is developed according to my personal machine and visual studio targets
+  For some reason, this means using the i686 toolchains (normal rust toolchain is x86)
+
+Setting up rust integration
+  Determine which architecture visual studio is targeting
+  run "rustup override set stable-i686-pc-windows-msvc" within the 'x86_inter' directory
+
+  Build the project using "cargo build --lib"
+  Build the release versions using "cargo build --lib --release"
+ 
+  Open up visual studio and open the project properties (if necessary)
+    In VC++ Directories
+      add "./x86_inter/target/debub" to library directories (for debug target)
+      add "./x86_inter/target/release" to library directories (for release target)
+    In Linker\Input
+      add "x86_interpreter.lib;Ws2_32.lib;userenv.lib;" to additional dependencies
+
+  Add extern "C" block with the following declarations
+    void interpret_file(const char*);
+    void interpret_string(const char*);
