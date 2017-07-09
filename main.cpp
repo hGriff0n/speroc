@@ -21,6 +21,12 @@ Stream& getMultiline(Stream&, std::string&);
 // Helper function to print out the ast structure
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack&);
 
+// Exported interpreter functions (implemented in Rust)
+extern "C" {
+	void interpret_file(const char*);
+	void interpret_string(const char*);
+}
+
 
 /*
  * Run the compiler and it's command-line interface
@@ -103,6 +109,12 @@ int main(int argc, char* argv[]) {
 						while (std::getline(out, input)) {
 							std::cout << input << '\n';
 						}
+
+						// TODO: Allow interpretation without requiring compilation displaying
+						if (flags["interpret"]) {
+							interpret_file("out.s");
+						}
+
 						std::remove("out.s");
 
 						// Reset `res` and `succ` for future usage

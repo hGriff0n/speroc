@@ -7,3 +7,6 @@
 [submodule "dep/better-enums"]
 	path = dep/better-enums
 	url = https://github.com/aantron/better-enums.git
+[submodule "x86_inter"]
+	path = x86_inter
+	url = https://github.com/hGriff0n/x86-Interpreter
