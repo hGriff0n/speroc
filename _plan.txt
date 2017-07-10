@@ -8,9 +8,15 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  Look at creating an x86 interpreter (using rust) to optimize the command line dev environment
-    TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
+  Work on integrating the rust x86 interpreter
+    Implement the needed instructions (particularly push and pop)
+    Look into moving to the 'dep' folder
+    Work on improving the rust code
+      TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
+  Fix updating pegtl to the recent version
+    Need to reget 'location data' from the input structure
   Extend SymTable working to scopes (ie. have scoped declarations)
+    Look at incorporating the code-generation changes (as laid out in 'todo.txt')
     Have a 'SymTable*' in the AsmGenerator structure (<- already done)
 	When entering a Scoped context, load the scope's symtable to the AsmGenerator (<- done)
 	Add in code to SymTable::getVar to perform scoped lookup (<- done)
