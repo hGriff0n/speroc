@@ -29,15 +29,15 @@ namespace spero::parser::actions {
 		using Loc = compiler::ast::Ast::Location;
 
 		Loc location{};
-		location.byte = in.byte_in_line();
-		location.line = in.line();
-		location.src = in.source();
+		//location.byte = in.byte_in_line();
+		//location.line = in.line();
+		//location.src = in.source();
 
 		return std::move(location);
 	}
 
 	template<class Rule>
-	struct action : pegtl::nothing<Rule> {};
+	struct action : tao::pegtl::nothing<Rule> {};
 
 	// Sentinel Nodes
 	SENTINEL(obrace);

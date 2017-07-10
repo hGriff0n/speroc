@@ -1,11 +1,11 @@
 #pragma once
 #pragma warning(disable : 4503)
 
-#include "pegtl.hh"
+#include "pegtl.hpp"
 
 namespace spero::parser::grammar {
-	using namespace pegtl;
-#define pstr(x) pegtl_string_t((x))
+	using namespace tao::pegtl;
+#define pstr(x) TAOCPP_PEGTL_STRING((x))
 #define key(x) seq<pstr((x)), not_at<ascii::identifier_other>, ig_s> {}
 
 	// Forward Declarations

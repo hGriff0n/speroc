@@ -1,6 +1,5 @@
 #include "compiler.h"
 #include "parser/control.h"
-#include "pegtl/analyze.hh"
 #include "codegen/AsmGenerator.h"
 
 std::string spero::util::escape(std::string s) {
@@ -30,11 +29,13 @@ namespace spero::compiler {
 	}
 
 	std::tuple<size_t, Stack> parse(std::string input, CompilationState& state) {
-		return parse_impl([&input](Stack& ast) { return pegtl::parse_string<grammar::program, actions::action, control::control>(input, "me", ast); });
+		using namespace tao::pegtl;
+		return parse_impl([&input](Stack& ast) { return tao::pegtl::parse<grammar::program, actions::action, control::control>(string_input<>{ input, "me" }, ast); });
 	}
 
 	std::tuple<size_t, Stack> parseFile(std::string file, CompilationState& state) {
-		return parse_impl([&file](Stack& ast) { return pegtl::parse_file<grammar::program, actions::action, control::control>(file, ast); });
+		using namespace tao::pegtl;
+		return parse_impl([&file](Stack& ast) { return tao::pegtl::parse<grammar::program, actions::action, control::control>(file_input<>{ file }, ast); });
 	}
 
 
