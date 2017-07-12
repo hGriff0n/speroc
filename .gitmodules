@@ -10,6 +10,6 @@
 [submodule "dep\\x86_inter"]
 	path = dep\\x86_inter
 	url = https://github.com/hGriff0n/x86-Interpreter
-[submodule "_x86_inter"]
-	path = _x86_inter
+[submodule "dep/_x86_inter"]
+	path = dep/_x86_inter
 	url = https://github.com/hGriff0n/x86-Interpreter
