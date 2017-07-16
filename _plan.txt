@@ -1,31 +1,36 @@
 Current Project State
   mutability => mutable-by-default [off-spec]
-  types => impl: hardcoded, availability: standard-only, generics: no, inheritance: unk
+  types =>
+    impl: hardcoded
+	availability: standard-only
+	generics: no
+	inheritance: undetermined (not sure how inheritance will be handled, between Rust 'impl', C++ 'inheritance' or some mix)
     recognized => Int, Bool, ~Byte, ~Char
 	...
-  variables => unsupported
+  variables => partially-supported
   functions => main-only
   annotations => ignored
 
 Current Project Plan
   Work on integrating the rust x86 interpreter
     Implement the needed instructions (particularly push and pop)
-    Look into moving to the 'dep' folder
     Work on improving the rust code
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
-  Fix updating pegtl to the recent version
-    Need to reget 'location data' from the input structure
   Extend SymTable working to scopes (ie. have scoped declarations)
-    Look at incorporating the code-generation changes (as laid out in 'todo.txt')
-    Have a 'SymTable*' in the AsmGenerator structure (<- already done)
-	When entering a Scoped context, load the scope's symtable to the AsmGenerator (<- done)
-	Add in code to SymTable::getVar to perform scoped lookup (<- done)
-	  Add in code to offset scoped lookup properly (<- done)
-	When exiting a Scoped context, the old symtable is restored in the AsmGenerator (<- done)
-	Add in really basic scope cleanup code (ie. pop) (<- done)
-	Variable/Fn lookup continues as before, just index into the symtable (<- done)
-	TODO: Add in handling of '=' when the lhs is a variable
-	TODO: Add in scope 'return value' code
+    Figure out how variables are being assigned values
+	  Rewrite this process to have a more straightforward execution
+	  Ensure new solution enables directly getting the variables value from the 'acceptVariable' call
+	Look into rewritting visitor framework from ground up
+	  Current design isn't extremely amenable to replacement modifications (changing the type of the node)
+	  This is because any modifications are performed from the perspective of the child node, not the parent
+	Add in variable recognizer analysis phase (require modification work)
+	  Should simplify some of the codegen (change assign vars to reassign nodes, except for main)
+	Generalize reassignment behavior to work on compound operators
+	  Change the parser to change reassign/compound operators to the new ast node
+	  Add a way to work with the memory location of a variable
+	    Extend this solution to literals and see if we can handle stuff that way
+    Change variables from being an entirely push/pop phenomenon
+	Ensure that the 'return value' of a scope is handled correctly
   Extend SymTable working into functions
     Look at possibly modifying the ast to force function wrapping (except possibly in forwarded contexts)
 	  Actually, declarations really only make sense (and are somewhat only possible) in functions that already have a scope

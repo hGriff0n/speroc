@@ -1,9 +1,8 @@
 
 todo:
  start working on the development plan (in _plan.txt)
-   Rework literals to just write their value directly (no loading into register)
-     This would probably be a good improvement to make, as I can do it to all areas
-     The "mov" etc. instructions are only emitted when an operation needs them in the context that they need them
+   Reduce register usage levels when working with literals
+     The end goal is that "3 + 4" should compile down to "mov $4, %eax\nadd $3, %eax" ("mov $7, %eax" is a bit farther down the pipeline)
    Work on the testing framework/runners a bit (make more diverse tests)
    see if there are any additional issues in my paper notes
  move the 'x86_inter' project into the 'dep' folder

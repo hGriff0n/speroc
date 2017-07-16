@@ -9,6 +9,7 @@ std::string spero::util::escape(std::string s) {
 namespace spero::compiler {
 	using namespace parser;
 
+	// TODO: Fix the semantic switching of 'succ'
 	template<class Fn>
 	std::tuple<size_t, Stack> parse_impl(Fn&& parse) {
 		// Setup parser state
@@ -20,12 +21,9 @@ namespace spero::compiler {
 
 		// Maintain the ast stack invariants (no nullptr [at 0], non-empty)
 		ast.pop_front();
-		if (!ast.size()) {
-			ast.emplace_back(std::make_unique<compiler::ast::Ast>(compiler::ast::Ast::Location{}));
-		}
 
 		// Return the completed ast
-		return std::make_tuple(!succ, std::move(ast));
+		return std::make_tuple(!succ || ast.size() == 0, std::move(ast));
 	}
 
 	std::tuple<size_t, Stack> parse(std::string input, CompilationState& state) {
