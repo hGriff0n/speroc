@@ -13,13 +13,11 @@ Current Project State
 
 Current Project Plan
   Work on integrating the rust x86 interpreter
+    Fix an 'index-out-of-range' error with stack acessing
     Implement the needed instructions (particularly push and pop)
     Work on improving the rust code
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
   Extend SymTable working to scopes (ie. have scoped declarations)
-    Figure out how variables are being assigned values
-	  Rewrite this process to have a more straightforward execution
-	  Ensure new solution enables directly getting the variables value from the 'acceptVariable' call
 	Look into rewritting visitor framework from ground up
 	  Current design isn't extremely amenable to replacement modifications (changing the type of the node)
 	  This is because any modifications are performed from the perspective of the child node, not the parent
@@ -29,8 +27,9 @@ Current Project Plan
 	  Change the parser to change reassign/compound operators to the new ast node
 	  Add a way to work with the memory location of a variable
 	    Extend this solution to literals and see if we can handle stuff that way
-    Change variables from being an entirely push/pop phenomenon
+    Change variables from being an entirely push/pop phenomenon (base of off ebp, preallocate stack space)
 	Ensure that the 'return value' of a scope is handled correctly
+	Find a way to add 'assignXX' visitation back in (may be rolled into the analysis phase)
   Extend SymTable working into functions
     Look at possibly modifying the ast to force function wrapping (except possibly in forwarded contexts)
 	  Actually, declarations really only make sense (and are somewhat only possible) in functions that already have a scope

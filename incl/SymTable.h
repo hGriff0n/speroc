@@ -18,7 +18,7 @@ namespace spero::compiler::analysis {
 	 */
 	class SymTable {
 		std::unordered_map<std::string, impl::Data> var_data;
-		SymTable* parent;
+		SymTable* parent = nullptr;
 		int ebp_offset = 0;
 
 		public:

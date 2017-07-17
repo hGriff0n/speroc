@@ -14,10 +14,15 @@ namespace spero::compiler::gen {
 	 */
 	class AsmGenerator : public ast::Visitor {
 		AsmEmitter emit;
+		std::ostream& out;
+
 		CompilationState& state;
 
 		analysis::SymTable globals;
 		analysis::SymTable* current = &globals;
+
+		void loadVariable(ast::Variable&);
+		void performAssign(ast::AssignPattern&);
 
 		public:
 			AsmGenerator(std::ostream&, CompilationState&);
@@ -35,8 +40,6 @@ namespace spero::compiler::gen {
 
 			// Names
 			virtual void acceptVariable(ast::Variable&) final;
-			virtual void acceptAssignName(ast::AssignName&) final;
-			virtual void acceptAssignTuple(ast::AssignTuple&) final;
 
 			// Types
 

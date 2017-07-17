@@ -2,7 +2,31 @@
 #include "util/parser.h"
 
 namespace spero::compiler::gen {
-	AsmGenerator::AsmGenerator(std::ostream& s, CompilationState& state) : emit{ s }, state{ state } {}
+	AsmGenerator::AsmGenerator(std::ostream& s, CompilationState& state) : out{ s }, emit { s }, state{ state } {}
+
+	void AsmGenerator::loadVariable(ast::Variable& v) {
+		auto var = v.name->toString();
+		auto loc = current->getVar(var);
+
+		Register ebp{ "ebp" };
+		out << ebp.at(loc.value());
+	}
+
+	void AsmGenerator::performAssign(ast::AssignPattern& pat) {
+		out << "\tmov %eax, ";
+
+		auto var = dynamic_cast<ast::AssignName&>(pat).var->toString();
+		auto loc = current->getVar(var);
+
+		if (!loc) {
+			int _loc = -4 * (current->getCount() + 2);
+			current->insert(var, _loc);
+			loc = _loc;
+		}
+
+		Register ebp{ "ebp" };
+		out << ebp.at(loc.value()) << '\n';
+	}
 	
 
 	// Base Nodes
@@ -44,17 +68,10 @@ namespace spero::compiler::gen {
 
 	// Names
 	void AsmGenerator::acceptVariable(ast::Variable& v) {
-		auto var = v.name->toString();
-		auto loc = current->getVar(var);
-		
-		if (loc) {
-			Register eax{ "eax" };
-			Register ebp{ "ebp" };
-			emit.mov(ebp.at(loc.value()), eax);
-
-		} else {
-			// error
-		}
+		Register eax{ "eax" };
+		out << "\tmov ";
+		loadVariable(v);
+		out << ", " << eax << '\n';
 	}
 	
 	void AsmGenerator::acceptAssignName(ast::AssignName& n) {
@@ -65,8 +82,6 @@ namespace spero::compiler::gen {
 		// Store variable on the stack
 		Register eax{ "eax" };
 		emit.push(eax);
-		//Register ebp{ "ebp" };
-		//emit.mov(eax, ebp.at(loc));
 	}
 
 	void AsmGenerator::acceptAssignTuple(ast::AssignTuple& t) {
@@ -220,7 +235,7 @@ namespace spero::compiler::gen {
 
 		} else {
 			v.expr->visit(*this);		// Push the expression value onto the stack
-			v.name->visit(*this);		// Store the location in the variable
+			performAssign(*v.name);		// Store the variable at its location
 		}
 	}
 }
