@@ -1140,24 +1140,31 @@ namespace spero::parser::actions {
 			auto op = util::pop<ast::QualifiedBinding>(s)->elems.back()->name;
 			auto lhs = util::pop<ast::ValExpr>(s);
 
-			//std::iter_swap(std::rbegin(s) + 1 + not_curried, std::rbegin(s) + not_curried);
+			// Handle optional left-side currying
+			if (!rhs) rhs = std::make_unique<ast::Future>(false, in.position());
 
-			//args.push_front(util::pop<ast::ValExpr>(s));
-			//if (not_curried) args.push_front(util::pop<ast::ValExpr>(s));
+			// Handle reassignment/compound operators
+			// TODO: Need to account for possibility for types to overload compound operators
+			// TODO: Adjust when operators are changed to a method call (can move back to one pathing)
+			if (op.back() == '=') {
+				auto _lhs = util::dyn_cast<ast::Variable>(std::move(lhs));
 
-			//s.emplace_back(std::make_unique<ast::Tuple>(std::move(args), mkLoc(in)));
+				// TODO: Check that 'lhs' is a variable
 
-			//// stack: op tuple
-			//action<grammar::fnseq>::apply(in, s);
+				// Handle compound reassignments
+				if (op.size() != 1) {
+					_lhs = std::make_unique<ast::Variable>(_lhs->name->toString(), in.position());
 
-			auto rhs = util::pop<ast::ValExpr>(s);
-			auto op = util::pop<ast::QualifiedBinding>(s);
-			auto lhs = util::pop<ast::ValExpr>(s);
+					rhs = std::make_unique<ast::BinOpCall>(std::move(_lhs), std::move(rhs), op.substr(0, op.size() - 1), in.position());
+				}
 
-			if (!rhs) rhs = std::make_unique<ast::Future>(false, mkLoc(in));
-			s.emplace_back(std::make_unique<ast::BinOpCall>(std::move(lhs), std::move(rhs), std::move(op), mkLoc(in)));
-			// stack: BinOpCall
+				s.emplace_back(std::make_unique<ast::Reassign>(std::move(_lhs), std::move(rhs), in.position()));
+
+			// Or push the operator call
+			} else {
 				s.emplace_back(std::make_unique<ast::BinOpCall>(std::move(lhs), std::move(rhs), std::move(op), in.position()));
+			}
+			// stack: Reassign | BinOpCall
 		}
 	};
 	INHERIT(_binary_prec_2, _binary_prec_1);

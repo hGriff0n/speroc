@@ -22,7 +22,8 @@ namespace spero::compiler::gen {
 		analysis::SymTable* current = &globals;
 
 		void loadVariable(ast::Variable&);
-		void performAssign(ast::AssignPattern&);
+		void performAssign(ast::AssignPattern&, bool);
+		void performAssign(std::string&, bool);
 
 		public:
 			AsmGenerator(std::ostream&, CompilationState&);
@@ -51,6 +52,7 @@ namespace spero::compiler::gen {
 			// Statements
 			virtual void acceptFnBody(ast::FnBody&) final;
 			virtual void acceptBinOpCall(ast::BinOpCall&) final;
+			virtual void acceptReassign(ast::Reassign&) final;
 			virtual void acceptUnaryOpApp(ast::UnaryOpApp&) final;
 			virtual void acceptVarAssign(ast::VarAssign&) final;
 	};

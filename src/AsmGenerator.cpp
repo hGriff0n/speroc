@@ -12,16 +12,18 @@ namespace spero::compiler::gen {
 		out << ebp.at(loc.value());
 	}
 
-	void AsmGenerator::performAssign(ast::AssignPattern& pat) {
+	void AsmGenerator::performAssign(ast::AssignPattern& pat, bool force_curr_scope) {
+		performAssign(dynamic_cast<ast::AssignName&>(pat).var->toString(), force_curr_scope);
+	}
+
+	void AsmGenerator::performAssign(std::string& var, bool force_curr_scope) {
 		out << "\tmov %eax, ";
 
-		auto var = dynamic_cast<ast::AssignName&>(pat).var->toString();
-		auto loc = current->getVar(var);
+		auto loc = current->getVar(var, force_curr_scope);
 
 		if (!loc) {
 			int _loc = -4 * (current->getCount() + 2);
-			current->insert(var, _loc);
-			loc = _loc;
+			loc = current->insert(var, _loc);
 		}
 
 		Register ebp{ "ebp" };
@@ -72,20 +74,6 @@ namespace spero::compiler::gen {
 		out << "\tmov ";
 		loadVariable(v);
 		out << ", " << eax << '\n';
-	}
-	
-	void AsmGenerator::acceptAssignName(ast::AssignName& n) {
-		// TODO: Improve variable storage
-		int loc = -4 * (current->getCount() + 2);
-		current->insert(n.var->toString(), loc);
-		
-		// Store variable on the stack
-		Register eax{ "eax" };
-		emit.push(eax);
-	}
-
-	void AsmGenerator::acceptAssignTuple(ast::AssignTuple& t) {
-
 	}
 
 
@@ -197,6 +185,12 @@ namespace spero::compiler::gen {
 		}
 	}
 
+	void AsmGenerator::acceptReassign(ast::Reassign& r) {
+		// Evaluate the operands
+		r.val->visit(*this);
+		performAssign(r.var->name->toString(), false);
+	}
+
 	void AsmGenerator::acceptUnaryOpApp(ast::UnaryOpApp& u) {
 		// Evaluate the expression
 		u.expr->visit(*this);
@@ -234,8 +228,8 @@ namespace spero::compiler::gen {
 			emit.write("\t.ident \"speroc: 0.0.15 (Windows 2017)\"");
 
 		} else {
-			v.expr->visit(*this);		// Push the expression value onto the stack
-			performAssign(*v.name);		// Store the variable at its location
+			v.expr->visit(*this);			// Push the expression value onto the stack
+			performAssign(*v.name, true);	// Store the variable at its location
 		}
 	}
 }

@@ -6,17 +6,17 @@ namespace spero::compiler::analysis {
 
 	SymTable::~SymTable() {}
 
-	void SymTable::insert(std::string name, int off) {
+	int SymTable::insert(std::string name, int off) {
 		// TODO: Add in check against "shadowing" ???
-		var_data[name].loc = off - ebp_offset;
+		return var_data[name].loc = off - ebp_offset;
 	}
 
-	std::optional<int> SymTable::getVar(std::string name) {
+	std::optional<int> SymTable::getVar(std::string name, bool force_curr_scope) {
 		if (var_data.count(name)) {
 			return var_data[name].loc;
 		}
 
-		if (parent) {
+		if (parent && !force_curr_scope) {
 			return parent->getVar(name);
 		}
 

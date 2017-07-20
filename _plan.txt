@@ -13,9 +13,9 @@ Current Project State
 
 Current Project Plan
   Work on integrating the rust x86 interpreter
-    Fix an 'index-out-of-range' error with stack acessing
-    Implement the needed instructions (particularly push and pop)
+    Remove 'panic!' from codebase (really bad working)
     Work on improving the rust code
+	  Expand the available memory to work with
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
   Extend SymTable working to scopes (ie. have scoped declarations)
 	Look into rewritting visitor framework from ground up
@@ -25,6 +25,7 @@ Current Project Plan
 	  Should simplify some of the codegen (change assign vars to reassign nodes, except for main)
 	Generalize reassignment behavior to work on compound operators
 	  Change the parser to change reassign/compound operators to the new ast node
+	    NOTE: This would require me to "accept" compound operators (I'm not sure about this)
 	  Add a way to work with the memory location of a variable
 	    Extend this solution to literals and see if we can handle stuff that way
     Change variables from being an entirely push/pop phenomenon (base of off ebp, preallocate stack space)

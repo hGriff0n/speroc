@@ -25,8 +25,8 @@ namespace spero::compiler::analysis {
 			SymTable();
 			~SymTable();
 
-			void insert(std::string, int);
-			std::optional<int> getVar(std::string);
+			int insert(std::string, int);
+			std::optional<int> getVar(std::string, bool=false);
 
 			size_t getCount();
 

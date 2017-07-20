@@ -1064,6 +1064,26 @@ namespace spero::compiler::ast {
 
 
 	/*
+	 * Represent a reassignment operation
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   var - variable that is being reassigned
+	 *   val - value expression to give the variable
+	 */
+	struct Reassign : ValExpr {
+		ptr<Variable> var;
+		ptr<ValExpr> val;
+
+		Reassign(ptr<Variable>, ptr<ValExpr>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+
+	/*
 	 * Represents a range object construction
 	 * 
 	 * Extends: ValExpr

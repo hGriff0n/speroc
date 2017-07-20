@@ -113,6 +113,7 @@ int main(int argc, char* argv[]) {
 						// TODO: Allow interpretation without requiring compilation displaying
 						if (flags["interpret"]) {
 							interpret_file("out.s");
+							std::cout << std::endl;
 						}
 
 						std::remove("out.s");

@@ -3,6 +3,7 @@ todo:
  start working on the development plan (in _plan.txt)
    Reduce register usage levels when working with literals
      The end goal is that "3 + 4" should compile down to "mov $4, %eax\nadd $3, %eax" ("mov $7, %eax" is a bit farther down the pipeline)
+	   NOTE: I think this requires a SSA-style IR (not really possible in our AST-IR)
 	 Additionally, need to consider reordering operator calls if a literal is involved to reduce loads
    Work on the testing framework/runners a bit (make more diverse tests)
    see if there are any additional issues in my paper notes

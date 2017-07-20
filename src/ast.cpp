@@ -834,6 +834,19 @@ namespace spero::compiler::ast {
 		return rhs->prettyPrint(s << '\n', buf + 2, "rhs=");
 	}
 
+	Reassign::Reassign(ptr<Variable> var, ptr<ValExpr> val, Location loc)
+		: ValExpr{ loc }, var{ std::move(var) }, val{ std::move(val) } {}
+	Visitor& Reassign::visit(Visitor& v) {
+		v.acceptReassign(*this);
+		return v;
+	}
+	DEF_PRINTER(Reassign) {
+		s << std::string(buf, ' ') << context << "ast.Reassign (";
+		ValExpr::prettyPrint(s, buf);
+		var->prettyPrint(s << '\n', buf + 2, "var=");
+		return val->prettyPrint(s << '\n', buf + 2, "val=");
+	}
+
 	Range::Range(ptr<ValExpr> start, ptr<ValExpr> stop, Location loc)
 		: ValExpr{ loc }, start{ std::move(start) }, stop{ std::move(stop) } {}
 	Visitor& Range::visit(Visitor& v) {
