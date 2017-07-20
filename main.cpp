@@ -17,6 +17,7 @@
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
 template <class Stream>
 Stream& getMultiline(Stream&, std::string&);
+std::deque<std::string> split(std::string);
 
 // Helper function to print out the ast structure
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack&);
@@ -86,8 +87,11 @@ int main(int argc, char* argv[]) {
 
 				// Set an interactive flag
 				} else if (command == ":s") {
-					auto flag = input.substr(3);
-					flags[flag] = !flags[flag];
+					for (auto flag : split(input.substr(3))) {
+						// TODO: Trim whitespace from 'flag'
+						flags[flag] = !flags[flag];
+					}
+
 					continue;
 
 				// Quit
@@ -247,4 +251,20 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
 	}
 
 	return s << '\n';
+}
+
+
+#include <sstream>
+#include <algorithm>
+#include <iterator>
+std::deque<std::string> split(std::string str) {
+	std::istringstream iss(str);
+	std::deque<std::string> ret;
+	std::string in;
+
+	while (std::getline(iss, in, ',')) {
+		ret.emplace_back(in);
+	}
+	
+	return std::move(ret);
 }
