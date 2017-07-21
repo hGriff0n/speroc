@@ -6,7 +6,6 @@
 #include <string>
 #include "enum.h"
 #include "SymTable.h"
-#include "pegtl/position.hpp"
 
 namespace spero::compiler {
 	// Cut down on typing for unique_ptr

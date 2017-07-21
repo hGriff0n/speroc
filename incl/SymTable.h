@@ -2,13 +2,18 @@
 
 #include <unordered_map>
 #include <optional>
+#include "pegtl/position.hpp"
 
 namespace spero::compiler::analysis {
 	namespace impl {
+		using Location = tao::pegtl::position;
 
 		struct Data {
 			int loc;
+			Location src;
 			//Ast* node;
+
+			Data(int, Location);
 		};
 
 	}
@@ -25,7 +30,7 @@ namespace spero::compiler::analysis {
 			SymTable();
 			~SymTable();
 
-			int insert(std::string, int);
+			int insert(std::string, int, impl::Location);
 			std::optional<int> getVar(std::string, bool=false);
 
 			size_t getCount();

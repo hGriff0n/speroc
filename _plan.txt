@@ -17,45 +17,27 @@ Current Project Plan
     Work on improving the rust code
 	  Expand the available memory to work with
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
+	Add ability to "save state", make into true 'repl'
   Extend SymTable working to scopes (ie. have scoped declarations)
 	Look into rewritting visitor framework from ground up
 	  Current design isn't extremely amenable to replacement modifications (changing the type of the node)
+        Maybe have every visit return a pointer (if it's nullptr no change, else swap out)
 	  This is because any modifications are performed from the perspective of the child node, not the parent
 	Add in variable recognizer analysis phase (require modification work)
 	  Should simplify some of the codegen (change assign vars to reassign nodes, except for main)
 	Generalize reassignment behavior to work on compound operators
 	  Change the parser to change reassign/compound operators to the new ast node
 	    NOTE: This would require me to "accept" compound operators (I'm not sure about this)
-	  Add a way to work with the memory location of a variable
-	    Extend this solution to literals and see if we can handle stuff that way
     Change variables from being an entirely push/pop phenomenon (base of off ebp, preallocate stack space)
-	Ensure that the 'return value' of a scope is handled correctly
 	Find a way to add 'assignXX' visitation back in (may be rolled into the analysis phase)
-  Extend SymTable working into functions
-    Look at possibly modifying the ast to force function wrapping (except possibly in forwarded contexts)
-	  Actually, declarations really only make sense (and are somewhat only possible) in functions that already have a scope
-	  For all functions, unless a scope is linked by a following block, assume the scope is 'current'
-	TODO: Need to extend function symtable support with the function arguments
-	TODO: Need to modify 'ebp_offset' setting of the symtable, to change for 
-  Extend SymTable working into types
-    Ensure that order-of-declaration errors can be caught and reported in functions/scopes
-    TODO: Figure out how to prevent accessing variables that are declared after the current statement
-	  Well there are some contexts that I want to enable that behavior and some that I don't
-	  Function bodys and normal scopes have this behavior, types and globals don't
-	    Sometimes functions don't have an associated block, may need to modify ast to add one in
-	  TypeAssign is set to take a block for defining the methods (can't rely on ast behavior, need to track in_type_or_global)
-		But Variables are going to be tracked in one pass, can't utilize a 'in_type_or_global' flag
-	    I'll need to track the "statement" id (or something like that) when working through the ast
-	  There's a possibility I could put this into a CFG-style pass, but I feel that doesn't handle some cases (particularly mutability shadowing)
-		(ie. "let a = mut a" is an analysis stage only, "let a = b + a" is a value change, though it can reuse the old address)
-  Improving Assembly generation for operators
-    Perform direct usage if possible (ie. "3 + 4" -> "mov 3, eax;add 4, eax;" not "mov 3, eax; push eax; mov 4, eax; add (esp), eax; add 4, esp;")
-	  Also directly utilize stack locations for adding/storing variables
-  Basic Mutability Tracking
-    Create "check_mutability" analysis phase
-	Create some test code to test the mutability checking
-	Move sym table collection into an analysis phase
+	  Might be wanting to add in tuples
   Add error/exception handling and reporting
+    Have error when a variable is used before it is declared in scopes/functions
+	  Sometimes functions don't have an associated block, may need to modify ast to add one in
+	  Need to ensure the solution works with types (REQUIRES: Separate variable analysis stage)
+	  Need to have a two-pass system at least (may need to extend depending on how the type inference works)
+	    The first pass records all variable declarations and their location
+		The second pass records all variable usages and flags unused/forward-used/created variables
     Add in storage and reporting structures to CompilationState
 	Adapt the analysis and codegen phases to report errors to the CompilationState
 	Work on error formatting and display onto the command line
@@ -64,14 +46,36 @@ Current Project Plan
 	Adapt the stages to be exception safe 
 	  Add in "noexcept" declarations
 	  Ensure that everything is "const" declared (if possible)
+  Basic Mutability Tracking
+    Create "check_mutability" analysis phase
+	Create some test code to test the mutability checking
+	Move sym table collection into an analysis phase
+  Basic Function Definition
+    Update x86_interpreter/codegen to be able to specify start instruction
+	Ensure compiler recognition of function defs and calls works correctly
+	Perform codgen of function definitions and ensure they do not interfere with normal compilation
+	  These initial functions should just return a value into the 'eax' register
+	Add in argument handling/setting for function definitions and calling
+	  Might just have a full stack-based solution for now
+	  Make sure each "function body" has a 'SymTable' attached to it (for argument setting)
+	  Ensure that recursive functions work
+	Handle global declarations correctly (ie. place these values in 'separate' memory)
+	  Figure out how to handle these separate addressing schemes
+	Allow for function bodies to be scopes (with their own local variables)
+      Look at possibly modifying the ast to force function wrapping (except possibly in forwarded contexts)
+	    Actually, declarations really only make sense (and are somewhat only possible) in functions that already have a scope
+	    For all functions, unless a scope is linked by a following block, assume the scope is 'current'
+	  TODO: Need to modify 'ebp_offset' setting of the symtable (particularly when accessing "global"/"parent" variables)
+        This is accounting for the effects of changing the stack pointers
   Basic Types
     value/variable => type
+	NOTE: Does this include creating custom types ???
   Type Inference
     explicit annotations within the ast
-  Basic Function Definition
   Basic Function Calling
   Improve system benchmark collection
   Improve command line interface collection
+    Improve the handling of "flags" within the interpreter
   ...
   Converting Operators into function calls [ <- Needs mutability checking and references
 

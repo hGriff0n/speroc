@@ -23,7 +23,7 @@ namespace spero::compiler::gen {
 
 		void loadVariable(ast::Variable&);
 		void performAssign(ast::AssignPattern&, bool);
-		void performAssign(std::string&, bool);
+		void performAssign(std::string&, ast::Location, bool);
 
 		public:
 			AsmGenerator(std::ostream&, CompilationState&);

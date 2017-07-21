@@ -2,13 +2,18 @@
 
 namespace spero::compiler::analysis {
 
+	impl::Data::Data(int loc, impl::Location src) : loc{ loc }, src{ src } {}
+
 	SymTable::SymTable() {}
 
 	SymTable::~SymTable() {}
 
-	int SymTable::insert(std::string name, int off) {
+	int SymTable::insert(std::string name, int off, impl::Location src) {
 		// TODO: Add in check against "shadowing" ???
-		return var_data[name].loc = off - ebp_offset;
+		impl::Data sym{ off - ebp_offset, src };
+
+		var_data.insert({ name, sym });
+		return sym.loc;
 	}
 
 	std::optional<int> SymTable::getVar(std::string name, bool force_curr_scope) {
