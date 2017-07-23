@@ -10,9 +10,10 @@ namespace spero::compiler::analysis {
 
 		struct Data {
 			int loc;
-			Location src;
+			std::optional<Location> src;
 			//Ast* node;
 
+			Data();
 			Data(int, Location);
 		};
 

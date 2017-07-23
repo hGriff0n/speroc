@@ -7,7 +7,6 @@ todo:
 	 Additionally, need to consider reordering operator calls if a literal is involved to reduce loads
    Work on the testing framework/runners a bit (make more diverse tests)
    see if there are any additional issues in my paper notes
- move the 'x86_inter' project into the 'dep' folder
  rewrite the grammar file to match the real grammar
  add in exception/error handling to make the compiler/parser usable
    adapt the compilation state structure to include an error-reporting framework
@@ -52,6 +51,7 @@ todo:
      if "forwarded_from_fn" is false, then it is a lambda usage
 	 also look at ways of pruning the creation of these "temporaries"
    modify module import syntax to allow for easy type aliasing
+   ensure that tuple switching (ie. "(a, b) = (b, a)") just rotates the internal locations (ie. no instruction)
 
  tester improvements:
    look at adding "error" field to test.compile struct that specifies a file to compare compilation errors with

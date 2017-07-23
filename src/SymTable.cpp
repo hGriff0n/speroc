@@ -2,6 +2,7 @@
 
 namespace spero::compiler::analysis {
 
+	impl::Data::Data() : loc{}, src{} {}
 	impl::Data::Data(int loc, impl::Location src) : loc{ loc }, src{ src } {}
 
 	SymTable::SymTable() {}

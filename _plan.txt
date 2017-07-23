@@ -19,18 +19,9 @@ Current Project Plan
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
 	Add ability to "save state", make into true 'repl'
   Extend SymTable working to scopes (ie. have scoped declarations)
-	Look into rewritting visitor framework from ground up
-	  Current design isn't extremely amenable to replacement modifications (changing the type of the node)
-        Maybe have every visit return a pointer (if it's nullptr no change, else swap out)
-	  This is because any modifications are performed from the perspective of the child node, not the parent
-	Add in variable recognizer analysis phase (require modification work)
-	  Should simplify some of the codegen (change assign vars to reassign nodes, except for main)
-	Generalize reassignment behavior to work on compound operators
-	  Change the parser to change reassign/compound operators to the new ast node
-	    NOTE: This would require me to "accept" compound operators (I'm not sure about this)
     Change variables from being an entirely push/pop phenomenon (base of off ebp, preallocate stack space)
-	Find a way to add 'assignXX' visitation back in (may be rolled into the analysis phase)
-	  Might be wanting to add in tuples
+	  Split out storage of global/static values
+	  Also be sure to "track" ebp offsets in a stack based fashion (for supporting local functions)
   Add error/exception handling and reporting
     Have error when a variable is used before it is declared in scopes/functions
 	  Sometimes functions don't have an associated block, may need to modify ast to add one in
@@ -47,9 +38,23 @@ Current Project Plan
 	  Add in "noexcept" declarations
 	  Ensure that everything is "const" declared (if possible)
   Basic Mutability Tracking
-    Create "check_mutability" analysis phase
+    Modify 'SymTable' to track the mutability of the variable (this can be done within the current system)
+	Throw errors when a Reassign node attempts to change the value of an immutable variable
 	Create some test code to test the mutability checking
-	Move sym table collection into an analysis phase
+  Basic Types
+    Add in tracking of variable/value types within the AST
+	  Ensure that 'malformed' expressions can throw up type errors
+	Add in handling of explicit annotations for automatically setting the types 
+      Ensure these explicit annotations throw up errors on unrecognized types
+  Abstract variables collection, etc. into a separate analysis phase
+    Rework the visitor system to allow for modification of sub-nodes
+	Have new system change VarAssign to Reassign nodes (after collecting relevant information)
+	  Ensure this new change interacts correctly with the mutability checking (including with shadowing)
+	Ensure this new system can handle "global" vars being defined post-facto
+	  Ensure that we can also force variables to be defined "ahead of time"
+	Rearrange codegen (or modify interpreter) to prevent these systems from interferring with each other (for post-facto variables)
+	Look into adding in language for recognizing compound operators
+	  A compound operator would map to a reassign<var, operator<var, val>>
   Basic Function Definition
     Update x86_interpreter/codegen to be able to specify start instruction
 	Ensure compiler recognition of function defs and calls works correctly
@@ -67,12 +72,10 @@ Current Project Plan
 	    For all functions, unless a scope is linked by a following block, assume the scope is 'current'
 	  TODO: Need to modify 'ebp_offset' setting of the symtable (particularly when accessing "global"/"parent" variables)
         This is accounting for the effects of changing the stack pointers
-  Basic Types
-    value/variable => type
-	NOTE: Does this include creating custom types ???
   Type Inference
     explicit annotations within the ast
   Basic Function Calling
+  Custom type definition
   Improve system benchmark collection
   Improve command line interface collection
     Improve the handling of "flags" within the interpreter
