@@ -49,6 +49,9 @@
     <Filter Include="Resource Files\interpreter">
       <UniqueIdentifier>{3f025008-e431-4bb0-8446-6648dd29c845}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\tools">
+      <UniqueIdentifier>{f3c773b5-7ea3-4d25-814b-5914433a75a8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\compiler.cpp">
@@ -78,25 +81,11 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="_dev_plan.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="_plan.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="_todo.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="LICENSE">
       <Filter>Resource Files\legal</Filter>
     </None>
     <None Include="README.md">
       <Filter>Resource Files\legal</Filter>
-    </None>
-    <None Include="test.rb">
-      <Filter>Resource Files\test runner</Filter>
     </None>
     <None Include="_test\tests.yaml">
       <Filter>Resource Files\test runner\default</Filter>
@@ -173,6 +162,21 @@
     <None Include="x86_inter\src\ximpl.rs">
       <Filter>Resource Files\interpreter</Filter>
     </None>
+    <None Include="tools\test.rb">
+      <Filter>Resource Files\test runner</Filter>
+    </None>
+    <None Include="docs\_readme.md">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="tools\mk_readme.rb">
+      <Filter>Resource Files\tools</Filter>
+    </None>
+    <None Include="tools\utils.rb">
+      <Filter>Resource Files\tools</Filter>
+    </None>
+    <None Include="tools\version.yaml">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="incl\compiler.h">
@@ -217,5 +221,19 @@
     <ClInclude Include="incl\parser\visitor.h">
       <Filter>Header Files\parser</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\_dev_plan.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="docs\_plan.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="docs\_todo.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="docs\rust_integration_list.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

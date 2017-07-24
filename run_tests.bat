@@ -1,2 +1,2 @@
 @ECHO OFF
-ruby test.rb %*
+ruby ./tools/test.rb %*

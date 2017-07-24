@@ -171,15 +171,14 @@
     <ClCompile Include="src\SymTable.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="_dev_plan.txt" />
-    <Text Include="_plan.txt" />
-    <Text Include="_todo.txt" />
-  </ItemGroup>
-  <ItemGroup>
+    <None Include="docs\_readme.md" />
     <None Include="grammar.md" />
     <None Include="LICENSE" />
     <None Include="README.md" />
-    <None Include="test.rb" />
+    <None Include="tools\mk_readme.rb" />
+    <None Include="tools\test.rb" />
+    <None Include="tools\utils.rb" />
+    <None Include="tools\version.yaml" />
     <None Include="x86_inter\src\emu.rs" />
     <None Include="x86_inter\src\inter.rs" />
     <None Include="x86_inter\src\lib.rs" />
@@ -220,6 +219,12 @@
     <ClInclude Include="incl\util\parser.h" />
     <ClInclude Include="incl\util\string.h" />
     <ClInclude Include="incl\util\utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\rust_integration_list.txt" />
+    <Text Include="docs\_dev_plan.txt" />
+    <Text Include="docs\_plan.txt" />
+    <Text Include="docs\_todo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
