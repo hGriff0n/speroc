@@ -168,6 +168,7 @@
     <ClCompile Include="src\cmd_line.cpp" />
     <ClCompile Include="src\CompilationState.cpp" />
     <ClCompile Include="src\compiler.cpp" />
+    <ClCompile Include="src\diagnostic.cpp" />
     <ClCompile Include="src\SymTable.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -216,6 +217,7 @@
     <ClInclude Include="incl\parser\visitor.h" />
     <ClInclude Include="incl\SymTable.h" />
     <ClInclude Include="incl\util\CompilationState.h" />
+    <ClInclude Include="incl\util\diagnostic.h" />
     <ClInclude Include="incl\util\parser.h" />
     <ClInclude Include="incl\util\string.h" />
     <ClInclude Include="incl\util\utils.h" />

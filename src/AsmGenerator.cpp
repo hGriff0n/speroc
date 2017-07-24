@@ -8,6 +8,11 @@ namespace spero::compiler::gen {
 		auto var = v.name->toString();
 		auto loc = current->getVar(var);
 
+		if (!loc) {
+			state.reportError("Attempt to use a variable before it was declared");
+			return;
+		}
+
 		Register ebp{ "ebp" };
 		out << ebp.at(loc.value());
 	}
@@ -17,17 +22,18 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::performAssign(std::string& var, ast::Location src, bool force_curr_scope) {
-		out << "\tmov %eax, ";
-
 		auto loc = current->getVar(var, force_curr_scope);
 
 		if (!loc) {
-			int _loc = -4 * (current->getCount() + 2);
-			loc = current->insert(var, _loc, src);
-		}
+			current->insert(var, -4 * (current->getCount() + 2), src);
 
-		Register ebp{ "ebp" };
-		out << ebp.at(loc.value()) << '\n';
+			Register eax{ "eax" };
+			emit.push(eax);
+
+		} else {
+			Register ebp{ "ebp" };
+			out << "\tmov %eax, " << ebp.at(loc.value()) << '\n';
+		}
 	}
 	
 
@@ -85,9 +91,9 @@ namespace spero::compiler::gen {
 
 	// Control
 	void AsmGenerator::acceptBlock(ast::Block& b) {
-		// TODO: Reserve stack space
-		//Register eax{ "eax" };
-		//emit.add(4 * b.locals.getCount(), eax);
+		// Reserve stack space for local variables
+		//Register esp{ "esp" };
+		//emit.add(4 * b.locals.getCount(), esp);
 		
 		// Initialize current
 		b.locals.setParent(current, true);

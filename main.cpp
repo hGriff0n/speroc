@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <cctype>
 
 #include "compiler.h"
 #include "parser/ast.h"
@@ -57,25 +58,24 @@ int main(int argc, char* argv[]) {
 
 		while (std::cout << "> " && getMultiline(std::cin, input)) {
 			try {
-				bool succ;
 				parser::Stack res;
 
 				std::string command = input.substr(0, 2);
+				state.clearDiagnostics();
 
 				// Compile a file
 				if (command == ":c") {
 					if (state.files().size() == 0) { state.files().push_back(""); }
 					state.files()[0] = input.substr(3);
 
-					if (succ = compile(state, res)) {
-						std::cout << "Compilation Failed " << state.failed() << '\n';
-						continue;
-					}
+					compile(state, res);
 
 					// Print out the generated assembly
-					std::ifstream out{ "out.s" };
-					while (std::getline(out, input)) {
-						std::cout << input << '\n';
+					if (!state.failed()) {
+						std::ifstream out{ "out.s" };
+						while (std::getline(out, input)) {
+							std::cout << input << '\n';
+						}
 					}
 
 				// Load and parse a file
@@ -83,7 +83,11 @@ int main(int argc, char* argv[]) {
 					if (state.files().size() == 0) { state.files().push_back(""); }
 					state.files()[0] = input.substr(3);
 
-					std::tie(succ, res) = compiler::parseFile(state.files()[0], state);
+					bool failed;
+					std::tie(failed, res) = compiler::parseFile(state.files()[0], state);
+					if (failed) {
+						state.reportError("Parsing of the input failed");
+					}
 
 				// Set an interactive flag
 				} else if (command == ":s") {
@@ -100,36 +104,41 @@ int main(int argc, char* argv[]) {
 
 				// Run the interactive mode
 				} else {
-					std::tie(succ, res) = compiler::parse(input, state);
+					bool failed;
+					std::tie(failed, res) = compiler::parse(input, state);
+					
+					// Stop early if parsing failed
+					if (failed) {
+						state.reportError("Parsing of the input failed");
 
-					// If I want to see the generated assembly
-					if (flags["compile"]) {
+					} else if (flags["compile"]) {
 						// Analyze and compile the code
 						auto ir = compiler::analyze(std::move(res), state);
 						compiler::codegen(ir, "interactive", "out.s", state, false);
 
 						// Print out the generated assembly
-						std::ifstream out{ "out.s" };
-						while (std::getline(out, input)) {
-							std::cout << input << '\n';
+						if (!state.failed()) {
+							std::ifstream out{ "out.s" };
+							while (std::getline(out, input)) {
+								std::cout << input << '\n';
+							}
+
+							// TODO: Allow interpretation without requiring compilation displaying
+							if (flags["interpret"]) {
+								interpret_file("out.s");
+								std::cout << std::endl;
+							}
+
+							std::remove("out.s");
 						}
 
-						// TODO: Allow interpretation without requiring compilation displaying
-						if (flags["interpret"]) {
-							interpret_file("out.s");
-							std::cout << std::endl;
-						}
-
-						std::remove("out.s");
-
-						// Reset `res` and `succ` for future usage
+						// Reset `res` for future usage
 						res = std::move(ir);
-						succ = state.failed();
 					}
 				}
 
-				std::cout << "Parsing Succeeded: " << (succ ? "false" : "true") << '\n';
-				printAST(std::cout, res);
+				state.printErrors(std::cout);
+				printAST(std::cout << '\n', res);
 
 			} catch (std::exception& e) {
 				std::cout << e.what() << '\n';
@@ -139,12 +148,13 @@ int main(int argc, char* argv[]) {
 	// Compiler run
 	} else {
 		parser::Stack res;
+		compile(state, res);
 
-		bool successful = compile(state, res);
+		if (state.failed()) {
+			state.printErrors(std::cout);
+		}
 
-		// TODO: Perform error reporting if not successful
-
-		return successful;
+		return state.failed();
 	}
 }
 
@@ -169,7 +179,9 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 		std::tie(failed, stack) = compiler::parseFile(state.files()[0], state);
 		state.logTime();
 
-		state.setStatus(failed);
+		if (failed) {
+			state.reportError("Parsing of the input failed");
+		}
 	}
 
 
@@ -206,8 +218,9 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	 */
 	if (!state.failed() && state.produceExe()) {
 		state.logTime();
-		state.setStatus(system((ASM_COMPILER" out.s -o " + state.output()).c_str()));
-		if (state.failed()) { state.setStatus(4); }
+		if (system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
+			state.reportError("Compilation of `out.s` failed");
+		}
 		state.logTime();
 
 
@@ -263,7 +276,11 @@ std::deque<std::string> split(std::string str) {
 	std::string in;
 
 	while (std::getline(iss, in, ',')) {
-		ret.emplace_back(in);
+		// Determine the chunk of the string that isn't space
+		auto front = std::find_if(in.begin(), in.end(), [](int ch) { return !std::isspace(ch); });
+		auto back = std::find_if(front, in.end(), [](int ch) { return std::isspace(ch); });
+
+		ret.emplace_back(front, back);
 	}
 	
 	return std::move(ret);

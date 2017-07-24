@@ -23,13 +23,13 @@ File.open("./README.md", "w") do |readme|
     # Output the source file information
     readme.puts "\nProject Info:"
     readme.puts "\n    size: #{num_lines} sloc"
-    readme.print "   "
+    readme.print "    files: "
     count = 0
     exts = stats.exts.select { |key, data| data[:files] != 0 }
     exts.each do |key, data|
-        readme.print " #{data[:files]} #{key}"
+        readme.print "#{data[:files]} #{key}"
         count += 1
-        readme.print "," unless count == exts.length
+        readme.print ", " unless count == exts.length
     end
     readme.puts "\n\n"
 

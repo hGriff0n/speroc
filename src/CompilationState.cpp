@@ -27,13 +27,16 @@ namespace spero::compiler {
 
 
 	// Error reporting/collection
-	void CompilationState::setStatus(size_t stat) {
-		if (!curr_failure_state) {
-			curr_failure_state = stat;
-		}
+	void CompilationState::reportError(std::string msg) {
+		diags.emplace_back(Diagnostic::Level::ERROR, msg);
 	}
-	
+	void CompilationState::addWarning(std::string msg) {
+		diags.emplace_back(Diagnostic::Level::WARNING, msg);
+	}
+	void CompilationState::clearDiagnostics() {
+		diags.clear();
+	}
 	size_t CompilationState::failed() {
-		return curr_failure_state;
+		return diags.size();
 	}
 }

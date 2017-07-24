@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 #include <deque>
+#include "diagnostic.h"
 
 #define abstract =0;
 
@@ -33,7 +34,7 @@ namespace spero::compiler {
 	class CompilationState {
 		std::deque<std::string> input_files;
 		std::deque<time_point> timing;
-		size_t curr_failure_state = 0;
+		std::deque<Diagnostic> diags;
 
 		public:
 			CompilationState(char**, char**);
@@ -50,8 +51,17 @@ namespace spero::compiler {
 			virtual bool deleteTemporaryFiles() abstract;
 
 			// Error reporting/collection
-			void setStatus(size_t);
+			void reportError(std::string);
+			void addWarning(std::string);
+			void clearDiagnostics();
 			size_t failed();
+
+			template<class Stream>
+			void printErrors(Stream& s) {
+				for (auto& diag : diags) {
+					s << '[' << '_' << "] = " << diag.message << '\n';
+				}
+			}
 
 			// Compilation Stage Control
 			virtual bool produceExe() abstract;
