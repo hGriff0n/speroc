@@ -19,7 +19,7 @@ namespace spero::compiler {
 
 
 	// Perform all steps related to final codegen stages (produces assembly code)
-	void codegen(IR_t&, std::string, std::string, CompilationState&, bool=true);
+	void codegen(IR_t&, std::string&, std::string, CompilationState&, bool=true);
 }
 
 

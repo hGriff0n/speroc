@@ -7,7 +7,7 @@ require 'yaml'
 
 # TODO: Move this file into the 'tools' directory
 
-yaml_file = "./tools/version.yaml"
+yaml_file = "./docs/version.yaml"
 ver = YAML.load_file(yaml_file)
 File.open("./README.md", "w") do |readme|
     # Semantic versioning (TODO: Determine how to autoupdate)
@@ -25,7 +25,7 @@ File.open("./README.md", "w") do |readme|
     readme.puts "\n    size: #{num_lines} sloc"
     readme.print "    files: "
     count = 0
-    exts = stats.exts.select { |key, data| data[:files] != 0 }
+    exts = stats.exts.select { |_, data| data[:files] != 0 }
     exts.each do |key, data|
         readme.print "#{data[:files]} #{key}"
         count += 1

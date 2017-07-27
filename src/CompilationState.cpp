@@ -19,7 +19,7 @@ namespace spero::compiler {
 		return std::make_pair(timing.at(i), timing.at(i + 1));
 	}
 
-	
+
 	// Basic state querying
 	bool CompilationState::deleteTemporaryFiles() {
 		return true;
@@ -27,11 +27,17 @@ namespace spero::compiler {
 
 
 	// Error reporting/collection
-	void CompilationState::reportError(std::string msg) {
-		diags.emplace_back(Diagnostic::Level::ERROR, msg);
+	DiagnosticBuilder CompilationState::log(std::string msg) {
+		diags.emplace_back(Diagnostic::Level::LOG, msg);
+		return { diags.back() };
 	}
-	void CompilationState::addWarning(std::string msg) {
+	DiagnosticBuilder CompilationState::error(std::string msg) {
+		diags.emplace_back(Diagnostic::Level::ERROR, msg);
+		return { diags.back() };
+	}
+	DiagnosticBuilder CompilationState::warn(std::string msg) {
 		diags.emplace_back(Diagnostic::Level::WARNING, msg);
+		return { diags.back() };
 	}
 	void CompilationState::clearDiagnostics() {
 		diags.clear();

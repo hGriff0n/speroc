@@ -21,7 +21,7 @@ OptionParser.new do |opt|
 end.parse!
 
 # Create the output directories
-FileUtils::mkdir_p "./#{options[:dir]}/#{options[:out_dir]}"
+FileUtils.mkdir_p "./#{options[:dir]}/#{options[:out_dir]}"
 
 # convert the remaining args to lowercase (same as tags)
 ARGV.map! {|s| s.downcase}

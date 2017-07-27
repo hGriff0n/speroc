@@ -28,7 +28,7 @@ namespace spero::compiler {
 
 	std::tuple<size_t, Stack> parse(std::string input, CompilationState& state) {
 		using namespace tao::pegtl;
-		return parse_impl([&input](Stack& ast) { return tao::pegtl::parse<grammar::program, actions::action, control::control>(string_input<>{ input, "me" }, ast); });
+		return parse_impl([&input](Stack& ast) { return tao::pegtl::parse<grammar::program, actions::action, control::control>(string_input<>{ input, "speroc:repl" }, ast); });
 	}
 
 	std::tuple<size_t, Stack> parseFile(std::string file, CompilationState& state) {
@@ -44,7 +44,7 @@ namespace spero::compiler {
 
 
 	// Perform the final compilation stages (produces direct assembly code)
-	void codegen(IR_t& s, std::string in, std::string out, CompilationState& state, bool output_header) {
+	void codegen(IR_t& s, std::string& in, std::string out, CompilationState& state, bool output_header) {
 		// Open the output file
 		std::ofstream o{ out };
 

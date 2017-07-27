@@ -8,18 +8,8 @@ class SourceStats
 
                 total, sloc = 0, 0
                 File.new(dir).each_line do |line|
-                    comment_regex = nil
-                    case ext
-                        when ".rb"
-                            comment_regex = /^(?![ \s]*\r?\n|[ \s]*#).*\r?\n/
-                        when ".cpp", ".c", ".h", ".rs"
-                            # comment_regex = /^(?![ \s]*\r?\n|[ \s]*}\r?\n|[ \s]*\/\/|[ \s]*\/\*|[ \s]*\*).*\r?\n/
-                            comment_regex = /^(?![ \s]*\r?\n|[ \s]*\/\/|[ \s]*\/\*|[ \s]*\*).*\r?\n/
-                        when ".spr"
-                            # I'm pretty sure this regex isn't right, but I don't have time to write a better one
-                            comment_regex = /^(?![ \s]*\r?\n|[ \s]*#).*\r?\n/
-                        else next
-                    end
+                    comment_regex = get_comment_regex(ext)
+                    next if !comment_regex
 
                     sloc += (line =~ comment_regex) ? 1 : 0
                     total += 1
@@ -37,6 +27,20 @@ class SourceStats
                 next if file == '.' || file == '..'
                 count_directory("#{dir}/#{file}")
             end
+        end
+    end
+
+    def get_comment_regex(ext)
+        case ext
+            when ".rb"
+                /^(?![ \s]*\r?\n|[ \s]*#).*\r?\n/
+            when ".cpp", ".c", ".h", ".rs"
+                # /^(?![ \s]*\r?\n|[ \s]*}\r?\n|[ \s]*\/\/|[ \s]*\/\*|[ \s]*\*).*\r?\n/
+                /^(?![ \s]*\r?\n|[ \s]*\/\/|[ \s]*\/\*|[ \s]*\*).*\r?\n/
+            when ".spr"
+                # I'm pretty sure this regex isn't right, but I don't have time to write a better one
+                /^(?![ \s]*\r?\n|[ \s]*#).*\r?\n/
+            else nil
         end
     end
 

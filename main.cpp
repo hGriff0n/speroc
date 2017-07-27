@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
 					bool failed;
 					std::tie(failed, res) = compiler::parseFile(state.files()[0], state);
 					if (failed) {
-						state.reportError("Parsing of the input failed");
+						state.error("Parsing of the input failed");
 					}
 
 				// Set an interactive flag
@@ -109,12 +109,13 @@ int main(int argc, char* argv[]) {
 					
 					// Stop early if parsing failed
 					if (failed) {
-						state.reportError("Parsing of the input failed");
+						state.error("Parsing of the input failed");
 
 					} else if (flags["compile"]) {
 						// Analyze and compile the code
 						auto ir = compiler::analyze(std::move(res), state);
-						compiler::codegen(ir, "interactive", "out.s", state, false);
+						std::string interactive{ "interactive" };
+						compiler::codegen(ir, interactive, "out.s", state, false);
 
 						// Print out the generated assembly
 						if (!state.failed()) {
@@ -180,7 +181,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 		state.logTime();
 
 		if (failed) {
-			state.reportError("Parsing of the input failed");
+			state.error("Parsing of the input failed");
 		}
 	}
 
@@ -198,7 +199,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 
 	/*
 	 * Generate the boundary ir for the external tools
-	 * 
+	 *
 	 * speroc does not handle the generation of executables
 	 * and other binary files, prefering to pass those stages
 	 * off to some existing system tool that is guaranteed to work
@@ -219,7 +220,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	if (!state.failed() && state.produceExe()) {
 		state.logTime();
 		if (system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
-			state.reportError("Compilation of `out.s` failed");
+			state.error("Compilation of `out.s` failed");
 		}
 		state.logTime();
 

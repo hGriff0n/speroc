@@ -28,8 +28,6 @@ namespace spero::compiler {
 	/*
 	 * Base class to define the interaction point for querying the
 	 * specified compilation state from all parts of the compiler
-	 *
-	 * TODO: Adapt failure state/etc. to use reporting structure (ie. # errors)
 	 */
 	class CompilationState {
 		std::deque<std::string> input_files;
@@ -51,15 +49,17 @@ namespace spero::compiler {
 			virtual bool deleteTemporaryFiles() abstract;
 
 			// Error reporting/collection
-			void reportError(std::string);
-			void addWarning(std::string);
+			DiagnosticBuilder log(std::string);
+			DiagnosticBuilder error(std::string);
+			DiagnosticBuilder warn(std::string);
 			void clearDiagnostics();
 			size_t failed();
 
+			// TODO: Temp Function. Please Delete
 			template<class Stream>
 			void printErrors(Stream& s) {
 				for (auto& diag : diags) {
-					s << '[' << '_' << "] = " << diag.message << '\n';
+					s << '[' << '_' << "] = " << diag.message << diag.location() << '\n';
 				}
 			}
 

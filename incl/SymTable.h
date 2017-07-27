@@ -10,7 +10,7 @@ namespace spero::compiler::analysis {
 
 		struct Data {
 			int loc;
-			std::optional<Location> src;
+			std::optional<Location> src;			// TODO: Switch over to an 'id' system
 			//Ast* node;
 
 			Data();
