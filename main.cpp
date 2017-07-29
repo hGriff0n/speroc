@@ -148,7 +148,12 @@ int main(int argc, char* argv[]) {
 	// Compiler run
 	} else {
 		parser::Stack res;
-		compile(state, res);
+		try {
+			compile(state, res);
+
+		} catch (std::exception& e) {
+			state.log(e.what());
+		}
 
 		if (state.failed()) {
 			state.printErrors(std::cout);

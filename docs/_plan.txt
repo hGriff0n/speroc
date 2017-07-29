@@ -24,7 +24,10 @@ Current Project Plan
 	  Add filtering of "LOG" errors from the final report (more like add command to show logs)
 	    Add in command flags to turn warnings to errors and to ignore warnings as well
 		Add in way of "changing" the command line arguments within the repl loop
+	Move 'compiler' exceptions from log-level to error-level
+	  Add in 'error indices' and automatic message population capbilities
 	"Const-correct" all variables, arguments, and methods within the C++ source
+	Add in 'xor' code to ensure that '%eax' has the correct value after 'set..' is used
   Basic Mutability Tracking
     Modify 'SymTable' to track the mutability of the variable (this can be done within the current system)
 	Throw errors when a Reassign node attempts to change the value of an immutable variable
