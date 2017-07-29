@@ -20,8 +20,7 @@ Current Project Plan
   Add error/exception handling and reporting
 	Adapt the parser and grammar to report errors
 	  Ensure that as many syntax mistakes are caught as posible
-	Ensure that all functions are exception safe (with relevant 'noexcept' declarations)
-	  Move any exceptions to "LOG" level errors ???
+	Add in logging capability to the compilation tracking
 	  Add filtering of "LOG" errors from the final report (more like add command to show logs)
 	    Add in command flags to turn warnings to errors and to ignore warnings as well
 		Add in way of "changing" the command line arguments within the repl loop

@@ -14,7 +14,7 @@ literals:
     - desc: ""
       exec: 'err.exe'
       compile:
-        fail: false
+        fail: true
         files: [ 'error.spr' ]
     - desc: ""
       exec: 'add.exe'

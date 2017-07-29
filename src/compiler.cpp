@@ -44,7 +44,7 @@ namespace spero::compiler {
 
 
 	// Perform the final compilation stages (produces direct assembly code)
-	void codegen(IR_t& s, std::string& in, std::string out, CompilationState& state, bool output_header) {
+	void codegen(IR_t& s, std::string in, std::string out, CompilationState& state, bool output_header) {
 		// Open the output file
 		std::ofstream o{ out };
 

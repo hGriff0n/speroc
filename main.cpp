@@ -114,8 +114,7 @@ int main(int argc, char* argv[]) {
 					} else if (flags["compile"]) {
 						// Analyze and compile the code
 						auto ir = compiler::analyze(std::move(res), state);
-						std::string interactive{ "interactive" };
-						compiler::codegen(ir, interactive, "out.s", state, false);
+						compiler::codegen(ir, "interactive", "out.s", state, false);
 
 						// Print out the generated assembly
 						if (!state.failed()) {

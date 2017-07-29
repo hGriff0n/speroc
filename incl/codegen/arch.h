@@ -41,17 +41,20 @@ namespace spero::compiler::gen::arch {
 	struct Memory : Operand {
 		Register& reg;
 		int offset;
+
 		Memory(Register&, int);
 	};
 
 	struct Register : Operand {
 		std::string name;
 		Register(std::string);
+
 		Memory at(int=0);
 	};
 
 	struct Literal : Operand {
 		int val;
+
 		Literal(int);
 	};
 
