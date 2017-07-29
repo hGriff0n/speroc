@@ -133,6 +133,7 @@ namespace spero::compiler::gen {
 	void AsmGenerator::acceptBinOpCall(ast::BinOpCall& b) {
 		Register eax{ "eax" };
 		Register esp{ "esp" };
+		Register al{ "al" };
 
 		// Evaluate the left side and store it on the stack
 		b.lhs->visit(*this);
@@ -161,32 +162,32 @@ namespace spero::compiler::gen {
 
 		} else if (b.op == "==") {
 			emit.cmp(eax, esp.at());
-			emit.setz(eax);
+			emit.setz(al);
 			emit.popByte(1);
 
 		} else if (b.op == "<") {
 			emit.cmp(eax, esp.at());
-			emit.setl(eax);
+			emit.setl(al);
 			emit.popByte(1);
 
 		} else if (b.op == ">") {
 			emit.cmp(eax, esp.at());
-			emit.setg(eax);
+			emit.setg(al);
 			emit.popByte(1);
 
 		} else if (b.op == "!=") {
 			emit.cmp(eax, esp.at());
-			emit.setnz(eax);
+			emit.setnz(al);
 			emit.popByte(1);
 
 		} else if (b.op == "<=") {
 			emit.cmp(eax, esp.at());
-			emit.setle(eax);
+			emit.setle(al);
 			emit.popByte(1);
 
 		} else if (b.op == ">=") {
 			emit.cmp(eax, esp.at());
-			emit.setge(eax);
+			emit.setge(al);
 			emit.popByte(1);
 
 		}
