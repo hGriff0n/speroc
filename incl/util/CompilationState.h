@@ -47,6 +47,7 @@ namespace spero::compiler {
 
 			// Basic state querying
 			virtual bool deleteTemporaryFiles() abstract;
+			virtual bool showLogs() abstract;
 
 			// Error reporting/collection
 			DiagnosticBuilder log(std::string);
@@ -58,8 +59,12 @@ namespace spero::compiler {
 			// TODO: Temp Function. Please Delete
 			template<class Stream>
 			void printErrors(Stream& s) {
+				bool show_logs = showLogs();
+
 				for (auto& diag : diags) {
-					s << '[' << '_' << "] = " << diag.message << diag.location() << '\n';
+					if (show_logs || diag.level != Diagnostic::Level::LOG) {
+						s << '[' << '_' << "] = " << diag.message << diag.location() << '\n';
+					}
 				}
 			}
 
@@ -84,6 +89,10 @@ namespace spero::compiler {
 
 		bool deleteTemporaryFiles() {
 			return !opts["nodel"].as<bool>();
+		}
+
+		bool showLogs() {
+			return opts["showlog"].as<bool>();
 		}
 
 		bool produceExe() {
