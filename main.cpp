@@ -18,7 +18,7 @@
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
 template <class Stream>
 Stream& getMultiline(Stream&, std::string&);
-std::deque<std::string> split(std::string);
+std::deque<std::string> split(std::string, char=',');
 
 // Helper function to print out the ast structure
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack&);
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 	// Automatically add in "interactive" and "nodel" flags for debug running
 	if (argc == 1) {
 		argc = 3;
-		argv = new char*[3]{ "speroc.exe", "-i", "-t" };
+		argv = new char*[3]{ "speroc.exe", "-i", "--nodel" };
 	}
 
 
@@ -88,6 +88,20 @@ int main(int argc, char* argv[]) {
 					if (failed) {
 						state.error("Parsing of the input failed");
 					}
+
+				// Modify the command line arguments
+				} else if (command == ":a") {
+					auto args = split(input.substr(3), ' ');
+					argv = new char*[args.size() + 2];
+					argc = 0;
+					
+					argv[argc++] = "speroc.exe";
+					argv[argc++] = "-i";
+					for (auto& arg : args) {
+						argv[argc++] = const_cast<char*>(arg.c_str());
+					}
+
+					state = cmd::parse(argc, argv);
 
 				// Set an interactive flag
 				} else if (command == ":s") {
@@ -275,12 +289,12 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
 #include <sstream>
 #include <algorithm>
 #include <iterator>
-std::deque<std::string> split(std::string str) {
+std::deque<std::string> split(std::string str, char ch) {
 	std::istringstream iss(str);
 	std::deque<std::string> ret;
 	std::string in;
 
-	while (std::getline(iss, in, ',')) {
+	while (std::getline(iss, in, ch)) {
 		// Determine the chunk of the string that isn't space
 		auto front = std::find_if(in.begin(), in.end(), [](int ch) { return !std::isspace(ch); });
 		auto back = std::find_if(front, in.end(), [](int ch) { return std::isspace(ch); });

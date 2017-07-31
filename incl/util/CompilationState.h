@@ -77,7 +77,7 @@ namespace spero::compiler {
 	// on cxxopts in subsequent header files that use CompilationState
 	template<class Option>
 	struct OptionState : CompilationState {
-		const Option opts;
+		Option opts;
 
 		OptionState(char** fst, char** snd, Option&& opts)
 			: CompilationState{ fst, snd }, opts{ opts } {}

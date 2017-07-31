@@ -19,14 +19,23 @@ Current Project Plan
 	Add ability to "save state", make into true 'repl'
   Add error/exception handling and reporting
 	Adapt the parser and grammar to report errors
-	  Ensure that as many syntax mistakes are caught as posible
+	  Look into utilising the 'raise'/'try_catch'/'try_catch_type' rules to add in error handling
+	    A way to get custom error messages is to create custom rules specifically for these cases (that throw the exceptions)
+	  Look into rewriting (and simplifying) the parser to make these transforms more beneficial
+	    Particularly look into forcing closing braces into the same rules (so I can pinpoint where the "open" is at)
+		This should hopefully reduce the amount of backtracking/compilcated paths
+	  Add the ability to perorm generic 'use' rebinding to the new grammar
+	  Adapt the ast and related actions to reflect these changes
 	Add in logging capability to the compilation tracking
-	  Add in command flags to turn warnings to errors and to ignore warnings as well
-	  Add in way of "changing" the command line arguments within the repl loop
+      Change '-W/--warn' flag to accept a vector of entries (either at once, or multiple occurances)
+      Add flag to ignore warnings when displaying messages
+      Add in ability to discriminate between log/warn/error messages when reporting error state
 	Move 'compiler' exceptions from log-level to error-level
 	  Add in 'error indices' and automatic message population capbilities
 	"Const-correct" all variables, arguments, and methods within the C++ source
 	Add in 'xor' code to ensure that '%eax' has the correct value after 'set..' is used
+	Simplify the commands available within the repl loop
+	  Also simplify the control path if possible
   Basic Mutability Tracking
     Modify 'SymTable' to track the mutability of the variable (this can be done within the current system)
 	Throw errors when a Reassign node attempts to change the value of an immutable variable
