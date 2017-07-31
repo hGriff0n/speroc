@@ -27,7 +27,6 @@ Current Project Plan
 	  Add the ability to perorm generic 'use' rebinding to the new grammar
 	  Adapt the ast and related actions to reflect these changes
 	Add in logging capability to the compilation tracking
-      Change '-W/--warn' flag to accept a vector of entries (either at once, or multiple occurances)
       Add flag to ignore warnings when displaying messages
       Add in ability to discriminate between log/warn/error messages when reporting error state
 	Move 'compiler' exceptions from log-level to error-level
