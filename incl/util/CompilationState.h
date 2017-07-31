@@ -33,6 +33,7 @@ namespace spero::compiler {
 		std::deque<std::string> input_files;
 		std::deque<time_point> timing;
 		std::deque<Diagnostic> diags;
+		size_t nerrs;
 
 		public:
 			CompilationState(char**, char**);

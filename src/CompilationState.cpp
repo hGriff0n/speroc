@@ -32,6 +32,7 @@ namespace spero::compiler {
 		return { diags.back() };
 	}
 	DiagnosticBuilder CompilationState::error(std::string msg) {
+		++nerrs;
 		diags.emplace_back(Diagnostic::Level::ERROR, msg);
 		return { diags.back() };
 	}
@@ -43,6 +44,6 @@ namespace spero::compiler {
 		diags.clear();
 	}
 	size_t CompilationState::failed() {
-		return diags.size();
+		return nerrs;
 	}
 }

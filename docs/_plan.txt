@@ -26,14 +26,12 @@ Current Project Plan
 		This should hopefully reduce the amount of backtracking/compilcated paths
 	  Add the ability to perorm generic 'use' rebinding to the new grammar
 	  Adapt the ast and related actions to reflect these changes
-	Add in logging capability to the compilation tracking
-      Add flag to ignore warnings when displaying messages
-      Add in ability to discriminate between log/warn/error messages when reporting error state
+	"Const-correct" all variables, arguments, and methods within the C++ source
 	Move 'compiler' exceptions from log-level to error-level
 	  Add in 'error indices' and automatic message population capbilities
-	"Const-correct" all variables, arguments, and methods within the C++ source
 	Add in 'xor' code to ensure that '%eax' has the correct value after 'set..' is used
-	Simplify the commands available within the repl loop
+	  Wouldn't this trigger the CPU flags that 'set..' uses ???
+	Simplify the commands available within the repl
 	  Also simplify the control path if possible
   Basic Mutability Tracking
     Modify 'SymTable' to track the mutability of the variable (this can be done within the current system)
