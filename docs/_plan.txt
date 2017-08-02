@@ -18,6 +18,11 @@ Current Project Plan
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
 	Add ability to "save state", make into true 'repl'
   Add error/exception handling and reporting
+    Rearrange error/warn/log system to utilize spdlog reporter framework
+	  Utilize spdlog only to perform normal console/file writing/logging
+	  Adapt 'CompilationState::warn/error/log' to return a custom spdlog logger
+	    This logger should be able to send log information to multiple 'sinks'
+		  TODO: Figure out purpose of 'dist_sink' then
 	Adapt the parser and grammar to report errors
 	  Look into utilising the 'raise'/'try_catch'/'try_catch_type' rules to add in error handling
 	    A way to get custom error messages is to create custom rules specifically for these cases (that throw the exceptions)

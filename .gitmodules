@@ -13,3 +13,9 @@
 [submodule "dep/_x86_inter"]
 	path = dep/_x86_inter
 	url = https://github.com/hGriff0n/x86-Interpreter
+[submodule "dep/spdlog"]
+	path = dep/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "dep/signals"]
+	path = dep/signals
+	url = https://github.com/miguelmartin75/Wink-Signals

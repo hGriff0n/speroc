@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 #include <deque>
+#include <spdlog.h>
 #include "diagnostic.h"
 
 #define abstract =0;
@@ -20,7 +21,6 @@ namespace spero::compiler::ast {
 namespace spero::parser {
 	using Stack = std::deque<compiler::ptr<compiler::ast::Ast>>;
 }
-
 
 namespace spero::compiler {
 	using time_point = std::chrono::system_clock::time_point;
