@@ -46,11 +46,29 @@
     <Filter Include="Resource Files\test runner\default\files">
       <UniqueIdentifier>{767c345a-27cc-4fb0-9bba-acd2dd7c147b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\interpreter">
-      <UniqueIdentifier>{3f025008-e431-4bb0-8446-6648dd29c845}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\tools">
       <UniqueIdentifier>{f3c773b5-7ea3-4d25-814b-5914433a75a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies">
+      <UniqueIdentifier>{7f87fe7f-be7f-4883-b4eb-d66713626b4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\interpreter">
+      <UniqueIdentifier>{3f025008-e431-4bb0-8446-6648dd29c845}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\spdlog">
+      <UniqueIdentifier>{159d202d-da3c-4515-9b20-d8209b960744}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\pegtl">
+      <UniqueIdentifier>{68f5918b-ab86-45b5-b814-f54237f4793b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\better-enums">
+      <UniqueIdentifier>{1b14aff9-2cff-4b28-a560-e95e0a5c99a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\cxxopts">
+      <UniqueIdentifier>{32f86b4a-ea03-4b88-b654-b003fefccf5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\signals">
+      <UniqueIdentifier>{6750b123-f465-4778-894c-d399422414a8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -142,28 +160,28 @@
       <Filter>Resource Files\legal</Filter>
     </None>
     <None Include="x86_inter\src\emu.rs">
-      <Filter>Resource Files\interpreter</Filter>
+      <Filter>Dependencies\interpreter</Filter>
     </None>
     <None Include="x86_inter\src\inter.rs">
-      <Filter>Resource Files\interpreter</Filter>
+      <Filter>Dependencies\interpreter</Filter>
     </None>
     <None Include="x86_inter\src\lib.rs">
-      <Filter>Resource Files\interpreter</Filter>
+      <Filter>Dependencies\interpreter</Filter>
     </None>
     <None Include="x86_inter\src\main.rs">
-      <Filter>Resource Files\interpreter</Filter>
+      <Filter>Dependencies\interpreter</Filter>
     </None>
     <None Include="x86_inter\src\parse.rs">
-      <Filter>Resource Files\interpreter</Filter>
+      <Filter>Dependencies\interpreter</Filter>
     </None>
     <None Include="x86_inter\src\view.rs">
-      <Filter>Resource Files\interpreter</Filter>
+      <Filter>Dependencies\interpreter</Filter>
     </None>
     <None Include="x86_inter\src\x86.rs">
-      <Filter>Resource Files\interpreter</Filter>
+      <Filter>Dependencies\interpreter</Filter>
     </None>
     <None Include="x86_inter\src\ximpl.rs">
-      <Filter>Resource Files\interpreter</Filter>
+      <Filter>Dependencies\interpreter</Filter>
     </None>
     <None Include="tools\test.rb">
       <Filter>Resource Files\test runner</Filter>
