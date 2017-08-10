@@ -9,8 +9,7 @@ namespace spero::compiler::gen {
 		auto loc = current->getVar(var);
 
 		if (!loc) {
-			state.error("Attempt to use a variable before it was declared")
-				.setLocation(v.loc);
+			state.log(ID::err, "Attempt to use a variable before it was declared {}", CompilationState::location(v.loc));
 			return;
 		}
 

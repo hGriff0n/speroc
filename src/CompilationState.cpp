@@ -1,7 +1,7 @@
 #include "util/CompilationState.h"
 
 namespace spero::compiler {
-	CompilationState::CompilationState(char** fst, char** snd) : input_files{ fst, snd } {}
+	CompilationState::CompilationState(char** fst, char** snd) : input_files{ fst, snd }, logger{ spdlog::stdout_color_mt("console") } {}
 
 
 	// Input/Output files
@@ -15,7 +15,7 @@ namespace spero::compiler {
 	void CompilationState::logTime() {
 		timing.emplace_back(std::chrono::system_clock::now());
 	}
-	std::pair<time_point, time_point> CompilationState::getCycle(size_t i) {
+	std::pair<TimePoint, TimePoint> CompilationState::getCycle(size_t i) {
 		return std::make_pair(timing.at(i), timing.at(i + 1));
 	}
 
@@ -25,24 +25,32 @@ namespace spero::compiler {
 		return true;
 	}
 
+	/* Example code on how to create a "multi-sink" logger
+	std::vector<spdlog::sink_ptr> sinks;
+	auto stdout_sink = spdlog::sinks::stdout_sink_mt::instance();
+	auto color_sink = std::make_shared<spdlog::sinks::ansicolor_sink>(stdout_sink);
+	sinks.push_back(color_sink);
+	// Add more sinks here, if needed.
+	auto combined_logger = std::make_shared<spdlog::logger>("main", begin(sinks), end(sinks));
+	spdlog::register_logger(combined_logger);
+	 */
+
 
 	// Error reporting/collection
-	DiagnosticBuilder CompilationState::log(std::string msg) {
-		diags.emplace_back(Diagnostic::Level::LOG, msg);
-		return { diags.back() };
+	spdlog::logger& CompilationState::getLogger(ID msg_id) {
+		return *logger;
 	}
-	DiagnosticBuilder CompilationState::error(std::string msg) {
-		++nerrs;
-		diags.emplace_back(Diagnostic::Level::ERROR, msg);
-		return { diags.back() };
+
+	std::string CompilationState::location(tao::pegtl::position pos) {
+		std::string ret = "at line:";
+		ret += std::to_string(pos.line);
+		ret += " col:";
+		ret += std::to_string(pos.byte_in_line);
+		ret += " of source '";
+		ret += pos.source;
+		return ret + '\'';
 	}
-	DiagnosticBuilder CompilationState::warn(std::string msg) {
-		diags.emplace_back(Diagnostic::Level::WARNING, msg);
-		return { diags.back() };
-	}
-	void CompilationState::clearDiagnostics() {
-		diags.clear();
-	}
+
 	size_t CompilationState::failed() {
 		return nerrs;
 	}

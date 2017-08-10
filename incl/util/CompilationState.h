@@ -4,7 +4,8 @@
 #include <memory>
 #include <deque>
 #include <spdlog.h>
-#include "diagnostic.h"
+#include <logger.h>
+#include "pegtl/position.hpp"
 
 #define abstract =0;
 
@@ -23,7 +24,8 @@ namespace spero::parser {
 }
 
 namespace spero::compiler {
-	using time_point = std::chrono::system_clock::time_point;
+	using TimePoint = std::chrono::system_clock::time_point;
+	using ID = spdlog::level::level_enum;
 
 	/*
 	 * Base class to define the interaction point for querying the
@@ -31,9 +33,12 @@ namespace spero::compiler {
 	 */
 	class CompilationState {
 		std::deque<std::string> input_files;
-		std::deque<time_point> timing;
-		std::deque<Diagnostic> diags;
+		std::deque<TimePoint> timing;
 		size_t nerrs;
+
+		std::shared_ptr<spdlog::logger> logger;
+
+		spdlog::logger& getLogger(ID msg_id);
 
 		public:
 			CompilationState(char**, char**);
@@ -42,32 +47,30 @@ namespace spero::compiler {
 			std::deque<std::string>& files();
 			virtual const std::string& output() abstract;
 
-			// Time loggers
+			// Time loggers (Unused)
+			// TODO: Improve internal 'benchmarking' interface
 			void logTime();
-			std::pair<time_point, time_point> getCycle(size_t);
+			std::pair<TimePoint, TimePoint> getCycle(size_t);
 
 			// Basic state querying
 			virtual bool deleteTemporaryFiles() abstract;
 			virtual bool showLogs() abstract;
 
 			// Error reporting/collection
-			DiagnosticBuilder log(std::string);
-			DiagnosticBuilder error(std::string);
-			DiagnosticBuilder warn(std::string);
-			void clearDiagnostics();
+			// TODO: Add in more complex logger manipulations (particularly change formatting)
+			// TODO: Add in rough ability to "craft" messages from component parts (instead of expecting me to do it)
+			template<class... Args>
+			void log(ID msg_id, const char* fmt, Args&&... args) {
+				// Eventual Basic Code Flow for this function: logger(msg_id).log(level(msg_id), fmt, std::forward<Args>(args)...);
+				if (msg_id == ID::err) { ++nerrs; }
+
+				getLogger(msg_id).log(msg_id, fmt, std::forward<Args>(args)...);
+			}
+
 			size_t failed();
 
-			// TODO: Temp Function. Please Delete
-			template<class Stream>
-			void printErrors(Stream& s) {
-				bool show_logs = showLogs();
-
-				for (auto& diag : diags) {
-					if (show_logs || diag.level != Diagnostic::Level::LOG) {
-						s << '[' << '_' << "] = " << diag.message << diag.location() << '\n';
-					}
-				}
-			}
+			// Temp function for formatting position
+			static std::string location(tao::pegtl::position);
 
 			// Compilation Stage Control
 			virtual bool produceExe() abstract;

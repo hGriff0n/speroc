@@ -11,12 +11,12 @@
 #define SENTINEL(gram) \
 template<> struct action<grammar::gram> {\
 	template<class Input>\
-	static void apply(const Input& in, Stack& s) { \
+	static void apply(const Input& in, Stack& s, CompilationState& state) { \
 	s.emplace_back(ast::Sentinel{}); }}
 #define TOKEN(gram, val) \
 template<> struct action<grammar::gram> {\
 	template<class Input>\
-	static void apply(const Input& in, Stack& s) { \
+	static void apply(const Input& in, Stack& s, CompilationState& state) { \
 	s.emplace_back(std::make_unique<ast::Token>(val, in.position())); }}
 #define INHERIT(gram, base) \
 template<> struct action<grammar::gram> : action<grammar::base> {}
@@ -37,61 +37,61 @@ namespace spero::parser::actions {
 	// Literals
 	template<> struct action<grammar::hex_body> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::Byte>(in.string(), 16, in.position()));
 		}
 	};
 	template<> struct action<grammar::bin_body> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::Byte>(in.string(), 2, in.position()));
 		}
 	};
 	template<> struct action<grammar::integer> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::Int>(in.string(), in.position()));
 		}
 	};
 	template<> struct action<grammar::dec> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::Float>(in.string(), in.position()));
 		}
 	};
 	template<> struct action<grammar::str_body> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::String>(util::escape(in.string()), in.position()));
 		}
 	};
 	template<> struct action<grammar::char_body> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::Char>(util::escape(in.string())[0], in.position()));
 		}
 	};
 	template<> struct action<grammar::b_false> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::Bool>(false, in.position()));
 		}
 	};
 	template<> struct action<grammar::b_true> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::Bool>(true, in.position()));
 		}
 	};
 	template<> struct action<grammar::lambda_placeholder> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::Future>(false, in.position()));
 		}
 	};
 	template<> struct action<grammar::tuple> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel vals*
 			auto vals = util::popSeq<ast::ValExpr>(s);
 			s.pop_back();
@@ -101,7 +101,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::_array> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel vals*
 			auto vals = util::popSeq<ast::ValExpr>(s);
 			s.pop_back();
@@ -111,7 +111,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::fn_rettype> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: type expr
 			auto fn = std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), false, in.position());
 			fn->ret = std::move(util::pop<ast::Type>(s));
@@ -121,7 +121,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::fnseq> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: expr array? anon_type? tuple
 			auto args = util::pop<ast::Tuple>(s);
 			auto type = util::pop<ast::TypeExt>(s);
@@ -141,7 +141,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::op_forward> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: bind expr
 
 			if (!util::is_type<ast::Tuple>(s.back())) {
@@ -157,12 +157,12 @@ namespace spero::parser::actions {
 				util::view_as<ast::Tuple>(s.back())->elems.push_front(std::make_unique<ast::Future>(true, in.position()));
 
 			// stack: op tuple
-			action<grammar::fnseq>::apply(in, s);
+			action<grammar::fnseq>::apply(in, s, state);
 		}
 	};
 	template<> struct action<grammar::fn_forward> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: expr
 			s.emplace_back(std::make_unique<ast::FnBody>(util::pop<ast::ValExpr>(s), true, in.position()));
 			// stack: fnbody
@@ -170,7 +170,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::fn_def> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: fnbody | expr
 			if (!util::at_node<ast::FnBody>(s)) {
 				auto body = util::pop<ast::ValExpr>(s);
@@ -182,7 +182,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::fn_or_tuple> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: tuple? fnbody
 			auto fn = util::pop<ast::FnBody>(s);
 			if (fn) {
@@ -219,20 +219,20 @@ namespace spero::parser::actions {
 	// Bindings
 	template<> struct action<grammar::var> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::VARIABLE, in.position()));
 		}
 	};
 	INHERIT(var_core, var);
 	template<> struct action<grammar::typ> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::TYPE, in.position()));
 		}
 	};
 	template<> struct action<grammar::op> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// Produce a qualified binding because operators aren't included in name_path
 			s.emplace_back(std::make_unique<ast::QualifiedBinding>(
 				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR, in.position()), in.position()
@@ -241,7 +241,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::name_path_part> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: qual? basic
 			auto part = util::pop<ast::BasicBinding>(s);
 
@@ -259,7 +259,7 @@ namespace spero::parser::actions {
 	SENTINEL(name_eps);
 	template<> struct action<grammar::name_path> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel qual? basic
 			auto part = util::pop<ast::BasicBinding>(s);
 
@@ -280,7 +280,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::typ_pointer> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			if (in.string() == "&") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::REF, in.position()));
 			else if (in.string() == "*") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::PTR, in.position()));
 			else if (in.string() == "..") s.emplace_back(std::make_unique<ast::Token>(ast::PtrStyling::VIEW, in.position()));
@@ -293,13 +293,13 @@ namespace spero::parser::actions {
 	SENTINEL(anon_sep);
 	/*template<> struct action<grammar::anon_sep> {
 	template<class Input>
-	static void apply(const Input& in, Stack& s) {
+	static void apply(const Input& in, Stack& s, CompilationState& state) {
 	s.emplace_back(std::make_unique<ast::AnonTypeSeperator>());
 	}
 	};*/
 	template<> struct action<grammar::anon_type> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel tuple? scope
 			auto scp = util::pop<ast::Block>(s);
 			auto tup = util::pop<ast::Tuple>(s);
@@ -310,7 +310,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::scope> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel vals*
 			auto vals = util::popSeq<ast::Stmt>(s);
 			s.pop_back();
@@ -320,7 +320,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::wait_stmt> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token expr
 			auto expr = util::pop<ast::ValExpr>(s);
 			s.pop_back();
@@ -331,7 +331,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::fneps> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: expr | binding sentinel?
 			bool sentinel_on_top = !util::view_as<ast::Ast>(s.back());
 			if (sentinel_on_top) s.pop_back();
@@ -346,7 +346,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::unary_op> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token
 			s.pop_back();
 			auto loc = in.position();
@@ -364,7 +364,7 @@ namespace spero::parser::actions {
 	// Decorators
 	template<> struct action<grammar::_type> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: qualname array?
 			auto inst = util::pop<ast::Array>(s);
 			auto name = util::pop<ast::QualifiedBinding>(s);
@@ -375,7 +375,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::type> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: type ptr
 			auto tkn = util::pop<ast::Token>(s);
 			util::view_as<ast::GenericType>(s.back())->_ptr = std::get<ast::PtrStyling>(tkn->value);
@@ -384,7 +384,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::unary> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			auto un_c = in.string()[0];
 			if (un_c == '&') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::DEREF, in.position()));
 			else if (un_c == '!') s.emplace_back(std::make_unique<ast::Token>(ast::UnaryType::NOT, in.position()));
@@ -395,7 +395,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::annotation> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: name glob? tuple?
 			auto tup = util::pop<ast::Tuple>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
@@ -406,7 +406,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::global_annotation> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: name glob? tuple?
 			auto tup = util::pop<ast::Tuple>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
@@ -417,7 +417,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::mod_dec> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: KWD var*
 			auto mod = util::popSeq<ast::BasicBinding>(s);
 			s.pop_back();
@@ -427,7 +427,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::inf_tuple_type> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel type*
 			auto types = util::popSeq<ast::Type>(s);
 
@@ -438,7 +438,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::inf_fn_type> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: tuple type
 			auto ret = util::pop<ast::Type>(s);
 			s.emplace_back(std::make_unique<ast::FuncType>(util::pop<ast::TupleType>(s), std::move(ret), in.position()));
@@ -448,7 +448,7 @@ namespace spero::parser::actions {
 	SENTINEL(inf_eps);
 	template<> struct action<grammar::inf_mut_type> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: type
 			if (in.string()[0] == 'm') util::view_as<ast::Type>(s.back())->is_mut = true;
 			// stack: type
@@ -456,7 +456,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::_inf_junc_and> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel type*
 			auto types = util::popSeq<ast::Type>(s);
 			s.emplace_back(std::make_unique<ast::AndType>(std::move(types), in.position()));
@@ -465,7 +465,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::_inf_junc_or> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel type*
 			auto types = util::popSeq<ast::Type>(s);
 			s.emplace_back(std::make_unique<ast::OrType>(std::move(types), in.position()));
@@ -474,7 +474,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::inf_type> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel type
 			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
 			s.pop_back();
@@ -484,7 +484,7 @@ namespace spero::parser::actions {
 
 	template<> struct action<grammar::gen_variance> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			if (in.string() == "+") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::COVARIANT, in.position()));
 			else if (in.string() == "-") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::CONTRAVARIANT, in.position()));
 			else s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::INVARIANT, in.position()));
@@ -492,13 +492,13 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::gen_variadic> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			if (in.string() == "..") s.emplace_back(std::make_unique<ast::Token>(ast::VarianceType::VARIADIC, in.position()));
 		}
 	};
 	template<> struct action<grammar::gen_subrel> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			if (in.string() == "::") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::IMPLS, in.position()));
 			else if (in.string() == "!:") s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::NOT_IMPLS, in.position()));
 			else if (in.string() == ">")  s.emplace_back(std::make_unique<ast::Token>(ast::RelationType::SUPERTYPE, in.position()));
@@ -508,7 +508,7 @@ namespace spero::parser::actions {
 	TOKEN(gen_subrel_eps, ast::RelationType::NA);
 	template<> struct action<grammar::gen_type> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: typ variance? variadic? (relation type)?
 			auto typs = util::popSeq<ast::Type>(s);
 			auto rel_val = std::get<ast::RelationType>(util::pop<ast::Token>(s)->value);
@@ -529,7 +529,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::gen_val> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: name type? expr?
 			auto expr = util::pop<ast::ValExpr>(s);
 			auto type = util::pop<ast::Type>(s);
@@ -540,7 +540,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::use_one> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: var
 			s.emplace_back(std::make_unique<ast::ImportName>(util::pop<ast::BasicBinding>(s), in.position()));
 			// stack: ImportName
@@ -549,13 +549,13 @@ namespace spero::parser::actions {
 	INHERIT(use_typ, use_one);
 	template<> struct action<grammar::use_any> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::ImportPiece>(in.position()));
 		}
 	};
 	template<> struct action<grammar::use_many> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel ImportName*
 			auto imps = util::popSeq<ast::ImportPiece>(s);
 			s.pop_back();
@@ -565,7 +565,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::use_rebind> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: (var array? var?) | (typ array? typ?)
 			auto name = util::pop<ast::BasicBinding>(s);
 			auto inst = util::pop<ast::Array>(s);
@@ -583,7 +583,7 @@ namespace spero::parser::actions {
 	// Assignment
 	template<> struct action<grammar::var_tuple> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel AssignPattern*
 			auto pat = util::popSeq<ast::AssignPattern>(s);
 
@@ -594,7 +594,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::var_type> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: binding
 			if (util::at_node<ast::BasicBinding>(s))
 				s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s), in.position()));
@@ -603,7 +603,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::var_pattern> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: binding
 			if (util::at_node<ast::BasicBinding>(s))
 				s.emplace_back(std::make_unique<ast::AssignName>(util::pop<ast::BasicBinding>(s), in.position()));
@@ -617,7 +617,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::capture_dec> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack:
 
 			auto& str = in.string();
@@ -645,7 +645,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::tuple_pat> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel pattern*
 			auto vals = util::popSeq<ast::Pattern>(s);
 
@@ -656,7 +656,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::pat_tuple> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: mut? PTuple
 			// stack: cap? PTuple
 			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
@@ -681,7 +681,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::pat_adt> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			//stack: binding PTuple?
 			auto args = util::pop<ast::PTuple>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
@@ -691,7 +691,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::pat_var> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: mut? var type?
 			auto type = util::pop<ast::Type>(s);
 			auto pat = std::make_unique<ast::PNamed>(util::pop<ast::BasicBinding>(s), std::move(type), in.position());
@@ -711,19 +711,19 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::pat_any> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::Pattern>(in.position()));
 		}
 	};
 	template<> struct action<grammar::pat_val> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			s.emplace_back(std::make_unique<ast::PVal>(util::pop<ast::ValExpr>(s), in.position()));
 		}
 	};
 	template<> struct action<grammar::in_binding> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: expr
 			s.emplace_back(std::make_unique<ast::InAssign>(util::pop<ast::ValExpr>(s), in.position()));
 			// stack: InAssignment
@@ -731,7 +731,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::var_assign> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			using namespace std;
 
 			// stack: pattern generic* (inf (expr | in)?) | (expr in?)
@@ -764,7 +764,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::adt_con> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: binding TupleType?
 			auto args = util::pop<ast::TupleType>(s);
 			auto name = util::pop<ast::BasicBinding>(s);
@@ -774,7 +774,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::named_arg> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: var type?
 			auto type = util::pop<ast::Type>(s);
 			auto var = util::pop<ast::BasicBinding>(s);
@@ -786,7 +786,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::con_tuple> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: sentinel variable*
 			auto vals = util::popSeq<ast::ValExpr>(s);
 
@@ -797,7 +797,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::rhs_inf> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: binding
 			s.emplace_back(std::make_unique<ast::SourceType>(util::pop<ast::BasicBinding>(s), ast::PtrStyling::NA, in.position()));
 			if (util::is_type<ast::Token>(*(std::rbegin(s) + 1)))
@@ -807,7 +807,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::type_assign> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: binding generics* inf? (adt|tuple)* scope
 			auto body = util::pop<ast::Block>(s);
 
@@ -832,7 +832,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::assign> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: vis (interface | inassign)
 			if (util::at_node<ast::Interface>(s)) {
 				auto assign = util::pop<ast::Interface>(s);
@@ -860,7 +860,7 @@ namespace spero::parser::actions {
 	// Control
 	template<> struct action<grammar::if_core> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token test body
 			auto body = util::pop<ast::ValExpr>(s);
 			auto test = util::pop<ast::ValExpr>(s);
@@ -871,18 +871,18 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::if_dot_core> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: body token test
 			auto iter = std::rbegin(s);
 			std::iter_swap(iter + 2, iter + 1);
 			std::iter_swap(iter + 1, iter);
-			action<grammar::if_core>::apply(in, s);
+			action<grammar::if_core>::apply(in, s, state);
 			// stack: branch
 		}
 	};
 	template<> struct action<grammar::elsif_rule> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: branch token test body
 			auto body = util::pop<ast::ValExpr>(s);
 			auto test = util::pop<ast::ValExpr>(s);
@@ -893,7 +893,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::else_rule> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: branch token body
 			auto body = util::pop<ast::ValExpr>(s);
 			s.pop_back();
@@ -903,16 +903,16 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::fn_if_core> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token test
 			s.emplace_back(std::make_unique<ast::Future>(true, in.position()));
-			action<grammar::if_core>::apply(in, s);
+			action<grammar::if_core>::apply(in, s, state);
 			// stack: branch
 		}
 	};
 	template<> struct action<grammar::loop> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token body
 			auto part = util::pop<ast::ValExpr>(s);
 			s.pop_back();
@@ -922,16 +922,16 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::dot_loop> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: body token
 			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
-			action<grammar::loop>::apply(in, s);
+			action<grammar::loop>::apply(in, s, state);
 			// stack: loop
 		}
 	};
 	template<> struct action<grammar::fn_dot_loop> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token
 			s.pop_back();
 			s.emplace_back(std::make_unique<ast::Loop>(std::make_unique<ast::Future>(true, in.position()), in.position()));
@@ -940,7 +940,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::while_l> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token test body
 			auto body = util::pop<ast::ValExpr>(s);
 			auto test = util::pop<ast::ValExpr>(s);
@@ -951,27 +951,27 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::dot_while> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: body token test
 			auto iter = std::rbegin(s);
 			std::iter_swap(iter + 2, iter + 1);
 			std::iter_swap(iter, iter + 1);
-			action<grammar::while_l>::apply(in, s);
+			action<grammar::while_l>::apply(in, s, state);
 			// stack: while
 		}
 	};
 	template<> struct action<grammar::fn_dot_while> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token test
 			s.emplace_back(std::make_unique<ast::Future>(true, in.position()));
-			action<grammar::while_l>::apply(in, s);
+			action<grammar::while_l>::apply(in, s, state);
 			// stack: while
 		}
 	};
 	template<> struct action<grammar::for_l> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token pattern generator body
 			auto body = util::pop<ast::ValExpr>(s);
 			auto gen = util::pop<ast::ValExpr>(s);
@@ -983,28 +983,28 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::dot_for> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: body token pattern generator
 			auto iter = std::rbegin(s);
 			std::iter_swap(iter + 3, iter + 2);			// stack: token body pattern generator
 			std::iter_swap(iter + 2, iter + 1);			// stack: token pattern body generator
 			std::iter_swap(iter + 1, iter);				// stack: token pattern generator body
-			action<grammar::for_l>::apply(in, s);
+			action<grammar::for_l>::apply(in, s, state);
 			// stack: for
 		}
 	};
 	template<> struct action<grammar::fn_dot_for> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token pattern generator
 			s.emplace_back(std::make_unique<ast::Future>(true, in.position()));
-			action<grammar::for_l>::apply(in, s);
+			action<grammar::for_l>::apply(in, s, state);
 			// stack: for
 		}
 	};
 	template<> struct action<grammar::jumps> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token expr?
 			auto expr = util::pop<ast::ValExpr>(s);
 			auto tkn = std::get<ast::KeywordType>(util::pop<ast::Token>(s)->value);
@@ -1031,25 +1031,25 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::dot_jmp> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: expr token
 			std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
-			action<grammar::jumps>::apply(in, s);
+			action<grammar::jumps>::apply(in, s, state);
 			// stack: jump
 		}
 	};
 	template<> struct action<grammar::fn_dot_jmp> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token
 			s.emplace_back(std::make_unique<ast::Future>(true, in.position()));
-			action<grammar::jumps>::apply(in, s);
+			action<grammar::jumps>::apply(in, s, state);
 			// stack: jump
 		}
 	};
 	template<> struct action<grammar::case_stmt> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: (sentinel | case) pattern* (if expr)? expr
 			auto expr = util::pop<ast::ValExpr>(s);
 			auto if_guard = util::pop<ast::ValExpr>(s);
@@ -1071,7 +1071,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::match_expr> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token expr sentinel case+ cap
 			s.pop_back();
 			auto cases = util::popSeq<ast::Case>(s);
@@ -1088,7 +1088,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::dot_match> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: expr token sentinel case+
 			auto cases = util::popSeq<ast::Case>(s);
 			s.pop_back();
@@ -1102,7 +1102,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::fn_dot_match> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: token sentinel case+
 			auto cases = util::popSeq<ast::Case>(s);
 			s.pop_back();
@@ -1119,7 +1119,7 @@ namespace spero::parser::actions {
 	// Operator Precedence
 	template<> struct action<grammar::op_prec_1> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// Produce a qualified binding because operators aren't included in name_path
 			s.emplace_back(std::make_unique<ast::QualifiedBinding>(
 				std::make_unique<ast::BasicBinding>(in.string(), ast::BindingType::OPERATOR, in.position()), in.position()
@@ -1134,7 +1134,7 @@ namespace spero::parser::actions {
 	INHERIT(op_prec_7, op_prec_1);
 	template<> struct action<grammar::_binary_prec_1> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: expr op expr | expr op
 			auto rhs = util::pop<ast::ValExpr>(s);
 			auto op = util::pop<ast::QualifiedBinding>(s)->elems.back()->name;
@@ -1177,7 +1177,7 @@ namespace spero::parser::actions {
 	// Expressions
 	template<> struct action<grammar::_index_> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: (expr|index) expr
 			auto expr = util::pop<ast::ValExpr>(s);
 			if (util::at_node<ast::Index>(s))
@@ -1192,7 +1192,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::un_eps> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: unary* expr
 			auto expr = util::pop<ast::ValExpr>(s);
 
@@ -1214,7 +1214,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::in_eps> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: expr inf?
 			auto typ = util::pop<ast::Type>(s);
 			//if (typ) s.pop_back();		// NOTE: Removes sentinel from anon_sep production (from time where anon_sep="::")
@@ -1224,7 +1224,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::_range_> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: expr, expr
 			auto stop = util::pop<ast::ValExpr>(s);
 			s.pop_back();
@@ -1235,7 +1235,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::impl_expr> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: IMPL qual array? block?
 			auto block = util::pop<ast::Block>(s);
 			auto gen = util::pop<ast::Array>(s);
@@ -1250,7 +1250,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::mod_use> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: USE imp*
 			auto imps = util::popSeq<ast::ImportPiece>(s);
 			s.pop_back();
@@ -1260,7 +1260,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::valexpr> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: mut? expr
 			std::iter_swap(std::rbegin(s) + 1, std::rbegin(s));
 
@@ -1282,7 +1282,7 @@ namespace spero::parser::actions {
 	};
 	template<> struct action<grammar::anot_expr> {
 		template<class Input>
-		static void apply(const Input& in, Stack& s) {
+		static void apply(const Input& in, Stack& s, CompilationState& state) {
 			// stack: annot* stmt
 			auto stmt = util::pop<ast::Stmt>(s);
 			if (!stmt) return;

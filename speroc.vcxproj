@@ -72,25 +72,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
     <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
     <LibraryPath>C:\Users\ghoop\Documents\GitHub\speroc\dep\_x86_inter\target\debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
     <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
     <LibraryPath>C:\Users\ghoop\Documents\GitHub\speroc\dep\_x86_inter\target\debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>C:\Users\ghoop\Documents\GitHub\speroc\dep\_x86_inter\target\release;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
     <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\src;$(VC_SourcePath);</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
     <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\src;$(VC_SourcePath);</SourcePath>
     <LibraryPath>C:\Users\ghoop\Documents\GitHub\speroc\dep\_x86_inter\target\release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -168,7 +168,6 @@
     <ClCompile Include="src\cmd_line.cpp" />
     <ClCompile Include="src\CompilationState.cpp" />
     <ClCompile Include="src\compiler.cpp" />
-    <ClCompile Include="src\diagnostic.cpp" />
     <ClCompile Include="src\SymTable.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -217,7 +216,6 @@
     <ClInclude Include="incl\parser\visitor.h" />
     <ClInclude Include="incl\SymTable.h" />
     <ClInclude Include="incl\util\CompilationState.h" />
-    <ClInclude Include="incl\util\diagnostic.h" />
     <ClInclude Include="incl\util\parser.h" />
     <ClInclude Include="incl\util\string.h" />
     <ClInclude Include="incl\util\utils.h" />

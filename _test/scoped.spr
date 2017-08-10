@@ -1,7 +1,7 @@
 def main = () -> {
     let a = 4
-    {
+    let b = {
         let a = 15
         a
-    }
+    } in b + a
 }

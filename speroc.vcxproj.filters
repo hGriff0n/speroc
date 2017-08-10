@@ -97,9 +97,6 @@
       <Filter>Source Files\interface</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="src\diagnostic.cpp">
-      <Filter>Source Files\interface</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
@@ -241,9 +238,6 @@
     </ClInclude>
     <ClInclude Include="incl\parser\visitor.h">
       <Filter>Header Files\parser</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\util\diagnostic.h">
-      <Filter>Header Files\interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

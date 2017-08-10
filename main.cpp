@@ -39,6 +39,7 @@ extern "C" {
 int main(int argc, char* argv[]) {
 	using namespace spero;
 	using namespace spero::parser;
+	using compiler::ID;
 	
 	// Automatically add in "interactive" and "nodel" flags for debug running
 	if (argc == 1) {
@@ -61,7 +62,6 @@ int main(int argc, char* argv[]) {
 				parser::Stack res;
 
 				std::string command = input.substr(0, 2);
-				state.clearDiagnostics();
 
 				// Compile a file
 				if (command == ":c") {
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
 					bool failed;
 					std::tie(failed, res) = compiler::parseFile(state.files()[0], state);
 					if (failed) {
-						state.error("Parsing of the input failed");
+						state.log(ID::err, "Parsing of the input failed");
 					}
 
 				// Modify the command line arguments
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
 					
 					// Stop early if parsing failed
 					if (failed) {
-						state.error("Parsing of the input failed");
+						state.log(ID::err, "Parsing of the input failed");
 
 					} else if (flags["compile"]) {
 						// Analyze and compile the code
@@ -151,7 +151,6 @@ int main(int argc, char* argv[]) {
 					}
 				}
 
-				state.printErrors(std::cout);
 				printAST(std::cout << '\n', res);
 
 			} catch (std::exception& e) {
@@ -166,11 +165,7 @@ int main(int argc, char* argv[]) {
 			compile(state, res);
 
 		} catch (std::exception& e) {
-			state.log(e.what());
-		}
-
-		if (state.failed()) {
-			state.printErrors(std::cout);
+			state.log(ID::info, e.what());
 		}
 
 		return state.failed();
@@ -184,12 +179,15 @@ int main(int argc, char* argv[]) {
  */
 bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack) {
 	using namespace spero;
+	using compiler::ID;
 
 	// TODO: Initialize timing and other compilation logging structures
 
 
 	/*
 	 * Perform parsing and initial recognization checks
+	 *
+	 * TODO: Rework the interface (failure state is now implicit)
 	 */
 	{
 		size_t failed;
@@ -199,7 +197,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 		state.logTime();
 
 		if (failed) {
-			state.error("Parsing of the input failed");
+			state.log(ID::err, "Parsing of the input failed");
 		}
 	}
 
@@ -220,7 +218,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	 *
 	 * speroc does not handle the generation of executables
 	 * and other binary files, prefering to pass those stages
-	 * off to some existing system tool that is guaranteed to work
+	 * off to some system tool that is guaranteed to work
 	 */
 	if (!state.failed()) {
 		state.logTime();
@@ -233,12 +231,12 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	 * Send the boundary ir off to the final compilation phase
 	 *
 	 * NOTE: Currently speroc uses `g++` for final compilation
-	 *   I will be moving over to LLVM (and the LLVM IR) in the future
+	 *   I will be moving over to LLVM (and LLVM IR) in the future
 	 */
 	if (!state.failed() && state.produceExe()) {
 		state.logTime();
 		if (system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
-			state.error("Compilation of `out.s` failed");
+			state.log(ID::err, "Compilation of `out.s` failed");
 		}
 		state.logTime();
 
