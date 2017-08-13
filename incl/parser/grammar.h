@@ -103,16 +103,11 @@ namespace spero::parser::grammar {
 	struct str_body : until<at<one<'"'>>, seq<opt<one<'\\'>>, any>> {};																// 
 	struct str : seq<one<'"'>, str_body, one<'"'>, ig_s> {};																		// 
 	struct char_body : seq<opt<one<'\\'>>, any> {};																					// 
-	//struct character : seq<one<'\''>, if_then_else<char_body, one<'\''>, err_char_no_close>, ig_s> {};							// 
 	struct character : seq<one<'\''>, char_body, one<'\''>, ig_s> {};																// 
-	//struct tuple : seq<oparen, opt<sequ<valexpr>>, if_then_else<cparen, eps, seq<err_tuple_no_close>>> {};						// 
 	struct tuple : seq<oparen, opt<sequ<valexpr>>, cparen> {};																		// 
-	//struct array : seq<obrack, opt<sequ<valexpr>>, if_then_else<cbrack, eps, seq<err_array_no_close>>> {};						//
 	struct _array : seq<obrack, opt<sequ<valexpr>>, one<']'>> {};																	// 
-	//struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};																	// 
 	struct array : seq<_array, ig_s> {};																							// 
-	//struct fn_rettype : if_then<at<inf_mut_type>, seq<inf_mut_type, ig_s, scope>> {};												// 
-	struct fn_rettype : if_then<at<inf_narrow>, seq<inf_narrow, ig_s, scope>> {};
+	struct fn_rettype : if_then<at<inf_narrow>, seq<inf_narrow, ig_s, scope>> {};													//
 	struct op_forward : seq<op, opt<valexpr>> {};																					// 
 	struct fn_forward : seq<one<'.'>, sor<fn_dot_ctrl, op_forward, valexpr>> {};													// Don't need to anything for the valexpr case, will be handled in analysis
 	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};													// 
@@ -124,7 +119,6 @@ namespace spero::parser::grammar {
 	//
 	struct anon_sep : seq<pstr(":::")> {};																							// 
 	struct anon_type : seq<anon_sep, ig_s, opt<con_tuple>, scope> {};																// 
-	//struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};															// 
 	struct scope : seq<obrace, star<anot_expr>, cbrace> {};																			// 
 	struct wait_stmt : seq<k_wait, valexpr> {};																						// 
 	struct lambda_placeholder : seq<placeholder> {};																				// 
@@ -140,8 +134,8 @@ namespace spero::parser::grammar {
 	// antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
 	struct unary : seq<sor<one<'!'>, one<'-'>, one<'~'>>, not_at<one<'('>>> {};														// 
 	struct unary_op : seq<at<unary>, any> {};																						// 
-	struct annotation : seq<one<'@'>, var_core, not_at<one<'!'>>, opt<tuple>> {};														// 
-	struct global_annotation : seq<one<'@'>, disable<var_core>, one<'!'>, opt<tuple>> {};												// 
+	struct annotation : seq<one<'@'>, var_core, not_at<one<'!'>>, opt<tuple>> {};													// 
+	struct global_annotation : seq<one<'@'>, disable<var_core>, one<'!'>, opt<tuple>> {};											// 
 	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};																		// 
 	struct inf_tuple_type : seq<oparen, sequ<inf_type>, cparen> {};																	// Match a tuple of inference types
 	struct inf_fn_type : seq<pstr("->"), ig_s, inf_type> {};																		// Rule for constructing function types	
@@ -200,7 +194,6 @@ namespace spero::parser::grammar {
 	struct assign_val : seq<one<'='>, ig_s, valexpr, opt<in_binding>> {};															// 
 	struct var_assign : seq<var_pattern, ig_s, opt<generic>, sor<seq<inf, opt<assign_val>>, assign_val>> {};						// 
 	struct lhs_inher : seq<two<':'>, ig_s, type, ig_s, one<'='>, ig_s, opt<k_mut>> {};												// 
-	//struct rhs_inf : seq<typ, ig_s, two<':'>, ig_s> {};																			// 
 	struct rhs_inf : if_then<at<typ, ig_s, two<':'>>, seq<typ, ig_s, two<':'>, ig_s>> {};											// 
 	struct rhs_inher : seq<one<'='>, ig_s, opt<k_mut>, opt<rhs_inf>> {};															// 
 	struct type_assign : seq<var_type, not_at<oparen>, ig_s, opt<generic>, sor<lhs_inher, rhs_inher>, cons, scope> {};				// 
@@ -223,7 +216,7 @@ namespace spero::parser::grammar {
 	struct for_l : seq<for_core, opt<k_do>, valexpr> {};																			// 
 	struct jumps : seq<jump_keys, opt<valexpr>> {};																					// 
 	struct case_if : seq<k_if, valexpr> {};																							// 
-	struct case_stmt : seq<opt<k_case>, sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("=>"), ig_s, valexpr> {};				// 
+	struct case_stmt : seq<opt<k_case>, sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("=>"), ig_s, valexpr> {};				// Think about removing the case statement
 	struct match_expr : seq<k_match, fncall, obrace, plus<case_stmt>, cbrace> {};													// 
 	struct dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};															// 
 	struct dot_while : seq<while_core> {};																							// 

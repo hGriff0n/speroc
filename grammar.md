@@ -1,186 +1,160 @@
 The current grammar of Spero, given in a basic PEG format
 
-	//
-	// Ignored / Special Characters
-	//
-	eolf           = "\r\n" / "\n"
-	comment        = "#" (!"\n" .)* eolf
-	multiline      = "##" (!"##" .)* "##"
-	whitespace     = [" \n\r\t"]+
-	ig             = multiline / comment / whitespace
-	oparen         = "(" ig*
-	cparen         = ")" ig*
-	cbrack         = "]" ig*
-	obrack         = "[" ig*
-	obrace         = "{" ig*
-	cbrace         = "}" ig*
-	placeholder    = "_" ig*
-	id_other       = ["a-zA-Z0-9_"]
+TODO: Consider how errors in sub-expressions should be handled by "parent" expressions
+TODO: Need to consider a way to grab "chunks" of syntactic errors
+  Right now I think "P:">.;]" will provide about 7 errors (way too many)
+	I could have a buffer of contiguous errors where every "failure" gets appended to the buffer
+	  TODO: Figure out how to use this buffer correctly
+		  I think this would mostly be used at the top level (ie. a gstmt/etc)
+			  Could just specify that when one of the other directions succeeds, flush the buffer as well
+			  Sub-levels are fairly well specified in what is/isn't allowed, but there's still this issue
+	Late failures of syntax need to "swallow" their failing nodes
+	  This means that 'gstmt' will always succeed, errors are reported immediately
+		This might have some problems with contextualizing the errors
+	Could also have the last statement push on an "error" ast node
+	  Reporting syntactical errors then becomes a specific analysis phase
+		Restore points would simply be nodes that stop/constrain the contextualization
+# NOTE: A "restore" point should be any high-level construct that allows for contextualizing error reports
 
-	//
-	// Language Keywords
-	//
-	KEY(str)       = str !id_other ig*
-	k_let          = KEY("let")
-	k_def          = KEY("def")
-	k_static       = KEY("static")
-	k_mut          = KEY("mut")
-	k_do           = KEY("do")
-	k_mod          = KEY("use")
-	k_match        = KEY("match")
-	k_if           = KEY("if")
-	k_elsif        = KEY("elsif")
-	k_else         = KEY("else")
-	k_while        = KEY("while")
-	k_for          = KEY("for")
-	k_loop         = KEY("loop")
-	k_break        = KEY("break")
-	k_continue     = KEY("continue")
-	k_yield        = KEY("yield")
-	k_ret          = KEY("return")
-	k_wait         = KEY("wait")
-	k_impl         = KEY("impls")
-	k_in           = KEY("in")
-	b_false        = KEY("false")
-	b_true         = KEY("true")
-	vcontext       = k_let / k_def / k_static
-	jump_key       = k_break / k_continue / k_ret / k_yield / k_wait
-	keyword        = vcontext / jump_key / placeholder / k_mut / k_mod / k_use / k_match / k_if
-					/ k_elsif / k_else / k_while / k_for / k_loop / k_impl / k_in / b_false / b_true
-
-	//
-	// Language Bindings
-	//
-	var            = !keyword ["a-z_"] id_other* "!" / "?"
-	typ            = ["A-Z"] id_other*
-	op_char        = ["!$%^&*?<>|`/\\-=+~"]
-	op             = (["&~!?"] / "->")? op_char+ ig*
-	variable       = var ig*
-	name_path      = (var / typ ":")*
-	typ_ptr        = ["&*"]
-	type           = name_path typ ig* array? typ_ptr? ig*
-	mut_type       = k_mut? type
-	binding        = (name_path typ / var) / op ig*
-
-	//
-	// Language Literals
-	//
-	hex            = "0x" ["0-9a-fA-F"]+
-	bin            = "0b" ["0-1"]+
-	float          = ["0-9"]+ "." ["0-9"]+
-	num            = ["0-9"]+
-	string         = "\"" (!"\"" "\\"? .)* "\""
-	character      = "'" "\\"? . "'"
-	Seq(o,e,s,c)   = o (e (s ig* e)*)? c
-	tuple          = Seq(oparen, valexpr, ",", cparen)
-	array          = Seq(obrack, valexpr, ",", cbrack)
-	fn_rettype     = mut_type ig* scope
-	op_forward     = op valexpr?
-	fn_forward     = "." dot_ctrl / op_forward / valexpr
-	fn_def         = "->" ig* fn_rettype / fn_forward / valexpr
-	fn_or_tuple    = fn_forward / (tuple fn_def?)
-	literal        = (hex / bin / num / string / b_false / b_true / array / fn_or_tuple) ig*
-
-	//
-	// Language Atoms
-	//
-	named_arg      = var ig* inf?
-	con_tuple      = Seq(oparen, named_arg, ",", cparen)
-	anon_type      = ":::" ig* con_tuple? scope
-	scope          = Seq(obrace, expr, ",", cbrace)
-	wait_stmt      = k_wait valexpr
-	atom           = scope / wait_stmt / lit / binding ig*
-	fnseq          = (array anon_type? tuple?) / (anon_type tuple?) / tuple
-	fncall         = atom fnseq*
-
-	//
-	// Language Decorators
-	//
-	unary          = ["&!-~"]
-	glbl_annot     = "@" var "!" tuple?
-	annotation     = "@" var tuple?
-	mod_dec        = k_mod var (":" var)* ig+
-	inf_type       = mut_type / inf_fn_type
-	type_tuple     = Seq(oparen, inf_type, ",", cparen)
-	inf_fn_type    = type_tuple (ig* "->" ig* inf_type)?
-	inf            = "::" ig* inf_type
-	gen_type       = typ ["+-"]? ig* (("::"/"!:"/"<"/">") ig* type)?
-	gen_val        = variable ("::" ig* type)? ("=" ig* valexpr)?
-	gen_part       = gen_type / gen_val
-	gen            = Seq(obrack, gen_part, ",", cbrack)
-	use_rebind     = (var ig* ("as" ig* var ig*)?) / (typ ig* ("as" ig* typ ig*))
-	use_many       = Seq(obrace, use_rebind, ",", cbrace)
-	use_final      = (use_many (":" placeholder)) / placeholder / var
-
-	//
-	// Patterns
-	//
-	var_tuple      = Seq(oparen, var_pattern, ",", cparen)
-	var_pattern    = var / op / var_tuple
-	var_type       = typ
-	tuple_pat      = Seq(oparen, pattern, ",", cparen)
-	pattern_adt    = typ tuple_pat?
-	pattern_tuple  = k_mut? tuple_pat
-	pattern_var    = k_mut var
-	pattern_val    = hex / bin / num / str / character / false / true / array
-	pattern        = placeholder / pattern_var / pattern_tuple / pattern_adt / pattern_val
-
-	//
-	// Assignment
-	//
-	adt_con        = typ type_tuple? ig*
-	constructors   = (adt_con "|" ig*)* (con_tuple / adt_con)?
-	assign_val     = "=" ig* valexpr
-	var_assgin     = var_pattern ig* generic? (inf assign_val?) / assign_val
-	lhs_inher      = inf "=" ig*
-	rhs_inf        = typ ig* "::" ig*
-	rhs_inher      = "=" ig* rhs_inf?
-	type_assign    = typ !oparen ig* generic? lhs_inher / rhs_inher cons scope
-	assign         = vcontext type_assign / var_assgin
-
-	//
-	// Control Flow
-	//
-	if_core        = k_if valexpr
-	elses          = (k_elsif valexpr k_do? valexpr)* k_else valexpr
-	branch         = if_core k_do? valexpr elses
-	loop           = k_loop valexpr
-	while_core     = k_while valexpr
-	while_l        = while_core k_do? valexpr
-	for_core       = k_for pattern "in" ig* valexpr
-	for_l          = for_core k_do? valexpr
-	jump           = jump_key valexpr?
-	case_pat       = pattern ig*
-	case_stmt      = Seq(eps, case_pat, ",", eps) ig* if_core? "->" ig* valexpr
-	match_expr     = k_match fncall obrace case_stmt+ cbrace
-	dot_match      = k_match obrace case_stmt+ cbrace
-	dot_ctrl       = if_core / k_loop / while_core / jump_key / dot_match / for_core / dot_if
-	control        = branch / loop / while_l / for_l / match_expr / jump
-
-	//
-	// Operator Precedence
-	//
-	PREC(ch)       = [ch] op_char*
-	BINARY(op, s)  = s (op ig* s)*
-	binary_prec_1  = BINARY(range, PREC("$?`\\"))
-	binary_prec_2  = BINARY(binary_prec_1, PREC("/%*"))
-	op_prec_3      = ("->" op_char+) / PREC("+-")
-	binary_prec_3  = BINARY(binary_prec_2, op_prec_3)
-	op_prec_4      = ("!" op_char+) / PREC("=")
-	binary_prec_4  = BINARY(binary_prec_3, op_prec_4)
-	binary_prec_5  = BINARY(binary_prec_4, PREC("&<>"))
-	binary_prec_6  = BINARY(binary_prec_5, PREC("^"))
-	binary_prec_7  = BINARY(binary_prec_6, PREC("|"))
-
-	//
-	// Expressions
-	//
-	_index_        = !".." "." ig* fncall
-	index          = unary* fncall _index_* ("." dot_ctrl) / inf / eps
-	range          = index (".." index?)?
-	valexpr        = k_mut? (control / range / binary) ig* ";"? ig*
-	mod_use        = k_use (var / placeholder ":")* use_final
-	impl_expr      = k_impl name_path typ ig*
-	expr           = (mod_use / impl_expr / assign / (k_do? valexpr)) ig* ";"? ig*
-	stmt           = (annotation ig*)* glbl_annot / mod_dec / expr
-	program        = ig* stmt* eolf
+	program = gstmt*
+	  # Could I use "unexpected character" here? FIRST set type lookahead
+	gstmt = mod_dec | impl | stmt
+	mod_dec = "mod" varname (";" | eolf)
+	  # error if eolf or ";" not used
+	  # restore point?
+	mod_path = (":" not_at[typ_ch | ":"] var)*
+	  # error if var not used
+	_mod_path = (var ":")*
+	  # fail if eolf, error otherwise if not ":"
+	impl = "impl" single_type for_type? scope
+	  # error if no scope, invalid typing
+		# TODO: Enforce for_type ???
+	  # restore point?
+	for_type = "for" single_type
+	  # fail if scope, error if wrong keyword or invalid typing
+	stmt = annotation* (ganot | mod_alias | expr) ";"?
+	  # restore point?
+	annotation = "@" var tuple?
+	  # error if non-var name used
+	ganot = "@!" var tuple?
+	  # error if non-var name used
+	mod_alias = "use" _mod_path (mul_imp | imp_alias)
+	  # TODO: Convert over to using 'mod_path' (I might be removing 'mod_path' though)
+	  # error if no path given
+	mul_imp = "{" binding ("," binding)* "}"
+	  # error if not "," used or binding not used
+	imp_alias = binding alias?
+	alias = array? "as" binding array?
+	  # error if binding not used or invalid keyword
+	binding = var | typ
+	expr = assign | ("do"? valexpr)
+	mvexpr = valexpr | in_assign
+	  # error if unexpected keyword/etc. used
+	mvdexpr = "do"? mvexpr
+	assign = vcontext (type_assign | var_assign)
+	  # error if wrong keyword used
+	type_assign = typname generic? "=" (adt_dec | arg_tuple)? scope
+	  # error if "=" not used or no scope used
+	var_assign = assign_pat generic? (interface | asgn_val)
+	interface = type_inf asgn_val?
+	asgn_val = "=" valexpr ("in" mvexpr)?
+	  # error if "=" not used
+	in_assign = vcontext assign_pat generic? type_inf? "=" valexpr "in" mvexpr
+	  # error if "=" not used or "in" not used
+	scope = "{" stmt* "}"
+	  # error if no closing "}"
+	arg_tuple = "(" (arg ("," arg)*)? ")"
+	  # error if no closing ")"
+	arg = var type_inf?
+	type_inf = "::" type
+	adt_dec = adt ("|" adt)*
+	adt = typ tuple_type?
+	  # error if typ not used
+	valexpr = "mut"? (control | binexpr) type_inf?
+	control = match | forl | whilel | branch | jump | loop
+	loop = "loop" mvdexpr
+	match = "match" mvexpr "{" case+ "}"
+	  # error if no closing "}" or no case statements
+	case = pattern if_core? "=>" mvexpr ";"?
+	  # error if "=>" not used or ";}\n" not end character
+	forl = "for" pattern "in" mvexpr mvdexpr
+	  # error if "in" not used
+	whilel = "while" mvexpr mvdexpr
+	branch = if_core mvdexpr eslif_case* else_case?
+	if_core = "if" mvexpr
+	elsif_case = "elsif" mvexpr mvdexpr
+	  # error if "elseif" used
+	else_case = "else" mvdexpr
+	jump = jump_key mvexpr?
+	binexpr = unexpr (op unexpr?)?
+	unexpr = un_op? index
+	index = fncall "." (dot_ctrl | index_cont)
+	index_cont = fncall ("." fncall)*
+	dot_ctrl = dotloop | dotwhile | dotfor | dotbranch | dotmatch | jump_key
+	dotloop = "loop"
+	dotwhile = "while" mvexpr
+	dotfor = "for" pattern "in" mvexpr
+	  # error if "in" not used
+	dotbranch = if_core elsif_case* else_case?
+	dotmatch = "match" "{" case+ "}"
+	  # error if no closing "}" or no case statements
+	fncall = (named | valcall) actcall*
+  named = varname type_const?
+	type_const = typ actcall? anon_type?
+	valcall = atom | op
+	actcall = (array tuple?) | tuple
+	anon_type = "::" scope
+	typ_ch = [A-Z]
+	var = [a-z][a-zA-Z_]
+	typ = typ_ch [a-zA-Z_]
+	varname = var mod_path
+	typname = varname ":" typ
+	  # error if typ not used
+	atom = fn_tuple | array | literal | plambda | scope
+	literal = binary | hex | decimal | char | string | "false" | "true"
+	tuple = "(" (mvexpr ("," mvexpr)* )? ")"
+	  # error if no closing ")"
+	array = "[" (mvexpr ("," mvexpr)* )? "]"
+	  # error if no closing "]"
+	binary = "0b" [01]+
+	hex = "0x" [0-9a-fA-F]+
+	decimal = [0-9]+ ("." [0-9]+)?
+	char = "'" "\"? . "'"
+	  # error if no closing '''
+	string = """ ("\"? .)* """
+	  # error if no closing '"'
+	plambda = "_"
+	fn_tuple = (tuple lambda?) | dot_fn
+	lambda = "->" mvexpr
+	dot_fn = "." (dot_ctrl | index_cont)
+	  # error if not dot_ctrl or index_cont used
+	generic = "[" gen_part ("," gen_part)* "]"
+	  # error if no closing "]"
+	gen_part = type_gen | val_gen
+	  # error if not type_gen or val_gen
+	type_gen = typ variance? relation?
+	val_gen = var relation?
+	relation = ("::" | "!:") type
+	pattern = "_" | literal | pat_adt | capture
+	pat_adt = typname pat_tuple?
+	pat_tuple = "(" (pattern ("," pattern)* )? ")"
+	  # error if no closing ")"
+	capture = capture_desc (pat_tuple | var)
+	  # error if pat_tuple or var not used
+	capture_desc = "mut"?  "&"?
+	assign_pat = var | op | "_" | assign_tuple
+	assign_tuple = "(" assign_pat ("," assign_pat)* ")"
+	  # error if no closing ")"
+	type = or_type
+	  # error if no or_type
+	or_type = and_type ("|" and_type)*
+	and_type = ntype ("&" ntype)*
+	ntype = mut_type | ("{" type "}")
+	  # error if no closing "}"
+	mut_type = "mut"? (tuple_fn_type | ref_type)
+	tuple_fn_type = tuple_type fn_type?
+	fn_type = "->" type
+	  # error if "->," not used
+	ref_type = single_type typ_ptr
+	single_type = typname array?
+	
