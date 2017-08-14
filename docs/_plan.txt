@@ -19,9 +19,7 @@ Current Project Plan
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
     Fix the issues that were missed during the initial grammar development
-	  gen_variadic
 	  ignore set
-	  wait
 	Adapt the grammar for peculiarities of pegtl
 	  'unop' will never be able to be called with fncall (why should "op = unop | binop")
 	Start working on actions and ast construction

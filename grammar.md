@@ -17,12 +17,13 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 		Restore points would simply be nodes that stop/constrain the contextualization
 # NOTE: A "restore" point should be any high-level construct that allows for contextualizing error reports
 
-	program = gstmt*
+	program = ig* gstmt*
 	  # Could I use "unexpected character" here? FIRST set type lookahead
 	gstmt = mod_dec | impl | stmt
-	mod_dec = "mod" varname (";" | eolf)
+	mod_dec = "mod" varname ig* (";" | eolf) ig*
 	  # error if eolf or ";" not used
 	  # restore point?
+	  # TODO: If I want to enforce the 'eolf', I need to modify the ig used
 	mod_path = (":" not_at[typ_ch | ":"] var)*
 	  # error if var not used
 	_mod_path = (var ":")*
@@ -47,14 +48,14 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	imp_alias = binding alias?
 	alias = array? "as" binding array?
 	  # error if binding not used or invalid keyword
-	binding = var | typ
+	binding = (var | typ) ig*
 	expr = assign | ("do"? valexpr)
 	mvexpr = valexpr | in_assign
 	  # error if unexpected keyword/etc. used
 	mvdexpr = "do"? mvexpr
 	assign = vcontext (type_assign | var_assign)
 	  # error if wrong keyword used
-	type_assign = typname generic? "=" (adt_dec | arg_tuple)? scope
+	type_assign = typ ig* generic? "=" (adt_dec | arg_tuple)? scope
 	  # error if "=" not used or no scope used
 	var_assign = assign_pat generic? (interface | asgn_val)
 	interface = type_inf asgn_val?
@@ -66,8 +67,8 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	  # error if no closing "}"
 	arg_tuple = "(" (arg ("," arg)*)? ")"
 	  # error if no closing ")"
-	arg = var type_inf?
-	type_inf = "::" type
+	arg = var ig* type_inf?
+	type_inf = "::" ig* type
 	adt_dec = adt ("|" adt)*
 	adt = typ tuple_type?
 	  # error if typ not used
@@ -76,7 +77,7 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	loop = "loop" mvdexpr
 	match = "match" mvexpr "{" case+ "}"
 	  # error if no closing "}" or no case statements
-	case = pattern if_core? "=>" mvexpr ";"?
+	case = pattern if_core? "=>" ig* mvexpr ";"?
 	  # error if "=>" not used or ";}\n" not end character
 	forl = "for" pattern "in" mvexpr mvdexpr
 	  # error if "in" not used
@@ -87,9 +88,9 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	  # error if "elseif" used
 	else_case = "else" mvdexpr
 	jump = jump_key mvexpr?
-	binexpr = unexpr (op unexpr?)?
-	unexpr = un_op? index
-	index = fncall "." (dot_ctrl | index_cont)
+	binexpr = unexpr (binop ig* unexpr?)?
+	unexpr = unop? index
+	index = fncall "." ig* (dot_ctrl | index_cont)
 	index_cont = fncall ("." fncall)*
 	dot_ctrl = dotloop | dotwhile | dotfor | dotbranch | dotmatch | jump_key
 	dotloop = "loop"
@@ -100,11 +101,11 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	dotmatch = "match" "{" case+ "}"
 	  # error if no closing "}" or no case statements
 	fncall = (named | valcall) actcall*
-  named = varname type_const?
-	type_const = typ actcall? anon_type?
-	valcall = atom | op
+    named = varname type_const?
+	type_const = ":" typ ig* actcall? anon_type?
+	valcall = (atom | op) ig*
 	actcall = (array tuple?) | tuple
-	anon_type = "::" scope
+	anon_type = "::" ig* scope
 	typ_ch = [A-Z]
 	var = [a-z][a-zA-Z_]
 	  # error if name matches a keyword (analysis)
@@ -125,39 +126,42 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	  # error if no closing '''
 	string = """ ("\"? .)* """
 	  # error if no closing '"'
-	plambda = "_"
+	plambda = "_" ig*
 	fn_tuple = (tuple lambda?) | dot_fn
-	lambda = "->" mvexpr
-	dot_fn = "." (dot_ctrl | index_cont)
+	lambda = "->" ig* mvexpr
+	dot_fn = "." ig* (dot_ctrl | index_cont)
 	  # error if not dot_ctrl or index_cont used
 	generic = "[" gen_part ("," gen_part)* "]"
 	  # error if no closing "]"
 	gen_part = type_gen | val_gen
 	  # error if not type_gen or val_gen
-	type_gen = typ variance? ".."? relation?
-	val_gen = var relation?
-	relation = ("::" | "!:") type
-	pattern = "_" | literal | pat_adt | capture
-	pat_adt = typname pat_tuple?
-	pat_tuple = "(" (pattern ("," pattern)* )? ")"
+	type_gen = typ ig* variance? (".." ig*)? relation?
+	val_gen = var ig* relation?
+	relation = ("::" | "!:") ig* type
+	pattern = plambda | pat_adt | capture | literal
+	pat_adt = typname ig* pat_tuple?
+	pat_tuple = "(" pattern ("," pattern)* ")"
 	  # error if no closing ")"
-	capture = capture_desc (pat_tuple | var)
+	capture = capture_desc (pat_tuple | (var ig*))
 	  # error if pat_tuple or var not used
-	capture_desc = "mut"?  "&"?
-	assign_pat = var | op | "_" | assign_tuple
+	capture_desc = "mut"? ("&" ig*)?
+	assign_pat = (var | op | "_" | assign_tuple) ig*
 	assign_tuple = "(" assign_pat ("," assign_pat)* ")"
 	  # error if no closing ")"
 	type = or_type
 	  # error if no or_type
-	or_type = and_type ("|" and_type)*
-	and_type = ntype ("&" ntype)*
-	ntype = mut_type | ("{" type "}")
+	or_type = and_type ("|" ig* and_type)*
+	and_type = ntype ("&" ig* ntype)*
+	ntype = mut_type | ("{" ig* type "}") ig*
 	  # error if no closing "}"
 	mut_type = "mut"? (tuple_fn_type | ref_type)
 	tuple_fn_type = tuple_type fn_type?
 	tuple_type = "(" (type ("," type)* )? ")"
-	fn_type = "->" type
+	fn_type = "->" ig* type
 	  # error if "->," not used
-	ref_type = single_type typ_ptr
-	single_type = typname array?
-	
+	ref_type = single_type typ_ptr ig*
+	typ_ptr = "&" | "*" | ".."
+	single_type = typname ig* array ig*?
+    ig = multiline | oneline | whitespace
+	multiline = "##" .* "##"
+	oneline = "#" .* eolf
