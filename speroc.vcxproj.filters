@@ -70,6 +70,9 @@
     <Filter Include="Dependencies\signals">
       <UniqueIdentifier>{6750b123-f465-4778-894c-d399422414a8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\description">
+      <UniqueIdentifier>{778811aa-8bdd-4bf4-b295-03031f242a15}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\compiler.cpp">
@@ -101,9 +104,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
-      <Filter>Resource Files\legal</Filter>
-    </None>
-    <None Include="README.md">
       <Filter>Resource Files\legal</Filter>
     </None>
     <None Include="_test\tests.yaml">
@@ -154,9 +154,6 @@
     <None Include="_test\var_ops.spr">
       <Filter>Resource Files\test runner\default\files</Filter>
     </None>
-    <None Include="grammar.md">
-      <Filter>Resource Files\legal</Filter>
-    </None>
     <None Include="x86_inter\src\emu.rs">
       <Filter>Dependencies\interpreter</Filter>
     </None>
@@ -184,17 +181,23 @@
     <None Include="tools\test.rb">
       <Filter>Resource Files\test runner</Filter>
     </None>
-    <None Include="docs\_readme.md">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="tools\mk_readme.rb">
       <Filter>Resource Files\tools</Filter>
     </None>
     <None Include="tools\utils.rb">
       <Filter>Resource Files\tools</Filter>
     </None>
+    <None Include="README.md">
+      <Filter>Resource Files\description</Filter>
+    </None>
+    <None Include="docs\_readme.md">
+      <Filter>Resource Files\description</Filter>
+    </None>
+    <None Include="grammar.md">
+      <Filter>Resource Files\description</Filter>
+    </None>
     <None Include="tools\version.yaml">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\tools</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -255,7 +258,7 @@
       <Filter>Resource Files</Filter>
     </Text>
     <Text Include="docs\rust_integration_list.txt">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\tools</Filter>
     </Text>
   </ItemGroup>
 </Project>

@@ -4,11 +4,14 @@
 #include <cctype>
 
 #include "incl/parser/_grammar.h"
+#include <pegtl/analyze.hpp>
 
 template<class Stream> Stream& getMultiline(Stream& in, std::string& s);
 
 int main(int argc, const char* argv) {
 	std::string input;
+
+	std::cout << "nissues: " << tao::pegtl::analyze<spero::parser::grammar::program>() << '\n';
 
 	while (std::cout << "> " && getMultiline(std::cin, input)) {
 		if (input.substr(0, 2) == ":q") break;

@@ -1,5 +1,6 @@
 The current grammar of Spero, given in a basic PEG format
 
+TODO: Need to explicitly add in "ignore" stuff
 TODO: Consider how errors in sub-expressions should be handled by "parent" expressions
 TODO: Need to consider a way to grab "chunks" of syntactic errors
   Right now I think "P:">.;]" will provide about 7 errors (way too many)
@@ -106,6 +107,7 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	anon_type = "::" scope
 	typ_ch = [A-Z]
 	var = [a-z][a-zA-Z_]
+	  # error if name matches a keyword (analysis)
 	typ = typ_ch [a-zA-Z_]
 	varname = var mod_path
 	typname = varname ":" typ
@@ -132,7 +134,7 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	  # error if no closing "]"
 	gen_part = type_gen | val_gen
 	  # error if not type_gen or val_gen
-	type_gen = typ variance? relation?
+	type_gen = typ variance? ".."? relation?
 	val_gen = var relation?
 	relation = ("::" | "!:") type
 	pattern = "_" | literal | pat_adt | capture
@@ -153,6 +155,7 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	  # error if no closing "}"
 	mut_type = "mut"? (tuple_fn_type | ref_type)
 	tuple_fn_type = tuple_type fn_type?
+	tuple_type = "(" (type ("," type)* )? ")"
 	fn_type = "->" type
 	  # error if "->," not used
 	ref_type = single_type typ_ptr
