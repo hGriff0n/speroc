@@ -97,6 +97,7 @@
       <Filter>Source Files\interface</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
@@ -237,6 +238,9 @@
       <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="incl\parser\visitor.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\_grammar.h">
       <Filter>Header Files\parser</Filter>
     </ClInclude>
   </ItemGroup>

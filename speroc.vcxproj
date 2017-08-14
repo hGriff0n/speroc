@@ -169,6 +169,7 @@
     <ClCompile Include="src\CompilationState.cpp" />
     <ClCompile Include="src\compiler.cpp" />
     <ClCompile Include="src\SymTable.cpp" />
+    <ClCompile Include="_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\_readme.md" />
@@ -214,6 +215,7 @@
     <ClInclude Include="incl\parser\ast.h" />
     <ClInclude Include="incl\parser\grammar.h" />
     <ClInclude Include="incl\parser\visitor.h" />
+    <ClInclude Include="incl\parser\_grammar.h" />
     <ClInclude Include="incl\SymTable.h" />
     <ClInclude Include="incl\util\CompilationState.h" />
     <ClInclude Include="incl\util\parser.h" />
