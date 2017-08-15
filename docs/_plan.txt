@@ -18,10 +18,8 @@ Current Project Plan
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
-    Fix the issues that were missed during the initial grammar development
-	  ignore set
 	Adapt the grammar for peculiarities of pegtl
-	  'unop' will never be able to be called with fncall (why should "op = unop | binop")
+	  Add in operator precedence grouping
 	Start working on actions and ast construction
 	  Be sure to add in syntax error checking
 	Figure out the conditions in which "a :: T" is interpreted as a type-check (as compared to a type annotation)

@@ -7,14 +7,13 @@ namespace spero::parser::grammar {
 	using namespace tao::pegtl;
 #define pstr(x) TAOCPP_PEGTL_STRING((x))
 #define key(x) seq<pstr((x)), not_at<ascii::identifier_other>, ig_s> {}
-
-
-	/*
-	* Custom rules
-	*/
-	using eps = success;
-	template<char ch>
-	struct spec_char : seq<one<ch>, star<ig>> {};
+#define DEFINE_BINARY_PRECEDENCE(n, prev) \
+struct binary_op##n : seq<binary_prec_op##n, star<binop_ch>> {}; \
+struct binary_cont##n : seq<binary_op##n, ig_s, opt<binary_prec##prev>> {}; \
+struct binary_prec##n : seq<binary_prec##prev, star<binary_cont##n>> {}
+#define DEFINE_BINARY_OP_PRECEDENCE(operators, n, prev) \
+struct binary_prec_op##n : operators {}; \
+DEFINE_BINARY_PRECEDENCE(n, prev)
 
 
 	/*
@@ -24,7 +23,21 @@ namespace spero::parser::grammar {
 	struct tuple;		struct statement;
 	struct index_cont;	struct scope;
 	struct _array;		struct assign_pat;
-	struct lit;
+	struct lit;			struct ig;
+	struct pattern;		struct type;
+	struct valexpr;
+
+
+	/*
+	* Custom rules
+	*/
+	using eps = success;
+	template<char ch>
+	struct spec_char : seq<one<ch>, star<ig>> {};
+	template<char... chs>
+	struct one_of : sor<one<chs>...> {};
+	template<class Rule, char... chs>
+	struct _sor : sor<one<chs>..., Rule> {};
 
 
 	/*
@@ -91,9 +104,11 @@ namespace spero::parser::grammar {
 	struct varname : seq<var, mod_path> {};
 	struct typname : seq<varname, one<':'>, typ> {};
 	struct binding : seq<sor<var, typ>, ig_s> {};
-	struct unop : eps {};
-	struct binop : eps {};
-	struct op : sor<unop, binop> {};
+	struct _unop : one_of<'!', '-', '~'> {};
+	struct unop : seq<_unop, ig_s, not_at<one<'('>>> {};
+	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
+	struct binop : seq<opt<_sor<pstr("->"), '!'>>, plus<binop_ch>> {};
+	struct op : sor<binop, unop> {};
 	struct pat_tuple : seq<oparen, opt<pattern, star<comma, pattern>>, cparen> {};
 	struct pat_adt : seq<typname, ig_s, opt<pat_tuple>> {};
 	struct capture_desc : seq<opt<kmut>, opt<one<'&'>, ig_s>> {};
@@ -106,7 +121,7 @@ namespace spero::parser::grammar {
 	/*
 	 * Type System
 	 */
-	struct typ_ptr : sor<one<'&'>, one<'*'>, two<'.'>> {};
+	struct typ_ptr : _sor<two<'.'>, '&', '*'> {};
 	struct single_type : seq<typname, ig_s, opt<_array>> {};
 	struct ref_type : seq<single_type, opt<typ_ptr, ig_s>> {};
 	struct tuple_type : seq<oparen, opt<type, star<comma, type>>, cparen> {};
@@ -125,11 +140,11 @@ namespace spero::parser::grammar {
 	struct annotation : seq<one<'@'>, var, opt<tuple>> {};
 	struct ganot : seq<pstr("@!"), var, opt<tuple>> {};
 	struct type_inf : seq<pstr("::"), type> {};
-	struct variance : sor<one<'+'>, one<'-'>> {};
+	struct variance : one_of<'+', '-'> {};
 	struct variadic : seq<pstr(".."), ig_s> {};
 	struct relation : seq<sor<pstr("::"), pstr("!:")>, ig_s, type> {};
-	struct type_gen : seq<typ, ig*, opt<variance>, ig_s, opt<variadic>, opt<relation>> {};
-	struct val_gen : seq<var, ig*, opt<relation>> {};
+	struct type_gen : seq<typ, ig_s, opt<variance>, ig_s, opt<variadic>, opt<relation>> {};
+	struct val_gen : seq<var, ig_s, opt<relation>> {};
 	struct gen_part : sor<type_gen, val_gen> {};
 	struct _generic : seq<obrack, gen_part, star<comma, gen_part>, cbrack> {};
 	struct adt : seq<typ, opt<tuple_type>> {};
@@ -140,8 +155,19 @@ namespace spero::parser::grammar {
 
 
 	/*
-	 * Dot Control
-	 */
+	* Control Structures
+	*/
+	struct forl : seq<kfor, pattern, kin, mvexpr, mvdexpr> {};
+	struct whilel : seq<kwhile, mvexpr, mvdexpr> {};
+	struct if_core : seq<kif, mvexpr> {};
+	struct elsif_case : seq<kelsif, mvexpr, mvdexpr> {};
+	struct else_case : seq<kelse, mvdexpr> {};
+	struct branch : seq<if_core, mvdexpr, star<elsif_case>, opt<else_case>> {};
+	struct _case : seq<pattern, opt<if_core>, pstr("=>"), ig_s, mvexpr, opt<endc>> {};
+	struct match : seq<kmatch, mvexpr, obrace, plus<_case>, cbrace> {};
+	struct jump : seq<jump_key, opt<mvexpr>> {};
+	struct loop : seq<kloop, mvdexpr> {};
+	struct control : sor<match, forl, whilel, branch, jump, loop> {};
 	struct dotloop : seq<kloop> {};
 	struct dotwhile : seq<kwhile, mvexpr> {};
 	struct dotfor : seq<kfor, pattern, kin, mvexpr> {};
@@ -153,7 +179,7 @@ namespace spero::parser::grammar {
 	/*
 	 * Atoms
 	 */
-	struct bin_body : plus<sor<one<'0'>, one<'1'>>> {};
+	struct bin_body : plus<one_of<'0', '1'>> {};
 	struct binary : seq<pstr("0b"), bin_body, ig_s> {};
 	struct hex_body : plus<xdigit> {};
 	struct hex : seq<pstr("0x"), hex_body, ig_s> {};
@@ -178,7 +204,7 @@ namespace spero::parser::grammar {
 	 * TODO: Split up the organization (can I do this to removes some forward declarations?)
 	 */
 	struct mod_dec : seq<kmod, varname, sor<endc, eolf>, ig_s> {};
-	  // TODO: Find a way of specifying "ig_s" so that the 'eolf' enforcement works
+	// TODO: Find a way of specifying "ig_s" so that the 'eolf' enforcement works
 	struct impl : seq<kimpl, single_type, opt<kfor, single_type>, scope> {};
 	struct mul_imp : seq<obrace, binding, star<comma, binding>, cbrace> {};
 	struct alias : seq<opt<_array>, kas, binding, opt<_array>> {};
@@ -191,31 +217,34 @@ namespace spero::parser::grammar {
 	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};
 	struct in_assign
 		: seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
-	struct type_const : seq<typ, ig_s, opt<actcall>, opt<anon_type>> {};
-	struct named : seq<varname, opt<one<':'>, type_const>> {};
-	struct valcall : sor<atom, seq<op, ig_s>> {};
 	struct actcall : sor<seq<_array, opt<tuple>>, tuple> {};
+	struct type_const : seq<typ, ig_s, opt<actcall>, opt<anon_type>> {};
+	struct named : sor<type_const, seq<varname, opt<one<':'>, type_const>>> {};
+	struct valcall : sor<atom, seq<op, ig_s>> {};
 	struct fncall : seq<sor<named, valcall>, star<actcall>> {};
 	struct index_cont : seq<fncall, star<dot, fncall>> {};
 	struct index : seq<fncall, dot, sor<dot_ctrl, index_cont>> {};
 	struct unexpr : seq<opt<unop>, index> {};
-	struct binexpr : seq<unexpr, opt<binop, ig_s, opt<unexpr>>> {};
 
 
 	/*
-	 * Control Structures
+	 * Binary Precedence
+	 *  NOTE: Attach the rules on the "binary_op{n}" structs, not "binary_prec_op{n}"
 	 */
-	struct forl : seq<kfor, pattern, kin, mvexpr, mvdexpr> {};
-	struct whilel : seq<kwhile, mvexpr, mvdexpr> {};
-	struct if_core : seq<kif, mvexpr> {};
-	struct elsif_case : seq<kelsif, mvexpr, mvdexpr> {};
-	struct else_case : seq<kelse, mvdexpr> {};
-	struct branch : seq<if_core, mvdexpr, star<elsif_case>, opt<else_case>> {};
-	struct _case : seq<pattern, opt<if_core>, pstr("=>"), ig*, mvexpr, opt<endc>> {};
-	struct match : seq<kmatch, mvexpr, obrace, plus<_case>, cbrace> {};
-	struct jump : seq<jump_key, opt<mvexpr>> {};
-	struct loop : seq<kloop, mvdexpr> {};
-	struct control : sor<match, forl, whilel, branch, jump, loop> {};
+	struct binary_prec0 : unexpr {};
+	struct binary_prec_op1 : one_of<'&', '$', '?', '\\'> {};
+	DEFINE_BINARY_PRECEDENCE(1, 0);
+	struct binary_prec_op2 : one_of<'/', '%', '*'> {};
+	DEFINE_BINARY_PRECEDENCE(2, 1);
+	struct binary_prec_op3 : _sor<seq<pstr("->"), binop_ch>, '+', '-'> {};
+	DEFINE_BINARY_PRECEDENCE(3, 2);
+	struct binary_prec_op4 : _sor<seq<one<'!'>, binop_ch>, '='> {};
+	DEFINE_BINARY_PRECEDENCE(4, 3);
+	struct binary_prec_op5 : one_of<'<', '>'> {};
+	DEFINE_BINARY_PRECEDENCE(5, 4);
+	DEFINE_BINARY_OP_PRECEDENCE(one<'^'>, 6, 5);
+	DEFINE_BINARY_OP_PRECEDENCE(one<'|'>, 7, 6);
+	struct binexpr : binary_prec7 {};
 	
 
 	/*

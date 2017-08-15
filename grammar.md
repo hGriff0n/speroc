@@ -1,6 +1,5 @@
 The current grammar of Spero, given in a basic PEG format
 
-TODO: Need to explicitly add in "ignore" stuff
 TODO: Consider how errors in sub-expressions should be handled by "parent" expressions
 TODO: Need to consider a way to grab "chunks" of syntactic errors
   Right now I think "P:">.;]" will provide about 7 errors (way too many)
