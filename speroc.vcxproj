@@ -227,6 +227,7 @@
     <Text Include="docs\_dev_plan.txt" />
     <Text Include="docs\_plan.txt" />
     <Text Include="docs\_todo.txt" />
+    <Text Include="Text.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

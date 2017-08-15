@@ -11,7 +11,7 @@ template<class Stream> Stream& getMultiline(Stream& in, std::string& s);
 int main(int argc, const char* argv) {
 	std::string input;
 
-	std::cout << "nissues: " << tao::pegtl::analyze<spero::parser::grammar::program>() << '\n';
+	std::cout << "nissues: " << tao::pegtl::analyze<spero::parser::grammar::program>() << "\n\n";
 
 	while (std::cout << "> " && getMultiline(std::cin, input)) {
 		if (input.substr(0, 2) == ":q") break;

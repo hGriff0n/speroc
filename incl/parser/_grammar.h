@@ -23,7 +23,7 @@ DEFINE_BINARY_PRECEDENCE(n, prev)
 	struct tuple;		struct statement;
 	struct index_cont;	struct scope;
 	struct _array;		struct assign_pat;
-	struct lit;			struct ig;
+	struct lit;			struct ig_s;
 	struct pattern;		struct type;
 	struct valexpr;
 
@@ -33,7 +33,7 @@ DEFINE_BINARY_PRECEDENCE(n, prev)
 	*/
 	using eps = success;
 	template<char ch>
-	struct spec_char : seq<one<ch>, star<ig>> {};
+	struct spec_char : seq<one<ch>, ig_s> {};
 	template<char... chs>
 	struct one_of : sor<one<chs>...> {};
 	template<class Rule, char... chs>
@@ -46,7 +46,7 @@ DEFINE_BINARY_PRECEDENCE(n, prev)
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
 	struct multiline_comment : seq<two<'#'>, until<two<'#'>>> {};
 	struct whitespace : plus<space> {};
-	struct ig : sor<multiline_comment, one_line_comment, whitespace> {};
+	struct ig : sor<multiline_comment, one_line_comment, space> {};
 	struct ig_s : star<ig> {};
 	struct obrace : spec_char<'{'> {};
 	struct cbrace : spec_char<'}'> {};
@@ -97,8 +97,8 @@ DEFINE_BINARY_PRECEDENCE(n, prev)
 	 * Identifiers
 	 */
 	struct typ_ch : range<'A', 'Z'> {};
-	struct typ : seq<typ_ch, ascii::identifier> {};
-	struct var : seq<range<'a', 'z'>, ascii::identifier> {};
+	struct typ : seq<typ_ch, star<ascii::identifier>> {};
+	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
 	struct mod_path : star<one<':'>, not_at<sor<typ_ch, one<':'>>>, var> {};
 	struct _mod_path : star<var, one<':'>> {};
 	struct varname : seq<var, mod_path> {};
@@ -164,10 +164,10 @@ DEFINE_BINARY_PRECEDENCE(n, prev)
 	struct else_case : seq<kelse, mvdexpr> {};
 	struct branch : seq<if_core, mvdexpr, star<elsif_case>, opt<else_case>> {};
 	struct _case : seq<pattern, opt<if_core>, pstr("=>"), ig_s, mvexpr, opt<endc>> {};
-	struct match : seq<kmatch, mvexpr, obrace, plus<_case>, cbrace> {};
+	struct matchs : seq<kmatch, mvexpr, obrace, plus<_case>, cbrace> {};
 	struct jump : seq<jump_key, opt<mvexpr>> {};
 	struct loop : seq<kloop, mvdexpr> {};
-	struct control : sor<match, forl, whilel, branch, jump, loop> {};
+	struct control : sor<matchs, forl, whilel, branch, jump, loop> {};
 	struct dotloop : seq<kloop> {};
 	struct dotwhile : seq<kwhile, mvexpr> {};
 	struct dotfor : seq<kfor, pattern, kin, mvexpr> {};
@@ -203,7 +203,8 @@ DEFINE_BINARY_PRECEDENCE(n, prev)
 	 *
 	 * TODO: Split up the organization (can I do this to removes some forward declarations?)
 	 */
-	struct mod_dec : seq<kmod, varname, sor<endc, eolf>, ig_s> {};
+	struct mod_dec : seq<kmod, varname, opt<endc>, ig_s> {};
+	//struct mod_dec : seq<kmod, varname, sor<endc, eolf>, ig_s> {};
 	// TODO: Find a way of specifying "ig_s" so that the 'eolf' enforcement works
 	struct impl : seq<kimpl, single_type, opt<kfor, single_type>, scope> {};
 	struct mul_imp : seq<obrace, binding, star<comma, binding>, cbrace> {};

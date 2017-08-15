@@ -260,5 +260,8 @@
     <Text Include="docs\rust_integration_list.txt">
       <Filter>Resource Files\tools</Filter>
     </Text>
+    <Text Include="Text.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>
