@@ -73,6 +73,9 @@
     <Filter Include="Resource Files\description">
       <UniqueIdentifier>{778811aa-8bdd-4bf4-b295-03031f242a15}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\parser\old">
+      <UniqueIdentifier>{d0181b20-8bbc-4173-b2da-ff11bf1f1af8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\compiler.cpp">
@@ -101,6 +104,12 @@
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="_main.cpp" />
+    <ClCompile Include="src\_CompilationState.cpp">
+      <Filter>Source Files\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_ast.cpp">
+      <Filter>Source Files\parser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
@@ -207,15 +216,6 @@
     <ClInclude Include="incl\SymTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="incl\parser\actions.h">
-      <Filter>Header Files\parser</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\parser\ast.h">
-      <Filter>Header Files\parser</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\parser\grammar.h">
-      <Filter>Header Files\parser</Filter>
-    </ClInclude>
     <ClInclude Include="incl\util\utils.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
@@ -240,10 +240,34 @@
     <ClInclude Include="incl\util\string.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
-    <ClInclude Include="incl\parser\visitor.h">
+    <ClInclude Include="incl\parser\_grammar.h">
       <Filter>Header Files\parser</Filter>
     </ClInclude>
-    <ClInclude Include="incl\parser\_grammar.h">
+    <ClInclude Include="incl\parser\grammar.h">
+      <Filter>Header Files\parser\old</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\actions.h">
+      <Filter>Header Files\parser\old</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\ast.h">
+      <Filter>Header Files\parser\old</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\visitor.h">
+      <Filter>Header Files\parser\old</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\_actions.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\_ast.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\_visitor.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\control.h">
+      <Filter>Header Files\parser\old</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\util\_CompilationState.h">
       <Filter>Header Files\parser</Filter>
     </ClInclude>
   </ItemGroup>
@@ -259,9 +283,6 @@
     </Text>
     <Text Include="docs\rust_integration_list.txt">
       <Filter>Resource Files\tools</Filter>
-    </Text>
-    <Text Include="Text.txt">
-      <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>
 </Project>

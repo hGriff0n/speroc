@@ -21,7 +21,7 @@ namespace spero::util {
 	// Specialization for working with the stack
 	template<class Node, class Stack>
 	bool at_node(Stack& stack) {
-		return is_type<Node>(stack.back());
+		return std::size(stack) != 0 && is_type<Node>(stack.back());
 	}
 
 	/*
@@ -55,7 +55,7 @@ namespace spero::util {
 	 */
 	template<class Node, class T, template<class, class...> class Stack, class... Ts>
 	std::unique_ptr<enable_if_base<T, Node, Node>> pop(Stack<std::unique_ptr<T>, Ts...>& stack) {
-		if (is_type<Node>(stack.back())) {
+		if (std::size(stack) != 0 && is_type<Node>(stack.back())) {
 			auto ret = dyn_cast<Node>(std::move(stack.back()));
 			stack.pop_back();
 			return std::move(ret);
