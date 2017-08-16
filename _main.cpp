@@ -3,22 +3,38 @@
 #include <unordered_map>
 #include <cctype>
 
-#include "incl/parser/_grammar.h"
+#include "incl/parser/_actions.h"
 #include <pegtl/analyze.hpp>
 
+
 template<class Stream> Stream& getMultiline(Stream& in, std::string& s);
+using namespace tao;
 
 int main(int argc, const char* argv) {
 	std::string input;
 
-	std::cout << "nissues: " << tao::pegtl::analyze<spero::parser::grammar::program>() << "\n\n";
+	std::cout << "nissues: " << pegtl::analyze<spero::parser::grammar::program>() << '\n';
 
-	while (std::cout << "> " && getMultiline(std::cin, input)) {
+	while (std::cout << "\n> " && getMultiline(std::cin, input)) {
 		if (input.substr(0, 2) == ":q") break;
 
-		auto succ = tao::pegtl::parse<spero::parser::grammar::program>(tao::pegtl::string_input<>{ input, "speroc:repl" });
+		spero::parser::Stack res;
 
-		std::cout << "Success: " << succ << '\n';
+		try {
+			using namespace spero::parser;
+			auto succ = pegtl::parse<grammar::program, actions::action>(
+				pegtl::string_input<>{ input, "speroc:repl" },
+				res);
+
+			std::cout << "Succeeded? " << (succ ? "yes" : "no") << "\n\n";
+
+			for (auto&& ast : res) {
+				ast->prettyPrint(std::cout, 0) << '\n';
+			}
+
+		} catch (std::exception& e) {
+			std::cout << e.what() << '\n';
+		}
 	}
 }
 

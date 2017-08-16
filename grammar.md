@@ -71,6 +71,7 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	adt_dec = adt ("|" adt)*
 	adt = typ tuple_type?
 	  # error if typ not used
+	  # error if at '(' and tuple_type not used
 	valexpr = "mut"? (control | binexpr) type_inf?
 	control = match | forl | whilel | branch | jump | loop
 	loop = "loop" mvdexpr
@@ -118,12 +119,12 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	  # error if no closing ")"
 	array = "[" (mvexpr ("," mvexpr)* )? "]"
 	  # error if no closing "]"
-	binary = "0b" [01]+
-	hex = "0x" [0-9a-fA-F]+
-	decimal = [0-9]+ ("." [0-9]+)?
-	char = "'" "\"? . "'"
+	binary = "0b" [01]+ ig*
+	hex = "0x" [0-9a-fA-F]+ ig
+	decimal = [0-9]+ ("." [0-9]+)? ig*
+	char = "'" "\"? . "'" ig*
 	  # error if no closing '''
-	string = """ ("\"? .)* """
+	string = """ ("\"? .)* """ ig*
 	  # error if no closing '"'
 	plambda = "_" ig*
 	fn_tuple = (tuple lambda?) | dot_fn
