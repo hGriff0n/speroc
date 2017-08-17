@@ -23,8 +23,7 @@ int main(int argc, const char* argv) {
 		try {
 			using namespace spero::parser;
 			auto succ = pegtl::parse<grammar::program, actions::action>(
-				pegtl::string_input<>{ input, "speroc:repl" },
-				res);
+				pegtl::string_input<>{ input, "speroc:repl" }, res);
 
 			std::cout << "Succeeded? " << (succ ? "yes" : "no") << "\n\n";
 

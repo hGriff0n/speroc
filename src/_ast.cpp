@@ -270,6 +270,69 @@ namespace spero::compiler::ast {
 		return result;
 	}
 
+	Pattern::Pattern(Location loc) : Ast{ loc } {}
+	Visitor& Pattern::visit(Visitor& v) {
+		//v.acceptPattern(*this);
+		return v;
+	}
+	DEF_PRINTER(Pattern) {
+		return s << std::string(buf, ' ') << context << "ast.AnyPattern (_)";
+	}
+
+	TuplePattern::TuplePattern(std::deque<ptr<Pattern>> ps, Location loc)
+		: Sequence{ std::move(ps), loc } {}
+	Visitor& TuplePattern::visit(Visitor& v) {
+		//v.acceptPTuple(*this);
+		return v;
+	}
+	DEF_PRINTER(TuplePattern) {
+		s << std::string(buf, ' ') << context << "ast.TuplePattern" << elems.size() << " (capture=" << cap._to_string() << ") (\n";
+		for (auto&& p : elems) {
+			p->prettyPrint(s, buf + 2) << '\n';
+		}
+		return s << std::string(buf, ' ') << ')';
+	}
+
+	VarPattern::VarPattern(ptr<QualifiedBinding> n, Location loc) : Pattern{ loc }, name{ std::move(n) } {}
+	Visitor& VarPattern::visit(Visitor& v) {
+		//v.acceptPNamed(*this);
+		return v;
+	}
+	DEF_PRINTER(VarPattern) {
+		s << std::string(buf, ' ') << context << "ast.VarPattern (capture=" << cap._to_string() << ')';
+		name->prettyPrint(s, 1);
+		/*if (type) {
+			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}*/
+
+		return s;
+	}
+
+	AdtPattern::AdtPattern(ptr<QualifiedBinding> n, ptr<TuplePattern> pat, Location loc)
+		: VarPattern{ std::move(n), loc }, args{ std::move(pat) } {}
+	Visitor& AdtPattern::visit(Visitor& v) {
+		//v.acceptPAdt(*this);
+		return v;
+	}
+	DEF_PRINTER(AdtPattern) {
+		s << std::string(buf, ' ') << context << "ast.AdtPattern";
+		name->prettyPrint(s, 1, "(type=") << ')';
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 2);
+		}
+		return s;
+	}
+
+	ValPattern::ValPattern(ptr<ValExpr> v, Location loc) : Pattern{ loc }, val{ std::move(v) } {}
+	Visitor& ValPattern::visit(Visitor& v) {
+		//v.acceptPVal(*this);
+		return v;
+	}
+	DEF_PRINTER(ValPattern) {
+		s << std::string(buf, ' ') << context << "ast.PVal";
+		return val->prettyPrint(s, 1, "(val=") << ')';
+	}
+
 
 	//
 	// TYPES

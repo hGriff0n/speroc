@@ -176,11 +176,68 @@ namespace spero::parser::actions {
 		// stack: QualifiedBinding
 	} END;
 	INHERIT(typname, qualtyp);
-	// pat_tuple
-	// pat_adt
-	// capture_desc
-	// capture
-	// pattern
+	RULE(pat_tuple) {
+		// stack: {} pattern*
+		auto pats = util::popSeq<ast::Pattern>(s);
+		s.pop_back();
+		PUSH(TuplePattern, std::move(pats));
+		// stack: pattern
+	} END;
+	RULE(pat_name) {
+		// stack: BasicBind cap BasicBind (due to pat_adt partially matching varname)
+		auto var = POP(BasicBinding);
+
+		// TODO: Find a way to just swap the cap and secondary bind elements (probably with dot_control)
+		auto cap = POP(Token);
+		s.pop_back();
+		s.emplace_back(std::move(cap));
+
+		PUSH(VarPattern, std::make_unique<ast::QualifiedBinding>(std::move(var), in.position()));
+		// stack: pattern
+	} END;
+	RULE(pat_adt) {
+		// stack: QualBind pattern?
+		auto tup = POP(TuplePattern);
+		PUSH(AdtPattern, POP(QualifiedBinding), std::move(tup));
+		// stack: pattern
+	} END;
+	RULE(capture_desc) {
+		// stack: kmut?
+		bool is_ref = (in.string()[0] == '&');
+
+		if (util::at_node<ast::Token>(s)) {
+			if (util::view_as<ast::Token>(s.back())->get<ast::KeywordType>() == +ast::KeywordType::MUT) {
+				s.pop_back();
+
+				if (is_ref) {
+					PUSH(Token, ast::CaptureType::MUTREF);
+				} else {
+					PUSH(Token, ast::CaptureType::MUT);
+				}
+			}
+
+		} else if (is_ref) {
+			PUSH(Token, ast::CaptureType::REF);
+		}
+		// stack: cap
+	} END;
+	RULE(capture) {
+		// stack: cap? pattern
+		auto pat = POP(Pattern);
+		auto cap = POP(Token);
+
+		if (cap) {
+			pat->cap = cap->get<ast::CaptureType>();
+		}
+		s.emplace_back(std::move(pat));
+		// stack: pattern
+	} END;
+	RULE(pat_any) {
+		s.emplace_back(std::make_unique<ast::Pattern>(in.position()));
+	} END;
+	RULE(pat_lit) {
+		PUSH(ValPattern, POP(ValExpr));
+	} END;
 	// assign_tuple
 	// assign_pat
 

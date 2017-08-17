@@ -26,7 +26,7 @@ namespace spero::parser::grammar {
 	 */
 	struct mvdexpr;		struct mvexpr;		struct _array;
 	struct tuple;		struct statement;	struct assign_pat;
-	struct index_cont;	struct scope;		struct lit;
+	struct index_cont;	struct scope;		struct pat_lit;
 	struct pattern;		struct type;		struct valexpr;
 
 
@@ -128,10 +128,12 @@ namespace spero::parser::grammar {
 	struct binop : seq<opt<_sor<pstr("->"), '!'>>, plus<binop_ch>> {};
 	struct op : sor<binop, unop> {};
 	struct pat_tuple : opt_sequence<oparen, pattern, cparen> {};
-	struct pat_adt : seq<typname, ig_s, opt<pat_tuple>> {};
-	struct capture_desc : seq<opt<one<'&'>, ig_s>, opt<kmut>> {};
-	struct capture : seq<capture_desc, sor<pat_tuple, seq<var, ig_s>>> {};
-	struct pattern : sor<one<'_'>, lit, pat_adt, capture> {};
+	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
+	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut> {};
+	struct pat_name : seq<var, not_at<one<':'>>, ig_s> {};
+	struct capture : seq<opt<capture_desc>, sor<pat_tuple, pat_name>> {};
+	struct pat_any : one<'_'> {};
+	struct pattern : sor<pat_any, pat_lit, pat_adt, capture> {};
 	struct assign_tuple : sequence<oparen, assign_pat, cparen> {};
 	struct assign_pat : seq<sor<var, op, one<'_'>, assign_tuple>, ig_s> {};
 
@@ -214,6 +216,7 @@ namespace spero::parser::grammar {
 	struct str_body : until<at<one<'"'>>, seq<opt<one<'\\'>>, any>> {};
 	struct string : seq<one<'"'>, str_body, one<'"'>, ig_s> {};
 	struct lit : sor<binary, hex, decimal, _char, string, kfalse, ktrue> {};
+	struct pat_lit : seq<lit> {};
 	struct scope : seq<obrace, star<statement>, cbrace> {};
 	struct tuple : opt_sequence<oparen, mvexpr, cparen> {};
 	struct _array : opt_sequence<obrack, mvexpr, cbrack> {};

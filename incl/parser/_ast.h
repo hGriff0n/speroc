@@ -354,6 +354,91 @@ namespace spero::compiler::ast {
 		std::string toString();
 	};
 
+	/*
+	 * Base class for representing pattern matching expressions
+	 *   Instance doubles for representing the any case
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   cap - descriptor of how the pattern is captured
+	 */
+	struct Pattern : Ast {
+		CaptureType cap = CaptureType::NORM;
+
+		Pattern(Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
+	/*
+	 * Instance class for matching against a decomposed tuple
+	 *
+	 * Extends: Pattern
+	 *
+	 * Exports:
+	 *   elems - collection of sub-patterns to match
+	 */
+	struct TuplePattern : Sequence<Pattern> {
+		TuplePattern(std::deque<ptr<Pattern>>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Instance class for binding to a variable in a pattern match
+	 *
+	 * Extends: Pattern
+	 *
+	 * Exports:
+	 *   name - the value to bind to
+	 */
+	struct VarPattern : Pattern {
+		ptr<QualifiedBinding> name;
+
+		VarPattern(ptr<QualifiedBinding>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
+	/*
+	 * Instance class for matching against a decomposed ADT
+	 *
+	 * Extends: PNamed
+	 *   Uses name as the ADT type to match againts
+	 *
+	 * Exports:
+	 *   args - the tuple to match values against
+	 */
+	struct AdtPattern : VarPattern {
+		ptr<TuplePattern> args;
+
+		AdtPattern(ptr<QualifiedBinding>, ptr<TuplePattern>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Instance class for matching against a value
+	 *
+	 * Extends: Pattern
+	 *
+	 * Exports:
+	 *   value - value to match against
+	 */
+	struct ValPattern : Pattern {
+		ptr<ValExpr> val;
+
+		ValPattern(ptr<ValExpr>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
 
 	//
 	// TYPES
