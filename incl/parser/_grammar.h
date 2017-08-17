@@ -73,6 +73,7 @@ namespace spero::parser::grammar {
 	struct endc    : punct<';'> {};
 	struct equals  : punct<'='> {};
 	struct bar     : punct<'|'> {};
+	struct and	   : punct<'+'> {};
 	struct dot     : punct<'.'> {};
 
 
@@ -138,16 +139,21 @@ namespace spero::parser::grammar {
 	/*
 	 * Type System
 	 */
-	struct typ_ptr : _sor<two<'.'>, '&', '*'> {};
+	struct typ_view : two<'.'> {};
+	struct typ_ref : one<'&'> {};
+	struct typ_ptr : one<'*'> {};
+	struct ptr_styling : sor<typ_view, typ_ref, typ_ptr> {};
 	struct single_type : seq<typname, ig_s, opt<_array>> {};
-	struct ref_type : seq<single_type, opt<typ_ptr, ig_s>> {};
+	struct ref_type : seq<single_type, opt<ptr_styling, ig_s>> {};
 	struct tuple_type : opt_sequence<oparen, type, cparen> {};
 	struct fn_type : seq<pstr("->"), ig_s, type> {};
 	struct tuple_fn_type : seq<tuple_type, opt<fn_type>> {};
 	struct mut_type : seq<opt<kmut>, sor<tuple_fn_type, ref_type>> {};
 	struct ntype : sor<mut_type, seq<obrace, type, cbrace>> {};
-	struct and_type : seq<ntype, star<one<'+'>, ig_s, ntype>> {};
-	struct or_type : seq<and_type, star<bar, and_type>> {};
+	struct and_cont : seq<and, ntype> {};
+	struct and_type : seq<ntype, star<and_cont>> {};
+	struct or_cont : seq<bar, and_type> {};
+	struct or_type : seq<and_type, star<or_cont>> {};
 	struct type : or_type {};
 
 
@@ -212,7 +218,8 @@ namespace spero::parser::grammar {
 	struct tuple : opt_sequence<oparen, mvexpr, cparen> {};
 	struct _array : opt_sequence<obrack, mvexpr, cbrack> {};
 	struct lambda : seq<pstr("->"), ig_s, mvexpr> {};
-	struct dot_fn : seq<dot, sor<dot_ctrl, index_cont>> {};
+	struct dot_eps : eps {};
+	struct dot_fn : seq<dot, dot_eps, sor<dot_ctrl, index_cont>> {};
 	struct fn_tuple : sor<seq<tuple, opt<lambda>>, dot_fn> {};
 	struct atom : sor<fn_tuple, _array, lit, plambda, scope> {};
 

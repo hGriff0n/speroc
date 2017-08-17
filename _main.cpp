@@ -29,7 +29,9 @@ int main(int argc, const char* argv) {
 			std::cout << "Succeeded? " << (succ ? "yes" : "no") << "\n\n";
 
 			for (auto&& ast : res) {
-				ast->prettyPrint(std::cout, 0) << '\n';
+				if (ast) {
+					ast->prettyPrint(std::cout, 0) << '\n';
+				}
 			}
 
 		} catch (std::exception& e) {

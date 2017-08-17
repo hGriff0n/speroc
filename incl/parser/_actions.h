@@ -16,6 +16,7 @@
 // static void apply(const Input& in, Stack& s, CompilationState& state)
 #define END }
 #define PUSH(Node, ...) s.emplace_back(std::make_unique<ast::Node>(__VA_ARGS__, in.position()))
+#define POP(Node) util::pop<ast::Node>(s)
 #define INHERIT(gram, base) template<> struct action<grammar::gram> : action<grammar::base> {}
 
 
@@ -30,13 +31,18 @@ namespace spero::parser::actions {
 	template<class Rule>
 	struct action : tao::pegtl::nothing<Rule> {};
 
+
+	//
 	// Sentinel Nodes
+	//
 	SENTINEL(obrace);
 	SENTINEL(obrack);
 	SENTINEL(oparen);
 
 
+	//
 	// Keyword Tokens (may remove a couple as it becomes beneficial)
+	//
 	TOKEN(kmut, ast::KeywordType::MUT);
 	TOKEN(kloop, ast::KeywordType::LOOP);
 	TOKEN(kif, ast::KeywordType::IF);
@@ -60,7 +66,9 @@ namespace spero::parser::actions {
 	TOKEN(kbreak, ast::KeywordType::BREAK);
 
 
-	// Literals
+	//
+	// Literals (done)
+	//
 	RULE(bin_body) {
 		PUSH(Byte, in.string(), 2);
 	} END;
@@ -87,27 +95,49 @@ namespace spero::parser::actions {
 	RULE(ktrue) {
 		PUSH(Bool, true);
 	} END;
-	// Plambda
+	RULE(plambda) {
+		PUSH(Future, false);
+	} END;
 
 
-	// Atoms
+	//
+	// Atoms (done)
+	//
 	RULE(scope) {
-
+		// stack: {} stmt*
+		auto vals = util::popSeq<ast::Statement>(s);
+		s.pop_back();
+		PUSH(Block, std::move(vals));
+		// stack: block
 	} END;
 	RULE(tuple) {
-
+		// stack: {} valexpr*
+		auto vals = util::popSeq<ast::ValExpr>(s);
+		s.pop_back();
+		PUSH(Tuple, std::move(vals));
+		// stack: tuple
 	} END;
 	RULE(_array) {
-
+		// stack: {} valexpr*
+		auto vals = util::popSeq<ast::ValExpr>(s);
+		s.pop_back();
+		PUSH(Array, std::move(vals));
+		// stack: array
 	} END;
-	// Lambda
-	// DotFn
+	RULE(lambda) {
+		// stack: tuple expr
+		auto body = POP(ValExpr);
+		PUSH(Function, POP(Tuple), std::move(body));
+		// stack: fndef
+	} END;
+	RULE(dot_eps) {
+		PUSH(Future, true);
+	} END;
 
 
+	//
 	// Identifiers
-
-
-	// Types
+	//
 	RULE(typ) {
 		PUSH(BasicBinding, in.string(), ast::BindingType::TYPE);
 	} END;
@@ -119,10 +149,10 @@ namespace spero::parser::actions {
 	} END;
 	RULE(mod_path) {
 		// stack: (BasicBinding | QualifiedBinding) BasicBinding
-		auto part = util::pop<ast::BasicBinding>(s);
+		auto part = POP(BasicBinding);
 
 		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, util::pop<ast::BasicBinding>(s));
+			PUSH(QualifiedBinding, POP(BasicBinding));
 		}
 
 		util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(part));
@@ -131,10 +161,10 @@ namespace spero::parser::actions {
 	INHERIT(_mod_path, mod_path);
 	RULE(qualtyp) {
 		// stack: (QualifiedBinding | BasicBinding)? BasicBinding
-		auto typ = util::pop<ast::BasicBinding>(s);
+		auto typ = POP(BasicBinding);
 
 		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, util::pop<ast::BasicBinding>(s));
+			PUSH(QualifiedBinding, POP(BasicBinding));
 		}
 
 		if (util::at_node<ast::QualifiedBinding>(s)) {
@@ -146,49 +176,180 @@ namespace spero::parser::actions {
 		// stack: QualifiedBinding
 	} END;
 	INHERIT(typname, qualtyp);
-	RULE(pat_tuple) {
+	// pat_tuple
+	// pat_adt
+	// capture_desc
+	// capture
+	// pattern
+	// assign_tuple
+	// assign_pat
 
+
+	//
+	// Types
+	//
+	TOKEN(typ_view, ast::PtrStyling::VIEW);
+	TOKEN(typ_ref, ast::PtrStyling::REF);
+	TOKEN(typ_ptr, ast::PtrStyling::PTR);
+	RULE(single_type) {
+		// stack: QualBind array?
+		auto gen = POP(Array);
+		auto typname = POP(QualifiedBinding);
+
+		if (gen) {
+			PUSH(GenericType, std::move(typname), std::move(gen));
+		} else {
+			PUSH(SourceType, std::move(typname));
+		}
+		// stack: type
 	} END;
-	RULE(pat_adt) {
+	RULE(ref_type) {
+		// stack: type ptrStyle?
+		if (util::at_node<ast::Token>(s)) {
+			auto tkn = POP(Token);
 
+			if (tkn->holds<ast::PtrStyling>()) {
+				util::view_as<ast::SourceType>(s.back())->_ptr = tkn->get<ast::PtrStyling>();
+			}
+		}
+		// stack: type
 	} END;
-	RULE(capture_desc) {
-
+	RULE(tuple_type) {
+		// stack: {} type*
+		auto types = util::popSeq<ast::Type>(s);
+		s.pop_back();
+		PUSH(TupleType, std::move(types));
+		// stack: tupleType
 	} END;
-	RULE(capture) {
-
+	RULE(fn_type) {
+		// stack: TupleType type
+		auto ret = POP(Type);
+		PUSH(FunctionType, POP(TupleType), std::move(ret));
+		// stack: FunctionType
 	} END;
-	RULE(pattern) {
+	RULE(mut_type) {
+		// stack: kmut? type
+		auto typ = POP(Type);
 
+		if (util::at_node<ast::Token>(s)) {
+			auto tkn = POP(Token);
+
+			if (tkn->holds<ast::KeywordType>()) {
+				typ->is_mut = (tkn->get<ast::KeywordType>() == +ast::KeywordType::MUT);
+			} else {
+				s.push_back(std::move(tkn));
+			}
+		}
+
+		s.push_back(std::move(typ));
+		// stack: type
 	} END;
-	RULE(assign_tuple) {
+	RULE(and_cont) {
+		// stack: (type | and_type) type
+		auto typ = POP(Type);
 
+		if (!util::at_node<ast::AndType>(s)) {
+			PUSH(AndType, POP(Type));
+		}
+
+		util::view_as<ast::AndType>(s.back())->elems.push_back(std::move(typ));
+		// stack: and_type
 	} END;
-	RULE(assign_pat) {
+	RULE(or_cont) {
+		// stack: (type | or_type) type
+		auto typ = POP(Type);
 
+		if (!util::at_node<ast::OrType>(s)) {
+			PUSH(OrType, POP(Type));
+		}
+
+		util::view_as<ast::OrType>(s.back())->elems.push_back(std::move(typ));
+		// stack: or_type
 	} END;
 
 
+	//
 	// Decorators
+	//
 	RULE(annotation) {
 		// stack: bind tuple?
-		PUSH(LocalAnnotation, util::pop<ast::BasicBinding>(s));
+		auto tup = POP(Tuple);
+		PUSH(LocalAnnotation, POP(BasicBinding), std::move(tup));
 		// stack: anot
 	} END;
 	RULE(ganot) {
 		// stack: bind tuple?
-		PUSH(Annotation, util::pop<ast::BasicBinding>(s));
+		auto tup = POP(Tuple);
+		PUSH(Annotation, POP(BasicBinding), std::move(tup));
 		// stack: anot
 	} END;
+	// type_inf
+	// variance
+	// variadic
+	// relation (?)
+	// type_gen
+	// val_gen
+	// _generic
+	RULE(adt) {
+		// stack: typ type?
+		 auto typ_args = POP(TupleType);
+		PUSH(Adt, POP(BasicBinding), std::move(typ_args));
+		// stack: adt
+	} END;
+	/*RULE(adt_dec) {
+		auto adts = util::popSeq<ast::Adt>(s);
+	} END;*/
+	// arg
+	// arg_tuple
+	// anon_type
 
 
+	//
 	// Control
+	//
+	// forl
+	// whilel
+	// if_core
+	// elsif_case
+	// else_case
+	// _case
+	// matchs
+	// jump
+	// loop
+	// dotloop
+	// dotwhile
+	// dotfor
+	// dotbranch
+	// dotmatch
 
 
+	//
 	// Expressions
+	//
+	// in_assign
+	// actcall
+	// type_const
+	// named
+	// valcall
+	// fncall (X)
+	// index_cont
+	// unexpr
 
 
+	//
 	// Statements
+	//
+	// mod_dec
+	// impl
+	// mul_imp
+	// alias
+	// imp_alias
+	// mod_alias
+	// type_assign
+	// asn_val
+	// _interface
+	// var_assign
+	// assign
 
 
 	// Binexpr Precedence
@@ -199,9 +360,18 @@ namespace spero::parser::actions {
 	INHERIT(binary_op5, op);
 	INHERIT(binary_op6, op);
 	INHERIT(binary_op7, op);
+	// binary_cont1
+	// binary_cont2
+	// binary_cont3
+	// binary_cont4
+	// binary_cont5
+	// binary_cont6
+	// binary_cont7
 
 
 	// Organizational Tagging
+	// valexpr
+	// statement
 
 }
 
@@ -212,3 +382,4 @@ namespace spero::parser::actions {
 #undef END
 #undef RULE
 #undef PUSH
+#undef POP

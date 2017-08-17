@@ -18,16 +18,23 @@ Current Project Plan
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
-    Test the grammar to make sure it works as expected
-	  Look at areas where I could refactor the grammar a bit
-	  Need to add in some 'ig*' to var/typ/op I think
 	Start developing the actions/ast hook-ins
+	Adjust grammar to allow for "Foo:Type" chains (mod_path is too restrictive)
 	Add in syntax error checking/handling
 	  Figure out how I want this to go
 	  Adapt rules/grammar to add in these handling
 	Figure out the conditions in which "a :: T" is interpreted as a type-check (as compared to a type annotation)
 	Look at changing function typing to "tuple type_inf lambda"
 	  Might not work because would interfere with tuples being typed
+    Look at modifying the grammar to support anon_type from values
+      Note: This will be useful when I get around to the possible metaprogramming (and passing types as values)
+	Need to enable function forwarding within lambda functions
+	  Or do I? I could use an analysis step to attach the created future to the function arguments
+	  I'm already going to be spending a pass on changing "_" to a function definition, can do both
+	Look at changing the grammar to allow for annotations to be "standalone" (the attaching can be done in analysis)
+	  "@foo(3)" doesn't compile but "@foo (3)" does <- Is this right?
+	  NOTE: This would also allow for going back to the '@<var>!' syntax for global annotations
+    Look into whether I can force the ptr styling to be attached to the type or not
   Add error/exception handling and reporting
 	Adapt the parser and grammar to report errors
 	  Look into utilising the 'raise'/'try_catch'/'try_catch_type' rules to add in error handling

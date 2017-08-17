@@ -55,14 +55,14 @@ namespace spero::compiler::ast {
 
 
 	/*
-	* Base class for all ast nodes
-	*
-	* Specifies the required information that all ast nodes must contain
-	*
-	* Exports:
-	*   loc - Structure containing the location data for the node
-	*   visit - Polymorphic method to accept a visitor object for iteration
-	*/
+	 * Base class for all ast nodes
+	 *
+	 * Specifies the required information that all ast nodes must contain
+	 *
+ 	 * Exports:
+	 *   loc - Structure containing the location data for the node
+	 *   visit - Polymorphic method to accept a visitor object for iteration
+	 */
 	struct Ast {
 		Location loc;
 
@@ -74,13 +74,13 @@ namespace spero::compiler::ast {
 
 
 	/*
-	* Base class for representing a token during parsing on the stack
-	*
-	* Extends: Ast
-	*
-	* Exports:
-	*   value - a variant containing the actual token
-	*/
+	 * Base class for representing a token during parsing on the stack
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   value - a variant containing the actual token
+	 */
 	struct Token : Ast {
 		using token_type = std::variant<KeywordType, PtrStyling, VarianceType, RelationType,
 			VisibilityType, BindingType, UnaryType, CaptureType>;
@@ -91,20 +91,25 @@ namespace spero::compiler::ast {
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+
+		template<class T, class=std::enable_if_t<can_hold_v<T, token_type>>>
+		bool holds() { return std::holds_alternative<T>(value); }
+		template<class T, class=std::enable_if_t<can_hold_v<T, token_type>>>
+		T get() { return std::get<T>(value); }
 	};
 
 
 	/*
-	* Base class for representing a type within the heirarchy
-	*
-	* Extends Ast
-	*
-	* Exports:
-	*   id - number bound to the type that is assigned during analysis
-	*   is_mut - flag whether the type is mutable
-	*
-	* TODO: Figure out whether this works when considering analysis stages
-	*/
+	 * Base class for representing a type within the heirarchy
+	 *
+	 * Extends Ast
+	 *
+	 * Exports:
+	 *   id - number bound to the type that is assigned during analysis
+	 *   is_mut - flag whether the type is mutable
+	 *
+	 * TODO: Figure out whether this works when considering analysis stages
+	 */
 	struct Type : Ast {
 		size_t id;
 		bool is_mut = false;
@@ -115,14 +120,14 @@ namespace spero::compiler::ast {
 
 
 	/*
-	* Base class to represent any Spero statement
-	*   TODO: Differentiate from ValExpr
-	*
-	* Extends: Ast
-	*
-	* Exports:
-	*   annotations - A collection of associated annotations
-	*/
+	 * Base class to represent any Spero statement
+	 *   TODO: Differentiate from ValExpr
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   annotations - A collection of associated annotations
+	 */
 	struct Statement : Ast {
 		std::deque<ptr<LocalAnnotation>> annots;
 
@@ -134,18 +139,18 @@ namespace spero::compiler::ast {
 
 
 	/*
-	* Base class to handle Spero statements that produce a value
-	*
-	* Extends: Stmt
-	*
-	* Exports:
-	*   is_mut - flag whether the produced value is mutable
-	*   unop   - token for any unary operations applied
-	*   type   - the marked type for the expression
-	*
-	* TODO:
-	*   type will need to be changed in the future to reduce luggage
-	*/
+	 * Base class to handle Spero statements that produce a value
+	 *
+	 * Extends: Stmt
+	 *
+	 * Exports:
+	 *   is_mut - flag whether the produced value is mutable
+	 *   unop   - token for any unary operations applied
+	 *   type   - the marked type for the expression
+	 *
+	 * TODO:
+	 *   type will need to be changed in the future to reduce luggage
+	 */
 	struct ValExpr : Statement {
 		bool is_mut = false;
 		ptr<Type> type;
@@ -158,15 +163,15 @@ namespace spero::compiler::ast {
 
 
 	/*
-	* Base class to represent any sequenced collection of ast nodes
-	* The second template parameter is used to control the inheritance tree
-	*
-	* Extends: ValExpr
-	*
-	* Exports:
-	*   exprs - collection of nodes that satisfy the sequence (stored front->back)
-	*/
-	template<class T, class Inher = T>
+	 * Base class to represent any sequenced collection of ast nodes
+	 * The second template parameter is used to control the inheritance tree
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   exprs - collection of nodes that satisfy the sequence (stored front->back)
+	 */
+	template<class T, class Inher=T>
 	struct Sequence : Inher {
 		std::deque<ptr<T>> elems;
 
@@ -235,6 +240,74 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
+	/*
+	 * Represents a value which will be provided in future analysis stages
+	 *   mainly used for function forwarding to dot_control structures
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   generated - flag for whether the Future was created by the compiler (ala "dot function") or by the programmer (ie. "_")
+	 */
+	struct Future : ValExpr {
+		bool generated;
+
+		Future(bool, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * TODO: Write a description
+	 */
+	struct Tuple : Sequence<ValExpr> {
+		Tuple(std::deque<ptr<ValExpr>>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	struct Array : Sequence<ValExpr> {
+		Array(std::deque<ptr<ValExpr>>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+
+	/*
+	 * TODO: Write a description
+	 */
+	struct Block : Sequence<Statement, ValExpr> {
+		Block(std::deque<ptr<Statement>>, Location);
+
+		//analysis::SymTable locals;
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Represents a lambda function body (ie. not a forwarded function)
+	 *
+	 * Extends: ValExpr
+ 	 *
+	 * Exports:
+	 *   forward - flag for whether the function body forwards arguments to the first expression
+	 *   args    - tuple for function binding function arguments
+	 *   body    - expression that the function evaluates
+	 */
+	struct Function : ValExpr {
+		ptr<Tuple> args;
+		ptr<ValExpr> body;
+
+		Function(ptr<Tuple>, ptr<ValExpr>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
 
 	// 
 	// NAMES, BINDINGS, PATTERNS
@@ -243,17 +316,17 @@ namespace spero::compiler::ast {
 	// 
 
 	/*
-	* Represents the basic block of a Spero binding
-	*
-	* Extends: Ast
-	*
-	* Exports:
-	*   name - the string representation of the binding
-	*   type - is the string a variable, type, or operator
-	*
-	* TODO:
-	*   Split this class into Operator/Variable/Type binding classes ???
-	*/
+	 * Represents the basic block of a Spero binding
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   name - the string representation of the binding
+	 *   type - is the string a variable, type, or operator
+	 *
+	 * TODO:
+	 *   Split this class into Operator/Variable/Type binding classes ???
+	 */
 	struct BasicBinding : Ast {
 		std::string name;
 		BindingType type;
@@ -266,12 +339,11 @@ namespace spero::compiler::ast {
 		std::string toString();
 	};
 
-
 	/*
-	* Represents a complete Spero binding
-	*
-	* Extends: Seqeuence<BasicBinding, Ast>
-	*/
+	 * Represents a complete Spero binding
+	 *
+	 * Extends: Seqeuence<BasicBinding, Ast>
+	 */
 	struct QualifiedBinding : Sequence<BasicBinding, Ast> {
 		QualifiedBinding(ptr<BasicBinding>, Location);
 		QualifiedBinding(std::deque<ptr<BasicBinding>>, Location);
@@ -289,7 +361,105 @@ namespace spero::compiler::ast {
 	// This section contains the nodes to collect information about types in source files
 	//
 
-	struct TType : Ast {};
+	/*
+	 * Basic class for type information obtained directly from the source file
+	 *
+	 * Extends: Type
+	 *
+	 * Exports:
+	 *   name - qualified binding that the type is refering to
+	 *   pointer - any pointer/view styling applied to the type
+	 */
+	struct SourceType : Type {
+		ptr<QualifiedBinding> name;
+		PtrStyling _ptr;
+
+		SourceType(ptr<QualifiedBinding>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
+	/*
+	 * Basic instance class for generic instantiated types
+	 *
+	 * Extends: SourceType
+	 *
+	 * Exports:
+	 *   inst - an array of generic parameters
+	 */
+	struct GenericType : SourceType {
+		ptr<Array> inst;
+
+		GenericType(ptr<QualifiedBinding>, ptr<Array>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Type instance class that represents a tuple of types
+	 *
+	 * Extends: Sequence<Type>
+	 *
+	 * Exports:
+	 *   elems - the collection of types that construct the tuple
+	 */
+	struct TupleType : Sequence<Type> {
+		TupleType(std::deque<ptr<Type>>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Type instance class that represents a function object
+	 *
+	 * Extends: Type
+     *
+	 * Exports:
+	 *   args - the tuple type that represents the functions arguments
+	 *   ret - the type returned by the function
+	 */
+	struct FunctionType : Type {
+		ptr<TupleType> args;
+		ptr<Type> ret;
+
+		FunctionType(ptr<TupleType>, ptr<Type>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Type instance class that represents a conjunction of several types
+	 *
+	 * Extends: Type
+	 *
+	 * Exports:
+	 *   types - the collection of individual types
+	 */
+	struct AndType : Sequence<Type> {
+		AndType(ptr<Type>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Type instance class that represents a disjunction of several types
+	 *
+	 * Extends: Type
+	 *
+	 * Exports:
+	 *   types - the collection of individual types
+	 */
+	struct OrType : Sequence<Type> {
+		OrType(ptr<Type>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
 
 
 	//
@@ -300,34 +470,50 @@ namespace spero::compiler::ast {
 
 
 	/*
-	* Represents a globally applied annotation (one that is not attached to a statement)
-	*
-	* Extends: Ast
-	*
-	* Exports:
-	*   name - binding that the annotation is associated to
-	*   args - arguments provided to the annotation
-	*/
+	 * Represents a globally applied annotation (one that is not attached to a statement)
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+ 	 *   name - binding that the annotation is associated to
+	 *   args - arguments provided to the annotation
+	 */
 	struct Annotation : Ast {
 		ptr<BasicBinding> name;
-		//ptr<Tuple> args;
+		ptr<Tuple> args;
 
-		//Annotation(ptr<BasicBinding>, ptr<Tuple>, Location);
-		Annotation(ptr<BasicBinding>, Location);
+		Annotation(ptr<BasicBinding>, ptr<Tuple>, Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
+	/*
+	 * Represents an annotation instance that is attached to a statement
+	 *
+	 * Extends: LocalAnnotation
+	 */
+	struct LocalAnnotation : Annotation {
+		LocalAnnotation(ptr<BasicBinding>, ptr<Tuple>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
 
 	/*
-	* Represents an annotation instance that is attached to a statement
-	*
-	* Extends: LocalAnnotation
-	*/
-	struct LocalAnnotation : Annotation {
-		//LocalAnnotation(ptr<BasicBinding>, ptr<Tuple>, Location);
-		LocalAnnotation(ptr<BasicBinding>, Location);
+	 * Represents an Algebraic Data Type constructor
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   name - the type name of the constructor
+	 *   args - the collection of types that the constructor takes
+	 */
+	struct Adt : Ast {
+		ptr<BasicBinding> name;
+		ptr<TupleType> args;
+
+		Adt(ptr<BasicBinding>, ptr<TupleType>, Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;

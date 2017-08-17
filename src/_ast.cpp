@@ -157,6 +157,82 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
+	Future::Future(bool f, Location loc) : ValExpr{ loc }, generated{ f } {}
+	Visitor& Future::visit(Visitor& v) {
+		//v.acceptFuture(*this);
+		return v;
+	}
+	DEF_PRINTER(Future) {
+		return s << std::string(buf, ' ') << context << "ast.FutureValue (gen=" << generated << ')';
+	}
+
+	Tuple::Tuple(std::deque<ptr<ValExpr>> vals, Location loc) : Sequence{ std::move(vals), loc } {}
+	Visitor& Tuple::visit(Visitor& v) {
+		//v.acceptTuple(*this);
+		return v;
+	}
+	DEF_PRINTER(Tuple) {
+		s << std::string(buf, ' ') << context << "ast.Tuple" << elems.size() << " (";
+		for (auto&& e : elems) {
+			e->prettyPrint(s << '\n', buf + 2) << ",";
+		}
+
+		if (elems.size()) {
+			s << '\n' << std::string(buf, ' ');
+		}
+		return s << ')';
+	}
+
+	Array::Array(std::deque<ptr<ValExpr>> vals, Location loc) : Sequence{ std::move(vals), loc } {}
+	Visitor& Array::visit(Visitor& v) {
+		//v.acceptArray(*this);
+		return v;
+	}
+	DEF_PRINTER(Array) {
+		s << std::string(buf, ' ') << context << "ast.Array" << elems.size() << " [type={}] [";
+		for (auto&& e : elems) {
+			e->prettyPrint(s << '\n', buf + 2) << ",";
+		}
+
+		if (elems.size()) {
+			s << '\n' << std::string(buf, ' ');
+		}
+		return s << ']';
+	}
+
+	Block::Block(std::deque<ptr<Statement>> vals, Location loc) : Sequence{ std::move(vals), loc } {}
+	Visitor& Block::visit(Visitor& v) {
+		//v.acceptBlock(*this);
+		return v;
+	}
+	DEF_PRINTER(Block) {
+		s << std::string(buf, ' ') << context << "ast.Block (size=" << elems.size() << ") {";
+		for (auto&& e : elems) {
+			e->prettyPrint(s << '\n', buf + 2);
+		}
+
+		if (elems.size()) {
+			s << '\n' << std::string(buf, ' ');
+		}
+		return s << '}';
+	}
+
+	Function::Function(ptr<Tuple> args, ptr<ValExpr> body, Location loc)
+		: ValExpr{ loc }, args{ std::move(args) }, body{ std::move(body) } {}
+	Visitor& Function::visit(Visitor& v) {
+		//v.acceptFunction(*this);
+		return v;
+	}
+	DEF_PRINTER(Function) {
+		s << std::string(buf, ' ') << context << "ast.Function";
+		ValExpr::prettyPrint(s, buf);
+
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 2, "args=");
+		}
+		return body->prettyPrint(s << '\n', buf + 2, "expr=");
+	}
+
 
 	// 
 	// NAMES, BINDINGS, PATTERNS
@@ -198,18 +274,105 @@ namespace spero::compiler::ast {
 	//
 	// TYPES
 	//
+	SourceType::SourceType(ptr<QualifiedBinding> b, Location loc)
+		: Type{ loc }, name{ std::move(b) }, _ptr{ PtrStyling::NA } {}
+	Visitor& SourceType::visit(Visitor& v) {
+		//v.acceptSourceType(*this);
+		return v;
+	}
+	DEF_PRINTER(SourceType) {
+		s << std::string(buf, ' ') << context << "ast.SourceType \"";
+		return name->prettyPrint(s, 0) << "\" (ptr=" << _ptr._to_string() << ")";
+	}
 
-	namespace {}
+	GenericType::GenericType(ptr<QualifiedBinding> b, ptr<Array> a, Location loc)
+		: SourceType{ std::move(b), loc }, inst{ std::move(a) } {}
+	Visitor& GenericType::visit(Visitor& v) {
+		//v.acceptGenericType(*this);
+		return v;
+	}
+	DEF_PRINTER(GenericType) {
+		s << std::string(buf, ' ') << context << "ast.GenericType \"";
+		name->prettyPrint(s, 0) << "\" (ptr=" << _ptr._to_string() << ")";
+
+		if (inst && inst->elems.size()) {
+			s << " [\n";
+			for (auto&& e : inst->elems) {
+				e->prettyPrint(s, buf + 2) << '\n';
+			}
+			s << std::string(buf, ' ') << "]";
+		}
+
+		return s;
+	}
+
+	TupleType::TupleType(std::deque<ptr<Type>> ts, Location loc) : Sequence{ std::move(ts), loc } {}
+	Visitor& TupleType::visit(Visitor& v) {
+		//v.acceptTupleType(*this);
+		return v;
+	}
+	DEF_PRINTER(TupleType) {
+		s << std::string(buf, ' ') << context << "ast.TupleType" << elems.size() << "(";
+
+		for (auto&& t : elems) {
+			t->prettyPrint(s << '\n', buf + 2);
+		}
+
+		return s << '\n' << std::string(buf, ' ') << ')';
+	}
+
+	FunctionType::FunctionType(ptr<TupleType> as, ptr<Type> ret, Location loc)
+		: Type{ loc }, args{ std::move(as) }, ret{ std::move(ret) } {}
+	Visitor& FunctionType::visit(Visitor& v) {
+		//v.acceptFunctionType(*this);
+		return v;
+	}
+	DEF_PRINTER(FunctionType) {
+		s << std::string(buf, ' ') << context << "ast.FunctionType";
+
+		args->prettyPrint(s << '\n', buf + 2, "args=");
+		return ret->prettyPrint(s << '\n', buf + 2, "ret=");
+	}
+
+	AndType::AndType(ptr<Type> typs, Location loc)
+		: Sequence{ MK_DEQUE<Type>(std::move(typs)), loc } {}
+	Visitor& AndType::visit(Visitor& v) {
+		//v.acceptAndType(*this);
+		return v;
+	}
+	DEF_PRINTER(AndType) {
+		s << std::string(buf, ' ') << context << "ast.AndType";
+
+		for (auto&& t : elems) {
+			t->prettyPrint(s << '\n', buf + 2);
+		}
+
+		return s;
+	}
+
+	OrType::OrType(ptr<Type> typs, Location loc)
+		: Sequence{ MK_DEQUE<Type>(std::move(typs)), loc } {}
+	Visitor& OrType::visit(Visitor& v) {
+		//v.acceptOrType(*this);
+		return v;
+	}
+	DEF_PRINTER(OrType) {
+		s << std::string(buf, ' ') << context << "ast.OrType";
+
+		for (auto&& t : elems) {
+			t->prettyPrint(s << '\n', buf + 2);
+		}
+
+		return s;
+	}
 
 
 	//
 	// DECORATIONS, ANNOTATION, GENERIC
 	//
 
-	/*Annotation::Annotation(ptr<BasicBinding> n, ptr<Tuple> t, Location loc)
-		: Ast{ loc }, name{ std::move(n) }, args{ std::move(t) } {}*/
-	Annotation::Annotation(ptr<BasicBinding> n, Location loc)
-		: Ast{ loc }, name{ std::move(n) } {}
+	Annotation::Annotation(ptr<BasicBinding> n, ptr<Tuple> t, Location loc)
+		: Ast{ loc }, name{ std::move(n) }, args{ std::move(t) } {}
 	Visitor& Annotation::visit(Visitor& v) {
 		//v.acceptAnnotation(*this);
 		return v;
@@ -218,16 +381,14 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Annotation name=";
 		name->prettyPrint(s, 0);
 
-		/*if (args) {
+		if (args) {
 			args->prettyPrint(s << '\n', buf + 2, "args=");
-		}*/
+		}
 		return s;
 	}
 
-	/*LocalAnnotation::LocalAnnotation(ptr<BasicBinding> n, ptr<Tuple> t, Location loc)
-		: Annotation{ std::move(n), std::move(t), loc } {}*/
-	LocalAnnotation::LocalAnnotation(ptr<BasicBinding> n, Location loc)
-		: Annotation{ std::move(n), loc } {}
+	LocalAnnotation::LocalAnnotation(ptr<BasicBinding> n, ptr<Tuple> t, Location loc)
+		: Annotation{ std::move(n), std::move(t), loc } {}
 	Visitor& LocalAnnotation::visit(Visitor& v) {
 		//v.acceptLocalAnnotation(*this);
 		return v;
@@ -236,9 +397,25 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.LocalAnnotation name=";
 		name->prettyPrint(s, 0);
 
-		/*if (args) {
+		if (args) {
 			args->prettyPrint(s << '\n', buf + 2, "args=");
-		}*/
+		}
+		return s;
+	}
+
+	Adt::Adt(ptr<BasicBinding> n, ptr<TupleType> t, Location loc)
+		: Ast{ loc }, name{ std::move(n) }, args{ std::move(t) } {}
+	Visitor& Adt::visit(Visitor& v) {
+		//v.acceptAdt(*this);
+		return v;
+	}
+	DEF_PRINTER(Adt) {
+		s << std::string(buf, ' ') << context << "ast.Adt (name=";
+		name->prettyPrint(s, 0) << ")";
+
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 2, "args=");
+		}
 		return s;
 	}
 
@@ -253,5 +430,7 @@ namespace spero::compiler::ast {
 	//
 	// STMTS
 	//
+
+	namespace {}
 
 }
