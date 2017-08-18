@@ -20,6 +20,7 @@ Current Project Plan
   Grammar changes and modifications
 	Start developing the actions/ast hook-ins
 	Adjust grammar to allow for "Foo:Type" chains (mod_path is too restrictive)
+	Go through the ast files and make sure documentation/pretty-printing are up-to-date
 	Add in syntax error checking/handling
 	  Figure out how I want this to go
 	  Adapt rules/grammar to add in these handling

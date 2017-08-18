@@ -31,8 +31,8 @@ namespace spero::parser::grammar {
 
 
 	/*
-	* Custom rules
-	*/
+	 * Custom rules
+	 */
 	using eps = success;
 	template<char... chs>
 	struct one_of : sor<one<chs>...> {};
@@ -73,7 +73,7 @@ namespace spero::parser::grammar {
 	struct endc    : punct<';'> {};
 	struct equals  : punct<'='> {};
 	struct bar     : punct<'|'> {};
-	struct and	   : punct<'+'> {};
+	struct and     : punct<'+'> {};
 	struct dot     : punct<'.'> {};
 
 
@@ -131,11 +131,13 @@ namespace spero::parser::grammar {
 	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
 	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut> {};
 	struct pat_name : seq<var, not_at<one<':'>>, ig_s> {};
-	struct capture : seq<opt<capture_desc>, sor<pat_tuple, pat_name>> {};
-	struct pat_any : one<'_'> {};
-	struct pattern : sor<pat_any, pat_lit, pat_adt, capture> {};
+	struct desc_eps : eps {};
+	struct capture : seq<sor<capture_desc, desc_eps>, sor<pat_tuple, pat_name>> {};
+	struct pat_any : disable<plambda> {};
+	struct pattern : seq<sor<pat_any, pat_lit, pat_adt, capture>, ig_s> {};
 	struct assign_tuple : sequence<oparen, assign_pat, cparen> {};
-	struct assign_pat : seq<sor<var, op, one<'_'>, assign_tuple>, ig_s> {};
+	struct assign_drop : disable<plambda> {};
+	struct assign_pat : seq<sor<var, op, assign_drop, assign_tuple>, ig_s> {};
 
 
 	/*
@@ -184,21 +186,24 @@ namespace spero::parser::grammar {
 	 */
 	struct forl : seq<kfor, pattern, kin, mvexpr, mvdexpr> {};
 	struct whilel : seq<kwhile, mvexpr, mvdexpr> {};
+	struct loop : seq<kloop, mvdexpr> {};
 	struct if_core : seq<kif, mvexpr> {};
+	struct if_branch : seq<if_core, mvdexpr> {};
 	struct elsif_case : seq<kelsif, mvexpr, mvdexpr> {};
 	struct else_case : seq<kelse, mvdexpr> {};
 	struct branch : seq<if_core, mvdexpr, star<elsif_case>, opt<else_case>> {};
-	struct _case : seq<pattern, opt<if_core>, pstr("=>"), ig_s, mvexpr, opt<endc>> {};
+	struct case_pat : seq<pattern, star<comma, pattern>> {};
+	struct _case : seq<case_pat, opt<if_core>, pstr("=>"), ig_s, mvexpr, opt<endc>> {};
 	struct matchs : seq<kmatch, mvexpr, obrace, plus<_case>, cbrace> {};
 	struct jump : seq<jump_key, opt<mvexpr>> {};
-	struct loop : seq<kloop, mvdexpr> {};
 	struct control : sor<matchs, forl, whilel, branch, jump, loop> {};
 	struct dotloop : seq<kloop> {};
 	struct dotwhile : seq<kwhile, mvexpr> {};
 	struct dotfor : seq<kfor, pattern, kin, mvexpr> {};
 	struct dotbranch : seq<if_core, star<elsif_case>, opt<else_case>> {};
 	struct dotmatch : seq<kmatch, obrace, plus<_case>, cbrace> {};
-	struct dot_ctrl : sor<dotloop, dotwhile, dotfor, dotbranch, dotmatch, jump_key> {};
+	struct dotjump : seq<jump_key> {};
+	struct dot_ctrl : sor<dotloop, dotwhile, dotfor, dotbranch, dotmatch> {};
 
 
 	/*
@@ -267,7 +272,8 @@ namespace spero::parser::grammar {
 	DEFINE_BINPREC_LEVEL_OP(2, 1, '/', '%', '*');
 	struct binary_opch3 : _sor<seq<pstr("->"), binop_ch>, '+', '-'> {};
 	DEFINE_BINPREC_LEVEL(3, 2);
-	struct binary_opch4 : _sor<seq<one<'!'>, binop_ch>, '='> {};
+	struct binary_opch4 : sor<seq<one<'!'>, binop_ch>,
+		if_then_else<seq<pstr("=>"), not_at<binop_ch>>, failure, one<'='>>> {};
 	DEFINE_BINPREC_LEVEL(4, 3);
 	DEFINE_BINPREC_LEVEL_OP(5, 4, '<', '>');
 	DEFINE_BINPREC_LEVEL_OP(6, 5, '^');

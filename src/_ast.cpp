@@ -487,13 +487,149 @@ namespace spero::compiler::ast {
 	// CONTROL
 	//
 
-	namespace {}
+	Branch::Branch(Location loc) : ValExpr{ loc } {}
+	Visitor& Branch::visit(Visitor& v) {
+		//v.acceptBranch(*this);
+		return v;
+	}
+
+	Loop::Loop(ptr<ValExpr> b, Location loc) : Branch{ loc }, body{ std::move(b) } {}
+	Visitor& Loop::visit(Visitor& v) {
+		//v.acceptLoop(*this);
+		return v;
+	}
+	DEF_PRINTER(Loop) {
+		s << std::string(buf, ' ') << context << "ast.Loop (";
+		ValExpr::prettyPrint(s, buf);
+		return body->prettyPrint(s << '\n', buf + 2, "body=");
+	}
+
+	While::While(ptr<ValExpr> test, ptr<ValExpr> body, Location loc)
+		: Loop{ std::move(body), loc }, test{ std::move(test) } {}
+	Visitor& While::visit(Visitor& v) {
+		//v.acceptWhile(*this);
+		return v;
+	}
+	DEF_PRINTER(While) {
+		s << std::string(buf, ' ') << context << "ast.While (";
+		ValExpr::prettyPrint(s, buf);
+		test->prettyPrint(s << '\n', buf + 2, "cond=");
+		return body->prettyPrint(s << '\n', buf + 2, "body=");
+	}
+
+	For::For(ptr<Pattern> p, ptr<ValExpr> g, ptr<ValExpr> b, Location loc)
+		: Loop{ std::move(b), loc }, pattern{ std::move(p) }, generator{ std::move(g) } {}
+	Visitor& For::visit(Visitor& v) {
+		//v.acceptFor(*this);
+		return v;
+	}
+	DEF_PRINTER(For) {
+		s << std::string(buf, ' ') << context << "ast.For (";
+		ValExpr::prettyPrint(s, buf);
+
+		pattern->prettyPrint(s << '\n', buf + 2, "vars=");
+		generator->prettyPrint(s << '\n', buf + 2, "in=");
+		return body->prettyPrint(s << '\n', buf + 2, "body=");
+	}
+
+	//IfElse::IfElse(ptr<ValExpr> test, ptr<ValExpr> body, Location loc) : Branch{ loc }, else_branch{ nullptr } {
+	//	addBranch(std::move(test), std::move(body));
+	//}
+	//void IfElse::addBranch(ptr<ValExpr> test, ptr<ValExpr> body) {
+	//	// TODO: assert else not filled
+	//	if_branches.emplace_back(std::make_pair(std::move(test), std::move(body)));
+	//}
+	//Visitor& IfElse::visit(Visitor& v) {
+	//	v.acceptIfElse(*this);
+	//	return v;
+	//}
+	//DEF_PRINTER(IfElse) {
+	//	s << std::string(buf, ' ') << context << "ast.Branch (";
+	//	ValExpr::prettyPrint(s, buf);
+
+	//	size_t cnt = 0;
+	//	for (auto& branch : if_branches) {
+	//		branch.first->prettyPrint(s << '\n', buf + 2, cnt++ ? "elsif=" : "if=");
+	//		branch.second->prettyPrint(s << '\n', buf + 4, "body=");
+	//	}
+
+	//	if (else_branch) {
+	//		else_branch->prettyPrint(s << '\n', buf + 2, "else=");
+	//	}
+
+	//	return s;
+	//}
+
+	Case::Case(ptr<TuplePattern> vs, ptr<ValExpr> if_g, ptr<ValExpr> e, Location loc)
+		: ValExpr{ loc }, vars{ std::move(vs) }, expr{ std::move(e) }, if_guard{ std::move(if_g) } {}
+	Visitor& Case::visit(Visitor& v) {
+		//v.acceptCase(*this);
+		return v;
+	}
+	DEF_PRINTER(Case) {
+		s << std::string(buf, ' ') << context << "ast.Case";
+		vars->prettyPrint(s << '\n', buf + 2, "pattern=");
+		if (if_guard) {
+			if_guard->prettyPrint(s << '\n', buf + 2, "if=");
+		}
+		return expr->prettyPrint(s << '\n', buf + 2, "expr=");
+	}
+
+	Match::Match(ptr<ValExpr> s, std::deque<ptr<Case>> cs, Location loc)
+		: Branch{ loc }, switch_expr{ std::move(s) }, cases{ std::move(cs) } {}
+	Visitor& Match::visit(Visitor& v) {
+		//v.acceptMatch(*this);
+		return v;
+	}
+	DEF_PRINTER(Match) {
+		s << std::string(buf, ' ') << context << "ast.Match (";
+		ValExpr::prettyPrint(s, buf);
+
+		switch_expr->prettyPrint(s << '\n', buf + 2, "switch=");
+
+		for (auto&& c : cases) {
+			c->prettyPrint(s << '\n', buf + 2, "case=");
+		}
+
+		return s;
+	}
+
+	Jump::Jump(KeywordType t, ptr<ValExpr> e, Location loc)
+		: Branch{ loc }, type{ t }, expr{ std::move(e) } {}
+	Visitor& Jump::visit(Visitor& v) {
+		//v.acceptJumpExpr(*this);
+		return v;
+	}
+	DEF_PRINTER(Jump) {
+		s << std::string(buf, ' ') << context << "ast.Jump (type=" << type._to_string();
+		ValExpr::prettyPrint(s << ", ", buf);
+
+		if (expr) {
+			expr->prettyPrint(s << '\n', buf + 2, "expr=");
+		}
+		return s;
+	}
 
 
 	//
 	// STMTS
 	//
 
-	namespace {}
+	/*BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, std::string op, Location loc)
+		: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ op } {}*/
+	BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, ptr<BasicBinding> op, Location loc)
+		: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ std::move(op) } {}
+	Visitor& BinOpCall::visit(Visitor& v) {
+		//v.acceptBinOpCall(*this);
+		return v;
+	}
+	DEF_PRINTER(BinOpCall) {
+		//s << std::string(buf, ' ') << context << "ast.BinOpCall (op=" << op;
+		s << std::string(buf, ' ') << context << "ast.BinOpCall (op=";
+		op->prettyPrint(s, 0);
+		ValExpr::prettyPrint(s << ", ", buf);
+		lhs->prettyPrint(s << '\n', buf + 2, "lhs=");
+		return rhs->prettyPrint(s << '\n', buf + 2, "rhs=");
+	}
 
 }

@@ -611,7 +611,148 @@ namespace spero::compiler::ast {
 	// This section contains the nodes for all Spero control structures
 	//
 
-	struct Control : Ast {};
+	/*
+	 * Base class for all nodes that represents operations requiring branch/jump instructions
+	 *
+	 * Extends: ValExpr
+	 */
+	struct Branch : ValExpr {
+		Branch(Location);
+
+		virtual Visitor& visit(Visitor&);
+	};
+
+	/*
+	 * An infinite loop that just repeats the body
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   body - the body of the loop
+	 */
+	struct Loop : Branch {
+		ptr<ValExpr> body;
+
+		Loop(ptr<ValExpr>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
+	/*
+	 * Represents a basic while loop construct
+	 *
+	 * Extends: Loop
+	 *
+	 * Exports:
+	 *   test - the expression to test for loop termination
+	 */
+	struct While : Loop {
+		ptr<ValExpr> test;
+
+		While(ptr<ValExpr>, ptr<ValExpr>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Represents a for loop construct
+	 *
+	 * Extends: Loop
+	 *
+	 * Exports:
+	 *   pattern - the var pattern to hold iteration values
+	 *   generator - the sequence that generates iteration values
+	 */
+	struct For : Loop {
+		ptr<Pattern> pattern;
+		ptr<ValExpr> generator;
+
+		For(ptr<Pattern>, ptr<ValExpr>, ptr<ValExpr>, Location);
+
+		virtual Visitor& visit(Visitor&) final;
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Represents a sequence of branching constructs
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   if_branches - sequence of conditional branching
+	 *   else_branch - optional fall-through case
+	 */
+	/*struct IfElse : Branch {
+		using Pair = std::pair<ptr<ValExpr>, ptr<ValExpr>>;
+
+		std::deque<Pair> if_branches;
+		ptr<ValExpr> else_branch;
+
+		IfElse(ptr<ValExpr>, ptr<ValExpr>, Location);
+
+		void addBranch(ptr<ValExpr>, ptr<ValExpr>);
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};*/
+
+	/*
+	 * Class that represents a single statement within a match construct
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   vars - the pattern set to match against
+	 *   expr - the expression to run on match success
+	 *   if_guard - optional if statement to further control matching
+	 */
+	struct Case : ValExpr {
+		ptr<TuplePattern> vars;
+		ptr<ValExpr> expr;
+		ptr<ValExpr> if_guard;
+
+		Case(ptr<TuplePattern>, ptr<ValExpr>, ptr<ValExpr>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Represents a pattern match construct
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   switch_expr - value to match against
+	 *   cases - sequence of case statements to use in matching
+	 */
+	struct Match : Branch {
+		ptr<ValExpr> switch_expr;
+		std::deque<ptr<Case>> cases;
+
+		Match(ptr<ValExpr>, std::deque<ptr<Case>>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Base class for all simple "branch" expressions
+	 *
+	 * Extends: Branch
+	 *
+	 * Exports:
+	 *   expr - evaluable body
+	 */
+	struct Jump : Branch {
+		KeywordType type;
+		ptr<ValExpr> expr;
+
+		Jump(KeywordType, ptr<ValExpr>, Location);
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
 
 
 	//
@@ -619,6 +760,29 @@ namespace spero::compiler::ast {
 	//
 	// This section represents all the compound statements in Spero not already presented
 	//
+
+	/*
+	 * Represent an binary operator call
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   lhs - expression on the lhs of the operation
+	 *   rhs - expression on the rhs of the operation
+	 *   op  - operator that is being invoked
+	 */
+	struct BinOpCall : ValExpr {
+		ptr<ValExpr> lhs;
+		ptr<ValExpr> rhs;
+		ptr<BasicBinding> op;
+		//std::string op;
+
+		//BinOpCall(ptr<ValExpr>, ptr<ValExpr>, std::string, Location);
+		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, ptr<BasicBinding>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
 
 	struct Stmt : Ast {};
 

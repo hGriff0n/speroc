@@ -44,10 +44,6 @@ namespace spero::parser::actions {
 	// Keyword Tokens (may remove a couple as it becomes beneficial)
 	//
 	TOKEN(kmut, ast::KeywordType::MUT);
-	TOKEN(kloop, ast::KeywordType::LOOP);
-	TOKEN(kif, ast::KeywordType::IF);
-	TOKEN(kelsif, ast::KeywordType::ELSIF);
-	TOKEN(kelse, ast::KeywordType::ELSE);
 	TOKEN(kin, ast::KeywordType::F_IN);
 	TOKEN(kmod, ast::KeywordType::MOD);
 	TOKEN(kuse, ast::KeywordType::USE);
@@ -55,15 +51,14 @@ namespace spero::parser::actions {
 	TOKEN(kdef, ast::VisibilityType::PUBLIC);
 	TOKEN(kstatic, ast::VisibilityType::STATIC);
 	TOKEN(kimpl, ast::KeywordType::IMPL);
-	TOKEN(kwhile, ast::KeywordType::WHILE);
-	TOKEN(kfor, ast::KeywordType::FOR);
-	TOKEN(kmatch, ast::KeywordType::MATCH);
-	TOKEN(kdo, ast::KeywordType::DO);
 	TOKEN(kwait, ast::KeywordType::WAIT);
 	TOKEN(kyield, ast::KeywordType::YIELD);
 	TOKEN(kret, ast::KeywordType::RET);
 	TOKEN(kcontinue, ast::KeywordType::CONT);
 	TOKEN(kbreak, ast::KeywordType::BREAK);
+	TOKEN(kif, ast::KeywordType::IF);
+	TOKEN(kelsif, ast::KeywordType::ELSIF);
+	TOKEN(kelse, ast::KeywordType::ELSE);
 
 
 	//
@@ -187,10 +182,9 @@ namespace spero::parser::actions {
 		// stack: BasicBind cap BasicBind (due to pat_adt partially matching varname)
 		auto var = POP(BasicBinding);
 
-		// TODO: Find a way to just swap the cap and secondary bind elements (probably with dot_control)
-		auto cap = POP(Token);
+		// Swap around the cap and the binding to remove the duplicate binding
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
 		s.pop_back();
-		s.emplace_back(std::move(cap));
 
 		PUSH(VarPattern, std::make_unique<ast::QualifiedBinding>(std::move(var), in.position()));
 		// stack: pattern
@@ -200,6 +194,9 @@ namespace spero::parser::actions {
 		auto tup = POP(TuplePattern);
 		PUSH(AdtPattern, POP(QualifiedBinding), std::move(tup));
 		// stack: pattern
+	} END;
+	RULE(desc_eps) {
+		PUSH(Token, ast::CaptureType::NORM);
 	} END;
 	RULE(capture_desc) {
 		// stack: kmut?
@@ -222,13 +219,9 @@ namespace spero::parser::actions {
 		// stack: cap
 	} END;
 	RULE(capture) {
-		// stack: cap? pattern
+		// stack: cap pattern
 		auto pat = POP(Pattern);
-		auto cap = POP(Token);
-
-		if (cap) {
-			pat->cap = cap->get<ast::CaptureType>();
-		}
+		pat->cap = POP(Token)->get<ast::CaptureType>();
 		s.emplace_back(std::move(pat));
 		// stack: pattern
 	} END;
@@ -364,20 +357,96 @@ namespace spero::parser::actions {
 	//
 	// Control
 	//
-	// forl
-	// whilel
-	// if_core
-	// elsif_case
-	// else_case
-	// _case
-	// matchs
-	// jump
-	// loop
-	// dotloop
-	// dotwhile
-	// dotfor
-	// dotbranch
-	// dotmatch
+	RULE(forl) {
+		// stack: pattern gen body
+		auto body = POP(ValExpr);
+		auto generator = POP(ValExpr);
+		PUSH(For, POP(Pattern), std::move(generator), std::move(body));
+		// stack: for
+	} END;
+	RULE(whilel) {
+		// stack: test body
+		auto body = POP(ValExpr);
+		PUSH(While, POP(ValExpr), std::move(body));
+		// stack: while
+	} END;
+	RULE(loop) {
+		// stack: valexpr
+		PUSH(Loop, POP(ValExpr));
+		// stack: loop
+	} END;
+	RULE(elsif_case) {
+		// stack: "elsif" test body
+
+		// stack: ?
+	} END;
+	RULE(else_case) {
+		// stack: "else" valexpr
+
+		// stack: ?
+	} END;
+	RULE(branch) {
+		// stack: "if" test body <elsif_core>* <else_core>?
+
+		// stack: ?
+	} END;
+	RULE(case_pat) {
+		// stack: <T> pattern*
+		auto pats = util::popSeq<ast::Pattern>(s);
+		PUSH(TuplePattern, std::move(pats));
+		// stack: <T> pattern
+	} END;
+	RULE(_case) {
+		// stack: pattern ("if" valexpr)? body
+		auto expr = POP(ValExpr);
+		auto if_guard = POP(ValExpr);
+		
+		if (if_guard) {
+			POP(Token);
+		}
+
+		PUSH(Case, POP(TuplePattern), std::move(if_guard), std::move(expr));
+		// stack: case
+	} END;
+	RULE(matchs) {
+		// stack: valexpr {} case+
+		auto cases = util::popSeq<ast::Case>(s);
+		s.pop_back();
+		PUSH(Match, POP(ValExpr), std::move(cases));
+		// stack: match
+	} END;
+	RULE(jump) {
+		// stack: kwd expr?
+		auto expr = POP(ValExpr);
+		PUSH(Jump, POP(Token)->get<ast::KeywordType>(), std::move(expr));
+		// stack: jump
+	} END;
+	INHERIT(dotloop, loop);
+	RULE(dotwhile) {
+		// stack: body test
+		auto test = POP(ValExpr);
+		PUSH(While, std::move(test), POP(ValExpr));
+		// stack: while
+	} END;
+	RULE(dotfor) {
+		// stack: body pattern gen
+		auto generator = POP(ValExpr);
+		auto pattern = POP(Pattern);
+		PUSH(For, std::move(pattern), std::move(generator), POP(ValExpr));
+		// stack: for
+	} END;
+	RULE(dotbranch) {
+		// stack: body "if" test <elsif_core>* <else_core>?
+
+		// stack: ?
+	} END;
+	INHERIT(dotmatch, matchs);
+	RULE(dotjump) {
+		// stack: expr kwd
+		auto tkn = POP(Token)->get<ast::KeywordType>();
+		PUSH(Jump, tkn, POP(ValExpr));
+		// stack: jump
+	} END;
 
 
 	//
@@ -417,13 +486,24 @@ namespace spero::parser::actions {
 	INHERIT(binary_op5, op);
 	INHERIT(binary_op6, op);
 	INHERIT(binary_op7, op);
-	// binary_cont1
-	// binary_cont2
-	// binary_cont3
-	// binary_cont4
-	// binary_cont5
-	// binary_cont6
-	// binary_cont7
+	RULE(binary_cont1) {
+		// stack: valexpr op valexpr?
+		auto rhs = POP(ValExpr);
+		auto op = POP(BasicBinding);
+
+		if (!rhs) {
+			rhs = std::make_unique<ast::Future>(true, op->loc);
+		}
+
+		PUSH(BinOpCall, POP(ValExpr), std::move(rhs), std::move(op));
+		// stack: binexpr
+	} END;
+	INHERIT(binary_cont2, binary_cont1);
+	INHERIT(binary_cont3, binary_cont1);
+	INHERIT(binary_cont4, binary_cont1);
+	INHERIT(binary_cont5, binary_cont1);
+	INHERIT(binary_cont6, binary_cont1);
+	INHERIT(binary_cont7, binary_cont1);
 
 
 	// Organizational Tagging
