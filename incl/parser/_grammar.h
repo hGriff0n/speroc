@@ -137,7 +137,8 @@ namespace spero::parser::grammar {
 	struct pattern : seq<sor<pat_any, pat_lit, pat_adt, capture>, ig_s> {};
 	struct assign_tuple : sequence<oparen, assign_pat, cparen> {};
 	struct assign_drop : disable<plambda> {};
-	struct assign_pat : seq<sor<var, op, assign_drop, assign_tuple>, ig_s> {};
+	struct assign_name : sor<var, op> {};
+	struct assign_pat : seq<sor<assign_name, assign_drop, assign_tuple>, ig_s> {};
 
 
 	/*
@@ -167,11 +168,12 @@ namespace spero::parser::grammar {
 	struct annotation : seq<one<'@'>, var, opt<tuple>, ig_s> {};
 	struct ganot : seq<pstr("@!"), var, opt<tuple>, ig_s> {};
 	struct type_inf : seq<pstr("::"), ig_s, type> {};
+	struct veps : seq<eps> {};
 	struct variance : one_of<'+', '-'> {};
 	struct variadic : seq<pstr(".."), ig_s> {};
-	struct relation : seq<sor<pstr("::"), pstr("!:")>, ig_s, type> {};
-	struct type_gen : seq<typ, ig_s, opt<variance>, ig_s, opt<variadic>, opt<relation>> {};
-	struct val_gen : seq<var, ig_s, opt<relation>> {};
+	struct relation : seq<sor<pstr("::"), pstr("!:")>, ig_s> {};
+	struct type_gen : seq<typ, ig_s, sor<variance, veps>, ig_s, opt<variadic>, opt<relation, type>> {};
+	struct val_gen : seq<var, ig_s, opt<relation, type>> {};
 	struct gen_part : sor<type_gen, val_gen> {};
 	struct _generic : sequence<obrack, gen_part, cbrack> {};
 	struct adt : seq<typ, opt<tuple_type>, ig_s> {};
@@ -191,7 +193,7 @@ namespace spero::parser::grammar {
 	struct if_branch : seq<if_core, mvdexpr> {};
 	struct elsif_case : seq<kelsif, mvexpr, mvdexpr> {};
 	struct else_case : seq<kelse, mvdexpr> {};
-	struct branch : seq<if_core, mvdexpr, star<elsif_case>, opt<else_case>> {};
+	struct branch : seq<if_branch, star<elsif_case>, opt<else_case>> {};
 	struct case_pat : seq<pattern, star<comma, pattern>> {};
 	struct _case : seq<case_pat, opt<if_core>, pstr("=>"), ig_s, mvexpr, opt<endc>> {};
 	struct matchs : seq<kmatch, mvexpr, obrace, plus<_case>, cbrace> {};
@@ -200,7 +202,8 @@ namespace spero::parser::grammar {
 	struct dotloop : seq<kloop> {};
 	struct dotwhile : seq<kwhile, mvexpr> {};
 	struct dotfor : seq<kfor, pattern, kin, mvexpr> {};
-	struct dotbranch : seq<if_core, star<elsif_case>, opt<else_case>> {};
+	struct dotif : seq<if_core> {};
+	struct dotbranch : seq<dotif, star<elsif_case>, opt<else_case>> {};
 	struct dotmatch : seq<kmatch, obrace, plus<_case>, cbrace> {};
 	struct dotjump : seq<jump_key> {};
 	struct dot_ctrl : sor<dotloop, dotwhile, dotfor, dotbranch, dotmatch> {};
@@ -240,7 +243,7 @@ namespace spero::parser::grammar {
 	struct type_const : seq<qualtyp, ig_s, opt<actcall, opt<anon_type>>> {};
 	struct named : seq<sor<type_const, seq<varname, opt<one<':'>, type_const>>>, ig_s> {};
 	struct valcall : sor<atom, seq<binop, ig_s>, seq<unop, ig_s, tuple>> {};
-	struct fncall : seq<sor<named, valcall>, star<actcall>> {};
+	struct fncall : seq<sor<valcall, named>, star<actcall>> {};
 	struct index_cont : seq<fncall, star<dot, fncall>> {};
 	struct index : seq<fncall, opt<dot, sor<dot_ctrl, index_cont>>> {};
 	struct unexpr : seq<opt<unop>, index> {};
@@ -251,7 +254,8 @@ namespace spero::parser::grammar {
 	 */
 	struct mod_dec : seq<kmod, varname, ign_s, must<sor<endc, eolf>>, ig_s> {};
 	// TODO: Change to my custom error handling
-	struct impl : seq<kimpl, single_type, opt<kfor, single_type>, scope> {};
+	struct impleps : seq<eps> {};
+	struct impl : seq<kimpl, single_type, opt<kfor, single_type, impleps>, scope> {};
 	struct mul_imp : sequence<obrace, binding, cbrace> {};
 	struct alias : seq<opt<_array>, kas, binding, opt<_array>> {};
 	struct imp_alias : seq<binding, opt<alias>> {};

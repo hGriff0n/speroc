@@ -45,20 +45,15 @@ namespace spero::parser::actions {
 	//
 	TOKEN(kmut, ast::KeywordType::MUT);
 	TOKEN(kin, ast::KeywordType::F_IN);
-	TOKEN(kmod, ast::KeywordType::MOD);
 	TOKEN(kuse, ast::KeywordType::USE);
 	TOKEN(klet, ast::VisibilityType::PROTECTED);
 	TOKEN(kdef, ast::VisibilityType::PUBLIC);
 	TOKEN(kstatic, ast::VisibilityType::STATIC);
-	TOKEN(kimpl, ast::KeywordType::IMPL);
 	TOKEN(kwait, ast::KeywordType::WAIT);
 	TOKEN(kyield, ast::KeywordType::YIELD);
 	TOKEN(kret, ast::KeywordType::RET);
 	TOKEN(kcontinue, ast::KeywordType::CONT);
 	TOKEN(kbreak, ast::KeywordType::BREAK);
-	TOKEN(kif, ast::KeywordType::IF);
-	TOKEN(kelsif, ast::KeywordType::ELSIF);
-	TOKEN(kelse, ast::KeywordType::ELSE);
 
 
 	//
@@ -231,6 +226,21 @@ namespace spero::parser::actions {
 	RULE(pat_lit) {
 		PUSH(ValPattern, POP(ValExpr));
 	} END;
+	RULE(assign_name) {
+		// stack: bind
+		PUSH(AssignName, POP(BasicBinding));
+		// stack: AssignName
+	} END;
+	RULE(assign_drop) {
+		s.emplace_back(std::make_unique<ast::AssignPattern>(in.position()));
+	} END;
+	RULE(assign_tuple) {
+		// stack: {} asgn_pat*
+		auto pats = util::popSeq<ast::AssignPattern>(s);
+		s.pop_back();
+		PUSH(AssignTuple, std::move(pats));
+		// stack: AssignTuple
+	} END;
 	// assign_tuple
 	// assign_pat
 
@@ -333,22 +343,60 @@ namespace spero::parser::actions {
 		PUSH(Annotation, POP(BasicBinding), std::move(tup));
 		// stack: anot
 	} END;
-	// type_inf
-	// variance
-	// variadic
-	// relation (?)
-	// type_gen
-	// val_gen
-	// _generic
+	TOKEN(veps, ast::VarianceType::INVARIANT);
+	RULE(variance) {
+		if (in.string()[0] == '+') {
+			PUSH(Token, ast::VarianceType::COVARIANT);
+		} else {
+			PUSH(Token, ast::VarianceType::CONTRAVARIANT);
+		}
+	} END;
+	TOKEN(variadic, ast::VarianceType::VARIADIC);
+	RULE(relation) {
+		if (in.string()[0] == ':') {
+			PUSH(Token, ast::RelationType::IMPLS);
+		} else {
+			PUSH(Token, ast::RelationType::NOT_IMPLS);
+		}
+	} END;
+	RULE(type_gen) {
+		// stack: bind var var? (rel type)?
+		auto typ = POP(Type);
+		auto rel = (typ ? POP(Token)->get<ast::RelationType>() : ast::RelationType::NA);
+		auto variadic = POP(Token);
+		auto variance = POP(Token);
+
+		// If no variadic was given, then variance will take on "nullptr" due to the stack popping
+		if (!variance) {
+			std::swap(variance, variadic);
+		}
+
+		PUSH(TypeGeneric, POP(BasicBinding), std::move(typ), rel, variance->get<ast::VarianceType>(), (bool)variadic);
+		// stack: type_gen
+	} END;
+	RULE(val_gen) {
+		// _stack: bind (rel type)? expr?
+		// stack: bind (rel type)?
+		auto typ = POP(Type);
+		auto rel = (typ ? POP(Token)->get<ast::RelationType>() : ast::RelationType::NA);
+
+		PUSH(ValueGeneric, POP(BasicBinding), std::move(typ), rel);
+		// stack: val_gen
+	} END;
+	RULE(_generic) {
+		// stack: {} gen_part*
+		auto parts = util::popSeq<ast::GenericPart>(s);
+		s.pop_back();
+		PUSH(GenericArray, std::move(parts));
+		// stack: gentype
+	} END;
 	RULE(adt) {
 		// stack: typ type?
 		 auto typ_args = POP(TupleType);
 		PUSH(Adt, POP(BasicBinding), std::move(typ_args));
 		// stack: adt
 	} END;
-	/*RULE(adt_dec) {
-		auto adts = util::popSeq<ast::Adt>(s);
-	} END;*/
+	// adt_dec
 	// arg
 	// arg_tuple
 	// anon_type
@@ -376,19 +424,23 @@ namespace spero::parser::actions {
 		// stack: loop
 	} END;
 	RULE(elsif_case) {
-		// stack: "elsif" test body
-
-		// stack: ?
+		// stack: IfBranch test body
+		auto body = POP(ValExpr);
+		PUSH(IfBranch, POP(ValExpr), std::move(body), true);
+		// stack: IfBranch IfBranch
 	} END;
-	RULE(else_case) {
-		// stack: "else" valexpr
-
-		// stack: ?
+	RULE(if_branch) {
+		// stack: test body
+		auto body = POP(ValExpr);
+		PUSH(IfBranch, POP(ValExpr), std::move(body), false);
+		// stack: IfBranch
 	} END;
 	RULE(branch) {
-		// stack: "if" test body <elsif_core>* <else_core>?
-
-		// stack: ?
+		// stack: IfBranch* valexpr?
+		auto _else_ = (util::at_node<ast::IfBranch>(s) ? nullptr : POP(ValExpr));
+		auto ifs = util::popSeq<ast::IfBranch>(s);
+		PUSH(IfElse, std::move(ifs), std::move(_else_));
+		// stack: IfElse
 	} END;
 	RULE(case_pat) {
 		// stack: <T> pattern*
@@ -435,11 +487,13 @@ namespace spero::parser::actions {
 		PUSH(For, std::move(pattern), std::move(generator), POP(ValExpr));
 		// stack: for
 	} END;
-	RULE(dotbranch) {
-		// stack: body "if" test <elsif_core>* <else_core>?
-
-		// stack: ?
+	RULE(dotif) {
+		// stack: body test
+		auto test = POP(ValExpr);
+		PUSH(IfBranch, std::move(test), POP(ValExpr), false);
+		// stack: IfBranch
 	} END;
+	INHERIT(dotbranch, branch);
 	INHERIT(dotmatch, matchs);
 	RULE(dotjump) {
 		// stack: expr kwd
@@ -465,8 +519,23 @@ namespace spero::parser::actions {
 	//
 	// Statements
 	//
-	// mod_dec
-	// impl
+	RULE(mod_dec) {
+		// stack: basicbind | qualbind
+		if (util::at_node<ast::BasicBinding>(s)) {
+			PUSH(QualifiedBinding, POP(BasicBinding));
+		}
+
+		PUSH(ModDec, POP(QualifiedBinding));
+		// stack: ModDec
+	} END;
+	TOKEN(impleps, ast::KeywordType::FOR);
+	RULE(impl) {
+		// stack: type (type "for")? scope
+		auto block = POP(Block);
+		auto for_type = (POP(Token) ? POP(SourceType) : nullptr);
+		PUSH(ImplExpr, std::move(for_type), POP(SourceType), std::move(block));
+		// stack: impl
+	} END;
 	// mul_imp
 	// alias
 	// imp_alias
@@ -507,8 +576,26 @@ namespace spero::parser::actions {
 
 
 	// Organizational Tagging
-	// valexpr
-	// statement
+	RULE(valexpr) {
+		// stack: kmut? expr type?
+		auto inf = POP(Type);
+		auto expr = POP(ValExpr);
+		auto mut = POP(Token);
+
+		expr->type = std::move(inf);
+		expr->is_mut = (bool)mut;
+		s.emplace_back(std::move(expr));
+		// stack: expr
+	} END;
+	RULE(statement) {
+		// stack: annotation* stmt
+		auto stmt = POP(Statement);
+		auto anots = util::popSeq<ast::LocalAnnotation>(s);
+
+		stmt->annots = std::move(anots);
+		s.emplace_back(std::move(stmt));
+		// stack: stmt
+	} END;
 
 }
 

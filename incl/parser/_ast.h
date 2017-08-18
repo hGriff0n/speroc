@@ -141,7 +141,7 @@ namespace spero::compiler::ast {
 	/*
 	 * Base class to handle Spero statements that produce a value
 	 *
-	 * Extends: Stmt
+	 * Extends: Statement
 	 *
 	 * Exports:
 	 *   is_mut - flag whether the produced value is mutable
@@ -356,7 +356,7 @@ namespace spero::compiler::ast {
 
 	/*
 	 * Base class for representing pattern matching expressions
-	 *   Instance doubles for representing the any case
+	 *   Instance doubles for representing the "any" case
 	 *
 	 * Extends: Ast
 	 *
@@ -434,6 +434,54 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> val;
 
 		ValPattern(ptr<ValExpr>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+
+	/*
+	 * Base class for representing an assignable binding
+	 *   Instance doubles for representing the "drop" case
+	 *
+	 * Extends: Ast
+	 *
+	 * Note: Instance usage is currently deprecated
+	 */
+	struct AssignPattern : Ast {
+		AssignPattern(Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
+	/*
+	 * Represents a singular named binding in an assignment context
+	 *
+	 * Extends: AssignPattern
+	 *
+	 * Exports:
+	 *   name - binding to assign to
+	 */
+	struct AssignName : AssignPattern {
+		ptr<BasicBinding> var;
+
+		AssignName(ptr<BasicBinding>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Represents a decomposed tuple assignment
+	 *
+	 * Extends: AssignPattern
+	 *
+	 * Exports:
+	 *   vars - a collection of AssignPattern to match against
+	 */
+	struct AssignTuple : Sequence<AssignPattern> {
+		AssignTuple(std::deque<ptr<AssignPattern>>, Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -586,6 +634,75 @@ namespace spero::compiler::ast {
 	};
 
 	/*
+	 * Base class for pieces of generic declarations
+	 *
+	 * Extends: Ast
+	 *   Reuses `prettyPrint` definition
+	 *
+	 * Exports:
+	 *   name - name to bind the generic value to for the expression context
+	 *   type - evaluable type of the binding
+	 *   rel - required relationship of the instance field to a declared type
+	 */
+	struct GenericPart : Ast {
+		ptr<BasicBinding> name;
+		ptr<Type> type;
+		RelationType rel;
+
+		GenericPart(ptr<BasicBinding>, ptr<Type>, RelationType, Location);
+		virtual Visitor& visit(Visitor&);
+	};
+
+	/*
+	 * Instance class for generics that require a type
+	 *
+	 * Extends: GenericPart
+	 *
+	 * Exports:
+	 *   variance - enum specifying the variance of the parent instance in relation to generic type
+	 *   variadic - flag for whether the type specifies a variadic collection
+	 */
+	struct TypeGeneric : GenericPart {
+		VarianceType variance;
+		bool variadic;
+
+		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType, bool, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Instance class for generics that require a value
+	 *
+	 * Extends: GenericPart
+	 *
+	 * Exports:
+	 *   value - default value for the generic field if none is provided or inferrable
+	 */
+	struct ValueGeneric : GenericPart {
+		//ptr<ValExpr> value;
+
+		//ValueGeneric(ptr<BasicBinding>, ptr<Type>, ptr<ValExpr>, Location);
+		ValueGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Collection class for generic declaration information
+	 *
+	 * Extends: Sequence<GenericPart, Ast>
+	 */
+	struct GenericArray : Sequence<GenericPart, Ast> {
+		GenericArray(std::deque<ptr<GenericPart>>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
 	 * Represents an Algebraic Data Type constructor
 	 *
 	 * Extends: Ast
@@ -646,6 +763,8 @@ namespace spero::compiler::ast {
 	 *
 	 * Exports:
 	 *   test - the expression to test for loop termination
+	 *
+	 * TODO: Look into having a common parent with IfBranch
 	 */
 	struct While : Loop {
 		ptr<ValExpr> test;
@@ -676,26 +795,41 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Represents a sequence of branching constructs
+	 * Represents a single branch case within an if-elsif-else statement
 	 *
-	 * Extends: ValExpr
+	 * Extends: Branch
 	 *
 	 * Exports:
-	 *   if_branches - sequence of conditional branching
-	 *   else_branch - optional fall-through case
+	 *   test - expression to test for branching
+	 *   body - expression to evaluate if test succeeds
 	 */
-	/*struct IfElse : Branch {
-		using Pair = std::pair<ptr<ValExpr>, ptr<ValExpr>>;
+	struct IfBranch : Branch {
+		ptr<ValExpr> test;
+		ptr<ValExpr> body;
+		bool elsif;
 
-		std::deque<Pair> if_branches;
-		ptr<ValExpr> else_branch;
+		IfBranch(ptr<ValExpr>, ptr<ValExpr>, bool, Location);
 
-		IfElse(ptr<ValExpr>, ptr<ValExpr>, Location);
+		virtual Visitor& visit(Visitor&) final;
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
 
-		void addBranch(ptr<ValExpr>, ptr<ValExpr>);
+	/*
+	 * Represents a sequence of branching constructs
+	 *
+	 * Extends: Sequence<IfBranch, Branch>
+	 *
+	 * Exports:
+	 *   _else_ - optional fall-through case
+	 */
+	struct IfElse : Sequence<IfBranch, Branch> {
+		ptr<ValExpr> _else_;
+
+		IfElse(std::deque<ptr<IfBranch>>, ptr<ValExpr>, Location);
+
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
-	};*/
+	};
 
 	/*
 	 * Class that represents a single statement within a match construct
@@ -756,9 +890,9 @@ namespace spero::compiler::ast {
 
 
 	//
-	// STMTS
+	// EXPRESSIONS
 	//
-	// This section represents all the compound statements in Spero not already presented
+	// This section represents all the compound statements that produce values
 	//
 
 	/*
@@ -784,6 +918,50 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
-	struct Stmt : Ast {};
+
+	//
+	// STMTS
+	//
+	// This section represents all the compound statements otherwise not declared
+	// 
+	
+	/*
+	 * Represents a module declaration expression
+	 *
+	 * Extends: Statement
+	 *
+	 * Exports:
+	 *   module - the name of the created module
+	 */
+	struct ModDec : Statement {
+		ptr<QualifiedBinding> module;
+
+		ModDec(ptr<QualifiedBinding>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Represents an implements expression within a type body used to import functions
+	 *   into the types interface. Almost entirely similar to standard OOP-inheritance
+	 *
+	 * Extends: Statement
+	 *
+	 * Exports:
+	 *   type - the type that is being implemented
+	 *   impls - block containing implementations for imported functions
+	 *   _interface - type interface that is being implemented for the original type
+	 */
+	struct ImplExpr : Statement {
+		ptr<SourceType> _interface;
+		ptr<SourceType> type;
+		ptr<Block> impls;
+
+		ImplExpr(ptr<SourceType>, ptr<SourceType>, ptr<Block>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
 
 }

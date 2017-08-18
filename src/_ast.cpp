@@ -333,6 +333,37 @@ namespace spero::compiler::ast {
 		return val->prettyPrint(s, 1, "(val=") << ')';
 	}
 
+	AssignPattern::AssignPattern(Location loc) : Ast{ loc } {}
+	Visitor& AssignPattern::visit(Visitor& v) {
+		//v.acceptAssignPattern(*this);
+		return v;
+	}
+	DEF_PRINTER(AssignPattern) {
+		return s << std::string(buf, ' ') << context << "ast.AnyPattern (_)";
+	}
+
+	AssignName::AssignName(ptr<BasicBinding> n, Location loc) : AssignPattern{ loc }, var{ std::move(n) } {}
+	Visitor& AssignName::visit(Visitor& v) {
+		//v.acceptAssignName(*this);
+		return v;
+	}
+	DEF_PRINTER(AssignName) {
+		return var->prettyPrint(s, buf, context);
+	}
+
+	AssignTuple::AssignTuple(std::deque<ptr<AssignPattern>> vs, Location loc) : Sequence{ std::move(vs), loc } {}
+	Visitor& AssignTuple::visit(Visitor& v) {
+		//v.acceptAssignTuple(*this);
+		return v;
+	}
+	DEF_PRINTER(AssignTuple) {
+		s << std::string(buf, ' ') << context << "ast.AssignTuple" << elems.size() << "(\n";
+		for (auto&& var : elems) {
+			var->prettyPrint(s, buf + 2) << '\n';
+		}
+		return s << std::string(buf, ' ') << ')';
+	}
+
 
 	//
 	// TYPES
@@ -466,6 +497,60 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
+	GenericPart::GenericPart(ptr<BasicBinding> n, ptr<Type> typ, RelationType rel, Location loc)
+		: Ast{ loc }, type{ std::move(typ) }, name{ std::move(n) }, rel{ rel } {}
+	Visitor& GenericPart::visit(Visitor& v) {
+		//v.acceptGenericPart(*this);
+		return v;
+	}
+
+	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, VarianceType var1, bool var2, Location loc)
+		: GenericPart{ std::move(b), std::move(t), rel, loc }, variadic{ var2 }, variance{ var1 } {}
+	Visitor& TypeGeneric::visit(Visitor& v) {
+		//v.acceptTypeGeneric(*this);
+		return v;
+	}
+	DEF_PRINTER(TypeGeneric) {
+		s << std::string(buf, ' ') << context << "ast.TypeGeneric (rel=" << rel._to_string()
+			<< ", variance=" << variance._to_string() << ", variadic=" << variadic << ')';
+		name->prettyPrint(s << '\n', buf + 2, "binding=");
+		if (type) {
+			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}
+		return s;
+	}
+
+	ValueGeneric::ValueGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, Location loc)
+		: GenericPart{ std::move(b), std::move(t), rel, loc } {}
+	Visitor& ValueGeneric::visit(Visitor& v) {
+		//v.acceptValueGeneric(*this);
+		return v;
+	}
+	DEF_PRINTER(ValueGeneric) {
+		s << std::string(buf, ' ') << context << "ast.ValueGeneric (rel=" << rel._to_string() << ')';
+		name->prettyPrint(s << '\n', buf + 2, "binding=");
+		if (type) {
+			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}
+		return s;
+	}
+
+	GenericArray::GenericArray(std::deque<ptr<GenericPart>> elems, Location loc)
+		: Sequence{ std::move(elems), loc } {}
+	Visitor& GenericArray::visit(Visitor& v) {
+		//
+		return v;
+	}
+	DEF_PRINTER(GenericArray) {
+		s << std::string(buf, ' ') << "ast.Generic (size=" << elems.size() << ") [";
+
+		for (auto&& part : elems) {
+			part->prettyPrint(s << '\n', buf + 2);
+		}
+
+		return s << '\n' << std::string(buf, ' ') << ']';
+	}
+
 	Adt::Adt(ptr<BasicBinding> n, ptr<TupleType> t, Location loc)
 		: Ast{ loc }, name{ std::move(n) }, args{ std::move(t) } {}
 	Visitor& Adt::visit(Visitor& v) {
@@ -532,33 +617,39 @@ namespace spero::compiler::ast {
 		return body->prettyPrint(s << '\n', buf + 2, "body=");
 	}
 
-	//IfElse::IfElse(ptr<ValExpr> test, ptr<ValExpr> body, Location loc) : Branch{ loc }, else_branch{ nullptr } {
-	//	addBranch(std::move(test), std::move(body));
-	//}
-	//void IfElse::addBranch(ptr<ValExpr> test, ptr<ValExpr> body) {
-	//	// TODO: assert else not filled
-	//	if_branches.emplace_back(std::make_pair(std::move(test), std::move(body)));
-	//}
-	//Visitor& IfElse::visit(Visitor& v) {
-	//	v.acceptIfElse(*this);
-	//	return v;
-	//}
-	//DEF_PRINTER(IfElse) {
-	//	s << std::string(buf, ' ') << context << "ast.Branch (";
-	//	ValExpr::prettyPrint(s, buf);
+	IfBranch::IfBranch(ptr<ValExpr> test, ptr<ValExpr> body, bool eif, Location loc)
+		: Branch{ loc }, test{ std::move(test) }, body{ std::move(body) }, elsif{ eif } {}
+	Visitor& IfBranch::visit(Visitor& v) {
+		return v;
+	}
+	DEF_PRINTER(IfBranch) {
+		s << std::string(buf, ' ') << context << (elsif ? "ast.Elsif (" : "ast.If (");
+		ValExpr::prettyPrint(s, buf);
 
-	//	size_t cnt = 0;
-	//	for (auto& branch : if_branches) {
-	//		branch.first->prettyPrint(s << '\n', buf + 2, cnt++ ? "elsif=" : "if=");
-	//		branch.second->prettyPrint(s << '\n', buf + 4, "body=");
-	//	}
+		test->prettyPrint(s << '\n', buf + 2, "test=");
+		return body->prettyPrint(s << '\n', buf + 2, "body=");
+	}
 
-	//	if (else_branch) {
-	//		else_branch->prettyPrint(s << '\n', buf + 2, "else=");
-	//	}
+	IfElse::IfElse(std::deque<ptr<IfBranch>> ifs, ptr<ValExpr> _else, Location loc)
+		: Sequence{ std::move(ifs), loc }, _else_{ std::move(_else) } {}
+	Visitor& IfElse::visit(Visitor& v) {
+		// v.acceptIfElse(*this);
+		return v;
+	}
+	DEF_PRINTER(IfElse) {
+		s << std::string(buf, ' ') << context << "ast.Branch (";
+		ValExpr::prettyPrint(s, buf);
 
-	//	return s;
-	//}
+		for (auto&& _if_ : elems) {
+			_if_->prettyPrint(s << '\n', buf + 2);
+		}
+
+		if (_else_) {
+			_else_->prettyPrint(s << '\n', buf + 2, "else=");
+		}
+
+		return s;
+	}
 
 	Case::Case(ptr<TuplePattern> vs, ptr<ValExpr> if_g, ptr<ValExpr> e, Location loc)
 		: ValExpr{ loc }, vars{ std::move(vs) }, expr{ std::move(e) }, if_guard{ std::move(if_g) } {}
@@ -612,7 +703,7 @@ namespace spero::compiler::ast {
 
 
 	//
-	// STMTS
+	// EXPRESSIONS
 	//
 
 	/*BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, std::string op, Location loc)
@@ -630,6 +721,40 @@ namespace spero::compiler::ast {
 		ValExpr::prettyPrint(s << ", ", buf);
 		lhs->prettyPrint(s << '\n', buf + 2, "lhs=");
 		return rhs->prettyPrint(s << '\n', buf + 2, "rhs=");
+	}
+
+
+	//
+	// STMTS
+	//
+
+	ModDec::ModDec(ptr<QualifiedBinding> v, Location loc) : Statement{ loc }, module{ std::move(v) } {}
+	Visitor& ModDec::visit(Visitor& v) {
+		//v.acceptModDec(*this);
+		return v;
+	}
+	DEF_PRINTER(ModDec) {
+		s << std::string(buf, ' ') << context << "ast.ModuleDec (module=";
+		module->prettyPrint(s, 0) << ')';
+		return Statement::prettyPrint(s, buf + 2);
+	}
+
+	ImplExpr::ImplExpr(ptr<SourceType> t, ptr<SourceType> inter, ptr<Block> b, Location loc)
+		: Statement{ loc }, type{ std::move(t) }, _interface{ std::move(inter) }, impls { std::move(b) } {}
+	Visitor& ImplExpr::visit(Visitor& v) {
+		//v.acceptImplExpr(*this);
+		return v;
+	}
+	DEF_PRINTER(ImplExpr) {
+		s << std::string(buf, ' ') << context << "ast.ImplExpr\n";
+		_interface->prettyPrint(s, buf + 2, "type=");
+		if (type) {
+			type->prettyPrint(s << '\n', buf + 2, "for=");
+		}
+		if (impls) {
+			impls->prettyPrint(s << '\n', buf + 2, "impl=");
+		}
+		return Statement::prettyPrint(s, buf + 2);
 	}
 
 }
