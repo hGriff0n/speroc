@@ -119,7 +119,6 @@ namespace spero::parser::grammar {
 	struct qualtyp : seq<typ> {};
 	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
 	struct mod_path : plus<one<':'>, not_at<sor<typ_ch, one<':'>>>, var> {};
-	struct _mod_path : plus<var, one<':'>> {};
 	struct varname : seq<var, opt<mod_path>> {};
 	struct typname : seq<opt<varname, one<':'>>, typ> {};
 	struct binding : seq<sor<var, typ>, ig_s> {};
@@ -139,6 +138,7 @@ namespace spero::parser::grammar {
 	struct assign_drop : disable<plambda> {};
 	struct assign_name : sor<var, op> {};
 	struct assign_pat : seq<sor<assign_name, assign_drop, assign_tuple>, ig_s> {};
+	struct assign_typ : seq<typ, ig_s> {};
 
 
 	/*
@@ -253,15 +253,18 @@ namespace spero::parser::grammar {
 	 * Statements
 	 */
 	struct mod_dec : seq<kmod, varname, ign_s, must<sor<endc, eolf>>, ig_s> {};
-	// TODO: Change to my custom error handling
+	    // TODO: Change to my custom error handling
 	struct impleps : seq<eps> {};
 	struct impl : seq<kimpl, single_type, opt<kfor, single_type, impleps>, scope> {};
-	struct mul_imp : sequence<obrace, binding, cbrace> {};
-	struct alias : seq<opt<_array>, kas, binding, opt<_array>> {};
-	struct imp_alias : seq<binding, opt<alias>> {};
-	struct mod_alias : seq<kuse, opt<_mod_path>, sor<mul_imp, imp_alias>> {};
-	struct type_assign : seq<typ, ig_s, opt<_generic>, equals, sor<adt_dec, arg_tuple, eps>, scope> {};
-	struct asgn_val : seq<equals, valexpr, opt<kin, mvexpr>> {};
+	struct alieps : seq<eps> {};
+	struct imps : seq<eps> {};
+	struct alias : seq<alieps, opt<_array>, kas, binding, opt<_array>> {};
+	struct imp_alias : seq<opt<one<':'>, typ>, ig_s, opt<alias>> {};
+	struct mul_imp : seq<opt<one<':'>>, sequence<obrace, binding, cbrace>> {};
+	struct mod_alias : seq<kuse, opt<var, sor<mod_path, imps>>, sor<mul_imp, imp_alias>> {};
+	struct type_assign : seq<assign_typ, opt<_generic>, equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, scope> {};
+	struct asgn_in : seq<kin, mvexpr> {};
+	struct asgn_val : seq<equals, valexpr, opt<asgn_in>> {};
 	struct _interface : seq<type_inf, opt<asgn_val>> {};
 	struct var_assign : seq<assign_pat, opt<_generic>, sor<_interface, asgn_val>> {};
 	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};

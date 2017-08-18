@@ -703,19 +703,43 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Represents an Algebraic Data Type constructor
+	 * Ast subtype to annotate a type constructor
+	 *   Currently empty
 	 *
 	 * Extends: Ast
+	 */
+	struct Constructor : Ast {
+		Constructor(Location);
+
+		virtual Visitor& visit(Visitor&) = 0;
+	};
+
+	/*
+	 * Represents an Algebraic Data Type constructor
+	 *
+	 * Extends: Constructor
 	 *
 	 * Exports:
 	 *   name - the type name of the constructor
 	 *   args - the collection of types that the constructor takes
 	 */
-	struct Adt : Ast {
+	struct Adt : Constructor {
 		ptr<BasicBinding> name;
 		ptr<TupleType> args;
 
 		Adt(ptr<BasicBinding>, ptr<TupleType>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Represents a simple argument tuple for a type constructor
+	 *
+	 * Extends: Constructor
+	 */
+	struct ArgTuple : Constructor {
+		ArgTuple(Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -890,36 +914,6 @@ namespace spero::compiler::ast {
 
 
 	//
-	// EXPRESSIONS
-	//
-	// This section represents all the compound statements that produce values
-	//
-
-	/*
-	 * Represent an binary operator call
-	 *
-	 * Extends: ValExpr
-	 *
-	 * Exports:
-	 *   lhs - expression on the lhs of the operation
-	 *   rhs - expression on the rhs of the operation
-	 *   op  - operator that is being invoked
-	 */
-	struct BinOpCall : ValExpr {
-		ptr<ValExpr> lhs;
-		ptr<ValExpr> rhs;
-		ptr<BasicBinding> op;
-		//std::string op;
-
-		//BinOpCall(ptr<ValExpr>, ptr<ValExpr>, std::string, Location);
-		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, ptr<BasicBinding>, Location);
-
-		virtual Visitor& visit(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
-	};
-
-
-	//
 	// STMTS
 	//
 	// This section represents all the compound statements otherwise not declared
@@ -959,6 +953,184 @@ namespace spero::compiler::ast {
 		ptr<Block> impls;
 
 		ImplExpr(ptr<SourceType>, ptr<SourceType>, ptr<Block>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Represents a rebind/import statement
+	 *
+	 * Extends: Statement
+	 */
+	struct ModRebindImport : Statement {
+		ptr<QualifiedBinding> _module;
+
+		ModRebindImport(Location);
+		ModRebindImport(ptr<QualifiedBinding>, Location);
+
+		virtual Visitor& visit(Visitor&) = 0;
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
+	/*
+	 * Import a single binding into the current scope
+	 *
+	 * Extends: ModRebindImport
+	 *
+	 * Exports:
+	 *   imp - the binding that is being imported
+	 */
+	struct SingleImport : ModRebindImport {
+		ptr<BasicBinding> binding;
+
+		SingleImport(ptr<QualifiedBinding>, ptr<BasicBinding>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Import multiple bindings into the current scope
+	 *
+	 * Extends: Sequence<BasicBinding, ModRebindImport>
+	 */
+	struct MultipleImport : Sequence<BasicBinding, ModRebindImport> {
+		MultipleImport(ptr<QualifiedBinding>, std::deque<ptr<BasicBinding>>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Rebind a name in the current scope in some fashion
+	 *
+	 * Extends: ModRebindImport
+	 *
+	 * Exports:
+	 */
+	struct Rebind : ModRebindImport {
+		ptr<BasicBinding> old_name;
+		ptr<Array> old_gen;
+
+		ptr<BasicBinding> new_name;
+		ptr<Array> new_gen;
+
+		Rebind(ptr<QualifiedBinding>, ptr<BasicBinding>, ptr<Array>, ptr<BasicBinding>, ptr<Array>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Base case for handling assignment statements
+	 *   Instance also handles interface specification
+	 *
+	 * Extends: Stmt
+	 *
+	 * Exports:
+	 *   vis - visibility of the created binding
+	 *   name - pattern that represents the binding
+	 *   generics - collection of generic parts for the assignment
+	 *   type - a field holding type information for the interface/assignment
+	 */
+	struct Interface : Statement {
+		VisibilityType vis;
+		ptr<AssignPattern> name;
+		ptr<GenericArray> gen;
+		ptr<Type> type;
+
+		Interface(VisibilityType, ptr<AssignPattern>, ptr<GenericArray>, ptr<Type>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
+	/*
+	 * Instance class for specifically handling type binding
+	 *
+	 * Extends: Interface
+	 *   Uses `type` for inheritance
+	 *
+	 * Exports:
+	 *   cons - list of adt and primary constructors
+	 *   body - type body
+	 */
+	struct TypeAssign : Interface {
+		using ConsList = std::deque<ptr<Constructor>>;
+		ConsList cons;
+		ptr<Block> body;
+		bool mutable_only;
+
+		TypeAssign(VisibilityType, ptr<AssignPattern>, ptr<GenericArray>, bool, ConsList, ptr<Block>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Instance class for handling value assignment to variables and operators
+	 *
+	 * Extends: Interface
+	 *   Uses `type` for static checking
+	 *
+	 * Exports:
+	 *   expr - value to be assigned to the binding
+	 */
+	struct VarAssign : Interface {
+		ptr<ValExpr> expr;
+
+		VarAssign(VisibilityType, ptr<AssignPattern>, ptr<GenericArray>, ptr<Type>, ptr<ValExpr>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+
+	//
+	// EXPRESSIONS
+	//
+	// This section represents all the compound statements that produce values
+	//
+
+	/*
+	 * Represent an binary operator call
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   lhs - expression on the lhs of the operation
+	 *   rhs - expression on the rhs of the operation
+	 *   op  - operator that is being invoked
+	 */
+	struct BinOpCall : ValExpr {
+		ptr<ValExpr> lhs;
+		ptr<ValExpr> rhs;
+		ptr<BasicBinding> op;
+		//std::string op;
+
+		//BinOpCall(ptr<ValExpr>, ptr<ValExpr>, std::string, Location);
+		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, ptr<BasicBinding>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Represents a scoped binding assignment, where a variable is declared for use in
+	 *   a single expression and is only visible within that context
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   bind - the assignment binding the variable to some value
+	 *   expr - the statement in which the binding is visible
+	 */
+	struct InAssign : ValExpr {
+		ptr<VarAssign> bind;
+		ptr<ValExpr> expr;
+
+		InAssign(ptr<VarAssign>, ptr<ValExpr>, Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;

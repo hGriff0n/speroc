@@ -44,8 +44,6 @@ namespace spero::parser::actions {
 	// Keyword Tokens (may remove a couple as it becomes beneficial)
 	//
 	TOKEN(kmut, ast::KeywordType::MUT);
-	TOKEN(kin, ast::KeywordType::F_IN);
-	TOKEN(kuse, ast::KeywordType::USE);
 	TOKEN(klet, ast::VisibilityType::PROTECTED);
 	TOKEN(kdef, ast::VisibilityType::PUBLIC);
 	TOKEN(kstatic, ast::VisibilityType::STATIC);
@@ -148,7 +146,6 @@ namespace spero::parser::actions {
 		util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(part));
 		// stack: QualifiedBinding
 	} END;
-	INHERIT(_mod_path, mod_path);
 	RULE(qualtyp) {
 		// stack: (QualifiedBinding | BasicBinding)? BasicBinding
 		auto typ = POP(BasicBinding);
@@ -241,8 +238,7 @@ namespace spero::parser::actions {
 		PUSH(AssignTuple, std::move(pats));
 		// stack: AssignTuple
 	} END;
-	// assign_tuple
-	// assign_pat
+	INHERIT(assign_typ, assign_name);
 
 
 	//
@@ -396,10 +392,8 @@ namespace spero::parser::actions {
 		PUSH(Adt, POP(BasicBinding), std::move(typ_args));
 		// stack: adt
 	} END;
-	// adt_dec
 	// arg
 	// arg_tuple
-	// anon_type
 
 
 	//
@@ -511,6 +505,7 @@ namespace spero::parser::actions {
 	// type_const
 	// named
 	// valcall
+	// anon_type
 	// fncall (X)
 	// index_cont
 	// unexpr
@@ -536,15 +531,118 @@ namespace spero::parser::actions {
 		PUSH(ImplExpr, std::move(for_type), POP(SourceType), std::move(block));
 		// stack: impl
 	} END;
-	// mul_imp
-	// alias
-	// imp_alias
-	// mod_alias
-	// type_assign
-	// asn_val
-	// _interface
-	// var_assign
-	// assign
+	RULE(mul_imp) {
+		// stack: qualbind {} bind*
+		auto bindings = util::popSeq<ast::BasicBinding>(s);
+		s.pop_back();
+		PUSH(MultipleImport, POP(QualifiedBinding), std::move(bindings));
+		// stack: MultipleImport
+	} END;
+	RULE(alieps) {
+		// stack: qualbind bind?
+		auto bind = POP(BasicBinding);
+
+		// If 'bind' is a var, then mod_path/imps gobbles it into the qualified binding
+		// This restores the division to match our expected/desired behavior
+		if (!bind) {
+			auto mod = POP(QualifiedBinding);
+			bind = std::move(mod->elems.back());
+			mod->elems.pop_back();
+
+			if (mod->elems.size() == 0) { mod = nullptr; }
+			s.emplace_back(std::move(mod));
+		}
+
+		s.emplace_back(std::move(bind));
+		// stack: (qualbind | {}) bind
+	} END;
+	RULE(alias) {
+		// stack: (qualbind | {}) bind? array? bind array??
+		auto narr = POP(Array);
+		auto nbind = POP(BasicBinding);
+		auto arr = POP(Array);
+		auto bind = POP(BasicBinding);
+		auto mod = POP(QualifiedBinding);
+
+		// If 'alieps' pushed a nullptr on the stack
+		if (!mod) { s.pop_back(); }
+
+		PUSH(Rebind, std::move(mod), std::move(bind), std::move(arr), std::move(nbind), std::move(narr));
+		// stack: Rebind
+	} END;
+	RULE(imps) {
+		PUSH(QualifiedBinding, POP(BasicBinding));
+	} END;
+	RULE(imp_alias) {
+		// stack: (qualbind basicbind?) | rebind
+		if (!util::at_node<ast::Rebind>(s)) {
+			auto typ = POP(BasicBinding);
+			auto mod = POP(QualifiedBinding);
+
+			if (!typ && mod->elems.size()) {
+				// If 'bind' is a var, then mod_path/imps gobbles it into the qualified binding
+				// This restores the division to match our expected/desired behavior
+				auto bind = std::move(mod->elems.back());
+
+				mod->elems.pop_back();
+				if (mod->elems.size() == 0) {
+					mod = nullptr;
+				}
+
+				PUSH(SingleImport, std::move(mod), std::move(bind));
+			} else {
+				PUSH(SingleImport, std::move(mod), std::move(typ));
+			}
+		}
+		// stack: singleimport | rebind
+	} END;
+	RULE(type_assign) {
+		// stack: vis pat gen? "mut"? cons* scope
+		auto body = POP(Block);
+		auto cons = util::popSeq<ast::Constructor>(s);
+		auto mut = POP(Token) != nullptr;
+		auto gen = POP(GenericArray);
+		auto pat = POP(AssignPattern);
+
+		PUSH(TypeAssign,
+			POP(Token)->get<ast::VisibilityType>(),
+			std::move(pat), std::move(gen), mut,
+			std::move(cons), std::move(body));
+		// stack: TypeAssign
+	} END;
+	RULE(asgn_val) {
+		// stack: (vis pat gen? type? val) | in
+		if (!util::at_node<ast::InAssign>(s)) {
+			auto val = POP(ValExpr);
+			auto typ = POP(Type);
+			auto gen = POP(GenericArray);
+			auto pat = POP(AssignPattern);
+			PUSH(VarAssign,
+				POP(Token)->get<ast::VisibilityType>(),
+				std::move(pat), std::move(gen),
+				std::move(typ), std::move(val));
+		}
+		// stack: VarAssign | in
+	} END;
+	RULE(asgn_in) {
+		// stack: vis pat gen? type? val expr
+		auto context = POP(ValExpr);
+		action<grammar::asgn_val>::apply(in, s);
+		PUSH(InAssign, POP(VarAssign), std::move(context));
+		// stack: InAssign
+	} END;
+	RULE(_interface) {
+		// stack: (vis pat gen? type) | varasgn
+		if (!util::at_node<ast::VarAssign>(s)) {
+			auto typ = POP(Type);
+			auto gen = POP(GenericArray);
+			auto pat = POP(AssignPattern);
+			PUSH(Interface,
+				POP(Token)->get<ast::VisibilityType>(),
+				std::move(pat), std::move(gen), std::move(typ));
+		}
+		// stack: Interface | VarAssign
+	} END;
 
 
 	// Binexpr Precedence

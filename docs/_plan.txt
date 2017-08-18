@@ -44,11 +44,16 @@ Current Project Plan
 	  NOTE: This would also allow for going back to the '@<var>!' syntax for global annotations
     Look into whether I can force the ptr styling to be attached to the type or not
 	Update codebase to VS 15.3 capabilities
+          "if (auto a = ...; ...)"
+          "[[maybe_unused]]"/"[[no_discard]]"
+          "auto [a, b] = ..."
+          "if constexpr"
 	Look into allowing "mut let i = 4 in i * 2"
 	  This can be gotten around with "mut {let i = 4 in i * 2}"
 	Look into moving 'mod_dec/impl' down to the statement level
 	  Their ast types inherit from Stmt
 	Figure out how generic parameters are being introduced/constrained in "impl"
+	Look at adding in a 'parser' action to separate out the qualified binding in var case of imp_alias
   Add error/exception handling and reporting
 	Adapt the parser and grammar to report errors
 	  Look into utilising the 'raise'/'try_catch'/'try_catch_type' rules to add in error handling
