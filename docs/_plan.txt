@@ -19,12 +19,10 @@ Current Project Plan
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
 	Start developing the actions/ast hook-ins
-	  Fix the issues with binary expressions
-	    the "disallow =>" changes completely screwed up the grammar there
 	  Attach 'instance' args to the variable class, not the fncall class
 	    Adjust the ast/actions/grammar accordingly
       Convert the rest of the files to using the new grammar once this is done
-      Change the names from "_X" to "X"
+        Change the names from "_X" to "X"
 	  Look into converting some "Xeps" rules to an explicit call within the construction
 	Reorganize this plan list to determine what to focus on
 	  There's a lot of stuff that's basically "I need to add new syntax"

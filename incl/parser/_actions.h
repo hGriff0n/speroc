@@ -17,6 +17,8 @@
 #define END }
 #define MAKE(Node, ...) std::make_unique<ast::Node>(__VA_ARGS__, in.position())
 #define PUSH(Node, ...) s.emplace_back(MAKE(Node, __VA_ARGS__))
+#define MAKE_NODE(Node) std::make_unique<ast::Node>(in.position())
+#define PUSH_NODE(Node) s.emplace_back(MAKE_NODE(Node))
 #define POP(Node) util::pop<ast::Node>(s)
 #define INHERIT(gram, base) template<> struct action<grammar::gram> : action<grammar::base> {}
 
@@ -221,7 +223,7 @@ namespace spero::parser::actions {
 		// stack: pattern
 	} END;
 	RULE(pat_any) {
-		s.emplace_back(std::make_unique<ast::Pattern>(in.position()));
+		PUSH_NODE(Pattern);
 	} END;
 	RULE(pat_lit) {
 		PUSH(ValPattern, POP(ValExpr));
@@ -232,7 +234,7 @@ namespace spero::parser::actions {
 		// stack: AssignName
 	} END;
 	RULE(assign_drop) {
-		s.emplace_back(std::make_unique<ast::AssignPattern>(in.position()));
+		PUSH_NODE(AssignPattern);
 	} END;
 	RULE(assign_tuple) {
 		// stack: {} asgn_pat*
@@ -461,14 +463,9 @@ namespace spero::parser::actions {
 		// stack: <T> pattern
 	} END;
 	RULE(_case) {
-		// stack: pattern ("if" valexpr)? body
+		// stack: pattern valexpr? body
 		auto expr = POP(ValExpr);
 		auto if_guard = POP(ValExpr);
-		
-		if (if_guard) {
-			POP(Token);
-		}
-
 		PUSH(Case, POP(TuplePattern), std::move(if_guard), std::move(expr));
 		// stack: case
 	} END;

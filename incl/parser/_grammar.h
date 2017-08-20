@@ -124,7 +124,8 @@ namespace spero::parser::grammar {
 	struct binding : seq<sor<var, typ>, ig_s> {};
 	struct unop : one_of<'!', '-', '~'> {};
 	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
-	struct binop : seq<opt<sor<pstr("->"), one<'!'>, pstr("=>")>>, plus<binop_ch>> {};
+	struct binop :
+		if_then_else<sor<pstr("->"), pstr("=>")>, failure, seq<opt<one<'!'>>, plus<binop_ch>>> {};
 	struct op : disable<sor<binop, unop>> {};
 	struct pat_tuple : opt_sequence<oparen, pattern, cparen> {};
 	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
@@ -242,7 +243,7 @@ namespace spero::parser::grammar {
 	 */
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
 	struct type_var : seq<opt<one<':'>>, typ, ig_s> {};
-	struct op_var : sor<seq<binop, ig_s>, varname> {};
+	struct op_var : seq<sor<binop, varname>, ig_s> {};
 	struct actcall : enable<sor<seq<_array, opt<tuple>>, tuple>> {};
 	struct type_const : seq<type_var, opt<disable<actcall>, opt<anon_type>>> {};
 	struct var_val : sor<seq<op_var, opt<type_const>>, type_const> {};
@@ -282,10 +283,9 @@ namespace spero::parser::grammar {
 	struct binary_prec0 : seq<unexpr> {};
 	DEFINE_BINPREC_LEVEL_OP(1, 0, '&', '$', '?', '\\');
 	DEFINE_BINPREC_LEVEL_OP(2, 1, '/', '%', '*');
-	struct binary_opch3 : _sor<seq<pstr("->"), binop_ch>, '+', '-'> {};
+	struct binary_opch3 : sor<one<'+'>, if_then_else<pstr("->"), failure, one<'-'>>> {};
 	DEFINE_BINPREC_LEVEL(3, 2);
-	struct binary_opch4 : sor<seq<one<'!'>, binop_ch>,
-		if_then_else<seq<pstr("=>"), not_at<binop_ch>>, failure, one<'='>>> {};
+	struct binary_opch4 : sor<seq<one<'!'>, binop_ch>, if_then_else<pstr("=>"), failure, one<'='>>> {};
 	DEFINE_BINPREC_LEVEL(4, 3);
 	DEFINE_BINPREC_LEVEL_OP(5, 4, '<', '>');
 	DEFINE_BINPREC_LEVEL_OP(6, 5, '^');
