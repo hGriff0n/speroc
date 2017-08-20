@@ -242,12 +242,12 @@ namespace spero::parser::grammar {
 	 * Expressions
 	 */
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
-	struct type_var : seq<opt<one<':'>>, typ, ig_s> {};
+	struct type_var : seq<opt<one<':'>>, typ, ig_s, opt<_array>> {};
 	struct op_var : seq<sor<binop, varname>, ig_s> {};
-	struct actcall : enable<sor<seq<_array, opt<tuple>>, tuple>> {};
-	struct type_const : seq<type_var, opt<disable<actcall>, opt<anon_type>>> {};
-	struct var_val : sor<seq<op_var, opt<type_const>>, type_const> {};
-	struct fncall : seq<sor<atom, var_val>, star<actcall>> {};
+	struct call : enable<tuple> {};
+	struct type_const : seq<type_var, opt<disable<call>, opt<anon_type>>> {};
+	struct var_val : sor<seq<op_var, sor<type_const, _array, eps>>, type_const> {};
+	struct fncall : seq<sor<atom, var_val>, star<call>> {};
 	struct indexeps : seq<eps> {};
 	struct index_cont : seq<indexeps, fncall, star<dot, fncall>> {};
 	struct index : seq<fncall, opt<dot, sor<dot_ctrl, index_cont>>> {};

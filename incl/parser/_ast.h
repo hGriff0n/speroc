@@ -1142,11 +1142,13 @@ namespace spero::compiler::ast {
 	 *
 	 * Exports:
 	 *   name - qualified binding that represents the variable
+	 *   inst_args - generic instantiation argument array
 	 */
 	struct Variable : ValExpr {
 		ptr<QualifiedBinding> name;
+		ptr<Array> inst_args;
 
-		Variable(ptr<QualifiedBinding>, Location);
+		Variable(ptr<QualifiedBinding>, ptr<Array>, Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1242,9 +1244,8 @@ namespace spero::compiler::ast {
 	struct FnCall : ValExpr {
 		ptr<ValExpr> callee;
 		ptr<Tuple> arguments;
-		ptr<Array> instance;
 
-		FnCall(ptr<ValExpr>, ptr<Array>, ptr<Tuple>, Location);
+		FnCall(ptr<ValExpr>, ptr<Tuple>, Location);
 
 
 		virtual Visitor& visit(Visitor&);

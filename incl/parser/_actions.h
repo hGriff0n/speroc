@@ -515,46 +515,55 @@ namespace spero::parser::actions {
 	//
 	// Expressions
 	//
-	RULE(actcall) {
-		// stack: expr array? tup?
+	RULE(call) {
+		// stack: expr tup
 		auto tup = POP(Tuple);
-		auto arr = POP(Array);
-		PUSH(FnCall, POP(ValExpr), std::move(arr), std::move(tup));
+		PUSH(FnCall, POP(ValExpr), std::move(tup));
 		// stack: fncall
 	} END;
 	RULE(op_var) {
 		// stack: basicbind | qualbind
 		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(Variable, MAKE(QualifiedBinding, POP(BasicBinding)));
+			PUSH(Variable, MAKE(QualifiedBinding, POP(BasicBinding)), nullptr);
 		} else {
-			PUSH(Variable, POP(QualifiedBinding));
+			PUSH(Variable, POP(QualifiedBinding), nullptr);
 		}
 		// stack: variable
 	} END;
 	RULE(type_var) {
-		// stack: variable? bind
+		// stack: variable? bind array?
+		auto inst = POP(Array);
 		auto typ = POP(BasicBinding);
-		
+
 		if (util::at_node<ast::Variable>(s)) {
-			util::view_as<ast::Variable>(s.back())->name->elems.emplace_back(std::move(typ));
+			auto* var = util::view_as<ast::Variable>(s.back());
+			var->name->elems.emplace_back(std::move(typ));
+			var->inst_args = std::move(inst);
 		} else {
-			PUSH(Variable, MAKE(QualifiedBinding, std::move(typ)));
+			PUSH(Variable, MAKE(QualifiedBinding, std::move(typ)), std::move(inst));
 		}
 		// stack: variable
 	} END;
 	RULE(type_const) {
-		// stack: variable array? tuple? block?
+		// stack: variable tuple? block?
 		auto body = POP(Block);
 		auto args = POP(Tuple);
-		auto inst = POP(Array);
 
 		if (body) {
 			auto var = POP(Variable);
-			 PUSH(TypeExtension, std::move(var->name), std::move(inst), std::move(args), std::move(body));
-		} else if (args || inst) {
-			PUSH(FnCall, POP(Variable), std::move(inst), std::move(args));
+			 PUSH(TypeExtension, std::move(var->name), std::move(var->inst_args), std::move(args), std::move(body));
+		} else if (args) {
+			PUSH(FnCall, POP(Variable),std::move(args));
 		}
 		// stack: FnCall | Var | TypeExt
+	} END;
+	RULE(var_val) {
+		// stack: variable array?
+		auto inst = POP(Array);
+		if (inst) {
+			util::view_as<ast::Variable>(s.back())->inst_args = std::move(inst);
+		}
+		// stack: variable
 	} END;
 
 	RULE(indexeps) {

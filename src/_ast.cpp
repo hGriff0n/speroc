@@ -747,7 +747,7 @@ namespace spero::compiler::ast {
 	}
 
 	ImplExpr::ImplExpr(ptr<SourceType> t, ptr<SourceType> inter, ptr<Block> b, Location loc)
-		: Statement{ loc }, type{ std::move(t) }, _interface{ std::move(inter) }, impls { std::move(b) } {}
+		: Statement{ loc }, type{ std::move(t) }, _interface{ std::move(inter) }, impls{ std::move(b) } {}
 	Visitor& ImplExpr::visit(Visitor& v) {
 		//v.acceptImplExpr(*this);
 		return v;
@@ -792,7 +792,7 @@ namespace spero::compiler::ast {
 
 	MultipleImport::MultipleImport(ptr<QualifiedBinding> mod, std::deque<ptr<BasicBinding>> names, Location loc)
 		: Sequence{ std::move(names), loc } {
-			_module = std::move(mod);
+		_module = std::move(mod);
 	}
 	Visitor& MultipleImport::visit(Visitor& v) {
 		return v;
@@ -803,7 +803,7 @@ namespace spero::compiler::ast {
 		ModRebindImport::prettyPrint(s << '\n', buf + 2, "from=");
 
 		s << '\n' << std::string(buf + 2, ' ') << "import= {";
-		
+
 		for (auto&& name : elems) {
 			name->prettyPrint(s << '\n', buf + 4);
 		}
@@ -928,7 +928,8 @@ namespace spero::compiler::ast {
 	//
 	// EXPRESSIONS
 	//
-	Variable::Variable(ptr<QualifiedBinding> n, Location loc) : ValExpr{ loc }, name{ std::move(n) } {}
+	Variable::Variable(ptr<QualifiedBinding> n, ptr<Array> i, Location loc)
+		: ValExpr{ loc }, name{ std::move(n) }, inst_args{ std::move(i) } {}
 	Visitor& Variable::visit(Visitor& v) {
 		//v.acceptVariable(*this);
 		return v;
@@ -936,7 +937,13 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(Variable) {
 		s << std::string(buf, ' ') << context << "ast.Variable (";
 		ValExpr::prettyPrint(s, buf);
-		return name->prettyPrint(s << "\n", buf + 2, "name=");
+		name->prettyPrint(s << "\n", buf + 2, "name=");
+
+		if (inst_args) {
+			inst_args->prettyPrint(s << '\n', buf + 2, "inst=");
+		}
+
+		return s;
 	}
 
 	/*UnOpCall::UnOpCall(ptr<ValExpr> e, std::string op, Location loc)
@@ -973,7 +980,7 @@ namespace spero::compiler::ast {
 	}
 
 	InAssign::InAssign(ptr<VarAssign> v, ptr<ValExpr> e, Location loc)
-		: ValExpr{ loc }, bind{ std::move(v) }, expr { std::move(e) } {}
+		: ValExpr{ loc }, bind{ std::move(v) }, expr{ std::move(e) } {}
 	Visitor& InAssign::visit(Visitor& v) {
 		//v.acceptInAssign(*this);
 		return v;
@@ -1001,23 +1008,20 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	FnCall::FnCall(ptr<ValExpr> c, ptr<Array> i, ptr<Tuple> a, Location loc)
-		: ValExpr{ loc }, callee{ std::move(c) }, arguments{ std::move(a) }, instance{ std::move(i) } {}
+	FnCall::FnCall(ptr<ValExpr> c, ptr<Tuple> a, Location loc)
+		: ValExpr{ loc }, callee{ std::move(c) }, arguments{ std::move(a) } {}
 	Visitor& FnCall::visit(Visitor& v) {
 		//v.acceptFnCall(*this);
 		return v;
 	}
 	DEF_PRINTER(FnCall) {
 		s << std::string(buf, ' ') << context << "ast.FnCall (args="
-			<< (bool)arguments << ", inst=" << (bool)instance << ", ";
+			<< (bool)arguments;
 		ValExpr::prettyPrint(s, buf) << '\n';
 		callee->prettyPrint(s, buf + 2, "caller=");
 
 		if (arguments) {
 			arguments->prettyPrint(s << '\n', buf + 2, "args=");
-		}
-		if (instance) {
-			instance->prettyPrint(s << '\n', buf + 2, "inst=");
 		}
 		return s;
 	}
