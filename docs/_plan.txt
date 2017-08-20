@@ -19,6 +19,8 @@ Current Project Plan
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
 	Start developing the actions/ast hook-ins
+	  Fix the issues with binary expressions
+	    the "disallow =>" changes completely screwed up the grammar there
 	  Attach 'instance' args to the variable class, not the fncall class
 	    Adjust the ast/actions/grammar accordingly
       Convert the rest of the files to using the new grammar once this is done
@@ -28,18 +30,10 @@ Current Project Plan
 	  There's a lot of stuff that's basically "I need to add new syntax"
 	  Make sure that documentation is up-to-date
 	  Also rearange all the new files to minimize forward declarations/unnatural ordering
-	  Look into adding "MAKE" macro command (like push, but just 'std::make_unique')
-	    "#define MAKE(Node, ...) std::make_unique<ast::Node>(__VA_ARGS__, in.position())"
-		"#define PUSH(Node, ...) s.emplace_back(MAKE(Node, __VA_ARGS__))"
 	Look into allowing generics to be assigned a default value
 	  The old grammar had this for value generics (forgot about it)
 	Adjust grammar to allow for "Foo:Type" chains (mod_path is too restrictive)
 	Go through the ast files and make sure documentation/pretty-printing are up-to-date
-	Fix errors with the grammar/assembly
-	  "a,b if a == b => 3" doesn't parse as Binop{a, b, ==} (Binexpr is messed up)
-	    "a, b if a > b => 3" doesn't parse as Binop{a, b, >} either
-		"a == b" fails during pretty printing
-		"a + b" fails during pretty printing
 	Add in syntax error checking/handling
 	  Figure out how I want this to go
 	  Adapt rules/grammar to add in these handling

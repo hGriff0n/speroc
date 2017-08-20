@@ -241,17 +241,17 @@ namespace spero::parser::grammar {
 	 * Expressions
 	 */
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
-
-	struct actcall : sor<seq<_array, opt<tuple>>, tuple> {};
-	struct type_const : seq<qualtyp, ig_s, opt<actcall, opt<anon_type>>> {};
-	struct named : seq<sor<type_const, seq<varname, opt<one<':'>, type_const>>>, ig_s> {};
-	struct valcall : sor<atom, seq<binop, ig_s>, seq<unop, ig_s, tuple>> {};
-	struct fncall : seq<sor<valcall, named>, star<actcall>> {};
-	struct index_cont : seq<fncall, star<dot, fncall>> {};
+	struct type_var : seq<opt<one<':'>>, typ, ig_s> {};
+	struct op_var : sor<seq<binop, ig_s>, varname> {};
+	struct actcall : enable<sor<seq<_array, opt<tuple>>, tuple>> {};
+	struct type_const : seq<type_var, opt<disable<actcall>, opt<anon_type>>> {};
+	struct var_val : sor<seq<op_var, opt<type_const>>, type_const> {};
+	struct fncall : seq<sor<atom, var_val>, star<actcall>> {};
 	struct indexeps : seq<eps> {};
 	struct index_cont : seq<indexeps, fncall, star<dot, fncall>> {};
 	struct index : seq<fncall, opt<dot, sor<dot_ctrl, index_cont>>> {};
-	struct unexpr : seq<opt<unop>, index> {};
+	struct unopcall : seq<unop, index> {};
+	struct unexpr : sor<unopcall, index> {};
 
 
 	/*

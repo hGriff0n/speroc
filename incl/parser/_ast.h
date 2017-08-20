@@ -1105,12 +1105,52 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
+	/*
+	 * Represents an anonymous type extension
+	 *
+	 * Extends: Statement
+	 *
+	 * Exports:
+	 *   typ_name - type being extended
+	 *   gen - generic instance arguments for the extended type
+	 *   args - arguments for the extended type's constructor
+	 *   ext - extension block
+	 */
+	struct TypeExtension : ValExpr {
+		ptr<QualifiedBinding> typ_name;
+		ptr<Array> gen;
+		ptr<Tuple> args;
+		ptr<Block> ext;
+
+		TypeExtension(ptr<QualifiedBinding>, ptr<Array>, ptr<Tuple>, ptr<Block>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
 
 	//
 	// EXPRESSIONS
 	//
 	// This section represents all the compound statements that produce values
 	//
+
+	/*
+	 * Basic class that represents a variable name
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   name - qualified binding that represents the variable
+	 */
+	struct Variable : ValExpr {
+		ptr<QualifiedBinding> name;
+
+		Variable(ptr<QualifiedBinding>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
 
 	/*
 	 * Represents an unary operator call
@@ -1188,4 +1228,27 @@ namespace spero::compiler::ast {
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
+
+	/*
+	 * Represents a complete step of fuction sequencing
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   callee - expression that applies the function sequence
+	 *   arguments   - argument tuple section
+	 *   instance   - generic instantiation section
+	 */
+	struct FnCall : ValExpr {
+		ptr<ValExpr> callee;
+		ptr<Tuple> arguments;
+		ptr<Array> instance;
+
+		FnCall(ptr<ValExpr>, ptr<Array>, ptr<Tuple>, Location);
+
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
 }

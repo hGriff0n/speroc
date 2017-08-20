@@ -904,10 +904,40 @@ namespace spero::compiler::ast {
 		return expr->prettyPrint(s << '\n', buf + 2, "value=");
 	}
 
+	TypeExtension::TypeExtension(ptr<QualifiedBinding> t, ptr<Array> g, ptr<Tuple> a, ptr<Block> e, Location loc)
+		: ValExpr{ loc }, typ_name{ std::move(t) }, gen{ std::move(g) }, args{ std::move(a) }, ext{ std::move(e) } {}
+	Visitor& TypeExtension::visit(Visitor& v) {
+		//v.acceptTypeExtension(*this);
+		return v;
+	}
+	DEF_PRINTER(TypeExtension) {
+		s << std::string(buf, ' ') << context << "ast.AnonymousType";
+		typ_name->prettyPrint(s << '\n', buf + 2, "extend=");
+
+		if (gen) {
+			gen->prettyPrint(s << '\n', buf + 4);
+		}
+		if (args) {
+			args->prettyPrint(s << '\n', buf + 4);
+		}
+
+		return ext->prettyPrint(s << '\n', buf + 2, "with=");
+	}
+
 
 	//
 	// EXPRESSIONS
 	//
+	Variable::Variable(ptr<QualifiedBinding> n, Location loc) : ValExpr{ loc }, name{ std::move(n) } {}
+	Visitor& Variable::visit(Visitor& v) {
+		//v.acceptVariable(*this);
+		return v;
+	}
+	DEF_PRINTER(Variable) {
+		s << std::string(buf, ' ') << context << "ast.Variable (";
+		ValExpr::prettyPrint(s, buf);
+		return name->prettyPrint(s << "\n", buf + 2, "name=");
+	}
 
 	/*UnOpCall::UnOpCall(ptr<ValExpr> e, std::string op, Location loc)
 		: ValExpr{ loc }, expr{ std::move(e) }, rhs{ std::move(rhs) }, op{ op } {}*/
@@ -968,6 +998,27 @@ namespace spero::compiler::ast {
 			e->prettyPrint(s << '\n', buf + 2, "idx=");
 		}
 
+		return s;
+	}
+
+	FnCall::FnCall(ptr<ValExpr> c, ptr<Array> i, ptr<Tuple> a, Location loc)
+		: ValExpr{ loc }, callee{ std::move(c) }, arguments{ std::move(a) }, instance{ std::move(i) } {}
+	Visitor& FnCall::visit(Visitor& v) {
+		//v.acceptFnCall(*this);
+		return v;
+	}
+	DEF_PRINTER(FnCall) {
+		s << std::string(buf, ' ') << context << "ast.FnCall (args="
+			<< (bool)arguments << ", inst=" << (bool)instance << ", ";
+		ValExpr::prettyPrint(s, buf) << '\n';
+		callee->prettyPrint(s, buf + 2, "caller=");
+
+		if (arguments) {
+			arguments->prettyPrint(s << '\n', buf + 2, "args=");
+		}
+		if (instance) {
+			instance->prettyPrint(s << '\n', buf + 2, "inst=");
+		}
 		return s;
 	}
 

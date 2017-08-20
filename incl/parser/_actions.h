@@ -15,7 +15,8 @@
 		static void apply(const Input& in, Stack& s)
 // static void apply(const Input& in, Stack& s, CompilationState& state)
 #define END }
-#define PUSH(Node, ...) s.emplace_back(std::make_unique<ast::Node>(__VA_ARGS__, in.position()))
+#define MAKE(Node, ...) std::make_unique<ast::Node>(__VA_ARGS__, in.position())
+#define PUSH(Node, ...) s.emplace_back(MAKE(Node, __VA_ARGS__))
 #define POP(Node) util::pop<ast::Node>(s)
 #define INHERIT(gram, base) template<> struct action<grammar::gram> : action<grammar::base> {}
 
@@ -180,7 +181,7 @@ namespace spero::parser::actions {
 		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
 		s.pop_back();
 
-		PUSH(VarPattern, std::make_unique<ast::QualifiedBinding>(std::move(var), in.position()));
+		PUSH(VarPattern, MAKE(QualifiedBinding, std::move(var)));
 		// stack: pattern
 	} END;
 	RULE(pat_adt) {
@@ -517,12 +518,48 @@ namespace spero::parser::actions {
 	//
 	// Expressions
 	//
-	// actcall
-	// type_const
-	// named
-	// valcall
-	// anon_type
-	// fncall (X)
+	RULE(actcall) {
+		// stack: expr array? tup?
+		auto tup = POP(Tuple);
+		auto arr = POP(Array);
+		PUSH(FnCall, POP(ValExpr), std::move(arr), std::move(tup));
+		// stack: fncall
+	} END;
+	RULE(op_var) {
+		// stack: basicbind | qualbind
+		if (util::at_node<ast::BasicBinding>(s)) {
+			PUSH(Variable, MAKE(QualifiedBinding, POP(BasicBinding)));
+		} else {
+			PUSH(Variable, POP(QualifiedBinding));
+		}
+		// stack: variable
+	} END;
+	RULE(type_var) {
+		// stack: variable? bind
+		auto typ = POP(BasicBinding);
+		
+		if (util::at_node<ast::Variable>(s)) {
+			util::view_as<ast::Variable>(s.back())->name->elems.emplace_back(std::move(typ));
+		} else {
+			PUSH(Variable, MAKE(QualifiedBinding, std::move(typ)));
+		}
+		// stack: variable
+	} END;
+	RULE(type_const) {
+		// stack: variable array? tuple? block?
+		auto body = POP(Block);
+		auto args = POP(Tuple);
+		auto inst = POP(Array);
+
+		if (body) {
+			auto var = POP(Variable);
+			 PUSH(TypeExtension, std::move(var->name), std::move(inst), std::move(args), std::move(body));
+		} else if (args || inst) {
+			PUSH(FnCall, POP(Variable), std::move(inst), std::move(args));
+		}
+		// stack: FnCall | Var | TypeExt
+	} END;
+
 	RULE(indexeps) {
 		// stack: expr
 		s.emplace_back(nullptr);
@@ -536,17 +573,13 @@ namespace spero::parser::actions {
 		PUSH(Index, std::move(exprs));
 		// stack: index
 	} END;
-	RULE(unexpr) {
-		// stack: bind? expr
+	RULE(unopcall) {
+		// stack: bind expr
 		auto expr = POP(ValExpr);
 		auto bind = POP(BasicBinding);
 
-		if (bind) {
-			PUSH(UnOpCall, std::move(expr), std::move(bind));
-		} else {
-			s.emplace_back(std::move(expr));
-		}
-		// stack: unexpr | expr
+		PUSH(UnOpCall, std::move(expr), std::move(bind));
+		// stack: unexpr
 	} END;
 
 
