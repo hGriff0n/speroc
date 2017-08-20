@@ -629,6 +629,10 @@ namespace spero::parser::actions {
 
 			if (mod->elems.size() == 0) { mod = nullptr; }
 			s.emplace_back(std::move(mod));
+
+		// If there is no module on the stack at all, mimic one for `alias`
+		} else if (!util::at_node<ast::QualifiedBinding>(s)) {
+			s.emplace_back(nullptr);
 		}
 
 		s.emplace_back(std::move(bind));

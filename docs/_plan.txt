@@ -18,58 +18,48 @@ Current Project Plan
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
-	Start developing the actions/ast hook-ins
-	  "use Foo[Int] as Foo" causes errors
-	    "use Foo as F" also causes errors
-		"use std:Foo as F" doesn't cause errors
-      Convert the rest of the files to using the new grammar once this is done
-        Change the names from "_X" to "X"
-	  Look into converting some "Xeps" rules to an explicit call within the construction
-	Reorganize this plan list to determine what to focus on
-	  There's a lot of stuff that's basically "I need to add new syntax"
-	  Make sure that documentation is up-to-date
-	  Also rearange all the new files to minimize forward declarations/unnatural ordering
-	Look into allowing generics to be assigned a default value
-	  The old grammar had this for value generics (forgot about it)
-	Adjust grammar to allow for "Foo:Type" chains (mod_path is too restrictive)
-	Go through the ast files and make sure documentation/pretty-printing are up-to-date
-	Add in syntax error checking/handling
-	  Figure out how I want this to go
-	  Adapt rules/grammar to add in these handling
-	Figure out the conditions in which "a :: T" is interpreted as a type-check (as compared to a type annotation)
-	Look at changing function typing to "tuple type_inf lambda"
-	  Might not work because would interfere with tuples being typed
-    Look at modifying the grammar to support anon_type from values
-      Note: This will be useful when I get around to the possible metaprogramming (and passing types as values)
-	Need to enable function forwarding within lambda functions
-	  Or do I? I could use an analysis step to attach the created future to the function arguments
-	  I'm already going to be spending a pass on changing "_" to a function definition, can do both
-	Look at changing the grammar to allow for annotations to be "standalone" (the attaching can be done in analysis)
-	  "@foo(3)" doesn't compile but "@foo (3)" does <- Is this right?
-	  NOTE: This would also allow for going back to the '@<var>!' syntax for global annotations
-    Look into whether I can force the ptr styling to be attached to the type or not
-	Update codebase to VS 15.3 capabilities
-          "if (auto a = ...; ...)"
-          "[[maybe_unused]]"/"[[no_discard]]"
-          "auto [a, b] = ..."
-          "if constexpr"
-	Look into allowing "mut let i = 4 in i * 2"
-	  This can be gotten around with "mut {let i = 4 in i * 2}"
-	Look into moving 'mod_dec/impl' down to the statement level
-	  Their ast types inherit from Stmt
-	Figure out how generic parameters are being introduced/constrained in "impl"
-	Look at adding in a 'parser' action to separate out the qualified binding in var case of imp_alias
-    Look at removing "static" keyword, replacing with "@static" and a <private> marker
+    Import the new parsing system to replace the old ones in the codebase
+	  Change the file names from "_X" to "X"
+	  Rearrange files/structures to minimize forward declarations and unnatural groupings
+	Make some minor improvements to the grammar
+	  Look into moving `mod_dec`/`impl`/ down a level to 'statement'
+        Basically allow for annotations to be attached to them
+	  Double check that ".foo" is allowed within the grammar
+	  Allow for type chains (ie. "std:File:Path"), maybe in mod_path
+	  Look into converting some "*eps" rules to an explicit call in a construction rule
+	  Look at removing "static" keyword and replacing it with '@static' annotation
+        A keyword marker for the '<private>' visibility class could be added
+	Add in syntax error checking and handling
+	  Figure out how I want this to work
+	  Add in ast error classes
+	  Adapt rules/grammar to handle these new capabilities
+	Codebase Updates
+	  Update to VS 15.3 capabilities
+        "if (auto a = ...; ...)"
+        "[[maybe_unused]]"/"[[no_discard]]"
+        "auto [a, b] = ..."
+        "if constexpr"
+      "Const-correct" all variables, arguments, and methods
+      Make sure Spero documentation is up-to-date
+      Make sure documentation of ast nodes is up-to-date and helpful
+	Syntax Improvement Considerations
+	  Look into allowing generics to have default values (old grammar had this for ValueGeneric only)
+	  Look into allowing "mut let i=0 in i" instead of "mut {let i=0 in i}" from `mvexpr`
+	  Look at removing "static" keyword and adding in `<private>` keyword
+	    static would be replaced by the '@static' annotation
+	  Look at modifying the grammar to allow for `anon_type` to be attached to `var_val`/`atom` calls (for metaprogramming)
+	  Look into whether ptr styling can be forced to directly attach to the type
+	Language Considerations
+	  Figure out a way to apply annotations to tuples
+	    Possibly consider not attaching annotations directly at parse time (would allow for "@<var>!" syntax)
+	  Figure out contexts to interpret "a :: T" as a type-check and not an annotation
+	  Write down how function forwarding is going to be determined in lambdas
+	    Utilize the same analysis pass that converts `plambda` to function declaration
+	  Figure out how generic parameters are introduced/constrained in "impl"
   Add error/exception handling and reporting
 	Adapt the parser and grammar to report errors
 	  Look into utilising the 'raise'/'try_catch'/'try_catch_type' rules to add in error handling
 	    A way to get custom error messages is to create custom rules specifically for these cases (that throw the exceptions)
-	  Look into rewriting (and simplifying) the parser to make these transforms more beneficial
-	    Particularly look into forcing closing braces into the same rules (so I can pinpoint where the "open" is at)
-		This should hopefully reduce the amount of backtracking/compilcated paths
-	  Add the ability to perorm generic 'use' rebinding to the new grammar
-	  Adapt the ast and related actions to reflect these changes
-	"Const-correct" all variables, arguments, and methods within the C++ source
 	Move 'compiler' exceptions from log-level to error-level
 	  Add in 'error indices' and automatic message population capbilities
 	Add in 'xor' code to ensure that '%eax' has the correct value after 'set..' is used

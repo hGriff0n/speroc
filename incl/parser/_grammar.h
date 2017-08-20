@@ -265,7 +265,8 @@ namespace spero::parser::grammar {
 	struct alieps : seq<eps> {};
 	struct imps : seq<eps> {};
 	struct alias : seq<alieps, opt<_array>, kas, binding, opt<_array>> {};
-	struct imp_alias : seq<opt<one<':'>, typ>, ig_s, opt<alias>> {};
+	struct imp_type : seq<opt<one<':'>>, typ> {};
+	struct imp_alias : seq<opt<imp_type>, ig_s, opt<alias>> {};
 	struct mul_imp : seq<opt<one<':'>>, sequence<obrace, binding, cbrace>> {};
 	struct mod_alias : seq<kuse, opt<var, sor<mod_path, imps>>, sor<mul_imp, imp_alias>> {};
 	struct type_assign : seq<assign_typ, opt<_generic>, equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, scope> {};
