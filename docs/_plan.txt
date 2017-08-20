@@ -19,6 +19,18 @@ Current Project Plan
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
 	Start developing the actions/ast hook-ins
+	  Attach 'instance' args to the variable class, not the fncall class
+	    Adjust the ast/actions/grammar accordingly
+      Convert the rest of the files to using the new grammar once this is done
+      Change the names from "_X" to "X"
+	  Look into converting some "Xeps" rules to an explicit call within the construction
+	Reorganize this plan list to determine what to focus on
+	  There's a lot of stuff that's basically "I need to add new syntax"
+	  Make sure that documentation is up-to-date
+	  Also rearange all the new files to minimize forward declarations/unnatural ordering
+	  Look into adding "MAKE" macro command (like push, but just 'std::make_unique')
+	    "#define MAKE(Node, ...) std::make_unique<ast::Node>(__VA_ARGS__, in.position())"
+		"#define PUSH(Node, ...) s.emplace_back(MAKE(Node, __VA_ARGS__))"
 	Look into allowing generics to be assigned a default value
 	  The old grammar had this for value generics (forgot about it)
 	Adjust grammar to allow for "Foo:Type" chains (mod_path is too restrictive)
@@ -54,6 +66,7 @@ Current Project Plan
 	  Their ast types inherit from Stmt
 	Figure out how generic parameters are being introduced/constrained in "impl"
 	Look at adding in a 'parser' action to separate out the qualified binding in var case of imp_alias
+    Look at removing "static" keyword, replacing with "@static" and a <private> marker
   Add error/exception handling and reporting
 	Adapt the parser and grammar to report errors
 	  Look into utilising the 'raise'/'try_catch'/'try_catch_type' rules to add in error handling

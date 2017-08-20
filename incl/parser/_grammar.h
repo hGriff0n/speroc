@@ -124,8 +124,8 @@ namespace spero::parser::grammar {
 	struct binding : seq<sor<var, typ>, ig_s> {};
 	struct unop : one_of<'!', '-', '~'> {};
 	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
-	struct binop : seq<opt<_sor<pstr("->"), '!'>>, plus<binop_ch>> {};
-	struct op : sor<binop, unop> {};
+	struct binop : seq<opt<sor<pstr("->"), one<'!'>, pstr("=>")>>, plus<binop_ch>> {};
+	struct op : disable<sor<binop, unop>> {};
 	struct pat_tuple : opt_sequence<oparen, pattern, cparen> {};
 	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
 	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut> {};
@@ -178,7 +178,9 @@ namespace spero::parser::grammar {
 	struct _generic : sequence<obrack, gen_part, cbrack> {};
 	struct adt : seq<typ, opt<tuple_type>, ig_s> {};
 	struct adt_dec : seq<adt, star<bar, adt>> {};
-	struct arg : seq<var, ig_s, opt<type_inf>> {};
+	struct argeps : seq<eps> {};
+	struct arg_inf : seq<pstr("::"), argeps, ig_s, type> {};
+	struct arg : seq<var, ig_s, opt<arg_inf>> {};
 	struct arg_tuple : opt_sequence<oparen, arg, cparen> {};
 	struct anon_type : seq<pstr("::"), ig_s, scope> {};
 
@@ -239,12 +241,15 @@ namespace spero::parser::grammar {
 	 * Expressions
 	 */
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
+
 	struct actcall : sor<seq<_array, opt<tuple>>, tuple> {};
 	struct type_const : seq<qualtyp, ig_s, opt<actcall, opt<anon_type>>> {};
 	struct named : seq<sor<type_const, seq<varname, opt<one<':'>, type_const>>>, ig_s> {};
 	struct valcall : sor<atom, seq<binop, ig_s>, seq<unop, ig_s, tuple>> {};
 	struct fncall : seq<sor<valcall, named>, star<actcall>> {};
 	struct index_cont : seq<fncall, star<dot, fncall>> {};
+	struct indexeps : seq<eps> {};
+	struct index_cont : seq<indexeps, fncall, star<dot, fncall>> {};
 	struct index : seq<fncall, opt<dot, sor<dot_ctrl, index_cont>>> {};
 	struct unexpr : seq<opt<unop>, index> {};
 
@@ -274,7 +279,7 @@ namespace spero::parser::grammar {
 	 * Binary Precedence
 	 *  NOTE: Attach the rules on the "binary_op{n}" structs, not "binary_prec_op{n}"
 	 */
-	struct binary_prec0 : unexpr {};
+	struct binary_prec0 : seq<unexpr> {};
 	DEFINE_BINPREC_LEVEL_OP(1, 0, '&', '$', '?', '\\');
 	DEFINE_BINPREC_LEVEL_OP(2, 1, '/', '%', '*');
 	struct binary_opch3 : _sor<seq<pstr("->"), binop_ch>, '+', '-'> {};
@@ -285,7 +290,7 @@ namespace spero::parser::grammar {
 	DEFINE_BINPREC_LEVEL_OP(5, 4, '<', '>');
 	DEFINE_BINPREC_LEVEL_OP(6, 5, '^');
 	DEFINE_BINPREC_LEVEL_OP(7, 6, '|');
-	struct binexpr : binary_prec7 {};
+	struct binexpr : seq<binary_prec7> {};
 	
 
 	/*

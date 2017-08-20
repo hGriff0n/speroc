@@ -135,6 +135,8 @@ namespace spero::parser::actions {
 	RULE(op) {
 		PUSH(BasicBinding, in.string(), ast::BindingType::OPERATOR);
 	} END;
+	INHERIT(unop, op);
+	INHERIT(binop, op);
 	RULE(mod_path) {
 		// stack: (BasicBinding | QualifiedBinding) BasicBinding
 		auto part = POP(BasicBinding);
@@ -388,12 +390,27 @@ namespace spero::parser::actions {
 	} END;
 	RULE(adt) {
 		// stack: typ type?
-		 auto typ_args = POP(TupleType);
+		auto typ_args = POP(TupleType);
 		PUSH(Adt, POP(BasicBinding), std::move(typ_args));
 		// stack: adt
 	} END;
-	// arg
-	// arg_tuple
+	SENTINEL(argeps);
+	RULE(arg) {
+		// stack: bind type?
+		auto typ = POP(Type);
+		if (typ) {
+			s.pop_back();
+		}
+		PUSH(Argument, POP(BasicBinding), std::move(typ));
+		// stack: arg
+	} END;
+	RULE(arg_tuple) {
+		// stack: {} arg*
+		auto args = util::popSeq<ast::Argument>(s);
+		s.pop_back();
+		PUSH(ArgTuple, std::move(args));
+		// stack: argtuple
+	} END;
 
 
 	//
@@ -500,15 +517,37 @@ namespace spero::parser::actions {
 	//
 	// Expressions
 	//
-	// in_assign
 	// actcall
 	// type_const
 	// named
 	// valcall
 	// anon_type
 	// fncall (X)
-	// index_cont
-	// unexpr
+	RULE(indexeps) {
+		// stack: expr
+		s.emplace_back(nullptr);
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+		// stack: {} expr
+	} END;
+	RULE(index_cont) {
+		// stack: {} expr*
+		auto exprs = util::popSeq<ast::ValExpr>(s);
+		s.pop_back();
+		PUSH(Index, std::move(exprs));
+		// stack: index
+	} END;
+	RULE(unexpr) {
+		// stack: bind? expr
+		auto expr = POP(ValExpr);
+		auto bind = POP(BasicBinding);
+
+		if (bind) {
+			PUSH(UnOpCall, std::move(expr), std::move(bind));
+		} else {
+			s.emplace_back(std::move(expr));
+		}
+		// stack: unexpr | expr
+	} END;
 
 
 	//
@@ -624,13 +663,14 @@ namespace spero::parser::actions {
 		}
 		// stack: VarAssign | in
 	} END;
-	RULE(asgn_in) {
+	RULE(in_assign) {
 		// stack: vis pat gen? type? val expr
 		auto context = POP(ValExpr);
 		action<grammar::asgn_val>::apply(in, s);
 		PUSH(InAssign, POP(VarAssign), std::move(context));
 		// stack: InAssign
 	} END;
+	INHERIT(asgn_in, in_assign);
 	RULE(_interface) {
 		// stack: (vis pat gen? type) | varasgn
 		if (!util::at_node<ast::VarAssign>(s)) {

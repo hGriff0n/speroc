@@ -569,12 +569,31 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	ArgTuple::ArgTuple(Location loc) : Constructor{ loc } {}
+	Argument::Argument(ptr<BasicBinding> b, ptr<Type> t, Location loc)
+		: Ast{ loc }, name{ std::move(b) }, typ{ std::move(t) } {}
+	Visitor& Argument::visit(Visitor& v) {
+		return v;
+	}
+	DEF_PRINTER(Argument) {
+		s << std::string(buf, ' ') << context << "ast.Arg (name=";
+		name->prettyPrint(s, 0) << ")";
+
+		if (typ) {
+			typ->prettyPrint(s << '\n', buf + 2, "type=");
+		}
+		return s;
+	}
+
+	ArgTuple::ArgTuple(std::deque<ptr<Argument>> args, Location loc) : Sequence{ std::move(args), loc } {}
 	Visitor& ArgTuple::visit(Visitor& v) {
 		return v;
 	}
 	DEF_PRINTER(ArgTuple) {
-		return s << "TODO";
+		s << std::string(buf, ' ') << context << "ast.ArgumentList (size=" << elems.size() << ')';
+		for (auto&& arg : elems) {
+			arg->prettyPrint(s << '\n', buf + 2);
+		}
+		return s;
 	}
 
 
@@ -853,7 +872,7 @@ namespace spero::compiler::ast {
 		}
 
 		if (cons.size()) {
-			s << '\n' << std::string(buf + 2, ' ') << "ast.ConsList (size=" << cons.size() << ") [";
+			s << '\n' << std::string(buf + 2, ' ') << "ast.Constructors [";
 
 			for (auto&& con : cons) {
 				con->prettyPrint(s << '\n', buf + 4);
@@ -890,6 +909,22 @@ namespace spero::compiler::ast {
 	// EXPRESSIONS
 	//
 
+	/*UnOpCall::UnOpCall(ptr<ValExpr> e, std::string op, Location loc)
+		: ValExpr{ loc }, expr{ std::move(e) }, rhs{ std::move(rhs) }, op{ op } {}*/
+	UnOpCall::UnOpCall(ptr<ValExpr> e, ptr<BasicBinding> op, Location loc)
+		: ValExpr{ loc }, expr{ std::move(e) }, op{ std::move(op) } {}
+	Visitor& UnOpCall::visit(Visitor& v) {
+		//v.acceptUnOpCall(*this);
+		return v;
+	}
+	DEF_PRINTER(UnOpCall) {
+		//s << std::string(buf, ' ') << context << "ast.UnOpCall (op=" << op;
+		s << std::string(buf, ' ') << context << "ast.UnOpCall (op=";
+		op->prettyPrint(s, 0);
+		ValExpr::prettyPrint(s << ", ", buf);
+		return expr->prettyPrint(s << '\n', buf + 2, "lhs=");
+	}
+
 	/*BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, std::string op, Location loc)
 	: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ op } {}*/
 	BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, ptr<BasicBinding> op, Location loc)
@@ -917,6 +952,23 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.ScopedBinding\n";
 		bind->prettyPrint(s, buf + 2, "bind=") << '\n';
 		return expr->prettyPrint(s, buf + 2, "in=");
+	}
+
+	Index::Index(std::deque<ptr<ValExpr>> els, Location loc)
+		: Sequence{ std::move(els), loc } {}
+	Visitor& Index::visit(Visitor& v) {
+		//v.acceptIndex(*this);
+		return v;
+	}
+	DEF_PRINTER(Index) {
+		s << std::string(buf, ' ') << context << "ast.IndexSequence (";
+		ValExpr::prettyPrint(s, buf);
+
+		for (auto&& e : elems) {
+			e->prettyPrint(s << '\n', buf + 2, "idx=");
+		}
+
+		return s;
 	}
 
 }

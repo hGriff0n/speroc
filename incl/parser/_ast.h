@@ -734,12 +734,31 @@ namespace spero::compiler::ast {
 	};
 
 	/*
+	 * Represents a function/constructor argument
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   name - binding mapped to the functional value
+	 *   typ - acceptable impl boundary for passed values
+	 */
+	struct Argument : Ast {
+		ptr<BasicBinding> name;
+		ptr<Type> typ;
+
+		Argument(ptr<BasicBinding>, ptr<Type>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
 	 * Represents a simple argument tuple for a type constructor
 	 *
 	 * Extends: Constructor
 	 */
-	struct ArgTuple : Constructor {
-		ArgTuple(Location);
+	struct ArgTuple : Sequence<Argument, Constructor> {
+		ArgTuple(std::deque<ptr<Argument>>, Location);
 
 		virtual Visitor& visit(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1094,6 +1113,27 @@ namespace spero::compiler::ast {
 	//
 
 	/*
+	 * Represents an unary operator call
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   expr - expression that the unary operator is applied to
+	 *   op - operator that is being invoked
+	 */
+	struct UnOpCall : ValExpr {
+		ptr<ValExpr> expr;
+		ptr<BasicBinding> op;
+		// std::string op;
+
+		//UnOpCall(ptr<ValExpr>, std::string, Location);
+		UnOpCall(ptr<ValExpr>, ptr<BasicBinding>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
 	 * Represent an binary operator call
 	 *
 	 * Extends: ValExpr
@@ -1136,4 +1176,16 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
+
+	/*
+	 * Represents a sequence of values where the each one is used to index the prior
+	 *
+	 * Extends: Sequence<ValExpr>
+	 */
+	struct Index : Sequence<ValExpr> {
+		Index(std::deque<ptr<ValExpr>>, Location);
+
+		virtual Visitor& visit(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
 }
