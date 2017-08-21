@@ -739,12 +739,13 @@ namespace spero::parser::actions {
 		// stack: valexpr op valexpr?
 		auto rhs = POP(ValExpr);
 		auto op = POP(BasicBinding);
+		auto oper = op->name;
 
 		if (!rhs) {
 			rhs = std::make_unique<ast::Future>(true, op->loc);
 		}
-
-		PUSH(BinOpCall, POP(ValExpr), std::move(rhs), std::move(op));
+		
+		PUSH(BinOpCall, POP(ValExpr), std::move(rhs), oper);
 		// stack: binexpr
 	} END;
 	INHERIT(binary_cont2, binary_cont1);

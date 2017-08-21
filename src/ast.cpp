@@ -41,8 +41,6 @@ namespace spero::compiler::ast {
 			return s << std::get<VisibilityType>(value)._to_string();
 		} else if (std::holds_alternative<BindingType>(value)) {
 			return s << std::get<BindingType>(value)._to_string();
-		} else if (std::holds_alternative<UnaryType>(value)) {
-			return s << std::get<UnaryType>(value)._to_string();
 		} else {
 			return s << "err";
 		}
@@ -208,7 +206,7 @@ namespace spero::compiler::ast {
 		v.visitFunction(*this);
 	}
 	DEF_PRINTER(Function) {
-		s << std::string(buf, ' ') << context << "ast.Function";
+		s << std::string(buf, ' ') << context << "ast.Function (";
 		ValExpr::prettyPrint(s, buf);
 
 		if (args) {
@@ -907,17 +905,16 @@ namespace spero::compiler::ast {
 		return expr->prettyPrint(s << '\n', buf + 2, "lhs=");
 	}
 
-	/*BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, std::string op, Location loc)
-	: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ op } {}*/
-	BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, ptr<BasicBinding> op, Location loc)
-		: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ std::move(op) } {}
+	BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, std::string op, Location loc)
+	: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ op } {}
+	/*BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, ptr<BasicBinding> op, Location loc)
+		: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ std::move(op) } {}*/
 	void BinOpCall::accept(Visitor& v) {
 		v.visitBinOpCall(*this);
 	}
 	DEF_PRINTER(BinOpCall) {
-		//s << std::string(buf, ' ') << context << "ast.BinOpCall (op=" << op;
-		s << std::string(buf, ' ') << context << "ast.BinOpCall (op=";
-		op->prettyPrint(s, 0);
+		s << std::string(buf, ' ') << context << "ast.BinOpCall (op=" << op;
+		//op->prettyPrint(s << std::string(buf, ' ') << context << "ast.BinOpCall (op=", 0);
 		ValExpr::prettyPrint(s << ", ", buf);
 		lhs->prettyPrint(s << '\n', buf + 2, "lhs=");
 		return rhs->prettyPrint(s << '\n', buf + 2, "rhs=");

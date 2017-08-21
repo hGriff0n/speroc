@@ -100,7 +100,7 @@ namespace spero::compiler {
 		}
 
 		bool produceExe() {
-			return !opts["asm"].as<bool>();
+			return !opts["stop"].as<bool>();
 		}
 	};
 }

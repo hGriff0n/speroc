@@ -37,7 +37,6 @@ namespace spero::compiler::ast {
 	BETTER_ENUM(RelationType, char, IMPLS, NOT_IMPLS, SUBTYPE, SUPERTYPE, NA)
 	BETTER_ENUM(VisibilityType, char, PUBLIC, PROTECTED, PRIVATE, STATIC)
 	BETTER_ENUM(BindingType, char, TYPE, VARIABLE, OPERATOR)
-	BETTER_ENUM(UnaryType, char, DEREF, NOT, MINUS, RESERVED, NA)
 	BETTER_ENUM(CaptureType, char, NORM, MUT, REF, MUTREF)
 
 
@@ -84,7 +83,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Token : Ast {
 		using token_type = std::variant<KeywordType, PtrStyling, VarianceType, RelationType,
-			VisibilityType, BindingType, UnaryType, CaptureType>;
+			VisibilityType, BindingType, CaptureType>;
 		token_type value;
 
 		template<class T, class = std::enable_if_t<can_hold_v<T, token_type>>>
@@ -1189,11 +1188,9 @@ namespace spero::compiler::ast {
 	struct BinOpCall : ValExpr {
 		ptr<ValExpr> lhs;
 		ptr<ValExpr> rhs;
-		ptr<BasicBinding> op;
-		//std::string op;
+		std::string op;
 
-		//BinOpCall(ptr<ValExpr>, ptr<ValExpr>, std::string, Location);
-		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, ptr<BasicBinding>, Location);
+		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, std::string, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
