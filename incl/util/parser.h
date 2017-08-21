@@ -39,14 +39,14 @@ namespace spero::util {
 	 */
 	template<class To, class From, class=enable_if_base<From, To>>
 	std::unique_ptr<To> dyn_cast(std::unique_ptr<From> f) {
-		/*if constexpr (std::is_same_v<From, To>)
+		if constexpr (std::is_same_v<From, To>)
 			return std::move(f);
 
-		else {*/
+		else {
 			To* tmp = dynamic_cast<To*>(f.get());
 			if (tmp) f.release();
 			return std::unique_ptr<To>{ tmp };
-		//}
+		}
 	}
 
 	/*

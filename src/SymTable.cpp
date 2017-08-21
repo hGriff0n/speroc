@@ -1,4 +1,4 @@
-#include "SymTable.h"
+#include "analysis/SymTable.h"
 
 namespace spero::compiler::analysis {
 

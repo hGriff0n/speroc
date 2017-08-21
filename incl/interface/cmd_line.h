@@ -3,7 +3,7 @@
 #include "cxxopts.hpp"
 #include <tuple>
 
-#include "util\CompilationState.h"
+#include "CompilationState.h"
 
 namespace spero {
 	namespace cmd {

@@ -3,11 +3,10 @@
 #include <fstream>
 #include <string>
 
-#include "util\CompilationState.h"
+#include "interface/CompilationState.h"
 
 
 namespace spero::compiler {
-
 	// Perform all steps related to parsing and initial IR creation
 	std::tuple<size_t, spero::parser::Stack> parse(std::string, CompilationState&);
 	std::tuple<size_t, spero::parser::Stack> parseFile(std::string, CompilationState&);
