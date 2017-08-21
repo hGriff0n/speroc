@@ -205,26 +205,25 @@
     <None Include="_test\var_ops.spr" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="incl\cmd_line.h" />
-    <ClInclude Include="incl\codegen\arch.h" />
-    <ClInclude Include="incl\codegen\AsmEmitter.h" />
-    <ClInclude Include="incl\codegen\AsmGenerator.h" />
-    <ClInclude Include="incl\compiler.h" />
-    <ClInclude Include="incl\parser\actions.h" />
-    <ClInclude Include="incl\parser\ast.h" />
-    <ClInclude Include="incl\parser\grammar.h" />
-    <ClInclude Include="incl\parser\visitor.h" />
-    <ClInclude Include="incl\SymTable.h" />
-    <ClInclude Include="incl\util\CompilationState.h" />
-    <ClInclude Include="incl\util\parser.h" />
-    <ClInclude Include="incl\util\string.h" />
-    <ClInclude Include="incl\util\utils.h" />
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="docs\rust_integration_list.txt" />
     <Text Include="docs\_dev_plan.txt" />
     <Text Include="docs\_plan.txt" />
     <Text Include="docs\_todo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="incl\analysis\SymTable.h" />
+    <ClInclude Include="incl\codegen\arch.h" />
+    <ClInclude Include="incl\codegen\AsmEmitter.h" />
+    <ClInclude Include="incl\codegen\AsmGenerator.h" />
+    <ClInclude Include="incl\compiler.h" />
+    <ClInclude Include="incl\interface\cmd_line.h" />
+    <ClInclude Include="incl\interface\CompilationState.h" />
+    <ClInclude Include="incl\parser\actions.h" />
+    <ClInclude Include="incl\parser\ast.h" />
+    <ClInclude Include="incl\parser\grammar.h" />
+    <ClInclude Include="incl\parser\visitor.h" />
+    <ClInclude Include="incl\util\parser.h" />
+    <ClInclude Include="incl\util\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

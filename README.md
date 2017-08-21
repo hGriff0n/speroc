@@ -1,9 +1,9 @@
-speroc ver 0.2.15 - The reference compiler for the spero language
+speroc ver 0.3.0 - The reference compiler for the spero language
 
 Project Info:
 
-    size: 5297 sloc
-    files: 10 .cpp, 16 .h, 3 .rb, 8 .rs
+    size: 4595 sloc
+    files: 9 .cpp, 14 .h, 3 .rb, 8 .rs
 
 Libraries Used:
 
@@ -12,4 +12,8 @@ Libraries Used:
     cxxopts: Cmd-line parsing
     x86: Interprets strings of x86 code
 
-I don't know too much about compiler development so I'm at a bit of a loss in some aspects
+I am currently in the process of rewritting the parser system to incorporate error checking and handling (and also improve it's capabilities). This means that some aspects of codegen are currently unconnected at the moment.
+
+Once these changes are fully integrated, the compiler will have basic ability to "compile" basic arithmetic operations with some simple variable usage (all of these are currently unconnected though).
+
+Once the error checking is fully integrated, and other error tasks are completed, the next step is to add in mutability tracking and restriction before moving on to implementing basic aspects of the type system and function definition/calling.

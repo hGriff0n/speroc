@@ -70,23 +70,18 @@
     <Filter Include="Dependencies\signals">
       <UniqueIdentifier>{6750b123-f465-4778-894c-d399422414a8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\description">
+      <UniqueIdentifier>{778811aa-8bdd-4bf4-b295-03031f242a15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\analysis">
+      <UniqueIdentifier>{62a189b9-e20d-4244-a99d-d6a28caa6b94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\analysis">
+      <UniqueIdentifier>{daa34b15-6e57-40ce-9dac-0d2ec3de8228}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\compiler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SymTable.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\arch.cpp">
-      <Filter>Source Files\codegen</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AsmEmitter.cpp">
-      <Filter>Source Files\codegen</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AsmGenerator.cpp">
-      <Filter>Source Files\codegen</Filter>
-    </ClCompile>
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="src\ast.cpp">
       <Filter>Source Files\parser</Filter>
     </ClCompile>
@@ -96,13 +91,24 @@
     <ClCompile Include="src\CompilationState.cpp">
       <Filter>Source Files\interface</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\compiler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AsmGenerator.cpp">
+      <Filter>Source Files\codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\arch.cpp">
+      <Filter>Source Files\codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AsmEmitter.cpp">
+      <Filter>Source Files\codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SymTable.cpp">
+      <Filter>Source Files\analysis</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
-      <Filter>Resource Files\legal</Filter>
-    </None>
-    <None Include="README.md">
       <Filter>Resource Files\legal</Filter>
     </None>
     <None Include="_test\tests.yaml">
@@ -153,9 +159,6 @@
     <None Include="_test\var_ops.spr">
       <Filter>Resource Files\test runner\default\files</Filter>
     </None>
-    <None Include="grammar.md">
-      <Filter>Resource Files\legal</Filter>
-    </None>
     <None Include="x86_inter\src\emu.rs">
       <Filter>Dependencies\interpreter</Filter>
     </None>
@@ -183,62 +186,24 @@
     <None Include="tools\test.rb">
       <Filter>Resource Files\test runner</Filter>
     </None>
-    <None Include="docs\_readme.md">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="tools\mk_readme.rb">
       <Filter>Resource Files\tools</Filter>
     </None>
     <None Include="tools\utils.rb">
       <Filter>Resource Files\tools</Filter>
     </None>
-    <None Include="tools\version.yaml">
-      <Filter>Resource Files</Filter>
+    <None Include="README.md">
+      <Filter>Resource Files\description</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="incl\compiler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\SymTable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\parser\actions.h">
-      <Filter>Header Files\parser</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\parser\ast.h">
-      <Filter>Header Files\parser</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\parser\grammar.h">
-      <Filter>Header Files\parser</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\util\utils.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\codegen\arch.h">
-      <Filter>Header Files\codegen</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\codegen\AsmEmitter.h">
-      <Filter>Header Files\codegen</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\codegen\AsmGenerator.h">
-      <Filter>Header Files\codegen</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\cmd_line.h">
-      <Filter>Header Files\interface</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\util\CompilationState.h">
-      <Filter>Header Files\interface</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\util\parser.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\util\string.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\parser\visitor.h">
-      <Filter>Header Files\parser</Filter>
-    </ClInclude>
+    <None Include="docs\_readme.md">
+      <Filter>Resource Files\description</Filter>
+    </None>
+    <None Include="grammar.md">
+      <Filter>Resource Files\description</Filter>
+    </None>
+    <None Include="tools\version.yaml">
+      <Filter>Resource Files\tools</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="docs\_dev_plan.txt">
@@ -251,7 +216,48 @@
       <Filter>Resource Files</Filter>
     </Text>
     <Text Include="docs\rust_integration_list.txt">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\tools</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="incl\compiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\ast.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\util\utils.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\visitor.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\codegen\AsmGenerator.h">
+      <Filter>Header Files\codegen</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\actions.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\grammar.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\util\parser.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\codegen\arch.h">
+      <Filter>Header Files\codegen</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\codegen\AsmEmitter.h">
+      <Filter>Header Files\codegen</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\analysis\SymTable.h">
+      <Filter>Header Files\analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\interface\cmd_line.h">
+      <Filter>Header Files\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\interface\CompilationState.h">
+      <Filter>Header Files\interface</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

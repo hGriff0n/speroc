@@ -1,7 +1,8 @@
-#include "util/CompilationState.h"
+#include "interface/CompilationState.h"
 
 namespace spero::compiler {
-	CompilationState::CompilationState(char** fst, char** snd) : input_files{ fst, snd }, logger{ spdlog::stdout_color_mt("console") } {}
+	CompilationState::CompilationState(char** fst, char** snd)
+		: input_files{ fst, snd }, logger{ spdlog::stdout_color_mt("console") } {}
 
 
 	// Input/Output files

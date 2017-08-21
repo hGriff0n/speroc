@@ -7,7 +7,7 @@
 #include "compiler.h"
 #include "parser/ast.h"
 
-#include "cmd_line.h"
+#include "interface/cmd_line.h"
 #include "util/utils.h"
 
 

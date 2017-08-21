@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <optional>
+
 #include "pegtl/position.hpp"
 
 namespace spero::compiler::analysis {

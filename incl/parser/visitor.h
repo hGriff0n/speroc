@@ -4,113 +4,106 @@
 
 namespace spero::compiler::ast {
 
-	#define DEF_ACCEPT(typ) inline virtual void accept##typ(typ##& t) { accept(t); }
+	#define DEF_VISIT(typ) inline virtual void visit##typ(typ##& t) { visit(t); }
 
 	/*
 	 * Visitor class definition
 	 *
 	 * Exports:
-	 *   accept* - accept method that is called within the visit function to invoke 
+	 *   accept* - accept method that is called within the visit function to invoke
 	 *   accept - method that is called if an overload for the AST type is not provided
 	 *       in the child type. This method must be provided to instantiate the type
 	 */
-	//[[ maybe_unused ]]
 	struct Visitor {
-		inline virtual void accept(Ast& t) =0;
+		inline virtual void visit(Ast& t) = 0;
 
 		// Base Nodes
-		DEF_ACCEPT(Token)
-		DEF_ACCEPT(Type)
-		DEF_ACCEPT(Stmt)
-		DEF_ACCEPT(ValExpr)
+		DEF_VISIT(Token);
+		DEF_VISIT(Type);
+		DEF_VISIT(Statement);
+		DEF_VISIT(ValExpr);
 
-		// Literals
-		DEF_ACCEPT(Bool)
-		DEF_ACCEPT(Byte)
-		DEF_ACCEPT(Float)
-		DEF_ACCEPT(Int)
-		DEF_ACCEPT(Char)
-		DEF_ACCEPT(String)
-		DEF_ACCEPT(Tuple)
-		DEF_ACCEPT(Array)
-		DEF_ACCEPT(Block)
-
-		// Names
-		DEF_ACCEPT(BasicBinding)
-		DEF_ACCEPT(QualifiedBinding)
-		DEF_ACCEPT(Variable)
-		DEF_ACCEPT(AssignPattern)
-		DEF_ACCEPT(AssignName)
-		DEF_ACCEPT(AssignTuple)
-		DEF_ACCEPT(Pattern)
-		DEF_ACCEPT(PTuple)
-		DEF_ACCEPT(PNamed)
-		DEF_ACCEPT(PAdt)
-		DEF_ACCEPT(PVal)
+		// Bindings
+		DEF_VISIT(BasicBinding);
+		DEF_VISIT(QualifiedBinding);
+		DEF_VISIT(Pattern);
+		DEF_VISIT(TuplePattern);
+		DEF_VISIT(VarPattern);
+		DEF_VISIT(AdtPattern);
+		DEF_VISIT(ValPattern);
+		DEF_VISIT(AssignPattern);
+		DEF_VISIT(AssignName);
+		DEF_VISIT(AssignTuple);
 
 		// Types
-		DEF_ACCEPT(SourceType)
-		DEF_ACCEPT(GenericType)
-		DEF_ACCEPT(TupleType)
-		DEF_ACCEPT(FuncType)
-		DEF_ACCEPT(AndType)
-		DEF_ACCEPT(OrType)
+		DEF_VISIT(SourceType);
+		DEF_VISIT(GenericType);
+		DEF_VISIT(TupleType);
+		DEF_VISIT(FunctionType);
+		DEF_VISIT(AndType);
+		DEF_VISIT(OrType);
 
-		// Decorations
-		DEF_ACCEPT(Annotation)
-		DEF_ACCEPT(LocalAnnotation)
-		DEF_ACCEPT(GenericPart)
-		DEF_ACCEPT(TypeGeneric)
-		DEF_ACCEPT(ValueGeneric)
-		DEF_ACCEPT(TypeExt)
-		DEF_ACCEPT(Case)
-		DEF_ACCEPT(ImportPiece)
-		DEF_ACCEPT(ImportName)
-		DEF_ACCEPT(ImportGroup)
-		DEF_ACCEPT(Adt)
-		DEF_ACCEPT(Future)
+		// Decorators
+		DEF_VISIT(Annotation);
+		DEF_VISIT(LocalAnnotation);
+		DEF_VISIT(GenericPart);
+		DEF_VISIT(TypeGeneric);
+		DEF_VISIT(ValueGeneric);
+		DEF_VISIT(GenericArray);
+		DEF_VISIT(Constructor);
+		DEF_VISIT(Adt);
+		DEF_VISIT(Argument);
+		DEF_VISIT(ArgTuple);
+
+		// Literals
+		DEF_VISIT(Literal);
+		DEF_VISIT(Bool);
+		DEF_VISIT(Byte);
+		DEF_VISIT(Float);
+		DEF_VISIT(Int);
+		DEF_VISIT(Char);
+		DEF_VISIT(String);
+		DEF_VISIT(Future);
+		DEF_VISIT(Tuple);
+		DEF_VISIT(Array);
+		DEF_VISIT(Block);
+		DEF_VISIT(Function);
 
 		// Control
-		DEF_ACCEPT(Branch)
-		DEF_ACCEPT(Loop)
-		DEF_ACCEPT(While)
-		DEF_ACCEPT(For)
-		DEF_ACCEPT(IfElse)
-		DEF_ACCEPT(Match)
-		DEF_ACCEPT(JumpExpr)
-		DEF_ACCEPT(Wait)
-		DEF_ACCEPT(Break)
-		DEF_ACCEPT(Continue)
-		DEF_ACCEPT(Return)
-		DEF_ACCEPT(YieldRet)
+		DEF_VISIT(Branch);
+		DEF_VISIT(Loop);
+		DEF_VISIT(While);
+		DEF_VISIT(For);
+		DEF_VISIT(IfBranch);
+		DEF_VISIT(IfElse);
+		DEF_VISIT(Case);
+		DEF_VISIT(Match);
+		DEF_VISIT(Jump);
 
-		// Stmts
-		DEF_ACCEPT(FnBody)
-		DEF_ACCEPT(FnCall)
-		DEF_ACCEPT(BinOpCall)
-		DEF_ACCEPT(Reassign)
-		DEF_ACCEPT(Range)
-		DEF_ACCEPT(UnaryOpApp)
-		DEF_ACCEPT(Interface)
-		DEF_ACCEPT(TypeAssign)
-		DEF_ACCEPT(VarAssign)
-		DEF_ACCEPT(InAssign)
-		DEF_ACCEPT(ImplExpr)
-		DEF_ACCEPT(ModDec)
-		DEF_ACCEPT(ModImport)
-		DEF_ACCEPT(Index)
+		// Statements
+		DEF_VISIT(ModDec);
+		DEF_VISIT(ImplExpr);
+		DEF_VISIT(ModRebindImport);
+		DEF_VISIT(SingleImport);
+		DEF_VISIT(MultipleImport);
+		DEF_VISIT(Rebind);
+		DEF_VISIT(Interface);
+		DEF_VISIT(TypeAssign);
+		DEF_VISIT(VarAssign);
+		DEF_VISIT(TypeExtension);
+
+		// Expression
+		DEF_VISIT(Variable);
+		DEF_VISIT(UnOpCall);
+		DEF_VISIT(BinOpCall);
+		DEF_VISIT(InAssign);
+		DEF_VISIT(Index);
+		DEF_VISIT(FnCall);
+
+		// Errors
+		//DEF_VISIT(Error);
 	};
 
-	#undef DEF_ACCEPT
-}
+#undef DEF_VISIT
 
-namespace spero::compiler::ast {
-	/*
-	* Definitions for any templated classes
-	*/
-	template<class T, class Inher>
-	Visitor& Sequence<T, Inher>::visit(Visitor& v) {
-		v.accept(*this);
-		return v;
-	}
 }

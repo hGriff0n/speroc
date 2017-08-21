@@ -2,14 +2,14 @@
 #include "util/parser.h"
 
 namespace spero::compiler::gen {
-	AsmGenerator::AsmGenerator(std::ostream& s, CompilationState& state) : out{ s }, emit { s }, state{ state } {}
+	AsmGenerator::AsmGenerator(std::ostream& s, compiler::CompilationState& state) : out{ s }, emit { s }, state{ state } {}
 
 	void AsmGenerator::loadVariable(ast::Variable& v) {
 		auto var = v.name->toString();
 		auto loc = current->getVar(var);
 
 		if (!loc) {
-			state.log(ID::err, "Attempt to use a variable before it was declared {}", CompilationState::location(v.loc));
+			state.log(compiler::ID::err, "Attempt to use a variable before it was declared {}", compiler::CompilationState::location(v.loc));
 			return;
 		}
 
@@ -38,11 +38,11 @@ namespace spero::compiler::gen {
 	
 
 	// Base Nodes
-	void AsmGenerator::accept(ast::Ast&) {}
+	void AsmGenerator::visit(ast::Ast&) {}
 
 
 	// Literals
-	void AsmGenerator::acceptBool(ast::Bool& b) {
+	void AsmGenerator::visitBool(ast::Bool& b) {
 		Register eax{ "eax" };
 		
 		if (b.val) {
@@ -53,29 +53,29 @@ namespace spero::compiler::gen {
 		}
 	}
 
-	void AsmGenerator::acceptByte(ast::Byte& b) {
+	void AsmGenerator::visitByte(ast::Byte& b) {
 		Register eax{ "eax" };
 		emit._xor(eax, eax);
 		emit.mov(b.val, eax);
 	}
 
-	void AsmGenerator::acceptFloat(ast::Float& f) {
+	void AsmGenerator::visitFloat(ast::Float& f) {
 		//
 	}
 
-	void AsmGenerator::acceptInt(ast::Int& i) {
+	void AsmGenerator::visitInt(ast::Int& i) {
 		Register eax{ "eax" };
 		emit.mov(i.val, eax);
 	}
 
-	void AsmGenerator::acceptChar(ast::Char& c) {
+	void AsmGenerator::visitChar(ast::Char& c) {
 		Register al{ "al" };
 		emit.mov(c.val, al);
 	}
 
 
 	// Names
-	void AsmGenerator::acceptVariable(ast::Variable& v) {
+	void AsmGenerator::visitVariable(ast::Variable& v) {
 		Register eax{ "eax" };
 		out << "\tmov ";
 		loadVariable(v);
@@ -90,18 +90,18 @@ namespace spero::compiler::gen {
 
 
 	// Control
-	void AsmGenerator::acceptBlock(ast::Block& b) {
+	void AsmGenerator::visitBlock(ast::Block& b) {
 		// Reserve stack space for local variables
 		//Register esp{ "esp" };
 		//emit.add(4 * b.locals.getCount(), esp);
 		
 		// Initialize current
-		b.locals.setParent(current, true);
-		current = &b.locals;
+		//b.locals.setParent(current, true);
+		//current = &b.locals;
 
 		// Emit the code for the function body
 		for (auto& stmt : b.elems) {
-			stmt->visit(*this);
+			stmt->accept(*this);
 		}
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
@@ -111,7 +111,7 @@ namespace spero::compiler::gen {
 
 
 	// Statements
-	void AsmGenerator::acceptFnBody(ast::FnBody& f) {
+	void AsmGenerator::visitFunction(ast::Function& f) {
 		Register ebp{ "ebp" }, esp{ "esp" }, eax{ "eax" };
 
 		// Print function enter code
@@ -121,7 +121,7 @@ namespace spero::compiler::gen {
 		emit.push(eax);
 
 		// Print the body
-		f.body->visit(*this);
+		f.body->accept(*this);
 
 		// Print function tail/endlog
 		emit.leave();
@@ -129,113 +129,54 @@ namespace spero::compiler::gen {
 		emit.label("LFE0");
 	}
 
-	void AsmGenerator::acceptBinOpCall(ast::BinOpCall& b) {
-		Register eax{ "eax" };
-		Register esp{ "esp" };
-		Register al{ "al" };
+	void AsmGenerator::visitBinOpCall(ast::BinOpCall& b) {
 
-		// Evaluate the left side and store it on the stack
-		b.lhs->visit(*this);
-		emit.push(eax);
-
-		// Evaluate the right side
-		b.rhs->visit(*this);
-
-		// Perform the operator call
-		if (b.op == "+") {
-			emit.add(esp.at(), eax);
-			emit.popByte(1);
-
-		} else if (b.op == "-") {
-			emit.sub(eax, esp.at());
-			emit.pop(eax);
-
-		} else if (b.op == "*") {
-			emit.imul(esp.at(), eax);
-			emit.popByte(1);
-
-		} else if (b.op == "/") {
-			emit.cdq();
-			emit.idiv(esp.at(), eax);
-			emit.popByte(1);
-
-		} else if (b.op == "==") {
-			emit.cmp(eax, esp.at());
-			emit.setz(al);
-			emit.popByte(1);
-
-		} else if (b.op == "<") {
-			emit.cmp(eax, esp.at());
-			emit.setl(al);
-			emit.popByte(1);
-
-		} else if (b.op == ">") {
-			emit.cmp(eax, esp.at());
-			emit.setg(al);
-			emit.popByte(1);
-
-		} else if (b.op == "!=") {
-			emit.cmp(eax, esp.at());
-			emit.setnz(al);
-			emit.popByte(1);
-
-		} else if (b.op == "<=") {
-			emit.cmp(eax, esp.at());
-			emit.setle(al);
-			emit.popByte(1);
-
-		} else if (b.op == ">=") {
-			emit.cmp(eax, esp.at());
-			emit.setge(al);
-			emit.popByte(1);
-
-		}
 	}
 
-	void AsmGenerator::acceptReassign(ast::Reassign& r) {
-		// Evaluate the operands
-		r.val->visit(*this);
-		performAssign(r.var->name->toString(), r.loc, false);
-	}
+	//void AsmGenerator::visitReassign(ast::Reassign& r) {
+	//	// Evaluate the operands
+	//	r.val->visit(*this);
+	//	performAssign(r.var->name->toString(), r.loc, false);
+	//}
 
-	void AsmGenerator::acceptUnaryOpApp(ast::UnaryOpApp& u) {
+	void AsmGenerator::visitUnOpCall(ast::UnOpCall& u) {
 		// Evaluate the expression
-		u.expr->visit(*this);
+		u.expr->accept(*this);
 
 		Register eax{ "eax" };
 
 		// Perform the operator call
 		// TODO: Perform type-based function lookup
-		switch (u.op) {
-			case ast::UnaryType::MINUS:
-				emit.neg(eax);
-				break;
-			case ast::UnaryType::NOT:
-				if (!emit.zeroSet()) {				// Insert a 'test' instruction if the 'zero flag' isn't set
-					emit.test(eax, eax);
-				}
-				emit.setz(eax);
-		}
+		//switch (u.op) {
+		//	case ast::UnaryType::MINUS:
+		//		emit.neg(eax);
+		//		break;
+		//	case ast::UnaryType::NOT:
+		//		if (!emit.zeroSet()) {				// Insert a 'test' instruction if the 'zero flag' isn't set
+		//			emit.test(eax, eax);
+		//		}
+		//		emit.setz(eax);
+		//}
 	}
 
-	void AsmGenerator::acceptVarAssign(ast::VarAssign& v) {
+	void AsmGenerator::visitVarAssign(ast::VarAssign& v) {
 		// if the body is a function
 		// TODO: Adding support for functions may require moving this to a separate stage
 		// TODO: Type checking will definitely require additional stages
-		if (util::is_type<ast::FnBody>(v.expr)) {
+		if (util::is_type<ast::Function>(v.expr)) {
 
 			// Print out function data
 			emit.write("\t.globl _main\n");
 			emit.write("\t.def _main; .scl 2; .type 32; .endef\n");
 			emit.label("_main");
 
-			v.expr->visit(*this);
+			v.expr->accept(*this);
 
 			// Print function ident information
 			emit.write("\t.ident \"speroc: 0.0.15 (Windows 2017)\"");
 
 		} else {
-			v.expr->visit(*this);					// Push the expression value onto the stack
+			v.expr->accept(*this);					// Push the expression value onto the stack
 			performAssign(*v.name, true);			// Store the variable at its location
 		}
 	}

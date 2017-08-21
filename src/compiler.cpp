@@ -1,5 +1,5 @@
 #include "compiler.h"
-#include "parser/control.h"
+#include "parser/actions.h"
 #include "codegen/AsmGenerator.h"
 
 std::string spero::util::escape(std::string s) {
@@ -14,7 +14,7 @@ namespace spero::compiler {
 	std::tuple<size_t, Stack> parse_impl(Fn&& parse) {
 		// Setup parser state
 		Stack ast;
-		ast.emplace_back(compiler::ast::Sentinel{});
+		ast.emplace_back(ast::Sentinel{});
 
 		// Perform a parsing run, switching on whether the input is a file or not
 		auto succ = parse(ast);
@@ -28,15 +28,19 @@ namespace spero::compiler {
 
 	std::tuple<size_t, Stack> parse(std::string input, CompilationState& state) {
 		using namespace tao::pegtl;
+		using namespace spero::parser;
+
 		return parse_impl([&input, &state](Stack& ast) {
-			return tao::pegtl::parse<grammar::program, actions::action, control::control>(string_input<>{ input, "speroc:repl" }, ast, state);
+			return tao::pegtl::parse<grammar::program, actions::action>(string_input<>{ input, "speroc:repl" }, ast, state);
 		});
 	}
 
 	std::tuple<size_t, Stack> parseFile(std::string file, CompilationState& state) {
 		using namespace tao::pegtl;
+		using namespace spero::parser;
+
 		return parse_impl([&file, &state](Stack& ast) {
-			return tao::pegtl::parse<grammar::program, actions::action, control::control>(file_input<>{ file }, ast, state);
+			return tao::pegtl::parse<grammar::program, actions::action>(file_input<>{ file }, ast, state);
 		});
 	}
 
@@ -61,7 +65,7 @@ namespace spero::compiler {
 
 		// Print everything directly to the file
 		for (const auto& node : s) {
-			node->visit(visitor);
+			node->accept(visitor);
 		}
 
 		o << '\n';

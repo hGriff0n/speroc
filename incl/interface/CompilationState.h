@@ -34,7 +34,7 @@ namespace spero::compiler {
 	class CompilationState {
 		std::deque<std::string> input_files;
 		std::deque<TimePoint> timing;
-		size_t nerrs;
+		size_t nerrs = 0;
 
 		std::shared_ptr<spdlog::logger> logger;
 

@@ -5,290 +5,307 @@
 
 namespace spero::parser::grammar {
 	using namespace tao::pegtl;
-#define pstr(x) TAOCPP_PEGTL_STRING((x))
-#define key(x) seq<pstr((x)), not_at<ascii::identifier_other>, ig_s> {}
 
-	// Forward Declarations
-	struct _array; struct anot_expr; struct scope; struct atom; struct pattern;
-	struct var_pattern; struct valexpr; struct fn_dot_ctrl; struct inf_type;
-	struct con_tuple; struct expr; struct binary_expr; struct inf_narrow;
 
-	// Ignore Characters
+	/*
+	 * Macro Defines
+	 */
+	#define pstr(x) TAOCPP_PEGTL_STRING((x))
+	#define key(x) seq<pstr((x)), not_at<ascii::identifier_other>, ig_s> {}
+	#define DEFINE_BINPREC_LEVEL(lvl, prev) \
+		struct binary_op##lvl : seq<binary_opch##lvl, star<binop_ch>> {}; \
+		struct binary_cont##lvl : seq<binary_op##lvl, ig_s, opt<binary_prec##prev>> {}; \
+		struct binary_prec##lvl : seq<binary_prec##prev, star<binary_cont##lvl>> {}
+	#define DEFINE_BINPREC_LEVEL_OP(lvl, prev, ...) \
+		struct binary_opch##lvl : one_of<__VA_ARGS__> {}; \
+		DEFINE_BINPREC_LEVEL(lvl, prev)
+
+
+	/*
+	 * Forward declarations
+	 */
+	struct mvdexpr;		struct mvexpr;		struct _array;
+	struct tuple;		struct statement;	struct assign_pat;
+	struct index_cont;	struct scope;		struct pat_lit;
+	struct pattern;		struct type;		struct valexpr;
+
+
+	/*
+	 * Custom rules
+	 */
+	using eps = success;
+	template<char... chs>
+	struct one_of : sor<one<chs>...> {};
+	template<class Rule, char... chs>
+	struct _sor : sor<one<chs>..., Rule> {};
+	template<class Odelim, class Rule, class Cdelim, class Sep=comma>
+	struct opt_sequence : seq<Odelim, opt<Rule, star<Sep, Rule>>, Cdelim> {};
+	template<class Odelim, class Rule, class Cdelim, class Sep=comma>
+	struct sequence : seq<Odelim, Rule, star<Sep, Rule>, Cdelim> {};
+
+
+	/*
+	 * Ignored Characters
+	 */
 	struct one_line_comment : seq<one<'#'>, until<eolf>> {};
 	struct multiline_comment : seq<two<'#'>, until<two<'#'>>> {};
 	struct whitespace : plus<space> {};
-	struct ig : sor<multiline_comment, one_line_comment, whitespace> {};
+	struct ig : sor<multiline_comment, one_line_comment, space> {};
 	struct ig_s : star<ig> {};
-	struct eps : success {};
-	struct opt_eps : eps {};
+	struct ign_s : star<not_at<eolf>, ig> {};
 
-	// Special Characters
+
+	/*
+	 * Punctuation
+	 *
+	 * TODO: Make 'sentinel' variants where necessary
+	 */
 	template<char ch>
-	struct spec_char : seq<one<ch>, star<ig>> {};
-	struct obrace : spec_char<'{'> {};
-	struct cbrace : spec_char<'}'> {};
-	struct obrack : spec_char<'['> {};
-	struct cbrack : spec_char<']'> {};
-	struct oparen : spec_char<'('> {};
-	struct cparen : spec_char<')'> {};
-	struct placeholder : spec_char<'_'> {};
-	struct id_other : ranges<'a', 'z', 'A', 'Z', '0', '9', '_'> {};
+	struct punct   : seq<one<ch>, ig_s> {};
+	struct obrace  : punct<'{'> {};
+	struct cbrace  : punct<'}'> {};
+	struct obrack  : punct<'['> {};
+	struct cbrack  : punct<']'> {};
+	struct oparen  : punct<'('> {};
+	struct cparen  : punct<')'> {};
+	struct plambda : punct<'_'> {};
+	struct comma   : punct<','> {};
+	struct endc    : punct<';'> {};
+	struct equals  : punct<'='> {};
+	struct bar     : punct<'|'> {};
+	struct and     : punct<'+'> {};
+	struct dot     : punct<'.'> {};
 
-	// Helper Structs
-	template<class Rule, char sep = ','>
-	struct sequ : list<seq<ig_s, Rule>, one<sep>> {};																				// 
-	template<class Rule, class Must>
-	struct if_then : if_then_else<Rule, Must, failure> {};																			// 
 
-	//
-	// Language Keywords
-	//
-	struct k_let : key("let");
-	struct k_def : key("def");
-	struct k_static : key("static");
-	struct k_mut : key("mut");
-	struct k_do : key("do");
-	struct k_mod : key("mod");
-	struct k_use : key("use");
-	struct k_match : key("match");
-	struct k_case : key("case");
-	struct k_if : key("if");
-	struct k_elsif : key("elsif");
-	struct k_else : key("else");
-	struct k_while : key("while");
-	struct k_for : key("for");
-	struct k_loop : key("loop");
-	struct k_break : key("break");
-	struct k_continue : key("continue");
-	struct k_yield : key("yield");
-	struct k_ret : key("return");
-	struct k_wait : key("wait");
-	struct k_impl : key("impls");
-	struct k_in : key("in");
-	struct b_false : key("false");
-	struct b_true : key("true");
-	struct vcontext : sor<k_let, k_def, k_static> {};
-	struct jump_keys : sor<k_break, k_continue, k_ret, k_yield> {};
-	struct keyword : sor<vcontext, jump_keys, placeholder, k_mut, k_mod, k_use, k_match, k_case, k_if, k_elsif, k_else, k_while, k_for, k_loop, k_wait, k_impl, k_in, b_false, b_true> {};
+	/*
+	 * Keywords
+	 */
+	struct kmut : key("mut");
+	struct kdo : key("do");
+	struct kloop : key("loop");
+	struct kmatch : key("match");
+	struct kif : key("if");
+	struct kelsif : key("elsif");
+	struct kelse : key("else");
+	struct kfor : key("for");
+	struct kin : key("in");
+	struct kwhile : key("while");
+	struct kmod : key("mod");
+	struct kimpl : key("impl");
+	struct kuse : key("use");
+	struct kas : key("as");
+	struct kfalse : key("false");
+	struct ktrue : key("true");
+	struct klet : key("let");
+	struct kdef : key("def");
+	struct kstatic : key("static");
+	struct kbreak : key("break");
+	struct kcontinue : key("continue");
+	struct kret : key("return");
+	struct kyield : key("yield");
+	struct kwait : key("wait");
+	struct vcontext : sor<klet, kdef, kstatic> {};
+	struct jump_key : sor<kbreak, kcontinue, kret, kyield, kwait> {};
+	// This is mostly in-case I want to short-cut var-checking at some point
+	struct keywords : sor<jump_key, vcontext, ktrue, kfalse, kas, kuse, kimpl, kmod,
+						kwhile, kin, kfor, kelse, kelsif, kif, kmatch, kloop, kdo, kmut> {};
 
-	//
-	// Language Bindings
-	//
-	struct var_core : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>> {};
-	struct var : seq<not_at<keyword>, ranges<'a', 'z', '_'>, star<id_other>, sor<one<'!'>, one<'?'>, eps>> {};						// 
-	struct typ : seq<ascii::range<'A', 'Z'>, star<id_other>> {};																	// 
-	struct op_characters : sor<one<'!'>, one<'$'>, one<'%'>, one<'^'>, one<'&'>, one<'*'>, one<'?'>, one<'<'>,						// 
-		one<'>'>, one<'|'>, one<'`'>, one<'/'>, one<'\\'>, one<'-'>, one<'='>, one<'+'>, one<'~'>> {};								// 
-	//struct op : seq<sor<one<'&'>, one<'~'>, one<'!'>, one<'?'>, pstr("->"), eps>, plus<op_characters>, ig_s> {};					// 
-	struct op : seq<sor<pstr("->"), eps>, plus<op_characters>, ig_s> {};															// 
-	struct variable : seq<var, ig_s> {};																							// 
-	struct name_path_part : if_then<sor<var, typ>, one<':'>> {};																	// 
-	struct name_eps : seq<eps> {};																									// 
-	struct name_path : seq<name_eps, star<name_path_part>> {};																		// 
-	struct typ_pointer : sor<one<'&'>, one<'*'>, two<'.'>, eps> {};																	// 
-	struct _type : seq<name_path, disable<typ>, opt<_array>> {};																	// 
-	struct type : seq<_type, typ_pointer, ig_s> {};																					// 
-	struct binding : sor<seq<name_path, disable<sor<var, typ>>, ig_s>, op> {};														// 
 
-	//
-	// Language Literals
-	//
-	struct hex_body : plus<xdigit> {};																								// 
-	struct hex : seq<pstr("0x"), hex_body, ig_s> {};																				// 
-	struct bin_body : plus<sor<one<'0'>, one<'1'>>> {};																				// 
-	struct bin : seq<pstr("0b"), bin_body, ig_s> {};																				// 
-	struct dec : seq<plus<digit>, one<'.'>, plus<digit>> {};																		// 
-	struct integer : plus<digit> {};																								// 
-	struct num : seq<sor<dec, integer>, ig_s> {};																					// 
-	struct str_body : until<at<one<'"'>>, seq<opt<one<'\\'>>, any>> {};																// 
-	struct str : seq<one<'"'>, str_body, one<'"'>, ig_s> {};																		// 
-	struct char_body : seq<opt<one<'\\'>>, any> {};																					// 
-	//struct character : seq<one<'\''>, if_then_else<char_body, one<'\''>, err_char_no_close>, ig_s> {};							// 
-	struct character : seq<one<'\''>, char_body, one<'\''>, ig_s> {};																// 
-	//struct tuple : seq<oparen, opt<sequ<valexpr>>, if_then_else<cparen, eps, seq<err_tuple_no_close>>> {};						// 
-	struct tuple : seq<oparen, opt<sequ<valexpr>>, cparen> {};																		// 
-	//struct array : seq<obrack, opt<sequ<valexpr>>, if_then_else<cbrack, eps, seq<err_array_no_close>>> {};						//
-	struct _array : seq<obrack, opt<sequ<valexpr>>, one<']'>> {};																	// 
-	//struct array : seq<obrack, opt<sequ<valexpr>>, cbrack> {};																	// 
-	struct array : seq<_array, ig_s> {};																							// 
-	//struct fn_rettype : if_then<at<inf_mut_type>, seq<inf_mut_type, ig_s, scope>> {};												// 
-	struct fn_rettype : if_then<at<inf_narrow>, seq<inf_narrow, ig_s, scope>> {};
-	struct op_forward : seq<op, opt<valexpr>> {};																					// 
-	struct fn_forward : seq<one<'.'>, sor<fn_dot_ctrl, op_forward, valexpr>> {};													// Don't need to anything for the valexpr case, will be handled in analysis
-	struct fn_def : seq<pstr("->"), ig_s, sor<fn_rettype, fn_forward, valexpr>> {};													// 
-	struct fn_or_tuple : sor<fn_forward, seq<tuple, opt<fn_def>>> {};																// 
-	struct lit : sor<hex, bin, num, str, character, b_false, b_true, array, fn_or_tuple> {};										// 
+	/*
+	 * Identifiers
+	 */
+	struct typ_ch : range<'A', 'Z'> {};
+	struct typ : seq<typ_ch, star<ascii::identifier>> {};
+	struct qualtyp : seq<typ> {};
+	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
+	struct mod_path : plus<one<':'>, not_at<sor<typ_ch, one<':'>>>, var> {};
+	struct varname : seq<var, opt<mod_path>> {};
+	struct typname : seq<opt<varname, one<':'>>, typ> {};
+	struct binding : seq<sor<var, typ>, ig_s> {};
+	struct unop : one_of<'!', '-', '~'> {};
+	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
+	struct binop :
+		if_then_else<sor<pstr("->"), pstr("=>")>, failure, seq<opt<one<'!'>>, plus<binop_ch>>> {};
+	struct op : disable<sor<binop, unop>> {};
+	struct pat_tuple : opt_sequence<oparen, pattern, cparen> {};
+	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
+	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut> {};
+	struct pat_name : seq<var, not_at<one<':'>>, ig_s> {};
+	struct desc_eps : eps {};
+	struct capture : seq<sor<capture_desc, desc_eps>, sor<pat_tuple, pat_name>> {};
+	struct pat_any : disable<plambda> {};
+	struct pattern : seq<sor<pat_any, pat_lit, pat_adt, capture>, ig_s> {};
+	struct assign_tuple : sequence<oparen, assign_pat, cparen> {};
+	struct assign_drop : disable<plambda> {};
+	struct assign_name : sor<var, op> {};
+	struct assign_pat : seq<sor<assign_name, assign_drop, assign_tuple>, ig_s> {};
+	struct assign_typ : seq<typ, ig_s> {};
 
-	//
-	// Language Atoms
-	//
-	struct anon_sep : seq<pstr(":::")> {};																							// 
-	struct anon_type : seq<anon_sep, ig_s, opt<con_tuple>, scope> {};																// 
-	//struct inst_array : seq<obrack, sequ<sor<type, valexpr>>, cbrack> {};															// 
-	struct scope : seq<obrace, star<anot_expr>, cbrace> {};																			// 
-	struct wait_stmt : seq<k_wait, valexpr> {};																						// 
-	struct lambda_placeholder : seq<placeholder> {};																				// 
-	struct atom : seq<sor<scope, wait_stmt, lit, binding, lambda_placeholder>, ig_s> {};											// 
-	struct fnseq : sor<seq<array, opt<anon_type>, opt<tuple>>, seq<anon_type, opt<tuple>>, tuple> {};								// 
-	struct fneps : eps {};																											// 
-	struct fncall : seq<atom, star<fnseq>, fneps> {};																				// 
 
-	//
-	// Language Decorators
-	//
-	// anexpr = expr / keyword
-	// antuple = oparen (anexpr ("," ig* anexpr)*)? cparen
-	struct unary : seq<sor<one<'!'>, one<'-'>, one<'~'>>, not_at<one<'('>>> {};														// 
-	struct unary_op : seq<at<unary>, any> {};																						// 
-	struct annotation : seq<one<'@'>, var_core, not_at<one<'!'>>, opt<tuple>> {};														// 
-	struct global_annotation : seq<one<'@'>, disable<var_core>, one<'!'>, opt<tuple>> {};												// 
-	struct mod_dec : seq<k_mod, list<var, one<':'>>, ig_s> {};																		// 
-	struct inf_tuple_type : seq<oparen, sequ<inf_type>, cparen> {};																	// Match a tuple of inference types
-	struct inf_fn_type : seq<pstr("->"), ig_s, inf_type> {};																		// Rule for constructing function types	
-	struct inf_tuple_or_fn : seq<inf_tuple_type, opt<inf_fn_type>> {};																// Match a tuple and an optional function return
-	struct inf_eps : eps {};																										// Put a sentinel on the stack for various transforms
-	struct inf_mut_type : seq<opt<disable<k_mut>>, sor<inf_tuple_or_fn, type>> {};													// Append type mutability
-	struct inf_narrow : if_then_else<disable<obrace>, seq<inf_type, cbrace>, inf_mut_type> {};										// Optionally add braces to create complex junctions
-	struct _inf_junc_and : plus<one<'&'>, ig_s, inf_narrow> {};																		// Match a sequence of and types
-	struct inf_junc_and : seq<inf_narrow, opt<_inf_junc_and>> {};																	// Rule to pass-by andtype if no '&'
-	struct _inf_junc_or : plus<one<'|'>, ig_s, inf_junc_and> {};																	// Match a sequence of or types (accounting for and precedence)
-	struct inf_junc_or : seq<inf_junc_and, opt<_inf_junc_or>> {};																	// Rule to pass-by ortype if no '|'
-	struct inf_type : seq<inf_eps, inf_junc_or> {};																					// Push a sentinel on the stack for matching
-	struct inf : seq<pstr("::"), ig_s, inf_type> {};																				// Type inference syntax
-	struct gen_variance : sor<one<'+'>, one<'-'>, eps> {};																			// 
-	struct gen_variadic : sor<two<'.'>, eps> {};																					// 
-	struct gen_subrel : sor<pstr("::"), pstr("!:"), one<'>'>, one<'<'>> {};															// 
-	struct gen_subtype : seq<gen_subrel, ig_s, type, star<one<'&'>, ig_s, type>> {};												// 
-	struct gen_subrel_eps : eps {};																									// 
-	struct gen_type : seq<typ, gen_variance, ig_s, gen_variadic, ig_s, sor<gen_subtype, gen_subrel_eps>> {};						// 
-	struct gen_val : seq<variable, opt<pstr("::"), ig_s, type>, opt<one<'='>, ig_s, expr>> {};										// 
-	struct gen_part : sor<gen_type, gen_val> {};																					// 
-	struct generic : seq<obrack, sequ<gen_part>, cbrack> {};																		// 
-	struct use_any : seq<placeholder> {};																							// 
-	struct use_one : seq<var> {};																									// 
-	struct use_typ : seq<typ> {};																									// 
-	template<class Gram>
-	struct inst_rebind : if_then_else<at<obrack>, seq<array, ig_s, pstr("as"), ig_s, Gram>, opt<pstr("as"), ig_s, Gram>> {};		// 
-	struct use_rebind : sor<seq<disable<use_one>, ig_s, inst_rebind<var>>, seq<use_typ, ig_s, inst_rebind<typ>>> {};				// 
-	struct alt_rebind : sor<seq<use_one, ig_s, inst_rebind<var>, ig_s>, seq<use_typ, ig_s, inst_rebind<typ>, ig_s>> {};				// Rewrite of 'use_rebind' that triggers the action for 'use_one'
-	struct use_many : seq<obrace, sequ<alt_rebind>, cbrace> {};																		// 
-	struct use_final : sor<seq<use_any, opt<one<':'>, use_any>>, use_many, use_rebind> {};											// (_:_)/{.*}/(t as t)
+	/*
+	 * Type System
+	 */
+	struct typ_view : two<'.'> {};
+	struct typ_ref : one<'&'> {};
+	struct typ_ptr : one<'*'> {};
+	struct ptr_styling : sor<typ_view, typ_ref, typ_ptr> {};
+	struct single_type : seq<typname, ig_s, opt<_array>> {};
+	struct ref_type : seq<single_type, opt<ptr_styling, ig_s>> {};
+	struct tuple_type : opt_sequence<oparen, type, cparen> {};
+	struct fn_type : seq<pstr("->"), ig_s, type> {};
+	struct tuple_fn_type : seq<tuple_type, opt<fn_type>> {};
+	struct mut_type : seq<opt<kmut>, sor<tuple_fn_type, ref_type>> {};
+	struct ntype : sor<mut_type, seq<obrace, type, cbrace>> {};
+	struct and_cont : seq<and, ntype> {};
+	struct and_type : seq<ntype, star<and_cont>> {};
+	struct or_cont : seq<bar, and_type> {};
+	struct or_type : seq<and_type, star<or_cont>> {};
+	struct type : or_type {};
 
-	//
-	// Patterns
-	//
-	struct var_tuple : seq<oparen, opt<sequ<var_pattern>>, cparen> {};																// 
-	struct var_pattern : sor<var, op, var_tuple> {};																				// 
-	struct var_type : seq<typ> {};																									// 
-	struct capture_dec : seq<opt<disable<k_mut>>, opt<one<'&'>>> {};																// 
-	struct tuple_pat : seq<oparen, sequ<pattern>, one<')'>> {};																		// 
-	struct pat_adt : seq<typ, opt<tuple_pat>> {};																					// 
-	struct pat_tuple : seq<opt<disable<capture_dec>>, ig_s, tuple_pat> {};															// 
-	struct pat_var : seq<opt<capture_dec>, ig_s, var, opt<ig_s, inf>> {};															// 
-	struct pat_val : sor<hex, bin, num, str, character, b_false, b_true, array> {};													// 
-	struct pat_any : seq<placeholder> {};																							// 
-	struct pattern : sor<pat_any, pat_var, pat_tuple, pat_adt, pat_val> {};															// 
 
-	//
-	// Assignment Grammar
-	//
-	struct adt_con : seq<typ, opt<inf_tuple_type>, ig_s> {};																		// 
-	struct named_arg : seq<var, ig_s, opt<inf>> {};																					// 
-	struct con_tuple : seq<oparen, opt<sequ<named_arg>>, cparen> {};																// 
-	struct cons : seq<star<adt_con, one<'|'>, ig_s>, sor<con_tuple, disable<adt_con>, eps>> {};										// 
-	struct in_binding : seq<k_in, ig_s, valexpr> {};																				// 
-	struct assign_val : seq<one<'='>, ig_s, valexpr, opt<in_binding>> {};															// 
-	struct var_assign : seq<var_pattern, ig_s, opt<generic>, sor<seq<inf, opt<assign_val>>, assign_val>> {};						// 
-	struct lhs_inher : seq<two<':'>, ig_s, type, ig_s, one<'='>, ig_s, opt<k_mut>> {};												// 
-	//struct rhs_inf : seq<typ, ig_s, two<':'>, ig_s> {};																			// 
-	struct rhs_inf : if_then<at<typ, ig_s, two<':'>>, seq<typ, ig_s, two<':'>, ig_s>> {};											// 
-	struct rhs_inher : seq<one<'='>, ig_s, opt<k_mut>, opt<rhs_inf>> {};															// 
-	struct type_assign : seq<var_type, not_at<oparen>, ig_s, opt<generic>, sor<lhs_inher, rhs_inher>, cons, scope> {};				// 
-	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};																	// 
+	/*
+	 * Decorators
+	 */
+	struct annotation : seq<one<'@'>, var, opt<tuple>, ig_s> {};
+	struct ganot : seq<pstr("@!"), var, opt<tuple>, ig_s> {};
+	struct type_inf : seq<pstr("::"), ig_s, type> {};
+	struct veps : seq<eps> {};
+	struct variance : one_of<'+', '-'> {};
+	struct variadic : seq<pstr(".."), ig_s> {};
+	struct relation : seq<sor<pstr("::"), pstr("!:")>, ig_s> {};
+	struct type_gen : seq<typ, ig_s, sor<variance, veps>, ig_s, opt<variadic>, opt<relation, type>> {};
+	struct val_gen : seq<var, ig_s, opt<relation, type>> {};
+	struct gen_part : sor<type_gen, val_gen> {};
+	struct _generic : sequence<obrack, gen_part, cbrack> {};
+	struct adt : seq<typ, opt<tuple_type>, ig_s> {};
+	struct adt_dec : seq<adt, star<bar, adt>> {};
+	struct argeps : seq<eps> {};
+	struct arg_inf : seq<pstr("::"), argeps, ig_s, type> {};
+	struct arg : seq<var, ig_s, opt<arg_inf>> {};
+	struct arg_tuple : opt_sequence<oparen, arg, cparen> {};
+	struct anon_type : seq<pstr("::"), ig_s, scope> {};
 
-	//
-	// Control Flow Grammar
-	//
-	struct if_core : seq<k_if, valexpr, opt<k_do>, valexpr> {};																		// 
-	struct if_dot_core : seq<k_if, valexpr> {};																						// 
-	struct fn_if_core : seq<k_if, valexpr> {};																						// 
-	struct elsif_rule : seq<k_elsif, valexpr, opt<k_do>, valexpr> {};																// 
-	struct else_rule : seq<k_else, valexpr> {};																						// 
-	struct elses : seq<star<elsif_rule>, opt<else_rule>> {};																		// 
-	struct branch : seq<if_core, elses> {};																							// 
-	struct loop : seq<k_loop, valexpr> {};																							// 
-	struct while_core : seq<k_while, valexpr> {};																					// 
-	struct while_l : seq<while_core, opt<k_do>, valexpr> {};																		// 
-	struct for_core : seq<k_for, pattern, ig_s, k_in, valexpr> {};																	// 
-	struct for_l : seq<for_core, opt<k_do>, valexpr> {};																			// 
-	struct jumps : seq<jump_keys, opt<valexpr>> {};																					// 
-	struct case_if : seq<k_if, valexpr> {};																							// 
-	struct case_stmt : seq<opt<k_case>, sequ<seq<pattern, ig_s>>, ig_s, opt<case_if>, pstr("=>"), ig_s, valexpr> {};				// 
-	struct match_expr : seq<k_match, fncall, obrace, plus<case_stmt>, cbrace> {};													// 
-	struct dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};															// 
-	struct dot_while : seq<while_core> {};																							// 
-	struct dot_for : seq<for_core> {};																								// 
-	struct dot_jmp : seq<jump_keys> {};																								// 
-	struct dot_loop : seq<k_loop> {};																								// 
-	struct dot_if : seq<if_dot_core, elses> {};																						// 
-	struct dot_ctrl : sor<dot_loop, dot_jmp, dot_while, dot_match, dot_for, dot_if> {};												// 
-	struct fn_dot_match : seq<k_match, obrace, plus<case_stmt>, cbrace> {};															// 
-	struct fn_dot_while : seq<while_core> {};																						// 
-	struct fn_dot_for : seq<for_core> {};																							// 
-	struct fn_dot_jmp : seq<jump_keys> {};																							// 
-	struct fn_dot_loop : seq<k_loop> {};																							// 
-	struct fn_dot_if : seq<fn_if_core, elses> {};																					// 
-	struct fn_dot_ctrl : sor<fn_dot_loop, fn_dot_jmp, fn_dot_while, fn_dot_match, fn_dot_for, fn_dot_if> {};						// 
 
-	//
-	// Binary Operator Precedence
-	//
-	struct op_prec_1 : seq<sor<one<'&'>, one<'$'>, one<'?'>, one<'`'>, one<'\\'>>, star<op_characters>> {};							// 
-	struct _binary_prec_1 : seq<op_prec_1, ig_s, opt<binary_expr>> {};																// 
-	struct binary_prec_1 : seq<binary_expr, star<_binary_prec_1>> {};																// 
-	struct op_prec_2 : seq<sor<one<'/'>, one<'%'>, one<'*'>>, star<op_characters>> {};												// 
-	struct _binary_prec_2 : seq<op_prec_2, ig_s, opt<binary_prec_1>> {};															// 
-	struct binary_prec_2 : seq<binary_prec_1, star<_binary_prec_2>> {};																// 
-	struct op_prec_3 : if_then_else<pstr("->"), plus<op_characters>, seq<sor<one<'+'>, one<'-'>>, star<op_characters>>> {};			// 
-	struct _binary_prec_3 : seq<op_prec_3, ig_s, opt<binary_prec_2>> {};															// 
-	struct binary_prec_3 : seq<binary_prec_2, star<_binary_prec_3>> {};																// 
-	struct op_prec_4 : seq<sor<seq<one<'!'>, plus<op_characters>>, seq<one<'='>, star<op_characters>>>> {};							// 
-	struct _binary_prec_4 : seq<op_prec_4, ig_s, opt<binary_prec_3>> {};															// 
-	struct binary_prec_4 : seq<binary_prec_3, star<_binary_prec_4>> {};																// 
-	struct op_prec_5 : seq<sor<one<'<'>, one<'>'>>, star<op_characters>> {};														// 
-	struct _binary_prec_5 : seq<op_prec_5, ig_s, opt<binary_prec_4>> {};															// 
-	struct binary_prec_5 : seq<binary_prec_4, star<_binary_prec_5>> {};																// 
-	struct op_prec_6 : seq<one<'^'>, star<op_characters>> {};																		// 
-	struct _binary_prec_6 : seq<op_prec_6, ig_s, opt<binary_prec_5>> {};															// 
-	struct binary_prec_6 : seq<binary_prec_5, star<_binary_prec_6>> {};																// 
-	struct op_prec_7 : seq<one<'|'>, star<op_characters>> {};																		// 
-	struct _binary_prec_7 : seq<op_prec_7, ig_s, opt<binary_prec_6>> {};															// 
-	struct binary_prec_7 : seq<binary_prec_6, star<_binary_prec_7>> {};																// 
-	struct binary : seq<binary_prec_7> {};																							// 
+	/*
+	 * Control Structures
+	 */
+	struct forl : seq<kfor, pattern, kin, mvexpr, mvdexpr> {};
+	struct whilel : seq<kwhile, mvexpr, mvdexpr> {};
+	struct loop : seq<kloop, mvdexpr> {};
+	struct if_core : seq<kif, mvexpr> {};
+	struct if_branch : seq<if_core, mvdexpr> {};
+	struct elsif_case : seq<kelsif, mvexpr, mvdexpr> {};
+	struct else_case : seq<kelse, mvdexpr> {};
+	struct branch : seq<if_branch, star<elsif_case>, opt<else_case>> {};
+	struct case_pat : seq<pattern, star<comma, pattern>> {};
+	struct _case : seq<case_pat, opt<if_core>, pstr("=>"), ig_s, mvexpr, opt<endc>> {};
+	struct matchs : seq<kmatch, mvexpr, obrace, plus<_case>, cbrace> {};
+	struct jump : seq<jump_key, opt<mvexpr>> {};
+	struct control : sor<matchs, forl, whilel, branch, jump, loop> {};
+	struct dotloop : seq<kloop> {};
+	struct dotwhile : seq<kwhile, mvexpr> {};
+	struct dotfor : seq<kfor, pattern, kin, mvexpr> {};
+	struct dotif : seq<if_core> {};
+	struct dotbranch : seq<dotif, star<elsif_case>, opt<else_case>> {};
+	struct dotmatch : seq<kmatch, obrace, plus<_case>, cbrace> {};
+	struct dotjump : seq<jump_key> {};
+	struct dot_ctrl : sor<dotloop, dotwhile, dotfor, dotbranch, dotmatch> {};
 
-	//
-	// Language Expressions
-	//
-	struct _index_ : if_then<not_at<two<'.'>>, seq<one<'.'>, ig_s, fncall>> {};														// 
-	struct in_eps : eps {};																											// 
-	struct un_eps : eps {};																											// 
-	struct in_ctrl : seq<one<'.'>, in_eps, dot_ctrl> {};																			// 
-	struct index : seq<star<unary>, fncall, star<_index_>, un_eps, sor<in_ctrl, seq<opt<inf>, in_eps>>> {};							// 
-	//struct range : seq<opt<two<','>, ig_s, index>, two<'.'>, ig_s, index> {};														// 
-		// this grammar interferes with the sequence grammar on the ',' causing duplicates to exist
-	struct range_op : two<'.'> {};																									// 
-	struct _range_ : seq<range_op, opt<index>> {};																					// 
-	struct range : seq<index, opt<_range_>> {};																						// 
-	struct binary_expr : sor<range, seq<unary_op, ig_s>> {};																		// 
-	struct control : sor<branch, loop, while_l, for_l, match_expr, jumps> {};														// 
-	struct valexpr : seq<sor<k_mut, eps>, sor<control, binary>, ig_s, opt<one<';'>, ig_s>> {};										// 
-	struct mod_use : seq<k_use, star<use_one, one<':'>>, use_final> {};																// 
-	struct impl_expr : seq<k_impl, name_path, disable<typ>, ig_s, opt<array>, ig_s, opt<scope>> {};									// 
-	struct expr : seq<sor<mod_use, impl_expr, assign, seq<opt<k_do>, valexpr>>, ig_s, opt<one<';'>, ig_s>> {};						// 
-	struct anot_expr : seq<star<annotation, ig_s>, sor<global_annotation, expr>> {};												// 
-	struct stmt : sor<mod_dec, anot_expr> {};																						// 
-	struct program : seq<ig_s, star<stmt>, eolf> {};																				// 
 
-	#undef key
-	#undef pstr
+	/*
+	 * Atoms
+	 */
+	struct bin_body : plus<one_of<'0', '1'>> {};
+	// TODO: Change to my custom error handling
+	struct binary : seq<pstr("0b"), must<bin_body>, ig_s> {};
+	struct hex_body : plus<xdigit> {};
+	// TODO: Change to my custom error handling
+	struct hex : seq<pstr("0x"), must<hex_body>, ig_s> {};
+	struct decimal : seq<plus<digit>, opt<one<'.'>, plus<digit>>, ig_s> {};
+	struct char_body : seq<any> {};
+	struct _char : seq<one<'\''>, opt<one<'\\'>>, char_body, one<'\''>, ig_s> {};
+	struct str_body : until<at<one<'"'>>, seq<opt<one<'\\'>>, any>> {};
+	struct string : seq<one<'"'>, str_body, one<'"'>, ig_s> {};
+	struct lit : sor<binary, hex, decimal, _char, string, kfalse, ktrue> {};
+	struct pat_lit : seq<lit> {};
+	struct scope : seq<obrace, star<statement>, cbrace> {};
+	struct tuple : opt_sequence<oparen, mvexpr, cparen> {};
+	struct _array : opt_sequence<obrack, mvexpr, cbrack> {};
+	struct lambda : seq<pstr("->"), ig_s, mvexpr> {};
+	struct dot_eps : eps {};
+	struct dot_fn : seq<dot, dot_eps, sor<dot_ctrl, index_cont>> {};
+	struct fn_tuple : sor<seq<tuple, opt<lambda>>, dot_fn> {};
+	struct atom : sor<fn_tuple, _array, lit, plambda, scope> {};
+
+
+	/*
+	 * Expressions
+	 */
+	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
+	struct type_var : seq<opt<one<':'>>, typ, ig_s, opt<_array>> {};
+	struct op_var : seq<sor<binop, varname>, ig_s> {};
+	struct call : enable<tuple> {};
+	struct type_const : seq<type_var, opt<disable<call>, opt<anon_type>>> {};
+	struct var_val : sor<seq<op_var, sor<type_const, _array, eps>>, type_const> {};
+	struct fncall : seq<sor<atom, var_val>, star<call>> {};
+	struct indexeps : seq<eps> {};
+	struct index_cont : seq<indexeps, fncall, star<dot, fncall>> {};
+	struct index : seq<fncall, opt<dot, sor<dot_ctrl, index_cont>>> {};
+	struct unopcall : seq<unop, index> {};
+	struct unexpr : sor<unopcall, index> {};
+
+
+	/*
+	 * Statements
+	 */
+	struct mod_dec : seq<kmod, varname, ign_s, must<sor<endc, eolf>>, ig_s> {};
+	    // TODO: Change to my custom error handling
+	struct impleps : seq<eps> {};
+	struct impl : seq<kimpl, single_type, opt<kfor, single_type, impleps>, scope> {};
+	struct alieps : seq<eps> {};
+	struct imps : seq<eps> {};
+	struct alias : seq<alieps, opt<_array>, kas, binding, opt<_array>> {};
+	struct imp_type : seq<opt<one<':'>>, typ> {};
+	struct imp_alias : seq<opt<imp_type>, ig_s, opt<alias>> {};
+	struct mul_imp : seq<opt<one<':'>>, sequence<obrace, binding, cbrace>> {};
+	struct mod_alias : seq<kuse, opt<var, sor<mod_path, imps>>, sor<mul_imp, imp_alias>> {};
+	struct type_assign : seq<assign_typ, opt<_generic>, equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, scope> {};
+	struct asgn_in : seq<kin, mvexpr> {};
+	struct asgn_val : seq<equals, valexpr, opt<asgn_in>> {};
+	struct _interface : seq<type_inf, opt<asgn_val>> {};
+	struct var_assign : seq<assign_pat, opt<_generic>, sor<_interface, asgn_val>> {};
+	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};
+
+
+	/*
+	 * Binary Precedence
+	 *  NOTE: Attach the rules on the "binary_op{n}" structs, not "binary_prec_op{n}"
+	 */
+	struct binary_prec0 : seq<unexpr> {};
+	DEFINE_BINPREC_LEVEL_OP(1, 0, '&', '$', '?', '\\');
+	DEFINE_BINPREC_LEVEL_OP(2, 1, '/', '%', '*');
+	struct binary_opch3 : sor<one<'+'>, if_then_else<pstr("->"), failure, one<'-'>>> {};
+	DEFINE_BINPREC_LEVEL(3, 2);
+	struct binary_opch4 : sor<seq<one<'!'>, binop_ch>, if_then_else<pstr("=>"), failure, one<'='>>> {};
+	DEFINE_BINPREC_LEVEL(4, 3);
+	DEFINE_BINPREC_LEVEL_OP(5, 4, '<', '>');
+	DEFINE_BINPREC_LEVEL_OP(6, 5, '^');
+	DEFINE_BINPREC_LEVEL_OP(7, 6, '|');
+	struct binexpr : seq<binary_prec7> {};
+	
+
+	/*
+	 * Organizational Structures
+	 */
+	struct valexpr : seq<opt<kmut>, sor<control, binexpr>, opt<type_inf>> {};
+	struct mvexpr : sor<valexpr, in_assign> {};
+	struct mvdexpr : seq<opt<kdo>, mvexpr> {};
+	struct expr : sor<ganot, mod_alias, assign, seq<opt<kdo>, valexpr>> {};
+	struct statement : seq<star<annotation>, expr, opt<endc>> {};
+	struct global_statement : sor<mod_dec, impl, statement> {};
+	struct program : seq<star<ig_s, global_statement>, must<eolf>> {};
 }
+
+#undef key
+#undef DEFINE_BINPREC_LEVEL
+#undef DEFINE_BINPREC_LEVE_OP
