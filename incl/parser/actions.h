@@ -1,7 +1,7 @@
 #pragma once
 
-#include "_grammar.h"
-#include "util/_CompilationState.h"
+#include "grammar.h"
+#include "interface/CompilationState.h"
 #include "util/parser.h"
 
 #include <algorithm>
@@ -12,8 +12,7 @@
 #define RULE(gram) \
 	template<> struct action<grammar::gram> { \
 		template<class Input> \
-		static void apply(const Input& in, Stack& s)
-// static void apply(const Input& in, Stack& s, CompilationState& state)
+		static void apply(const Input& in, Stack& s, CompilationState& state)
 #define END }
 #define MAKE(Node, ...) std::make_unique<ast::Node>(__VA_ARGS__, in.position())
 #define PUSH(Node, ...) s.emplace_back(MAKE(Node, __VA_ARGS__))
@@ -709,7 +708,7 @@ namespace spero::parser::actions {
 	RULE(in_assign) {
 		// stack: vis pat gen? type? val expr
 		auto context = POP(ValExpr);
-		action<grammar::asgn_val>::apply(in, s);
+		action<grammar::asgn_val>::apply(in, s, state);
 		PUSH(InAssign, POP(VarAssign), std::move(context));
 		// stack: InAssign
 	} END;
