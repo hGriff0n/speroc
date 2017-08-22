@@ -35,7 +35,7 @@ namespace spero::compiler::analysis {
 
 	void SymTable::setParent(SymTable* p, bool offset_ebp) {
 		parent = p;
-		ebp_offset = offset_ebp * p->getCount() * 4;
+		ebp_offset = offset_ebp * (p->ebp_offset + (p->getCount() * 4));
 	}
 
 	SymTable* SymTable::getParent() {

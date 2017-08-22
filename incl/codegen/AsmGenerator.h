@@ -37,6 +37,9 @@ namespace spero::compiler::gen {
 			virtual void visitChar(ast::Char&) final;
 			//virtual void visitString(ast::String&) final;
 
+			// Atoms
+			virtual void visitBlock(ast::Block&) final;
+
 			// Names
 			virtual void visitVariable(ast::Variable&) final;
 			virtual void visitAssignName(ast::AssignName&) final;
@@ -46,13 +49,15 @@ namespace spero::compiler::gen {
 			// Decorations
 
 			// Control
-			virtual void visitBlock(ast::Block&) final;
 
 			// Statements
+			virtual void visitVarAssign(ast::VarAssign&) final;
+
+			// Expressions
+			virtual void visitInAssign(ast::InAssign&) final;
 			virtual void visitFunction(ast::Function&) final;
 			virtual void visitBinOpCall(ast::BinOpCall&) final;
 			virtual void visitUnOpCall(ast::UnOpCall&) final;
-			virtual void visitVarAssign(ast::VarAssign&) final;
 	};
 
 }
