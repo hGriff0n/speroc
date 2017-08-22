@@ -224,6 +224,7 @@
     <ClInclude Include="incl\parser\grammar.h" />
     <ClInclude Include="incl\parser\visitor.h" />
     <ClInclude Include="incl\util\parser.h" />
+    <ClInclude Include="incl\util\strings.h" />
     <ClInclude Include="incl\util\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

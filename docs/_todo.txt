@@ -7,7 +7,6 @@ todo:
 	 Additionally, need to consider reordering operator calls if a literal is involved to reduce loads
    Work on the testing framework/runners a bit (make more diverse tests)
    see if there are any additional issues in my paper notes
- rewrite the grammar file to match the real grammar
  improve performance of the parsing stages
    create benchmark/performance suite for all stages
      improve logging interface/information
@@ -27,17 +26,11 @@ todo:
    send the rest of the ir over to clang/llvm (need to wait for an update for VS 2017)
 
  parser improvements:
-   re-enable "::" syntax for anonymous types
-     changed to ":::" due to interference with type inference
-     note: 'action<inf>' isn't triggered with "::"
-	 could remove the optional tuple (this would allow me to remove the ast_seperator too)
    fncall node may have too much responsibility
    need to determine a distinction between semantic and syntactic typing in the ast
      depends in large part based on how I'm representing types internally
-   determine whether I really need the "Future" node
    look into replacing 'std::string' with 'std::string_view' for ast prettyPrint
    look into moving pretty printing into the visitor model
-   have the moduleDec rule collect everything as a single string
 
  compiler improvements:
    add in analysis passes for "_" lambdas utilizing ast.Future
@@ -52,10 +45,5 @@ todo:
  tester improvements:
    look at adding "error" field to test.compile struct that specifies a file to compare compilation errors with
 
- Fix Spero
-   Range grammar interfered with sequence grammar on the ',' (step)
-   Figure out a better way to handle the duplication between rhs_inher and adt
-     The old grammar causes the type name to be pushed on the stack twice
-       I fixed this by adding the 'if<at>' rule, but I want to have a more focused rule
 
 Icon at www.iconfinder.com/icons/606025/ancient_antique_historic_roman_rome_helmet_vintage_warrior_icon

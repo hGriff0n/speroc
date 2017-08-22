@@ -21,11 +21,12 @@ Current Project Plan
 	Make some minor improvements to the grammar
 	  Look into moving `mod_dec`/`impl`/ down a level to 'statement'
         Basically allow for annotations to be attached to them
-	  Double check that ".foo" is allowed within the grammar
 	  Allow for type chains (ie. "std:File:Path"), maybe in mod_path
 	  Look into converting some "*eps" rules to an explicit call in a construction rule
-	  Look at removing "static" keyword and replacing it with '@static' annotation
-        A keyword marker for the '<private>' visibility class could be added
+	Find a way to integrate changes made in compiler development to changes in the language docs
+	  Removed 'static' visibility, role filled by '@static' annotation
+	    Reserved 'private' for possible visibility keyword
+	  Removed ranges
 	Add in syntax error checking and handling
 	  Figure out how I want this to work
 	  Add in ast error classes

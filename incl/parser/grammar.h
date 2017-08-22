@@ -98,13 +98,13 @@ namespace spero::parser::grammar {
 	struct ktrue : key("true");
 	struct klet : key("let");
 	struct kdef : key("def");
-	struct kstatic : key("static");
+	struct kpriv : key("private");
 	struct kbreak : key("break");
 	struct kcontinue : key("continue");
 	struct kret : key("return");
 	struct kyield : key("yield");
 	struct kwait : key("wait");
-	struct vcontext : sor<klet, kdef, kstatic> {};
+	struct vcontext : sor<klet, kdef> {};
 	struct jump_key : sor<kbreak, kcontinue, kret, kyield, kwait> {};
 	// This is mostly in-case I want to short-cut var-checking at some point
 	struct keywords : sor<jump_key, vcontext, ktrue, kfalse, kas, kuse, kimpl, kmod,

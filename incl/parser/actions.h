@@ -48,7 +48,7 @@ namespace spero::parser::actions {
 	TOKEN(kmut, ast::KeywordType::MUT);
 	TOKEN(klet, ast::VisibilityType::PROTECTED);
 	TOKEN(kdef, ast::VisibilityType::PUBLIC);
-	TOKEN(kstatic, ast::VisibilityType::STATIC);
+	TOKEN(kpriv, ast::VisibilityType::PRIVATE);
 	TOKEN(kwait, ast::KeywordType::WAIT);
 	TOKEN(kyield, ast::KeywordType::YIELD);
 	TOKEN(kret, ast::KeywordType::RET);

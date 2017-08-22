@@ -262,5 +262,8 @@
     <ClInclude Include="incl\parser\base.h">
       <Filter>Header Files\parser</Filter>
     </ClInclude>
+    <ClInclude Include="incl\util\strings.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

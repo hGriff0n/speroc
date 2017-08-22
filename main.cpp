@@ -91,7 +91,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 
 
 // Helper function to run the interactive mode
-int run_interpreter(spero::compiler::CompilationState&);
+void run_interpreter(spero::compiler::CompilationState&, int&, char**);
 
 
 /*
@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
 
 	// Interactive mode
 	} else {
-		return run_interpreter(state);
+		return run_interpreter(state, argc, argv), 0;
 	}
 }
 
@@ -173,7 +173,7 @@ extern "C" {
 }
 
 
-int run_interpreter(spero::compiler::CompilationState& state, int& argc, char** argv) {
+void run_interpreter(spero::compiler::CompilationState& state, int& argc, char** argv) {
 	using namespace spero;
 	using namespace spero::parser;
 	using compiler::ID;
