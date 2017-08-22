@@ -120,7 +120,7 @@ namespace spero::parser::actions {
 		PUSH(Function, POP(Tuple), std::move(body));
 		// stack: fndef
 	} END;
-	RULE(dot_eps) {
+	RULE(fwd_dot) {
 		PUSH(Future, true);
 	} END;
 
@@ -191,11 +191,13 @@ namespace spero::parser::actions {
 		PUSH(AdtPattern, POP(QualifiedBinding), std::move(tup));
 		// stack: pattern
 	} END;
-	RULE(desc_eps) {
-		PUSH(Token, ast::CaptureType::NORM);
-	} END;
 	RULE(capture_desc) {
 		// stack: kmut?
+		if (in.string().size() == 0) {
+			PUSH(Token, ast::CaptureType::NORM);
+			return;
+		}
+
 		bool is_ref = (in.string()[0] == '&');
 
 		if (util::at_node<ast::Token>(s)) {
@@ -343,9 +345,10 @@ namespace spero::parser::actions {
 		PUSH(Annotation, POP(BasicBinding), std::move(tup));
 		// stack: anot
 	} END;
-	TOKEN(veps, ast::VarianceType::INVARIANT);
 	RULE(variance) {
-		if (in.string()[0] == '+') {
+		if (in.string().size() == 0) {
+			PUSH(Token, ast::VarianceType::INVARIANT);
+		} else if (in.string()[0] == '+') {
 			PUSH(Token, ast::VarianceType::COVARIANT);
 		} else {
 			PUSH(Token, ast::VarianceType::CONTRAVARIANT);
@@ -396,7 +399,7 @@ namespace spero::parser::actions {
 		PUSH(Adt, POP(BasicBinding), std::move(typ_args));
 		// stack: adt
 	} END;
-	SENTINEL(argeps);
+	SENTINEL(arg_sentinel);
 	RULE(arg) {
 		// stack: bind type?
 		auto typ = POP(Type);
@@ -469,7 +472,8 @@ namespace spero::parser::actions {
 		// stack: case
 	} END;
 	RULE(matchs) {
-		// stack: valexpr {} case+
+		// stack: valexpr {} case+ keyword
+		POP(Token);
 		auto cases = util::popSeq<ast::Case>(s);
 		s.pop_back();
 		PUSH(Match, POP(ValExpr), std::move(cases));
@@ -600,7 +604,7 @@ namespace spero::parser::actions {
 		PUSH(ModDec, POP(QualifiedBinding));
 		// stack: ModDec
 	} END;
-	TOKEN(impleps, ast::KeywordType::FOR);
+	TOKEN(for_type, ast::KeywordType::FOR);
 	RULE(impl) {
 		// stack: type (type "for")? scope
 		auto block = POP(Block);

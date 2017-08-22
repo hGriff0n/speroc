@@ -38,9 +38,9 @@ namespace spero::parser::grammar {
 	struct one_of : sor<one<chs>...> {};
 	template<class Rule, char... chs>
 	struct _sor : sor<one<chs>..., Rule> {};
-	template<class Odelim, class Rule, class Cdelim, class Sep=comma>
+	template<class Odelim, class Rule, class Cdelim, class Sep = comma>
 	struct opt_sequence : seq<Odelim, opt<Rule, star<Sep, Rule>>, Cdelim> {};
-	template<class Odelim, class Rule, class Cdelim, class Sep=comma>
+	template<class Odelim, class Rule, class Cdelim, class Sep = comma>
 	struct sequence : seq<Odelim, Rule, star<Sep, Rule>, Cdelim> {};
 
 
@@ -61,20 +61,20 @@ namespace spero::parser::grammar {
 	 * TODO: Make 'sentinel' variants where necessary
 	 */
 	template<char ch>
-	struct punct   : seq<one<ch>, ig_s> {};
-	struct obrace  : punct<'{'> {};
-	struct cbrace  : punct<'}'> {};
-	struct obrack  : punct<'['> {};
-	struct cbrack  : punct<']'> {};
-	struct oparen  : punct<'('> {};
-	struct cparen  : punct<')'> {};
+	struct punct : seq<one<ch>, ig_s> {};
+	struct obrace : punct<'{'> {};
+	struct cbrace : punct<'}'> {};
+	struct obrack : punct<'['> {};
+	struct cbrack : punct<']'> {};
+	struct oparen : punct<'('> {};
+	struct cparen : punct<')'> {};
 	struct plambda : punct<'_'> {};
-	struct comma   : punct<','> {};
-	struct endc    : punct<';'> {};
-	struct equals  : punct<'='> {};
-	struct bar     : punct<'|'> {};
-	struct and     : punct<'+'> {};
-	struct dot     : punct<'.'> {};
+	struct comma : punct<','> {};
+	struct endc : punct<';'> {};
+	struct equals : punct<'='> {};
+	struct bar : punct<'|'> {};
+	struct and : punct<'+'> {};
+	struct dot : punct<'.'> {};
 
 
 	/*
@@ -108,7 +108,7 @@ namespace spero::parser::grammar {
 	struct jump_key : sor<kbreak, kcontinue, kret, kyield, kwait> {};
 	// This is mostly in-case I want to short-cut var-checking at some point
 	struct keywords : sor<jump_key, vcontext, ktrue, kfalse, kas, kuse, kimpl, kmod,
-						kwhile, kin, kfor, kelse, kelsif, kif, kmatch, kloop, kdo, kmut> {};
+		kwhile, kin, kfor, kelse, kelsif, kif, kmatch, kloop, kdo, kmut> {};
 
 
 	/*
@@ -129,10 +129,9 @@ namespace spero::parser::grammar {
 	struct op : disable<sor<binop, unop>> {};
 	struct pat_tuple : opt_sequence<oparen, pattern, cparen> {};
 	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
-	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut> {};
+	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut, eps> {};
 	struct pat_name : seq<var, not_at<one<':'>>, ig_s> {};
-	struct desc_eps : eps {};
-	struct capture : seq<sor<capture_desc, desc_eps>, sor<pat_tuple, pat_name>> {};
+	struct capture : seq<capture_desc, sor<pat_tuple, pat_name>> {};
 	struct pat_any : disable<plambda> {};
 	struct pattern : seq<sor<pat_any, pat_lit, pat_adt, capture>, ig_s> {};
 	struct assign_tuple : sequence<oparen, assign_pat, cparen> {};
@@ -169,18 +168,17 @@ namespace spero::parser::grammar {
 	struct annotation : seq<one<'@'>, var, opt<tuple>, ig_s> {};
 	struct ganot : seq<pstr("@!"), var, opt<tuple>, ig_s> {};
 	struct type_inf : seq<pstr("::"), ig_s, type> {};
-	struct veps : seq<eps> {};
-	struct variance : one_of<'+', '-'> {};
+	struct variance : sor<one<'+'>, one<'-'>, eps> {};
 	struct variadic : seq<pstr(".."), ig_s> {};
 	struct relation : seq<sor<pstr("::"), pstr("!:")>, ig_s> {};
-	struct type_gen : seq<typ, ig_s, sor<variance, veps>, ig_s, opt<variadic>, opt<relation, type>> {};
+	struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, opt<relation, type>> {};
 	struct val_gen : seq<var, ig_s, opt<relation, type>> {};
 	struct gen_part : sor<type_gen, val_gen> {};
 	struct _generic : sequence<obrack, gen_part, cbrack> {};
 	struct adt : seq<typ, opt<tuple_type>, ig_s> {};
 	struct adt_dec : seq<adt, star<bar, adt>> {};
-	struct argeps : seq<eps> {};
-	struct arg_inf : seq<pstr("::"), argeps, ig_s, type> {};
+	struct arg_sentinel : seq<ig_s> {};
+	struct arg_inf : seq<pstr("::"), arg_sentinel, type> {};
 	struct arg : seq<var, ig_s, opt<arg_inf>> {};
 	struct arg_tuple : opt_sequence<oparen, arg, cparen> {};
 	struct anon_type : seq<pstr("::"), ig_s, scope> {};
@@ -232,8 +230,8 @@ namespace spero::parser::grammar {
 	struct tuple : opt_sequence<oparen, mvexpr, cparen> {};
 	struct _array : opt_sequence<obrack, mvexpr, cbrack> {};
 	struct lambda : seq<pstr("->"), ig_s, mvexpr> {};
-	struct dot_eps : eps {};
-	struct dot_fn : seq<dot, dot_eps, sor<dot_ctrl, index_cont>> {};
+	struct fwd_dot : seq<dot> {};
+	struct dot_fn : seq<fwd_dot, sor<dot_ctrl, index_cont>> {};
 	struct fn_tuple : sor<seq<tuple, opt<lambda>>, dot_fn> {};
 	struct atom : sor<fn_tuple, _array, lit, plambda, scope> {};
 
@@ -260,8 +258,8 @@ namespace spero::parser::grammar {
 	 */
 	struct mod_dec : seq<kmod, varname, ign_s, must<sor<endc, eolf>>, ig_s> {};
 	    // TODO: Change to my custom error handling
-	struct impleps : seq<eps> {};
-	struct impl : seq<kimpl, single_type, opt<kfor, single_type, impleps>, scope> {};
+	struct for_type : seq<kfor, single_type> {};
+	struct impl : seq<kimpl, single_type, opt<for_type>, scope> {};
 	struct alieps : seq<eps> {};
 	struct imps : seq<eps> {};
 	struct alias : seq<alieps, opt<_array>, kas, binding, opt<_array>> {};
@@ -300,10 +298,9 @@ namespace spero::parser::grammar {
 	struct valexpr : seq<opt<kmut>, sor<control, binexpr>, opt<type_inf>> {};
 	struct mvexpr : sor<valexpr, in_assign> {};
 	struct mvdexpr : seq<opt<kdo>, mvexpr> {};
-	struct expr : sor<ganot, mod_alias, assign, seq<opt<kdo>, valexpr>> {};
-	struct statement : seq<star<annotation>, expr, opt<endc>> {};
-	struct global_statement : sor<mod_dec, impl, statement> {};
-	struct program : seq<star<ig_s, global_statement>, must<eolf>> {};
+	struct statement : sor<ganot, mod_dec, mod_alias, impl, assign, seq<opt<kdo>, valexpr>> {};
+	struct annotated : seq<star<annotation>, statement, opt<endc>> {};
+	struct program : seq<star<ig_s, annotated>, must<eolf>> {};
 }
 
 #undef key

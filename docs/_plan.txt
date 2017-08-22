@@ -19,10 +19,7 @@ Current Project Plan
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
 	Make some minor improvements to the grammar
-	  Look into moving `mod_dec`/`impl`/ down a level to 'statement'
-        Basically allow for annotations to be attached to them
 	  Allow for type chains (ie. "std:File:Path"), maybe in mod_path
-	  Look into converting some "*eps" rules to an explicit call in a construction rule
 	Find a way to integrate changes made in compiler development to changes in the language docs
 	  Removed 'static' visibility, role filled by '@static' annotation
 	    Reserved 'private' for possible visibility keyword
