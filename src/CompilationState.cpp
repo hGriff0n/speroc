@@ -9,7 +9,6 @@ namespace spero::compiler {
 	std::deque<std::string>& CompilationState::files() {
 		return input_files;
 	}
-	//const std::string& output() { return output_file; }
 
 
 	// Time loggers

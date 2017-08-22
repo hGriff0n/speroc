@@ -1,4 +1,4 @@
-#include "../incl/codegen/AsmEmitter.h"
+#include "codegen/AsmEmitter.h"
 
 namespace spero::compiler::gen {
 	using namespace arch;

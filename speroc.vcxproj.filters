@@ -259,5 +259,8 @@
     <ClInclude Include="incl\interface\CompilationState.h">
       <Filter>Header Files\interface</Filter>
     </ClInclude>
+    <ClInclude Include="incl\parser\base.h">
+      <Filter>Header Files\parser</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

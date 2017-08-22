@@ -14,16 +14,12 @@ namespace spero::compiler {
 	std::tuple<size_t, Stack> parse_impl(Fn&& parse) {
 		// Setup parser state
 		Stack ast;
-		ast.emplace_back(ast::Sentinel{});
 
 		// Perform a parsing run, switching on whether the input is a file or not
 		auto succ = parse(ast);
 
-		// Maintain the ast stack invariants (no nullptr [at 0], non-empty)
-		ast.pop_front();
-
 		// Return the completed ast
-		return std::make_tuple(!succ || ast.size() == 0, std::move(ast));
+		return std::make_tuple(!succ, std::move(ast));
 	}
 
 	std::tuple<size_t, Stack> parse(std::string input, CompilationState& state) {

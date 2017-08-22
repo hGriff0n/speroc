@@ -220,6 +220,7 @@
     <ClInclude Include="incl\interface\CompilationState.h" />
     <ClInclude Include="incl\parser\actions.h" />
     <ClInclude Include="incl\parser\ast.h" />
+    <ClInclude Include="incl\parser\base.h" />
     <ClInclude Include="incl\parser\grammar.h" />
     <ClInclude Include="incl\parser\visitor.h" />
     <ClInclude Include="incl\util\parser.h" />

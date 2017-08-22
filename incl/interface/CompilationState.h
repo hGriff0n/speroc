@@ -3,22 +3,16 @@
 #include <chrono>
 #include <memory>
 #include <deque>
+
 #include <spdlog.h>
 #include <logger.h>
-#include "pegtl/position.hpp"
+
+#include "parser/base.h"
 
 #define abstract =0;
 
 
 // Forward Declarations
-namespace spero::compiler {
-	template<class T> using ptr = std::unique_ptr<T>;
-}
-
-namespace spero::compiler::ast {
-	struct Ast;
-}
-
 namespace spero::parser {
 	using Stack = std::deque<compiler::ptr<compiler::ast::Ast>>;
 }

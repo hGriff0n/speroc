@@ -6,9 +6,9 @@
 #include "pegtl/position.hpp"
 
 namespace spero::compiler::analysis {
-	namespace impl {
-		using Location = tao::pegtl::position;
+	using Location = tao::pegtl::position;
 
+	namespace impl {
 		struct Data {
 			int loc;
 			std::optional<Location> src;			// TODO: Switch over to an 'id' system
@@ -32,7 +32,7 @@ namespace spero::compiler::analysis {
 			SymTable();
 			~SymTable();
 
-			int insert(std::string, int, impl::Location);
+			int insert(std::string, int, Location);
 			std::optional<int> getVar(std::string, bool=false);
 
 			size_t getCount();

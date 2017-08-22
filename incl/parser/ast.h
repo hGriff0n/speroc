@@ -1,17 +1,13 @@
 #pragma once
 
 #include <variant>
-#include <memory>
 #include <deque>
 #include <string>
 
 #include "enum.h"
-#include "analysis/SymTable.h"
+#include "base.h"
 
 namespace spero::compiler {
-	// Cut down on typing for unique_ptr
-	template<class T> using ptr = std::unique_ptr<T>;
-
 	/*
 	* Templates to check if a variant could hold a T
 	*/
@@ -28,7 +24,6 @@ namespace spero::compiler::ast {
 	* Enums and other basic types
 	*/
 	using Sentinel = nullptr_t;
-	using Location = tao::pegtl::position;
 	BETTER_ENUM(KeywordType, char, LET, DEF, STATIC, MUT, DO,
 		MOD, USE, MATCH, IF, ELSIF, ELSE, WHILE, FOR, LOOP,
 		BREAK, CONT, YIELD, RET, WAIT, IMPL, F_IN)
@@ -44,7 +39,6 @@ namespace spero::compiler::ast {
 	* Forward declarations
 	*/
 	struct LocalAnnotation;
-	struct Visitor;
 
 
 	//
@@ -52,26 +46,6 @@ namespace spero::compiler::ast {
 	// 
 	// This section contains the base nodes within the heirarchy
 	//
-
-
-	/*
-	 * Base class for all ast nodes
-	 *
-	 * Specifies the required information that all ast nodes must contain
-	 *
- 	 * Exports:
-	 *   loc - Structure containing the location data for the node
-	 *   visit - Polymorphic method to accept a visitor object for iteration
-	 */
-	struct Ast {
-		Location loc;
-
-		Ast(Location);
-
-		virtual void accept(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
-	};
-
 
 	/*
 	 * Base class for representing a token during parsing on the stack
@@ -1136,6 +1110,26 @@ namespace spero::compiler::ast {
 	//
 
 	/*
+	 * Represents a scoped binding assignment, where a variable is declared for use in
+	 *   a single expression and is only visible within that context
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   bind - the assignment binding the variable to some value
+	 *    expr - the statement in which the binding is visible
+	 */
+	struct InAssign : ValExpr {
+		ptr<VarAssign> bind;
+		ptr<ValExpr> expr;
+
+		InAssign(ptr<VarAssign>, ptr<ValExpr>, Location);
+
+		virtual void accept(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
 	 * Basic class that represents a variable name
 	 *
 	 * Extends: ValExpr
@@ -1195,27 +1189,6 @@ namespace spero::compiler::ast {
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
-
-	/*
-	 * Represents a scoped binding assignment, where a variable is declared for use in
-	 *   a single expression and is only visible within that context
-	 *
-	 * Extends: ValExpr
-	 *
-	 * Exports:
-	 *   bind - the assignment binding the variable to some value
-	 *   expr - the statement in which the binding is visible
-	 */
-	struct InAssign : ValExpr {
-		ptr<VarAssign> bind;
-		ptr<ValExpr> expr;
-
-		InAssign(ptr<VarAssign>, ptr<ValExpr>, Location);
-
-		virtual void accept(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
-	};
-
 
 	/*
 	 * Represents a sequence of values where the each one is used to index the prior
