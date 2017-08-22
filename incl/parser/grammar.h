@@ -106,8 +106,7 @@ namespace spero::parser::grammar {
 	struct kwait : key("wait");
 	struct vcontext : sor<klet, kdef> {};
 	struct jump_key : sor<kbreak, kcontinue, kret, kyield, kwait> {};
-	// This is mostly in-case I want to short-cut var-checking at some point
-	struct keywords : sor<jump_key, vcontext, ktrue, kfalse, kas, kuse, kimpl, kmod,
+	struct keywords : sor<jump_key, vcontext, ktrue, kfalse, kas, kuse, kimpl, kmod,				// This is mostly in-case I want to short-cut var-checking at some point
 		kwhile, kin, kfor, kelse, kelsif, kif, kmatch, kloop, kdo, kmut> {};
 
 
@@ -120,7 +119,8 @@ namespace spero::parser::grammar {
 	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
 	struct mod_path : plus<one<':'>, not_at<sor<typ_ch, one<':'>>>, var> {};
 	struct varname : seq<var, opt<mod_path>> {};
-	struct typname : seq<opt<varname, one<':'>>, typ> {};
+	struct type_path : seq<one<':'>, typ> {};
+	struct typname : sor<seq<varname, plus<type_path>>, typ> {};
 	struct binding : seq<sor<var, typ>, ig_s> {};
 	struct unop : one_of<'!', '-', '~'> {};
 	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
@@ -240,11 +240,14 @@ namespace spero::parser::grammar {
 	 * Expressions
 	 */
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
-	struct type_var : seq<opt<one<':'>>, typ, ig_s, opt<_array>> {};
-	struct op_var : seq<sor<binop, varname>, ig_s> {};
+	struct type_var : seq<plus<type_path>, ig_s, opt<_array>> {};
+	struct op_var : seq<binop> {};
+	struct vareps : seq<eps, opt<_array>> {};
 	struct call : enable<tuple> {};
-	struct type_const : seq<type_var, opt<disable<call>, opt<anon_type>>> {};
-	struct var_val : sor<seq<op_var, sor<type_const, _array, eps>>, type_const> {};
+	struct type_const_tail : seq<opt<_array>, opt<disable<call>, opt<anon_type>>> {};
+	struct raw_const : seq<typ, ig_s, type_const_tail> {};
+	struct type_const : seq<type_var, ig_s, type_const_tail> {};
+	struct var_val : sor<seq<varname, sor<type_const, vareps>>, raw_const, op_var> {};
 	struct fncall : seq<sor<atom, var_val>, star<call>> {};
 	struct indexeps : seq<eps> {};
 	struct index_cont : seq<indexeps, fncall, star<dot, fncall>> {};
@@ -263,7 +266,7 @@ namespace spero::parser::grammar {
 	struct alieps : seq<eps> {};
 	struct imps : seq<eps> {};
 	struct alias : seq<alieps, opt<_array>, kas, binding, opt<_array>> {};
-	struct imp_type : seq<opt<one<':'>>, typ> {};
+	struct imp_type : sor<plus<type_path>, typ> {};
 	struct imp_alias : seq<opt<imp_type>, ig_s, opt<alias>> {};
 	struct mul_imp : seq<opt<one<':'>>, sequence<obrace, binding, cbrace>> {};
 	struct mod_alias : seq<kuse, opt<var, sor<mod_path, imps>>, sor<mul_imp, imp_alias>> {};

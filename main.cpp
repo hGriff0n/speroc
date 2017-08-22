@@ -185,7 +185,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 		try {
 			parser::Stack res;
 
-			std::string command = input.substr(0, 2);
+			auto command = input.substr(0, 2);
 
 			// Compile a file
 			if (command == ":c") {

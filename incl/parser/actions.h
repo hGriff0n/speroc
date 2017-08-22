@@ -150,6 +150,7 @@ namespace spero::parser::actions {
 		util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(part));
 		// stack: QualifiedBinding
 	} END;
+	INHERIT(type_path, mod_path);
 	RULE(qualtyp) {
 		// stack: (QualifiedBinding | BasicBinding)? BasicBinding
 		auto typ = POP(BasicBinding);
@@ -166,7 +167,13 @@ namespace spero::parser::actions {
 		}
 		// stack: QualifiedBinding
 	} END;
-	INHERIT(typname, qualtyp);
+	RULE(typname) {
+		// stack: qualbind | basicbind
+		if (util::at_node<ast::BasicBinding>(s)) {
+			PUSH(QualifiedBinding, POP(BasicBinding));
+		}
+		// stack: qualbind
+	} END;
 	RULE(pat_tuple) {
 		// stack: {} pattern*
 		auto pats = util::popSeq<ast::Pattern>(s);
@@ -524,27 +531,21 @@ namespace spero::parser::actions {
 		PUSH(FnCall, POP(ValExpr), std::move(tup));
 		// stack: fncall
 	} END;
-	RULE(op_var) {
-		// stack: basicbind | qualbind
+	RULE(vareps) {
+		// stack: basicbind | qualbind array
+		auto inst = POP(Array);
 		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(Variable, MAKE(QualifiedBinding, POP(BasicBinding)), nullptr);
+			PUSH(Variable, MAKE(QualifiedBinding, POP(BasicBinding)), std::move(inst));
 		} else {
-			PUSH(Variable, POP(QualifiedBinding), nullptr);
+			PUSH(Variable, POP(QualifiedBinding), std::move(inst));
 		}
 		// stack: variable
 	} END;
+	INHERIT(op_var, vareps);
 	RULE(type_var) {
-		// stack: variable? bind array?
+		// stack: qualbind array?
 		auto inst = POP(Array);
-		auto typ = POP(BasicBinding);
-
-		if (util::at_node<ast::Variable>(s)) {
-			auto* var = util::view_as<ast::Variable>(s.back());
-			var->name->elems.emplace_back(std::move(typ));
-			var->inst_args = std::move(inst);
-		} else {
-			PUSH(Variable, MAKE(QualifiedBinding, std::move(typ)), std::move(inst));
-		}
+		PUSH(Variable, POP(QualifiedBinding), std::move(inst));
 		// stack: variable
 	} END;
 	RULE(type_const) {
@@ -557,6 +558,21 @@ namespace spero::parser::actions {
 			 PUSH(TypeExtension, std::move(var->name), std::move(var->inst_args), std::move(args), std::move(body));
 		} else if (args) {
 			PUSH(FnCall, POP(Variable),std::move(args));
+		}
+		// stack: FnCall | Var | TypeExt
+	} END;
+	RULE(raw_const) {
+		// stack: basicbind array? tuple? block?
+		auto body = POP(Block);
+		auto args = POP(Tuple);
+
+		action<grammar::vareps>::apply(in, s, state);
+		if (body) {
+			auto var = POP(Variable);
+			PUSH(TypeExtension, std::move(var->name), std::move(var->inst_args), std::move(args), std::move(body));
+
+		} else if (args) {
+			PUSH(FnCall, POP(Variable), std::move(args));
 		}
 		// stack: FnCall | Var | TypeExt
 	} END;
