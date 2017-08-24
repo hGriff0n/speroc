@@ -21,7 +21,7 @@ namespace spero::compiler::gen {
 		analysis::SymTable globals;
 		analysis::SymTable* current = &globals;
 
-		void assign(std::string&, bool, ast::Location);
+		void assign(std::string&, bool, Location);
 
 		public:
 			AsmGenerator(std::ostream&, compiler::CompilationState&);

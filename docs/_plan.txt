@@ -20,6 +20,11 @@ Current Project Plan
   Grammar changes and modifications
 	Add in syntax error checking and handling
 	  Figure out how I want this to work
+	    There's two kinds of errors: immediate and deferred
+		  Immediate I can report automatically when I see them, no problem
+		  Deferred errors require a bit more context to construct correct error messages
+		    An error node gets placed on the stack and later popped off once the context is there
+			Deferred nodes can either maintained within the ast structure or popped off once the context exists
 	  Add in ast error classes
 	  Adapt rules/grammar to handle these new capabilities
 	Codebase Updates
@@ -36,6 +41,9 @@ Current Project Plan
 	    static would be replaced by the '@static' annotation
 	  Look at modifying the grammar to allow for `anon_type` to be attached to `var_val`/`atom` calls (for metaprogramming)
 	  Look into whether ptr styling can be forced to directly attach to the type
+	  Allow for variables after type chains (to account for static variables/methods)
+          Change binexpr to be left-associative (ie. "3 + 3 + 4" => "{3 + 3} + 4")
+            Not sure if it's currently this way or not
 	Language Considerations
 	  Figure out a way to apply annotations to tuples
 	    Possibly consider not attaching annotations directly at parse time (would allow for "@<var>!" syntax)

@@ -41,16 +41,6 @@ namespace spero::compiler {
 		return *logger;
 	}
 
-	std::string CompilationState::location(tao::pegtl::position pos) {
-		std::string ret = "at line:";
-		ret += std::to_string(pos.line);
-		ret += " col:";
-		ret += std::to_string(pos.byte_in_line);
-		ret += " of source '";
-		ret += pos.source;
-		return ret + '\'';
-	}
-
 	size_t CompilationState::failed() {
 		return nerrs;
 	}

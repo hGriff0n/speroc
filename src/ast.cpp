@@ -159,7 +159,7 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(Tuple) {
 		s << std::string(buf, ' ') << context << "ast.Tuple" << elems.size() << " (";
 		for (auto&& e : elems) {
-			e->prettyPrint(s << '\n', buf + 2) << ",";
+			e->prettyPrint(s << '\n', buf + 2) << ',';
 		}
 
 		if (elems.size()) {
@@ -175,7 +175,7 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(Array) {
 		s << std::string(buf, ' ') << context << "ast.Array [len=" << elems.size() << ", type={}] [";
 		for (auto&& e : elems) {
-			e->prettyPrint(s << '\n', buf + 2) << ",";
+			e->prettyPrint(s << '\n', buf + 2) << ',';
 		}
 
 		if (elems.size()) {

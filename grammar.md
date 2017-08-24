@@ -151,7 +151,7 @@ TODO: Need to consider a way to grab "chunks" of syntactic errors
 	type = or_type
 	  # error if no or_type
 	or_type = and_type ("|" ig* and_type)*
-	and_type = ntype ("&" ig* ntype)*
+	and_type = ntype ("+" ig* ntype)*
 	ntype = mut_type | ("{" ig* type "}") ig*
 	  # error if no closing "}"
 	mut_type = "mut"? (tuple_fn_type | ref_type)

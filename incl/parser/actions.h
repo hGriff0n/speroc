@@ -14,9 +14,10 @@
 		template<class Input> \
 		static void apply(const Input& in, Stack& s, CompilationState& state)
 #define END }
-#define MAKE(Node, ...) std::make_unique<ast::Node>(__VA_ARGS__, in.position())
+#define LOCATION Location{ in.iterator(), in.input().source() }
+#define MAKE(Node, ...) std::make_unique<ast::Node>(__VA_ARGS__, LOCATION)
 #define PUSH(Node, ...) s.emplace_back(MAKE(Node, __VA_ARGS__))
-#define MAKE_NODE(Node) std::make_unique<ast::Node>(in.position())
+#define MAKE_NODE(Node) std::make_unique<ast::Node>(LOCATION)
 #define PUSH_NODE(Node) s.emplace_back(MAKE_NODE(Node))
 #define POP(Node) util::pop<ast::Node>(s)
 #define INHERIT(gram, base) template<> struct action<grammar::gram> : action<grammar::base> {}

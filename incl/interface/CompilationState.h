@@ -63,9 +63,6 @@ namespace spero::compiler {
 
 			size_t failed();
 
-			// Temp function for formatting position
-			static std::string location(tao::pegtl::position);
-
 			// Compilation Stage Control
 			virtual bool produceExe() abstract;
 	};

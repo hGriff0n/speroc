@@ -13,7 +13,6 @@ namespace spero::compiler::ast {
 	 * Forward Declarations and Other types
 	 */
 	struct Visitor;
-	using Location = analysis::Location;
 
 	/*
 	 * Base class for all ast nodes

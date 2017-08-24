@@ -3,11 +3,9 @@
 #include <unordered_map>
 #include <optional>
 
-#include "pegtl/position.hpp"
+#include "parser/location.h"
 
 namespace spero::compiler::analysis {
-	using Location = tao::pegtl::position;
-
 	namespace impl {
 		struct Data {
 			int loc;

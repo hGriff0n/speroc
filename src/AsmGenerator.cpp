@@ -4,7 +4,7 @@
 namespace spero::compiler::gen {
 	AsmGenerator::AsmGenerator(std::ostream& s, compiler::CompilationState& state) : out{ s }, emit { s }, state{ state } {}
 	
-	void AsmGenerator::assign(std::string& var, bool force_curr, ast::Location loc) {
+	void AsmGenerator::assign(std::string& var, bool force_curr, Location loc) {
 		Register eax{ "eax" };
 		auto variable = current->getVar(var, force_curr);
 
