@@ -964,4 +964,16 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
+
+	//
+	// ERRORS
+	//
+
+	Symbol::Symbol(char c, Location loc) : Ast{ loc }, ch{ c } {}
+
+	Error::Error(Location loc) : Ast{ loc } {}
+	DEF_PRINTER(Error) {
+		return s << std::string(buf, ' ') << context << "ast.Error";
+	}
+
 }

@@ -91,7 +91,7 @@ namespace spero::compiler::gen {
 		auto loc = current->getVar(v.name->toString());
 
 		if (!loc) {
-			state.log(ID::err, "Attempt to use variable `{}` before it was declared at {}:{} of {}", v.name->toString(), v.loc.line, v.loc.byte_in_line, v.loc.source);
+			state.log(ID::err, "Attempt to use variable `{}` before it was declared <at {}>", v.name->toString(), v.loc);
 			return;
 		}
 

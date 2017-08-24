@@ -1230,10 +1230,45 @@ namespace spero::compiler::ast {
 	// This section represents all structures that represent something wrong
 	//
 
-	template<class T>
+	/*
+	 * Helper node for tracking a symbol appearance for error reporting
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   ch - the character that this node was created for
+	 */
+	struct Symbol : Ast {
+		char ch;
+
+		Symbol(char, Location);
+	};
+
+	/*
+	 * Base node for representing all error contexts
+	 *   Provides overload of `prettyPrint` for all error classes
+	 *
+	 * Extends: Ast
+	 */
+	struct Error : Ast {
+		Error(Location loc);
+
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Sentinel struct representing a missing close symbol
+	 *
+	 * Extends: Error
+	 */
+	struct CloseSymbolError : Error {
+		CloseSymbolError(Location loc) : Error{ loc } {}
+	};
+
+	/*template<class T>
 	struct Error : T { };
 
 	template<class T>
-	struct SyntaxError : Error<T> {};
+	struct SyntaxError : Error<T> {};*/
 
 }

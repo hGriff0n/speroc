@@ -38,9 +38,9 @@ namespace spero::parser::actions {
 	//
 	// Sentinel Nodes
 	//
-	SENTINEL(obrace);
-	SENTINEL(obrack);
-	SENTINEL(oparen);
+	RULE(obrace) { PUSH(Symbol, '{'); } END;
+	RULE(obrack) { PUSH(Symbol, '['); } END;
+	RULE(oparen) { PUSH(Symbol, '('); } END;
 
 
 	//
@@ -95,23 +95,44 @@ namespace spero::parser::actions {
 	// Atoms (done)
 	//
 	RULE(scope) {
-		// stack: {} stmt*
+		// stack: symbol stmt* error?
+		auto err = POP(CloseSymbolError);
 		auto vals = util::popSeq<ast::Statement>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing brace found for opening '{}' <at {}>", '{', sym->loc);
+		}
+
 		PUSH(Block, std::move(vals));
 		// stack: block
 	} END;
 	RULE(tuple) {
-		// stack: {} valexpr*
+		// stack: symbol valexpr* error?
+		auto err = POP(CloseSymbolError);
 		auto vals = util::popSeq<ast::ValExpr>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <at {}>", sym->loc);
+		}
+
 		PUSH(Tuple, std::move(vals));
 		// stack: tuple
 	} END;
 	RULE(_array) {
 		// stack: {} valexpr*
+		auto err = POP(CloseSymbolError);
 		auto vals = util::popSeq<ast::ValExpr>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing bracket found for opening '[' <at {}>", sym->loc);
+		}
+
 		PUSH(Array, std::move(vals));
 		// stack: array
 	} END;
@@ -797,6 +818,18 @@ namespace spero::parser::actions {
 		stmt->annots = std::move(anots);
 		s.emplace_back(std::move(stmt));
 		// stack: stmt
+	} END;
+
+
+	// Errors
+	RULE(errorparen) {
+		PUSH_NODE(CloseSymbolError);
+	} END;
+	RULE(errorbrack) {
+		PUSH_NODE(CloseSymbolError);
+	} END;
+	RULE(errorbrace) {
+		PUSH_NODE(CloseSymbolError);
 	} END;
 
 }

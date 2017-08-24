@@ -6,6 +6,7 @@
 
 #include <spdlog.h>
 #include <logger.h>
+#include <fmt/ostr.h>
 
 #include "parser/base.h"
 
