@@ -102,7 +102,7 @@ namespace spero::parser::actions {
 		// Error Handling
 		auto sym = POP(Symbol);
 		if (err) {
-			state.log(compiler::ID::err, "No closing brace found for opening '{}' <at {}>", '{', sym->loc);
+			state.log(compiler::ID::err, "No closing brace found for opening '{}' <scope at {}>", '{', sym->loc);
 		}
 
 		PUSH(Block, std::move(vals));
@@ -116,7 +116,7 @@ namespace spero::parser::actions {
 		// Error Handling
 		auto sym = POP(Symbol);
 		if (err) {
-			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <at {}>", sym->loc);
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <tuple at {}>", sym->loc);
 		}
 
 		PUSH(Tuple, std::move(vals));
@@ -130,7 +130,7 @@ namespace spero::parser::actions {
 		// Error Handling
 		auto sym = POP(Symbol);
 		if (err) {
-			state.log(compiler::ID::err, "No closing bracket found for opening '[' <at {}>", sym->loc);
+			state.log(compiler::ID::err, "No closing bracket found for opening '[' <array at {}>", sym->loc);
 		}
 
 		PUSH(Array, std::move(vals));
@@ -197,9 +197,16 @@ namespace spero::parser::actions {
 		// stack: qualbind
 	} END;
 	RULE(pat_tuple) {
-		// stack: {} pattern*
+		// stack: {} pattern* error?
+		auto err = POP(CloseSymbolError);
 		auto pats = util::popSeq<ast::Pattern>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <pat_tuple at {}>", sym->loc);
+		}
+
 		PUSH(TuplePattern, std::move(pats));
 		// stack: pattern
 	} END;
@@ -267,9 +274,16 @@ namespace spero::parser::actions {
 		PUSH_NODE(AssignPattern);
 	} END;
 	RULE(assign_tuple) {
-		// stack: {} asgn_pat*
+		// stack: {} asgn_pat* error?
+		auto err = POP(CloseSymbolError);
 		auto pats = util::popSeq<ast::AssignPattern>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <assign_tuple at {}>", sym->loc);
+		}
+
 		PUSH(AssignTuple, std::move(pats));
 		// stack: AssignTuple
 	} END;
@@ -306,9 +320,16 @@ namespace spero::parser::actions {
 		// stack: type
 	} END;
 	RULE(tuple_type) {
-		// stack: {} type*
+		// stack: {} type* error?
+		auto err = POP(CloseSymbolError);
 		auto types = util::popSeq<ast::Type>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <tuple_type at {}>", sym->loc);
+		}
+
 		PUSH(TupleType, std::move(types));
 		// stack: tupleType
 	} END;
@@ -333,6 +354,18 @@ namespace spero::parser::actions {
 		}
 
 		s.push_back(std::move(typ));
+		// stack: type
+	} END;
+	RULE(braced_type) {
+		// stack: {} type error?
+		auto err = POP(CloseSymbolError);
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+
+		// Error handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '{}' <braced_type at {}>", '{', sym->loc);
+		}
 		// stack: type
 	} END;
 	RULE(and_cont) {
@@ -416,9 +449,16 @@ namespace spero::parser::actions {
 		// stack: val_gen
 	} END;
 	RULE(_generic) {
-		// stack: {} gen_part*
+		// stack: {} gen_part* error?
+		auto err = POP(CloseSymbolError);
 		auto parts = util::popSeq<ast::GenericPart>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '[' <generic at {}>", sym->loc);
+		}
+
 		PUSH(GenericArray, std::move(parts));
 		// stack: gentype
 	} END;
@@ -439,9 +479,16 @@ namespace spero::parser::actions {
 		// stack: arg
 	} END;
 	RULE(arg_tuple) {
-		// stack: {} arg*
+		// stack: {} arg* error?
+		auto err = POP(CloseSymbolError);
 		auto args = util::popSeq<ast::Argument>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <arg_tuple at {}>", sym->loc);
+		}
+
 		PUSH(ArgTuple, std::move(args));
 		// stack: argtuple
 	} END;
@@ -501,10 +548,20 @@ namespace spero::parser::actions {
 		// stack: case
 	} END;
 	RULE(matchs) {
-		// stack: valexpr {} case+ keyword
+		// stack: valexpr {} case+ keyword error?
+		auto err = POP(CloseSymbolError);
 		POP(Token);
 		auto cases = util::popSeq<ast::Case>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing brace found for opening '{}' <match at {}>", '{', sym->loc);
+		}
+		if (cases.size() == 0) {
+			state.log(compiler::ID::err, "Match expression with no cases <at {}>", sym->loc);
+		}
+
 		PUSH(Match, POP(ValExpr), std::move(cases));
 		// stack: match
 	} END;
@@ -651,9 +708,16 @@ namespace spero::parser::actions {
 		// stack: impl
 	} END;
 	RULE(mul_imp) {
-		// stack: qualbind {} bind*
+		// stack: qualbind {} bind* error?
+		auto err = POP(CloseSymbolError);
 		auto bindings = util::popSeq<ast::BasicBinding>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing brace found for opening '{}' <mul_imp at {}>", '{', sym->loc);
+		}
+
 		PUSH(MultipleImport, POP(QualifiedBinding), std::move(bindings));
 		// stack: MultipleImport
 	} END;

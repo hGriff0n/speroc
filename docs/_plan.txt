@@ -27,6 +27,8 @@ Current Project Plan
 			Deferred nodes can either maintained within the ast structure or popped off once the context exists
 	  Add in ast error classes
 	  Adapt rules/grammar to handle these new capabilities
+	Fix isswues with grammar
+	  "match foo { 3 => 3 }" throws up an error with matching the '}' from a scope
 	Codebase Updates
 	  Update to VS 15.3 capabilities
         "if (auto a = ...; ...)"
