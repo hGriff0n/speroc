@@ -212,9 +212,10 @@ namespace spero::parser::grammar {
 	/*
 	 * Control Structures
 	 */
-	// TODO: Error if 'in' not used (immediate)
-	// TODO: Error if no mvexpr (deferred)
-	struct forl : seq<kfor, pattern, kin, mvexpr, mvdexpr> {};
+	// TODO: Error if no mvexpr or mvdexpr (deferred)
+	struct infor : seq<kin, mvexpr, mvdexpr> {};
+	struct missing_in : seq<eps> {};
+	struct forl : seq<kfor, pattern, sor<infor, missing_in>> {};														// Immediate error if 'in' not used
 	// TODO: Error if no mvexpr (deferred)
 	struct whilel : seq<kwhile, mvexpr, mvdexpr> {};
 	// TODO: Error if no mvexpr (deferred)
@@ -240,13 +241,14 @@ namespace spero::parser::grammar {
 	struct dotloop : seq<kloop> {};
 	// TODO: Error if no mvexpr (deferred)
 	struct dotwhile : seq<kwhile, mvexpr> {};
-	// TODO: Error if 'in' not used
-	struct dotfor : seq<kfor, pattern, kin, mvexpr> {};
+	// TODO: Error if no 'mvexpr' (deferred)
+	struct dot_infor : seq<kin, mvexpr> {};
+	struct dotfor : seq<kfor, pattern, sor<dot_infor, missing_in>> {};													// Errors: see 'forl'
 	struct dotif : seq<if_core> {};
 	struct dotbranch : seq<dotif, star<elsif_case>, opt<else_case>> {};
 	struct dotmatch : seq<kmatch, obrace, star<_case>, sor<cbrace, errorbrace>> {};										// Errors: see 'matchs'
 	struct dotjump : seq<jump_key> {};
-	struct dot_ctrl : sor<dotloop, dotwhile, dotfor, dotbranch, dotmatch> {};
+	struct dot_ctrl : sor<dotloop, dotwhile, dotfor, dotbranch, dotmatch, dotjump> {};
 
 
 	/*

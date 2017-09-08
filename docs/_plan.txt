@@ -5,9 +5,9 @@ Current Project State
 	availability: standard-only
 	generics: no
 	inheritance: undetermined (not sure how inheritance will be handled, between Rust 'impl', C++ 'inheritance' or some mix)
-    recognized => Int, Bool, ~Byte, ~Char
+    recognized => Int, Bool
 	...
-  variables => partially-supported
+  variables => basic shadowing and scoping
   functions => main-only
   annotations => ignored
 
@@ -19,16 +19,14 @@ Current Project Plan
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
 	Add in syntax error checking and handling
-	  Figure out how I want this to work
-	    There's two kinds of errors: immediate and deferred
-		  Immediate I can report automatically when I see them, no problem
-		  Deferred errors require a bit more context to construct correct error messages
-		    An error node gets placed on the stack and later popped off once the context is there
-			Deferred nodes can either maintained within the ast structure or popped off once the context exists
+	  Report errors for all missing keywords
+	  Add in error reporting for immediate classes
 	  Add in ast error classes
 	  Adapt rules/grammar to handle these new capabilities
-	Fix isswues with grammar
+	Fix issues with grammar
 	  "match foo { 3 => 3 }" throws up an error with matching the '}' from a scope
+	  "for a in a a" crashes the compiler because it's trying to report an error
+	  Need to enable "3.return.if true" as a rewording of "if true return 3"
 	Codebase Updates
 	  Update to VS 15.3 capabilities
         "if (auto a = ...; ...)"
@@ -39,7 +37,7 @@ Current Project Plan
 	Syntax Improvement Considerations
 	  Look into allowing generics to have default values (old grammar had this for ValueGeneric only)
 	  Look into allowing "mut let i=0 in i" instead of "mut {let i=0 in i}" from `mvexpr`
-	  Look at removing "static" keyword and adding in `<private>` keyword
+	  Remove "static" keyword and adding in `<private>` keyword (just reserver `private` for now)
 	    static would be replaced by the '@static' annotation
 	  Look at modifying the grammar to allow for `anon_type` to be attached to `var_val`/`atom` calls (for metaprogramming)
 	  Look into whether ptr styling can be forced to directly attach to the type
@@ -65,6 +63,12 @@ Current Project Plan
 	  Also simplify the control path if possible
   Improve "help" support
     Look into adding "code of conduct"
+  Language Logic Checking
+    Figure out what type system I want to support
+	  Ensure that it can be type-checked with the algebraic subtyping paper
+	Figure out what concurrency systems I want to focus on
+	Flesh out the rules for mutability restrictions
+	  Ensure they maintain the semantics I want to have
   Basic Mutability Tracking
     Modify 'SymTable' to track the mutability of the variable (this can be done within the current system)
 	Throw errors when a Reassign node attempts to change the value of an immutable variable

@@ -55,6 +55,7 @@ namespace spero::parser::actions {
 	TOKEN(kret, ast::KeywordType::RET);
 	TOKEN(kcontinue, ast::KeywordType::CONT);
 	TOKEN(kbreak, ast::KeywordType::BREAK);
+	TOKEN(kfor, ast::KeywordType::FOR);
 
 
 	//
@@ -497,11 +498,22 @@ namespace spero::parser::actions {
 	//
 	// Control
 	//
-	RULE(forl) {
-		// stack: pattern gen body
+	RULE(missing_in) {
+		// stack: "for" pattern
+		POP(Pattern);
+		auto key = POP(Token);
+		state.log(compiler::ID::err, "Missing keyword `in` <for loop at {}>", key->loc);
+
+		// TODO: Need to push a valexpr on the stack to prevent errors
+		// stack: 
+	} END;
+	RULE(infor) {
+		// stack: "for" pattern gen body
 		auto body = POP(ValExpr);
 		auto generator = POP(ValExpr);
-		PUSH(For, POP(Pattern), std::move(generator), std::move(body));
+		auto pat = POP(Pattern);
+		POP(Token);
+		PUSH(For, std::move(pat), std::move(generator), std::move(body));
 		// stack: for
 	} END;
 	RULE(whilel) {
@@ -578,10 +590,11 @@ namespace spero::parser::actions {
 		PUSH(While, std::move(test), POP(ValExpr));
 		// stack: while
 	} END;
-	RULE(dotfor) {
-		// stack: body pattern gen
+	RULE(dot_infor) {
+		// stack: body "for" pattern gen
 		auto generator = POP(ValExpr);
 		auto pattern = POP(Pattern);
+		POP(Token);
 		PUSH(For, std::move(pattern), std::move(generator), POP(ValExpr));
 		// stack: for
 	} END;
