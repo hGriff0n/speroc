@@ -36,7 +36,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 		state.logTime();
 
 		if (failed) {
-			state.log(ID::err, "Parsing of the input failed");
+			state.log(ID::err, "Unexpected error in parsing input");
 		}
 	}
 

@@ -976,4 +976,10 @@ namespace spero::compiler::ast {
 		return s << std::string(buf, ' ') << context << "ast.Error";
 	}
 
+	CloseSymbolError::CloseSymbolError(Location loc) : Error{ loc } {}
+
+	ValError::ValError(Location loc) : ValExpr{ loc } {}
+	DEF_PRINTER(ValError) {
+		return s << std::string(buf, ' ') << context << "ast.Error";
+	}
 }

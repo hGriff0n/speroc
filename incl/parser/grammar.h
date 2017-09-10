@@ -75,11 +75,15 @@ namespace spero::parser::grammar {
 	struct bar : punct<'|'> {};
 	struct and : punct<'+'> {};
 	struct dot : punct<'.'> {};
+	struct ochar : one<'\''> {};
+	struct oquote : one<'"'> {};
 
 	struct errorbrace : ig_s {};
 	struct errorparen : ig_s {};
 	struct errorbrack : ig_s {};
 	struct errorequal : ig_s {};
+	struct errorchar : ig_s {};
+	struct errorquote : ig_s {};
 
 
 	/*
@@ -254,20 +258,15 @@ namespace spero::parser::grammar {
 	/*
 	 * Atoms
 	 */
-	struct bin_body : plus<one_of<'0', '1'>> {};
-	// TODO: Error if body isn't present (deferred)
-	struct binary : seq<pstr("0b"), must<bin_body>, ig_s> {};
-	struct hex_body : plus<xdigit> {};
-	// TODO: Error if body isn't present (deferred)
-	struct hex : seq<pstr("0x"), must<hex_body>, ig_s> {};
-	// TODO: Error if '.digit' not used (immediate)
-	struct decimal : seq<plus<digit>, opt<one<'.'>, plus<digit>>, ig_s> {};
+	struct bin_body : star<one_of<'0', '1'>> {};
+	struct binary : seq<pstr("0b"), bin_body, ig_s> {};																	// Immediate error if binary body isn't present
+	struct hex_body : star<xdigit> {};
+	struct hex : seq<pstr("0x"), hex_body, ig_s> {};																	// Immediate error if hex body isn't present
+	struct decimal : seq<plus<digit>, opt<one<'.'>, plus<digit>>, ig_s> {};												// NOTE: '.'<eps> needs to be "allowed" for indexing
 	struct char_body : seq<any> {};
-	// TODO: Error if no closing ''' (immediate)
-	struct _char : seq<one<'\''>, opt<one<'\\'>>, char_body, one<'\''>, ig_s> {};
-	struct str_body : until<at<one<'"'>>, seq<opt<one<'\\'>>, any>> {};
-	// TODO: Error if no closing '"' (immediate)
-	struct string : seq<one<'"'>, str_body, one<'"'>, ig_s> {};
+	struct _char : seq<ochar, opt<one<'\\'>>, char_body, sor<one<'\''>, errorchar>, ig_s> {};							// Immediate error if no closing '''
+	struct str_body : until<at<sor<one<'"'>, tao::pegtl::eof>>, seq<opt<one<'\\'>>, any>> {};
+	struct string : seq<oquote, str_body, sor<one<'"'>, errorquote>, ig_s> {};											// Immediate error if no closing '"'
 	struct lit : sor<binary, hex, decimal, _char, string, kfalse, ktrue> {};
 	struct pat_lit : seq<lit> {};
 	struct scope : seq<obrace, star<statement>, sor<cbrace, errorbrace>> {};											// Immediate error if no closing '}'
@@ -340,7 +339,7 @@ namespace spero::parser::grammar {
 	// TODO: Error if no valexpr (deferred)
 	struct asgn_val : seq<equals, valexpr, opt<asgn_in>> {};
 	struct _interface : seq<type_inf, opt<asgn_val>> {};
-	// TODO: Error if _interface or asgn_val not used
+	// TODO: Error if _interface or asgn_val not used (deferred)
 	struct var_assign : seq<assign_pat, opt<_generic>, sor<_interface, asgn_val>> {};
 	// TODO: Error if invalid keyword (immediate?)
 	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};

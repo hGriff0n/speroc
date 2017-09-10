@@ -41,6 +41,8 @@ namespace spero::parser::actions {
 	RULE(obrace) { PUSH(Symbol, '{'); } END;
 	RULE(obrack) { PUSH(Symbol, '['); } END;
 	RULE(oparen) { PUSH(Symbol, '('); } END;
+	RULE(ochar) { PUSH(Symbol, '\''); } END;
+	RULE(oquote) { PUSH(Symbol, '"'); } END;
 
 
 	//
@@ -62,14 +64,25 @@ namespace spero::parser::actions {
 	// Literals (done)
 	//
 	RULE(bin_body) {
-		PUSH(Byte, in.string(), 2);
+		if (in.string().size() == 0) {
+			state.log(compiler::ID::err, "Missing binary body: `0b` must be followed by a sequence of binary digits <at {}>", LOCATION);
+			PUSH_NODE(ValError);
+		} else {
+			PUSH(Byte, in.string(), 2);
+		}
 	} END;
 	RULE(hex_body) {
-		PUSH(Byte, in.string(), 16);
+		if (in.string().size() == 0) {
+			state.log(compiler::ID::err, "Missing hex body: `0x` must be followed by a sequence of hexadecimal digits <at {}>", LOCATION);
+			PUSH_NODE(ValError);
+		} else {
+			PUSH(Byte, in.string(), 16);
+		}
 	} END;
 	RULE(decimal) {
 		auto str = in.string();
-		if (str.find('.') != std::string::npos) {
+
+		if (auto dot_pos = str.find('.'); dot_pos != std::string::npos) {
 			PUSH(Float, str);
 		} else {
 			PUSH(Int, str);
@@ -78,8 +91,30 @@ namespace spero::parser::actions {
 	RULE(char_body) {
 		PUSH(Char, in.string()[0]);
 	} END;
+	RULE(_char) {
+		// stack: {} char error?
+		auto err = POP(CloseSymbolError);
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+		auto sym = POP(Symbol);
+
+		if (err) {
+			state.log(compiler::ID::err, "No closing quote found for opening ' <char at {}>", sym->loc);
+		}
+		// stack: char
+	} END;
 	RULE(str_body) {
 		PUSH(String, util::escape(in.string()));
+	} END;
+	RULE(string) {
+		// stack: {} char error?
+		auto err = POP(CloseSymbolError);
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+		auto sym = POP(Symbol);
+
+		if (err) {
+			state.log(compiler::ID::err, "No closing quote found for opening \" <string at {}>", sym->loc);
+		}
+		// stack: char
 	} END;
 	RULE(kfalse) {
 		PUSH(Bool, false);
@@ -902,12 +937,10 @@ namespace spero::parser::actions {
 	RULE(errorparen) {
 		PUSH_NODE(CloseSymbolError);
 	} END;
-	RULE(errorbrack) {
-		PUSH_NODE(CloseSymbolError);
-	} END;
-	RULE(errorbrace) {
-		PUSH_NODE(CloseSymbolError);
-	} END;
+	INHERIT(errorbrack, errorparen);
+	INHERIT(errorbrace, errorparen);
+	INHERIT(errorchar, errorparen);
+	INHERIT(errorquote, errorparen);
 
 }
 

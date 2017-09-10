@@ -1262,7 +1262,16 @@ namespace spero::compiler::ast {
 	 * Extends: Error
 	 */
 	struct CloseSymbolError : Error {
-		CloseSymbolError(Location loc) : Error{ loc } {}
+		CloseSymbolError(Location);
+	};
+
+	/*
+	 * Temporary sentinel struct to allow for using errors as value expressions
+	 */
+	struct ValError : ValExpr {
+		ValError(Location loc);
+
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
 	/*template<class T>
