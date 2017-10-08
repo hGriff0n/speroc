@@ -133,7 +133,6 @@ namespace spero::parser::grammar {
 	// TODO: Error if typ not used (deferred)
 	struct type_path : seq<one<':'>, typ> {};
 	struct typname : sor<seq<varname, plus<type_path>>, typ> {};
-	struct binding : seq<sor<var, typ>, ig_s> {};
 	struct unop : one_of<'!', '-', '~'> {};
 	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
 	struct binop :
@@ -314,22 +313,37 @@ namespace spero::parser::grammar {
 	 */
 	// TODO: Error if eolf or ';' not used (immediate)
 	struct mod_dec : seq<kmod, varname, ign_s, must<sor<endc, eolf>>, ig_s> {};
-	// TODO: Error if wrong keyword (immediate)
 	// TODO: Error if no type used (deferred)
 	struct for_type : seq<kfor, single_type> {};
+	struct impl_errchars : plus<not_at<disable<obrace>>, any> {};														// Immediate error if unexpected characters encountered
 	// TODO: Error if no scope, no type used (deferred)
-	struct impl : seq<kimpl, single_type, opt<for_type>, scope> {};
+	struct impl : seq<kimpl, single_type, opt<for_type>, opt<impl_errchars>, scope> {};
+
+	// Rewrite of import statements
+	struct name : sor<var, typ> {};
+	struct entity : seq<name, opt<_array>> {};
+	struct binding : seq<entity, star<one<':'>, entity>> {};
+	struct mulimp : seq<one<':'>, sequence<obrace, binding, ig_s, sor<cbrace, errorbrace>>> {};
+	struct check_valid : seq<eps> {};
+	struct check_alias : seq<eps> {};
+	struct alias : seq<pstr("as"), ig_s, entity, check_alias> {};
+	struct rebind : sor<alias, check_valid> {};
+	struct mod_imp : seq<kuse, binding, sor<mulimp, rebind>> {};
+
+	// TODO: Error if binding not used (deferred)
 	struct alieps : seq<eps> {};
 	struct imps : seq<eps> {};
-	// TODO: Error if binding not used (deferred)
-	// TODO: Error if "as" not used (immediate)
-	struct alias : seq<alieps, opt<_array>, kas, binding, opt<_array>> {};
-	struct imp_type : sor<plus<type_path>, typ> {};
-	struct imp_alias : seq<opt<imp_type>, ig_s, opt<alias>> {};
+	struct alias : seq<alieps, opt<_array>, kas, binding, ig_s, opt<_array>> {};
 	// TODO: Error if ',' and no binding used (deferred)
-	struct mul_imp : seq<opt<one<':'>>, sequence<obrace, binding, sor<cbrace, errorbrace>>> {};							// Immediate error if no closing '}'
+	struct mul_imp : seq<opt<one<':'>>, sequence<obrace, binding, ig_s, sor<cbrace, errorbrace>>> {};							// Immediate error if no closing '}'
 	// TODO: Error if no mul_imp, or imp_alias (deferred)
-	struct mod_alias : seq<kuse, opt<var, sor<mod_path, imps>>, sor<mul_imp, imp_alias>> {};
+	struct imp_alias : opt<ig_s, alias> {};
+	struct imp_type : sor<plus<type_path>, typ> {};
+	struct mod_varpath : seq<var, sor<mod_path, imps>, opt<imp_type>> {};
+	struct mod_alias : seq<kuse, opt<mod_varpath>, sor<mul_imp, imp_alias>> {};
+
+	
+
 	// TODO: Error if '=' not used (immediate)
 	// TODO: Error if scope not used (deferred)
 	struct type_assign : seq<assign_typ, opt<_generic>, equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, scope> {};
