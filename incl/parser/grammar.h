@@ -319,37 +319,23 @@ namespace spero::parser::grammar {
 	// TODO: Error if no scope, no type used (deferred)
 	struct impl : seq<kimpl, single_type, opt<for_type>, opt<impl_errchars>, scope> {};
 
-	// TODO: Error if binding not used (deferred)
-	struct alieps : seq<eps> {};
-	struct imps : seq<eps> {};
-	struct binding : sor<var, typ> {};
-	struct alias : seq<alieps, opt<_array>, kas, binding, ig_s, opt<_array>> {};
-	// TODO: Error if ',' and no binding used (deferred)
-	struct mul_imp : seq<opt<one<':'>>, sequence<obrace, seq<binding, ig_s>, sor<cbrace, errorbrace>>> {};							// Immediate error if no closing '}'
-	// TODO: Error if no mul_imp, or imp_alias (deferred)
-	struct imp_alias : opt<ig_s, alias> {};
-	struct imp_type : sor<plus<type_path>, typ> {};
-	struct mod_varpath : seq<var, sor<mod_path, imps>, opt<imp_type>> {};
-	struct mod_alias : seq<kuse, opt<mod_varpath>, sor<mul_imp, imp_alias>> {};
-
-	// TODO: Need to clean up the grammar for these defines
-	// TODO: Need to add in the associated actions
-	// TODO: Need to convert over to using this setup for 'module import'
-		// This includes putting all the new actions/asts in the correct place
+	// TODO: Need to add in error reporting for these definitions
 	// Then I need to move to using 'paths' throughout the entire codebase
+		// Shrink the number of definitions, move a lot of these outside of the immediate area
 	struct pvar : disable<var> {};
 	struct ptyp : disable<typ> {};
 	struct pname : sor<pvar, ptyp> {};
 	struct path_part : seq<pname, opt<_array>> {};
 	struct path : star<path_part, one<':'>> {};
 	struct pathed_name : seq<path, disable<path_part>> {};
-	struct path_mul_imp : sequence<obrace, seq<ig_s, pname, ig_s>, sor<cbrace, errorbrace>> {};
-	struct path_typrebind : seq<ptyp, opt<_array>> {};
-	struct path_typalias : seq<disable<ptyp>, if_then_else<disable<_array>, seq<kas, path_typrebind>, if_then_else<seq<ig_s, kas>, path_typrebind, eps>>> {};
-	struct path_varrebind : seq<pvar, opt<_array>> {};
-	struct path_varalias : seq<disable<pvar>, if_then_else<disable<_array>, seq<kas, path_varrebind>, if_then_else<seq<ig_s, kas>, path_varrebind, eps>>> {};
-	struct path_imp_alias : sor<path_varalias, path_typalias> {};
-	struct path_mod_alias : seq<kuse, opt<path>, sor<path_mul_imp, path_imp_alias>> {};
+
+	struct mul_imp : sequence<obrace, seq<ig_s, pname, ig_s>, sor<cbrace, errorbrace>> {};
+	struct at_rebind_point : seq<ig_s, sor<disable<_array>, at<kas>>> {};
+	struct rebind : seq<kas, path_part> {};
+	struct import_single : seq<eps> {};
+	// TODO: Error if at rebind point and no rebind
+	struct imp_alias : seq<disable<pname>, if_then_else<at_rebind_point, rebind, import_single>> {};
+	struct mod_alias : seq<kuse, opt<path>, sor<mul_imp, imp_alias>> {};
 
 	// TODO: Error if '=' not used (immediate)
 	// TODO: Error if scope not used (deferred)

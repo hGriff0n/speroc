@@ -741,8 +741,7 @@ namespace spero::compiler::ast {
 	}
 
 	ModRebindImport::ModRebindImport(Location loc) : Statement{ loc }, _module{ nullptr } {}
-	ModRebindImport::ModRebindImport(ptr<QualifiedBinding> mod, Location loc)
-		: Statement{ loc }, _module{ std::move(mod) } {}
+	ModRebindImport::ModRebindImport(ptr<Path> mod, Location loc) : Statement{ loc }, _module{ std::move(mod) } {}
 	DEF_PRINTER(ModRebindImport) {
 		if (_module) {
 			_module->prettyPrint(s, buf, context);
@@ -753,21 +752,16 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	SingleImport::SingleImport(ptr<QualifiedBinding> mod, ptr<BasicBinding> name, Location loc)
-		: ModRebindImport{ std::move(mod), loc }, binding{ std::move(name) } {}
+	SingleImport::SingleImport(ptr<Path> mod, Location loc) : ModRebindImport{ std::move(mod), loc } {}
 	void SingleImport::accept(Visitor& v) {
 		v.visitSingleImport(*this);
 	}
 	DEF_PRINTER(SingleImport) {
-		s << std::string(buf, ' ') << context << "ast.SingleImport";
-		Statement::prettyPrint(s, buf + 2);
-		ModRebindImport::prettyPrint(s << '\n', buf + 2, "from=");
-
-		return binding->prettyPrint(s << '\n', buf + 2, "import=");
+		s << std::string(buf, ' ') << context << "ast.SingleImport ";
+		return ModRebindImport::prettyPrint(s, 0);
 	}
 
-	MultipleImport::MultipleImport(ptr<QualifiedBinding> mod, std::deque<ptr<BasicBinding>> names, Location loc)
-		: Sequence{ std::move(names), loc } {
+	MultipleImport::MultipleImport(ptr<Path> mod, std::deque<ptr<PathPart>> names, Location loc) : Sequence{ std::move(names), loc } {
 		_module = std::move(mod);
 	}
 	void MultipleImport::accept(Visitor& v) {
@@ -781,38 +775,14 @@ namespace spero::compiler::ast {
 		s << '\n' << std::string(buf + 2, ' ') << "import= {";
 
 		for (auto&& name : elems) {
-			name->prettyPrint(s << '\n', buf + 4);
-		}
-
-		return s << '\n' << std::string(buf + 2, ' ') << '}';
-	}
-
-	PathMultipleImport::PathMultipleImport(ptr<Path> mod, std::deque<ptr<PathPart>> names, Location loc)
-		: Sequence{ std::move(names), loc }, _tmp_module{ std::move(mod) } {}
-	void PathMultipleImport::accept(Visitor& v) {
-		//v.visitMultipleImport(*this);
-	}
-	DEF_PRINTER(PathMultipleImport) {
-		s << std::string(buf, ' ') << context << "ast.MultipleImport";
-		Statement::prettyPrint(s, buf + 2);
-		if (_tmp_module) {
-			_tmp_module->prettyPrint(s, buf+2, "from=");
-		} else {
-			s << std::string(buf+2, ' ') << "from={scope}";
-		}
-		//ModRebindImport::prettyPrint(s << '\n', buf + 2, "from=");
-
-		s << '\n' << std::string(buf + 2, ' ') << "import= {";
-
-		for (auto&& name : elems) {
 			name->prettyPrint(s, 0) << ", ";
 		}
 
 		return s << '}';
 	}
 
-	Rebind::Rebind(ptr<QualifiedBinding> mod, ptr<BasicBinding> bind, ptr<Array> arr, ptr<BasicBinding> nbind, ptr<Array> narr, Location loc)
-		: ModRebindImport{ std::move(mod), loc }, old_name{ std::move(bind) }, old_gen{ std::move(arr) }, new_name{ std::move(nbind) }, new_gen{ std::move(narr) } {}
+	Rebind::Rebind(ptr<Path> mod, ptr<Path> bind, Location loc)
+		: ModRebindImport{ std::move(mod), loc }, new_name{ std::move(bind) } {}
 	void Rebind::accept(Visitor& v) {
 		v.visitRebind(*this);
 	}
@@ -821,15 +791,7 @@ namespace spero::compiler::ast {
 		Statement::prettyPrint(s, buf + 2);
 		ModRebindImport::prettyPrint(s << '\n', buf + 2, "from=");
 
-		old_name->prettyPrint(s << '\n', buf + 2, "rebind=");
-		if (old_gen) {
-			old_gen->prettyPrint(s << '\n', buf + 4, "inst=");
-		}
-
-		new_name->prettyPrint(s << '\n', buf + 2, "as=");
-		if (new_gen) {
-			new_gen->prettyPrint(s << '\n', buf + 4, "inst=");
-		}
+		new_name->prettyPrint(s << '\n', buf + 2, "to=");
 
 		return s;
 	}

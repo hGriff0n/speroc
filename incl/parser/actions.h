@@ -186,6 +186,7 @@ namespace spero::parser::actions {
 	//
 	// Identifiers
 	//
+	// TODO: Remove once fully converted to path
 	RULE(typ) {
 		PUSH(BasicBinding, in.string(), ast::BindingType::TYPE);
 	} END;
@@ -197,6 +198,7 @@ namespace spero::parser::actions {
 	} END;
 	INHERIT(unop, op);
 	INHERIT(binop, op);
+	// TODO: Remove once fully converted to path
 	RULE(mod_path) {
 		// stack: (BasicBinding | QualifiedBinding) BasicBinding
 		auto part = POP(BasicBinding);
@@ -212,6 +214,7 @@ namespace spero::parser::actions {
 		}
 		// stack: QualifiedBinding
 	} END;
+	// TODO: Remove once fully converted to path
 	INHERIT(type_path, mod_path);
 	RULE(ptyp) {
 		PUSH(PathPart, in.string(), ast::BindingType::TYPE);
@@ -232,20 +235,7 @@ namespace spero::parser::actions {
 		}
 		// stack: Path
 	} END;
-	RULE(path_mul_imp) {
-		// stack: path {} PathPart* error?
-		auto err = POP(CloseSymbolError);
-		auto bindings = util::popSeq<ast::PathPart>(s);
-
-		// Error Handling
-		auto sym = POP(Symbol);
-		if (err) {
-			state.log(compiler::ID::err, "No closing brace found for opening '{}' <mul_imp at {}>", '{', sym->loc);
-		}
-
-		PUSH(PathMultipleImport, POP(Path), std::move(bindings));
-		// stack: MultipleImport
-	} END;
+	// TODO: Once fully converted to path
 	RULE(qualtyp) {
 		// stack: (QualifiedBinding | BasicBinding)? BasicBinding
 		auto typ = POP(BasicBinding);
@@ -262,6 +252,7 @@ namespace spero::parser::actions {
 		}
 		// stack: QualifiedBinding
 	} END;
+	// TODO: Remove once fully converted to path
 	RULE(typname) {
 		// stack: qualbind | basicbind
 		if (util::at_node<ast::BasicBinding>(s)) {
@@ -793,9 +784,9 @@ namespace spero::parser::actions {
 		// stack: impl
 	} END;
 	RULE(mul_imp) {
-		// stack: qualbind {} bind* error?
+		// stack: path {} PathPart* error?
 		auto err = POP(CloseSymbolError);
-		auto bindings = util::popSeq<ast::BasicBinding>(s);
+		auto bindings = util::popSeq<ast::PathPart>(s);
 
 		// Error Handling
 		auto sym = POP(Symbol);
@@ -803,70 +794,28 @@ namespace spero::parser::actions {
 			state.log(compiler::ID::err, "No closing brace found for opening '{}' <mul_imp at {}>", '{', sym->loc);
 		}
 
-		PUSH(MultipleImport, POP(QualifiedBinding), std::move(bindings));
+		PUSH(MultipleImport, POP(Path), std::move(bindings));
 		// stack: MultipleImport
 	} END;
-	RULE(alieps) {
-		// stack: qualbind bind?
-		auto bind = POP(BasicBinding);
+	SENTINEL(kas);
+	RULE(rebind) {
+		// stack: Path {} Path
+		auto new_name = POP(Path);
+		s.pop_back();
+		auto old_name = POP(Path);
 
-		// If 'bind' is a var, then mod_path/imps gobbles it into the qualified binding
-		// This restores the division to match our expected/desired behavior
-		if (!bind) {
-			auto mod = POP(QualifiedBinding);
-			bind = std::move(mod->elems.back());
-			mod->elems.pop_back();
-
-			if (mod->elems.size() == 0) { mod = nullptr; }
-			s.emplace_back(std::move(mod));
-
-		// If there is no module on the stack at all, mimic one for `alias`
-		} else if (!util::at_node<ast::QualifiedBinding>(s)) {
-			s.emplace_back(nullptr);
+		// TODO: Add in error handling
+		if (old_name->elems.back()->type != new_name->elems.back()->type) {
+			state.log(compiler::ID::err, "Attempt to rebind a {} as a {} <at {}>", old_name->elems.back()->type._to_string(), new_name->elems.back()->type._to_string(), LOCATION);
 		}
 
-		s.emplace_back(std::move(bind));
-		// stack: (qualbind | {}) bind
+		PUSH(Rebind, std::move(old_name), std::move(new_name));
+		// stack: ModRebind
 	} END;
-	RULE(alias) {
-		// stack: (qualbind | {}) bind? array? bind array??
-		auto narr = POP(Array);
-		auto nbind = POP(BasicBinding);
-		auto arr = POP(Array);
-		auto bind = POP(BasicBinding);
-		auto mod = POP(QualifiedBinding);
-
-		// If 'alieps' pushed a nullptr on the stack
-		if (!mod) { s.pop_back(); }
-
-		PUSH(Rebind, std::move(mod), std::move(bind), std::move(arr), std::move(nbind), std::move(narr));
-		// stack: Rebind
-	} END;
-	RULE(imps) {
-		PUSH(QualifiedBinding, POP(BasicBinding));
-	} END;
-	RULE(imp_alias) {
-		// stack: (qualbind basicbind?) | rebind
-		if (!util::at_node<ast::Rebind>(s)) {
-			auto typ = POP(BasicBinding);
-			auto mod = POP(QualifiedBinding);
-
-			if (!typ && mod->elems.size()) {
-				// If 'bind' is a var, then mod_path/imps gobbles it into the qualified binding
-				// This restores the division to match our expected/desired behavior
-				auto bind = std::move(mod->elems.back());
-
-				mod->elems.pop_back();
-				if (mod->elems.size() == 0) {
-					mod = nullptr;
-				}
-
-				PUSH(SingleImport, std::move(mod), std::move(bind));
-			} else {
-				PUSH(SingleImport, std::move(mod), std::move(typ));
-			}
-		}
-		// stack: singleimport | rebind
+	RULE(import_single) {
+		// stack: Path
+		PUSH(SingleImport, POP(Path));
+		// stack: ModRebindImport
 	} END;
 	RULE(type_assign) {
 		// stack: vis pat gen? "mut"? cons* scope

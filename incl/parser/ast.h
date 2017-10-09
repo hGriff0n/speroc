@@ -983,10 +983,10 @@ namespace spero::compiler::ast {
 	 * Extends: Statement
 	 */
 	struct ModRebindImport : Statement {
-		ptr<QualifiedBinding> _module;
+		ptr<Path> _module;
 
 		ModRebindImport(Location);
-		ModRebindImport(ptr<QualifiedBinding>, Location);
+		ModRebindImport(ptr<Path>, Location);
 
 		virtual void accept(Visitor&) = 0;
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
@@ -996,14 +996,9 @@ namespace spero::compiler::ast {
 	 * Import a single binding into the current scope
 	 *
 	 * Extends: ModRebindImport
-	 *
-	 * Exports:
-	 *   imp - the binding that is being imported
 	 */
 	struct SingleImport : ModRebindImport {
-		ptr<BasicBinding> binding;
-
-		SingleImport(ptr<QualifiedBinding>, ptr<BasicBinding>, Location);
+		SingleImport(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1014,20 +1009,8 @@ namespace spero::compiler::ast {
 	 *
 	 * Extends: Sequence<BasicBinding, ModRebindImport>
 	 */
-	struct MultipleImport : Sequence<BasicBinding, ModRebindImport> {
-		MultipleImport(ptr<QualifiedBinding>, std::deque<ptr<BasicBinding>>, Location);
-
-		virtual void accept(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
-	};
-
-	/*
-	 * Generalization of Spero multiple rebind to handle all cases
-	 *   NOTE: This is a current work in progress to replace MultipleImport
-	 */
-	struct PathMultipleImport : Sequence<PathPart, ModRebindImport> {
-		ptr<Path> _tmp_module;
-		PathMultipleImport(ptr<Path>, std::deque<ptr<PathPart>>, Location);
+	struct MultipleImport : Sequence<PathPart, ModRebindImport> {
+		MultipleImport(ptr<Path>, std::deque<ptr<PathPart>>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1037,17 +1020,14 @@ namespace spero::compiler::ast {
 	 * Rebind a name in the current scope in some fashion
 	 *
 	 * Extends: ModRebindImport
-	 *
+	 * 
 	 * Exports:
+	 *   new_name - the new name for the imported entity
 	 */
 	struct Rebind : ModRebindImport {
-		ptr<BasicBinding> old_name;
-		ptr<Array> old_gen;
+		ptr<Path> new_name;
 
-		ptr<BasicBinding> new_name;
-		ptr<Array> new_gen;
-
-		Rebind(ptr<QualifiedBinding>, ptr<BasicBinding>, ptr<Array>, ptr<BasicBinding>, ptr<Array>, Location);
+		Rebind(ptr<Path>, ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1317,5 +1297,9 @@ namespace spero::compiler::ast {
 
 	template<class T>
 	struct SyntaxError : Error<T> {};*/
+	struct ImportError : ModRebindImport {
+		ImportError(Location);
+		virtual void accept(Visitor&);
+	};
 
 }
