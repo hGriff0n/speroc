@@ -127,12 +127,15 @@ namespace spero::parser::grammar {
 	struct qualtyp : seq<typ> {};
 	// TODO: Error if name matches a keyword (analysis?)
 	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
-
 	// TODO: Error if var not used (deferred)
+	// TODO: Replace with path
 	struct mod_path : plus<one<':'>, not_at<sor<typ_ch, one<':'>>>, var> {};
+	// TODO: Replace with path
 	struct varname : seq<var, opt<mod_path>> {};
 	// TODO: Error if typ not used (deferred)
+	// TODO: Replace with path
 	struct type_path : seq<one<':'>, typ> {};
+	// TODO: Replace with path
 	struct typname : sor<seq<varname, plus<type_path>>, typ> {};
 	struct unop : one_of<'!', '-', '~'> {};
 	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
@@ -141,6 +144,7 @@ namespace spero::parser::grammar {
 	struct op : disable<sor<binop, unop>> {};
 	// TODO: Error if ',' not used (immediate)
 	struct pat_tuple : opt_sequence<oparen, pattern, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
+	// TODO: Replace with path
 	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
 	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut, eps> {};
 	struct pat_name : seq<var, not_at<one<':'>>, ig_s> {};
@@ -163,6 +167,7 @@ namespace spero::parser::grammar {
 	struct typ_ref : one<'&'> {};
 	struct typ_ptr : one<'*'> {};
 	struct ptr_styling : sor<typ_view, typ_ref, typ_ptr> {};
+	// TODO: Replace with path
 	struct single_type : seq<typname, ig_s, opt<_array>> {};
 	struct ref_type : seq<single_type, opt<ptr_styling, ig_s>> {};
 	// TODO: Error if ',' not used (immediate)
@@ -292,6 +297,7 @@ namespace spero::parser::grammar {
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
 
 	// Then I need to move to using 'paths' throughout the entire codebase
+		// If it uses `BasicBinding` or `QualifiedBinding` it will be replaced
 	struct pvar : disable<var> {};
 	struct ptyp : disable<typ> {};
 	struct pname : sor<pvar, ptyp> {};
@@ -306,6 +312,7 @@ namespace spero::parser::grammar {
 	struct type_const_tail : seq<opt<_array>, opt<disable<call>, opt<anon_type>>> {};
 	struct raw_const : seq<typ, ig_s, type_const_tail> {};
 	struct type_const : seq<type_var, ig_s, type_const_tail> {};
+	// TODO: Replace with path
 	struct var_val : sor<seq<varname, sor<type_const, vareps>>, raw_const, op_var> {};
 	struct fncall : seq<sor<atom, var_val>, star<call>> {};
 	struct indexeps : seq<eps> {};
@@ -322,7 +329,7 @@ namespace spero::parser::grammar {
 	 * Statements
 	 */
 	// TODO: Error if eolf or ';' not used (immediate)
-	struct mod_dec : seq<kmod, varname, ign_s, must<sor<endc, eolf>>, ig_s> {};
+	struct mod_dec : seq<kmod, pathed_name, ig_s, must<sor<endc, eolf>>, ig_s> {};
 	// TODO: Error if no type used (deferred)
 	struct for_type : seq<kfor, single_type> {};
 	struct impl_errchars : plus<not_at<disable<obrace>>, any> {};														// Immediate error if unexpected characters encountered

@@ -713,13 +713,13 @@ namespace spero::compiler::ast {
 	// STMTS
 	//
 
-	ModDec::ModDec(ptr<QualifiedBinding> v, Location loc) : Statement{ loc }, module{ std::move(v) } {}
+	ModDec::ModDec(ptr<Path> v, Location loc) : Statement{ loc }, _module{ std::move(v) } {}
 	void ModDec::accept(Visitor& v) {
 		v.visitModDec(*this);
 	}
 	DEF_PRINTER(ModDec) {
 		s << std::string(buf, ' ') << context << "ast.ModuleDec (module=";
-		module->prettyPrint(s, 0) << ')';
+		_module->prettyPrint(s, 0) << ')';
 		return Statement::prettyPrint(s, buf + 2);
 	}
 

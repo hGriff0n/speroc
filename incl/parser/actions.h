@@ -768,12 +768,16 @@ namespace spero::parser::actions {
 	// Statements
 	//
 	RULE(mod_dec) {
-		// stack: basicbind | qualbind
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
+		// stack: Path
+		auto path = POP(Path);
+		
+		for (auto&& part : path->elems) {
+			if (part->type != +ast::BindingType::VARIABLE || part->gens != nullptr) {
+				state.log(compiler::ID::err, "Module path parts must be basic vars <at {}>", part->loc);
+			}
 		}
 
-		PUSH(ModDec, POP(QualifiedBinding));
+		PUSH(ModDec, std::move(path));
 		// stack: ModDec
 	} END;
 	TOKEN(for_type, ast::KeywordType::FOR);

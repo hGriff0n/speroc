@@ -944,12 +944,12 @@ namespace spero::compiler::ast {
 	 * Extends: Statement
 	 *
 	 * Exports:
-	 *   module - the name of the created module
+	 *   _module - the name of the created module
 	 */
 	struct ModDec : Statement {
-		ptr<QualifiedBinding> module;
+		ptr<Path> _module;
 
-		ModDec(ptr<QualifiedBinding>, Location);
+		ModDec(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
