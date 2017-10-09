@@ -204,11 +204,48 @@ namespace spero::parser::actions {
 		if (util::at_node<ast::BasicBinding>(s)) {
 			PUSH(QualifiedBinding, POP(BasicBinding));
 		}
-
-		util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(part));
+		
+		if (!util::at_node<ast::QualifiedBinding>(s)) {
+			PUSH(QualifiedBinding, std::move(part));
+		} else {
+			util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(part));
+		}
 		// stack: QualifiedBinding
 	} END;
 	INHERIT(type_path, mod_path);
+	RULE(ptyp) {
+		PUSH(PathPart, in.string(), ast::BindingType::TYPE);
+	} END;
+	RULE(pvar) {
+		PUSH(PathPart, in.string(), ast::BindingType::VARIABLE);
+	} END;
+	RULE(path_part) {
+		// stack: Path? PathPart array?
+		auto gens = POP(Array);
+		auto part = POP(PathPart);
+		part->gens = std::move(gens);
+
+		if (!util::at_node<ast::Path>(s)) {
+			PUSH(Path, std::move(part));
+		} else {
+			util::view_as<ast::Path>(s.back())->elems.push_back(std::move(part));
+		}
+		// stack: Path
+	} END;
+	RULE(path_mul_imp) {
+		// stack: path {} PathPart* error?
+		auto err = POP(CloseSymbolError);
+		auto bindings = util::popSeq<ast::PathPart>(s);
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing brace found for opening '{}' <mul_imp at {}>", '{', sym->loc);
+		}
+
+		PUSH(PathMultipleImport, POP(Path), std::move(bindings));
+		// stack: MultipleImport
+	} END;
 	RULE(qualtyp) {
 		// stack: (QualifiedBinding | BasicBinding)? BasicBinding
 		auto typ = POP(BasicBinding);

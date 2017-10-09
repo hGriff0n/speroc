@@ -250,6 +250,33 @@ namespace spero::compiler::ast {
 		return result;
 	}
 
+
+	PathPart::PathPart(std::string n, BindingType t, Location loc)
+		: Ast{ loc }, name{ n }, type{ t } {}
+	void PathPart::accept(Visitor& v) {
+		//v.visitBasicBinding(*this);
+	}
+	DEF_PRINTER(PathPart) {
+		s << name;
+		if (gens) s << "[_]";
+		return s;
+		//return s << std::string(buf, ' ') << context << "ast.PathPart (var=" << name << ", type=" << type._to_string() << ")";
+	}
+
+	Path::Path(ptr<PathPart> b, Location loc) : Sequence{ MK_DEQUE(std::move(b)), loc } {}
+	void Path::accept(Visitor& v) {
+		//v.visitQualifiedBinding(*this);
+	}
+	DEF_PRINTER(Path) {
+		s << std::string(buf, ' ') << context << "ast.Path ";
+
+		elems.front()->prettyPrint(s, 0);
+		for (auto p = std::begin(elems) + 1; p != std::end(elems); ++p) {
+			p->get()->prettyPrint(s << ':', 0);
+		}
+		return s;
+	}
+
 	Pattern::Pattern(Location loc) : Ast{ loc } {}
 	void Pattern::accept(Visitor& v) {
 		v.visitPattern(*this);
@@ -760,6 +787,30 @@ namespace spero::compiler::ast {
 		return s << '\n' << std::string(buf + 2, ' ') << '}';
 	}
 
+	PathMultipleImport::PathMultipleImport(ptr<Path> mod, std::deque<ptr<PathPart>> names, Location loc)
+		: Sequence{ std::move(names), loc }, _tmp_module{ std::move(mod) } {}
+	void PathMultipleImport::accept(Visitor& v) {
+		//v.visitMultipleImport(*this);
+	}
+	DEF_PRINTER(PathMultipleImport) {
+		s << std::string(buf, ' ') << context << "ast.MultipleImport";
+		Statement::prettyPrint(s, buf + 2);
+		if (_tmp_module) {
+			_tmp_module->prettyPrint(s, buf+2, "from=");
+		} else {
+			s << std::string(buf+2, ' ') << "from={scope}";
+		}
+		//ModRebindImport::prettyPrint(s << '\n', buf + 2, "from=");
+
+		s << '\n' << std::string(buf + 2, ' ') << "import= {";
+
+		for (auto&& name : elems) {
+			name->prettyPrint(s, 0) << ", ";
+		}
+
+		return s << '}';
+	}
+
 	Rebind::Rebind(ptr<QualifiedBinding> mod, ptr<BasicBinding> bind, ptr<Array> arr, ptr<BasicBinding> nbind, ptr<Array> narr, Location loc)
 		: ModRebindImport{ std::move(mod), loc }, old_name{ std::move(bind) }, old_gen{ std::move(arr) }, new_name{ std::move(nbind) }, new_gen{ std::move(narr) } {}
 	void Rebind::accept(Visitor& v) {
@@ -982,4 +1033,7 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(ValError) {
 		return s << std::string(buf, ' ') << context << "ast.Error";
 	}
+
+	ImportError::ImportError(Location loc) : ModRebindImport{ loc } {}
+	void ImportError::accept(Visitor&) {}
 }

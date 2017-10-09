@@ -329,6 +329,32 @@ namespace spero::compiler::ast {
 	};
 
 	/*
+	 * Generalization of Spero path parts to handle all cases
+	 *   NOTE: This is a current work in progress to replace BasicBinding
+	 */
+	struct PathPart : Ast {
+		std::string name;
+		BindingType type;
+		ptr<Array> gens;
+
+		PathPart(std::string, BindingType, Location);
+
+		virtual void accept(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
+	/*
+	 * Generalization of Spero bindings to handle all cases
+	 *   NOTE: This is a current work in progress to replace QualifiedBinding
+	 */
+	struct Path : Sequence<PathPart, Ast> {
+		Path(ptr<PathPart>, Location);
+
+		virtual void accept(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
 	 * Base class for representing pattern matching expressions
 	 *   Instance doubles for representing the "any" case
 	 *
@@ -990,6 +1016,18 @@ namespace spero::compiler::ast {
 	 */
 	struct MultipleImport : Sequence<BasicBinding, ModRebindImport> {
 		MultipleImport(ptr<QualifiedBinding>, std::deque<ptr<BasicBinding>>, Location);
+
+		virtual void accept(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Generalization of Spero multiple rebind to handle all cases
+	 *   NOTE: This is a current work in progress to replace MultipleImport
+	 */
+	struct PathMultipleImport : Sequence<PathPart, ModRebindImport> {
+		ptr<Path> _tmp_module;
+		PathMultipleImport(ptr<Path>, std::deque<ptr<PathPart>>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;

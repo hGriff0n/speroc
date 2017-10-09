@@ -27,7 +27,8 @@ namespace spero::compiler {
 		using namespace spero::parser;
 
 		return parse_impl([&input, &state](Stack& ast) {
-			return tao::pegtl::parse<grammar::program, actions::action>(string_input<>{ input, "speroc:repl" }, ast, state);
+			return tao::pegtl::parse<grammar::path_mod_alias, actions::action>(string_input<>{input, "speroc:repl" }, ast, state);
+			/*return tao::pegtl::parse<grammar::program, actions::action>(string_input<>{input, "speroc:repl" }, ast, state);*/
 		});
 	}
 
