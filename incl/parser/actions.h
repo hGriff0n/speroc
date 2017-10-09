@@ -48,6 +48,7 @@ namespace spero::parser::actions {
 	//
 	// Keyword Tokens (may remove a couple as it becomes beneficial)
 	//
+	TOKEN(kas, ast::KeywordType::AS);
 	TOKEN(kmut, ast::KeywordType::MUT);
 	TOKEN(klet, ast::VisibilityType::PROTECTED);
 	TOKEN(kdef, ast::VisibilityType::PUBLIC);
@@ -797,7 +798,6 @@ namespace spero::parser::actions {
 		PUSH(MultipleImport, POP(Path), std::move(bindings));
 		// stack: MultipleImport
 	} END;
-	SENTINEL(kas);
 	RULE(rebind) {
 		// stack: Path {} Path
 		auto new_name = POP(Path);
@@ -811,6 +811,19 @@ namespace spero::parser::actions {
 
 		PUSH(Rebind, std::move(old_name), std::move(new_name));
 		// stack: ModRebind
+	} END;
+	RULE(err_rebind) {
+		// stack: Path {}
+		POP(Token);
+		auto loc = util::view_as<ast::Path>(s.back())->loc;
+
+		// TODO: Provide better context (ie. why must I provide a new name?)
+			// Either because an "as" was used, or the imported name is (directly) generic instantiated
+		state.log(compiler::ID::err, "Rebind context must provide a new name <at {}>", loc);
+
+		// TODO: Using `SingleImport` to prevent errors along the way
+		PUSH(SingleImport, POP(Path));
+		// stack: Path
 	} END;
 	RULE(import_single) {
 		// stack: Path

@@ -127,6 +127,7 @@ namespace spero::parser::grammar {
 	struct qualtyp : seq<typ> {};
 	// TODO: Error if name matches a keyword (analysis?)
 	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
+
 	// TODO: Error if var not used (deferred)
 	struct mod_path : plus<one<':'>, not_at<sor<typ_ch, one<':'>>>, var> {};
 	struct varname : seq<var, opt<mod_path>> {};
@@ -289,6 +290,15 @@ namespace spero::parser::grammar {
 	// TODO: Error if wrong keyword used (deferred?)
 	// TODO: Error if exprs not used (deferred)
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
+
+	// Then I need to move to using 'paths' throughout the entire codebase
+	struct pvar : disable<var> {};
+	struct ptyp : disable<typ> {};
+	struct pname : sor<pvar, ptyp> {};
+	struct path_part : seq<pname, opt<_array>> {};
+	struct path : star<path_part, one<':'>> {};
+	struct pathed_name : seq<path, disable<path_part>> {};
+
 	struct type_var : seq<plus<type_path>, ig_s, opt<_array>> {};
 	struct op_var : seq<binop> {};
 	struct vareps : opt<_array> {};
@@ -318,25 +328,14 @@ namespace spero::parser::grammar {
 	struct impl_errchars : plus<not_at<disable<obrace>>, any> {};														// Immediate error if unexpected characters encountered
 	// TODO: Error if no scope, no type used (deferred)
 	struct impl : seq<kimpl, single_type, opt<for_type>, opt<impl_errchars>, scope> {};
-
-	// TODO: Need to add in error reporting for these definitions
-	// Then I need to move to using 'paths' throughout the entire codebase
-		// Shrink the number of definitions, move a lot of these outside of the immediate area
-	struct pvar : disable<var> {};
-	struct ptyp : disable<typ> {};
-	struct pname : sor<pvar, ptyp> {};
-	struct path_part : seq<pname, opt<_array>> {};
-	struct path : star<path_part, one<':'>> {};
-	struct pathed_name : seq<path, disable<path_part>> {};
-
 	struct mul_imp : sequence<obrace, seq<ig_s, pname, ig_s>, sor<cbrace, errorbrace>> {};
 	struct at_rebind_point : seq<ig_s, sor<disable<_array>, at<kas>>> {};
+	struct err_rebind : seq<eps> {};
 	struct rebind : seq<kas, path_part> {};
+	struct maybe_rebind : sor<rebind, err_rebind> {};
 	struct import_single : seq<eps> {};
-	// TODO: Error if at rebind point and no rebind
-	struct imp_alias : seq<disable<pname>, if_then_else<at_rebind_point, rebind, import_single>> {};
+	struct imp_alias : seq<disable<pname>, if_then_else<at_rebind_point, maybe_rebind, import_single>> {};
 	struct mod_alias : seq<kuse, opt<path>, sor<mul_imp, imp_alias>> {};
-
 	// TODO: Error if '=' not used (immediate)
 	// TODO: Error if scope not used (deferred)
 	struct type_assign : seq<assign_typ, opt<_generic>, equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, scope> {};

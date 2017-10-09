@@ -19,8 +19,7 @@ Current Project Plan
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
     Need to rework grammar to correctly handle paths
-	  Need to allow for types and vars to intermix
-	  Need to allow for arrays to be bound at any level in the heirarchy
+	  Need to get variables, types, and operators to be able to use these paths
 	Add in syntax error checking and handling
 	  Write rules/actions to report missing keywords/symbols
 	    alias, type_assign, asgn_val, elsif_case, in_assign
@@ -52,6 +51,9 @@ Current Project Plan
           Change binexpr to be left-associative (ie. "3 + 3 + 4" => "{3 + 3} + 4")
             Not sure if it's currently this way or not
 	Language Considerations
+	  Right now I force using 'as' if a type is generic specialized
+	    I do this by checking whether the last item is an array, however this can apply to any part of the path
+		Should probably generalize this to an analysis step
 	  Figure out a way to apply annotations to tuples
 	    Possibly consider not attaching annotations directly at parse time (would allow for "@<var>!" syntax)
 	  Figure out contexts to interpret "a :: T" as a type-check and not an annotation

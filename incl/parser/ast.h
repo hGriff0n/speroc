@@ -26,7 +26,7 @@ namespace spero::compiler::ast {
 	using Sentinel = nullptr_t;
 	BETTER_ENUM(KeywordType, char, LET, DEF, STATIC, MUT, DO,
 		MOD, USE, MATCH, IF, ELSIF, ELSE, WHILE, FOR, LOOP,
-		BREAK, CONT, YIELD, RET, WAIT, IMPL, F_IN)
+		BREAK, CONT, YIELD, RET, WAIT, IMPL, F_IN, AS)
 	BETTER_ENUM(PtrStyling, char, PTR, REF, VIEW, NA)
 	BETTER_ENUM(VarianceType, char, COVARIANT, CONTRAVARIANT, INVARIANT, VARIADIC)
 	BETTER_ENUM(RelationType, char, IMPLS, NOT_IMPLS, SUBTYPE, SUPERTYPE, NA)
