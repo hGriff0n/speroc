@@ -236,25 +236,17 @@ namespace spero::parser::actions {
 		}
 		// stack: Path
 	} END;
-	// TODO: Once fully converted to path
-	RULE(qualtyp) {
-		// stack: (QualifiedBinding | BasicBinding)? BasicBinding
-		auto typ = POP(BasicBinding);
-
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
-		}
-
-		if (util::at_node<ast::QualifiedBinding>(s)) {
-			util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(typ));
-
-		} else {
-			PUSH(QualifiedBinding, std::move(typ));
-		}
-		// stack: QualifiedBinding
-	} END;
-	// TODO: Remove once fully converted to path
+	// TODO: Fully converted to path
 	RULE(typname) {
+		//	// stack: Path
+		//	if (util::at_node<ast::Path>(s)) {
+		//		auto* node = util::view_as<ast::Path>(s.back());
+		//		if (node->elems.back()->type != +ast::BindingType::TYPE) {
+		//			state.log(compiler::ID::err, "Expected type name, found something else <qualtyp at {}>", node->->loc);
+		//		}
+		//	}
+		//	// stack: Path
+
 		// stack: qualbind | basicbind
 		if (util::at_node<ast::BasicBinding>(s)) {
 			PUSH(QualifiedBinding, POP(BasicBinding));

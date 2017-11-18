@@ -122,11 +122,20 @@ namespace spero::parser::grammar {
 	/*
 	 * Identifiers
 	 */
+	 // TODO: Error if name matches a keyword (analysis?)
+	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
 	struct typ_ch : range<'A', 'Z'> {};
 	struct typ : seq<typ_ch, star<ascii::identifier>> {};
-	struct qualtyp : seq<typ> {};
-	// TODO: Error if name matches a keyword (analysis?)
-	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
+
+	 // Then I need to move to using 'paths' throughout the entire codebase
+	 // If it uses `BasicBinding` or `QualifiedBinding` it will be replaced
+	struct pvar : disable<var> {};
+	struct ptyp : disable<typ> {};
+	struct pname : sor<pvar, ptyp> {};
+	struct path_part : seq<pname, opt<_array>> {};
+	struct path : star<path_part, one<':'>> {};
+	struct pathed_name : seq<path, disable<path_part>> {};
+
 	// TODO: Error if var not used (deferred)
 	// TODO: Replace with path
 	struct mod_path : plus<one<':'>, not_at<sor<typ_ch, one<':'>>>, var> {};
@@ -296,14 +305,9 @@ namespace spero::parser::grammar {
 	// TODO: Error if exprs not used (deferred)
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
 
+	// TODO: Moved up to identifiers
 	// Then I need to move to using 'paths' throughout the entire codebase
 		// If it uses `BasicBinding` or `QualifiedBinding` it will be replaced
-	struct pvar : disable<var> {};
-	struct ptyp : disable<typ> {};
-	struct pname : sor<pvar, ptyp> {};
-	struct path_part : seq<pname, opt<_array>> {};
-	struct path : star<path_part, one<':'>> {};
-	struct pathed_name : seq<path, disable<path_part>> {};
 
 	struct type_var : seq<plus<type_path>, ig_s, opt<_array>> {};
 	struct op_var : seq<binop> {};
