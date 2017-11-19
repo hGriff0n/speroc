@@ -48,6 +48,7 @@ namespace spero::parser::actions {
 	//
 	// Keyword Tokens (may remove a couple as it becomes beneficial)
 	//
+	TOKEN(kas, ast::KeywordType::AS);
 	TOKEN(kmut, ast::KeywordType::MUT);
 	TOKEN(klet, ast::VisibilityType::PROTECTED);
 	TOKEN(kdef, ast::VisibilityType::PUBLIC);
@@ -186,6 +187,7 @@ namespace spero::parser::actions {
 	//
 	// Identifiers
 	//
+	// TODO: Remove once fully converted to path
 	RULE(typ) {
 		PUSH(BasicBinding, in.string(), ast::BindingType::TYPE);
 	} END;
@@ -197,40 +199,35 @@ namespace spero::parser::actions {
 	} END;
 	INHERIT(unop, op);
 	INHERIT(binop, op);
-	RULE(mod_path) {
-		// stack: (BasicBinding | QualifiedBinding) BasicBinding
-		auto part = POP(BasicBinding);
-
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
-		}
-
-		util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(part));
-		// stack: QualifiedBinding
+	RULE(ptyp) {
+		PUSH(PathPart, in.string(), ast::BindingType::TYPE);
 	} END;
-	INHERIT(type_path, mod_path);
-	RULE(qualtyp) {
-		// stack: (QualifiedBinding | BasicBinding)? BasicBinding
-		auto typ = POP(BasicBinding);
+	RULE(pvar) {
+		PUSH(PathPart, in.string(), ast::BindingType::VARIABLE);
+	} END;
+	RULE(path_part) {
+		// stack: Path? PathPart array?
+		auto gens = POP(Array);
+		auto part = POP(PathPart);
+		part->gens = std::move(gens);
 
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
-		}
-
-		if (util::at_node<ast::QualifiedBinding>(s)) {
-			util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(typ));
-
+		if (!util::at_node<ast::Path>(s)) {
+			PUSH(Path, std::move(part));
 		} else {
-			PUSH(QualifiedBinding, std::move(typ));
+			util::view_as<ast::Path>(s.back())->elems.push_back(std::move(part));
 		}
-		// stack: QualifiedBinding
+		// stack: Path
 	} END;
 	RULE(typname) {
-		// stack: qualbind | basicbind
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
+		// stack: Path
+		if (util::at_node<ast::Path>(s)) {
+			auto* node = util::view_as<ast::Path>(s.back());
+
+			if (node->elems.back()->type != +ast::BindingType::TYPE) {
+				state.log(compiler::ID::err, "Expected type name, found something else <qualtyp at {}>", node->loc);
+			}
 		}
-		// stack: qualbind
+		// stack: Path
 	} END;
 	RULE(pat_tuple) {
 		// stack: {} pattern* error?
@@ -246,21 +243,10 @@ namespace spero::parser::actions {
 		PUSH(TuplePattern, std::move(pats));
 		// stack: pattern
 	} END;
-	RULE(pat_name) {
-		// stack: BasicBind cap BasicBind (due to pat_adt partially matching varname)
-		auto var = POP(BasicBinding);
-
-		// Swap around the cap and the binding to remove the duplicate binding
-		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
-		s.pop_back();
-
-		PUSH(VarPattern, MAKE(QualifiedBinding, std::move(var)));
-		// stack: pattern
-	} END;
 	RULE(pat_adt) {
-		// stack: QualBind pattern?
+		// stack: Path pattern?
 		auto tup = POP(TuplePattern);
-		PUSH(AdtPattern, POP(QualifiedBinding), std::move(tup));
+		PUSH(AdtPattern, POP(Path), std::move(tup));
 		// stack: pattern
 	} END;
 	RULE(capture_desc) {
@@ -301,6 +287,24 @@ namespace spero::parser::actions {
 	RULE(pat_lit) {
 		PUSH(ValPattern, POP(ValExpr));
 	} END;
+	RULE(resolve_constants) {
+		// stack: path
+		if (util::at_node<ast::Path>(s)) {
+			if (util::view_as<ast::Path>(s.back())->elems.back()->type == +ast::BindingType::TYPE) {
+				return action<grammar::pat_adt>::apply(in, s, state);
+			}
+
+			auto name = POP(Path);
+			if (name->elems.size() > 1) {
+				s.emplace_back(std::make_unique<ast::Variable>(std::move(name), name->loc));
+				action<grammar::pat_lit>::apply(in, s, state);
+
+			} else {
+				s.emplace_back(std::make_unique<ast::VarPattern>(std::move(name), name->loc));
+			}
+		}
+		// stack: patlit | patname
+	} END;
 	RULE(assign_name) {
 		// stack: bind
 		PUSH(AssignName, POP(BasicBinding));
@@ -333,14 +337,13 @@ namespace spero::parser::actions {
 	TOKEN(typ_ref, ast::PtrStyling::REF);
 	TOKEN(typ_ptr, ast::PtrStyling::PTR);
 	RULE(single_type) {
-		// stack: QualBind array?
+		// stack: Path array?
 		auto gen = POP(Array);
-		auto typname = POP(QualifiedBinding);
 
 		if (gen) {
-			PUSH(GenericType, std::move(typname), std::move(gen));
+			PUSH(GenericType, POP(Path), std::move(gen));
 		} else {
-			PUSH(SourceType, std::move(typname));
+			PUSH(SourceType, POP(Path));
 		}
 		// stack: type
 	} END;
@@ -658,58 +661,33 @@ namespace spero::parser::actions {
 		PUSH(FnCall, POP(ValExpr), std::move(tup));
 		// stack: fncall
 	} END;
-	RULE(vareps) {
-		// stack: basicbind | qualbind array
-		auto inst = POP(Array);
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(Variable, MAKE(QualifiedBinding, POP(BasicBinding)), std::move(inst));
-		} else {
-			PUSH(Variable, POP(QualifiedBinding), std::move(inst));
+	RULE(pathed_var) {
+		// stack: path | var
+		if (util::at_node<ast::Path>(s)) {
+			auto loc = s.back()->loc;
+			s.emplace_back(std::make_unique<ast::Variable>(POP(Path), loc));
 		}
-		// stack: variable
+		// stack: var
 	} END;
-	INHERIT(op_var, vareps);
-	RULE(type_var) {
-		// stack: qualbind array?
-		auto inst = POP(Array);
-		PUSH(Variable, POP(QualifiedBinding), std::move(inst));
-		// stack: variable
+	RULE(op_var) {
+		// stack: binding
+		auto bind = POP(BasicBinding);
+		s.emplace_back(std::make_unique<ast::Path>(std::make_unique<ast::PathPart>(bind->name, ast::BindingType::OPERATOR, bind->loc), bind->loc));
+		action<grammar::pathed_var>::apply(in, s, state);
+		// stack: var
 	} END;
-	RULE(type_const) {
-		// stack: variable tuple? block?
+	RULE(type_const_tail) {
+		// stack: var tuple? block?
 		auto body = POP(Block);
 		auto args = POP(Tuple);
 
 		if (body) {
 			auto var = POP(Variable);
-			 PUSH(TypeExtension, std::move(var->name), std::move(var->inst_args), std::move(args), std::move(body));
-		} else if (args) {
-			PUSH(FnCall, POP(Variable),std::move(args));
-		}
-		// stack: FnCall | Var | TypeExt
-	} END;
-	RULE(raw_const) {
-		// stack: basicbind array? tuple? block?
-		auto body = POP(Block);
-		auto args = POP(Tuple);
-
-		action<grammar::vareps>::apply(in, s, state);
-		if (body) {
-			auto var = POP(Variable);
-			PUSH(TypeExtension, std::move(var->name), std::move(var->inst_args), std::move(args), std::move(body));
-
+			PUSH(TypeExtension, std::move(var->name), std::move(args), std::move(body));
 		} else if (args) {
 			PUSH(FnCall, POP(Variable), std::move(args));
 		}
 		// stack: FnCall | Var | TypeExt
-	} END;
-	RULE(var_val) {
-		// stack: variable array?
-		auto inst = POP(Array);
-		if (inst) {
-			util::view_as<ast::Variable>(s.back())->inst_args = std::move(inst);
-		}
-		// stack: variable
 	} END;
 
 	RULE(indexeps) {
@@ -739,12 +717,16 @@ namespace spero::parser::actions {
 	// Statements
 	//
 	RULE(mod_dec) {
-		// stack: basicbind | qualbind
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
+		// stack: Path
+		auto path = POP(Path);
+		
+		for (auto&& part : path->elems) {
+			if (part->type != +ast::BindingType::VARIABLE || part->gens != nullptr) {
+				state.log(compiler::ID::err, "Module path parts must be basic vars <at {}>", part->loc);
+			}
 		}
 
-		PUSH(ModDec, POP(QualifiedBinding));
+		PUSH(ModDec, std::move(path));
 		// stack: ModDec
 	} END;
 	TOKEN(for_type, ast::KeywordType::FOR);
@@ -756,9 +738,9 @@ namespace spero::parser::actions {
 		// stack: impl
 	} END;
 	RULE(mul_imp) {
-		// stack: qualbind {} bind* error?
+		// stack: path {} PathPart* error?
 		auto err = POP(CloseSymbolError);
-		auto bindings = util::popSeq<ast::BasicBinding>(s);
+		auto bindings = util::popSeq<ast::PathPart>(s);
 
 		// Error Handling
 		auto sym = POP(Symbol);
@@ -766,70 +748,40 @@ namespace spero::parser::actions {
 			state.log(compiler::ID::err, "No closing brace found for opening '{}' <mul_imp at {}>", '{', sym->loc);
 		}
 
-		PUSH(MultipleImport, POP(QualifiedBinding), std::move(bindings));
+		PUSH(MultipleImport, POP(Path), std::move(bindings));
 		// stack: MultipleImport
 	} END;
-	RULE(alieps) {
-		// stack: qualbind bind?
-		auto bind = POP(BasicBinding);
+	RULE(rebind) {
+		// stack: Path {} Path
+		auto new_name = POP(Path);
+		s.pop_back();
+		auto old_name = POP(Path);
 
-		// If 'bind' is a var, then mod_path/imps gobbles it into the qualified binding
-		// This restores the division to match our expected/desired behavior
-		if (!bind) {
-			auto mod = POP(QualifiedBinding);
-			bind = std::move(mod->elems.back());
-			mod->elems.pop_back();
-
-			if (mod->elems.size() == 0) { mod = nullptr; }
-			s.emplace_back(std::move(mod));
-
-		// If there is no module on the stack at all, mimic one for `alias`
-		} else if (!util::at_node<ast::QualifiedBinding>(s)) {
-			s.emplace_back(nullptr);
+		// TODO: Add in error handling
+		if (old_name->elems.back()->type != new_name->elems.back()->type) {
+			state.log(compiler::ID::err, "Attempt to rebind a {} as a {} <at {}>", old_name->elems.back()->type._to_string(), new_name->elems.back()->type._to_string(), LOCATION);
 		}
 
-		s.emplace_back(std::move(bind));
-		// stack: (qualbind | {}) bind
+		PUSH(Rebind, std::move(old_name), std::move(new_name));
+		// stack: ModRebind
 	} END;
-	RULE(alias) {
-		// stack: (qualbind | {}) bind? array? bind array??
-		auto narr = POP(Array);
-		auto nbind = POP(BasicBinding);
-		auto arr = POP(Array);
-		auto bind = POP(BasicBinding);
-		auto mod = POP(QualifiedBinding);
+	RULE(err_rebind) {
+		// stack: Path {}
+		POP(Token);
+		auto loc = util::view_as<ast::Path>(s.back())->loc;
 
-		// If 'alieps' pushed a nullptr on the stack
-		if (!mod) { s.pop_back(); }
+		// TODO: Provide better context (ie. why must I provide a new name?)
+			// Either because an "as" was used, or the imported name is (directly) generic instantiated
+		state.log(compiler::ID::err, "Rebind context must provide a new name <at {}>", loc);
 
-		PUSH(Rebind, std::move(mod), std::move(bind), std::move(arr), std::move(nbind), std::move(narr));
-		// stack: Rebind
+		// TODO: Using `SingleImport` to prevent errors along the way
+		PUSH(SingleImport, POP(Path));
+		// stack: Path
 	} END;
-	RULE(imps) {
-		PUSH(QualifiedBinding, POP(BasicBinding));
-	} END;
-	RULE(imp_alias) {
-		// stack: (qualbind basicbind?) | rebind
-		if (!util::at_node<ast::Rebind>(s)) {
-			auto typ = POP(BasicBinding);
-			auto mod = POP(QualifiedBinding);
-
-			if (!typ && mod->elems.size()) {
-				// If 'bind' is a var, then mod_path/imps gobbles it into the qualified binding
-				// This restores the division to match our expected/desired behavior
-				auto bind = std::move(mod->elems.back());
-
-				mod->elems.pop_back();
-				if (mod->elems.size() == 0) {
-					mod = nullptr;
-				}
-
-				PUSH(SingleImport, std::move(mod), std::move(bind));
-			} else {
-				PUSH(SingleImport, std::move(mod), std::move(typ));
-			}
-		}
-		// stack: singleimport | rebind
+	RULE(import_single) {
+		// stack: Path
+		PUSH(SingleImport, POP(Path));
+		// stack: ModRebindImport
 	} END;
 	RULE(type_assign) {
 		// stack: vis pat gen? "mut"? cons* scope
@@ -893,13 +845,12 @@ namespace spero::parser::actions {
 		// stack: valexpr op valexpr?
 		auto rhs = POP(ValExpr);
 		auto op = POP(BasicBinding);
-		auto oper = op->name;
 
 		if (!rhs) {
 			rhs = std::make_unique<ast::Future>(true, op->loc);
 		}
 		
-		PUSH(BinOpCall, POP(ValExpr), std::move(rhs), oper);
+		PUSH(BinOpCall, POP(ValExpr), std::move(rhs), op->name);
 		// stack: binexpr
 	} END;
 	INHERIT(binary_cont2, binary_cont1);

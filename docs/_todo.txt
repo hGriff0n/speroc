@@ -41,6 +41,8 @@ todo:
    improve the displaying of compiler errors
      have a collection of error 'id's ???
 	 link in printing of the source code the creates the error
+   generics will have to be handled with a specific pass over Path
+     I'll also need a better way of mapping from paths to single names
 
  tester improvements:
    look at adding "error" field to test.compile struct that specifies a file to compare compilation errors with

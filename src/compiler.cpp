@@ -23,20 +23,18 @@ namespace spero::compiler {
 	}
 
 	std::tuple<size_t, Stack> parse(std::string input, CompilationState& state) {
-		using namespace tao::pegtl;
 		using namespace spero::parser;
 
 		return parse_impl([&input, &state](Stack& ast) {
-			return tao::pegtl::parse<grammar::program, actions::action>(string_input<>{ input, "speroc:repl" }, ast, state);
+			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::string_input<>{input, "speroc:repl" }, ast, state);
 		});
 	}
 
 	std::tuple<size_t, Stack> parseFile(std::string file, CompilationState& state) {
-		using namespace tao::pegtl;
 		using namespace spero::parser;
 
 		return parse_impl([&file, &state](Stack& ast) {
-			return tao::pegtl::parse<grammar::program, actions::action>(file_input<>{ file }, ast, state);
+			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::file_input<>{ file }, ast, state);
 		});
 	}
 

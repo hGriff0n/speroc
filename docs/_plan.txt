@@ -20,9 +20,8 @@ Current Project Plan
   Grammar changes and modifications
 	Add in syntax error checking and handling
 	  Write rules/actions to report missing keywords/symbols
-	    for_type, alias, type_assign, asgn_val, elsif_case, in_assign
+	    alias, type_assign, asgn_val, elsif_case, in_assign
 	  Modify old code to use 'ValError' if possible
-	  Figure out if ".3" should be an error or be an forwarded function
 	  Find a solution to allow for 'ValError' type nodes to be considered as 'T' nodes
 	    Can't use multiple inheritance of Ast types
 		  Maybe I can have a set of type tags for the types that I need this behavior from
@@ -50,6 +49,9 @@ Current Project Plan
           Change binexpr to be left-associative (ie. "3 + 3 + 4" => "{3 + 3} + 4")
             Not sure if it's currently this way or not
 	Language Considerations
+	  Right now I force using 'as' if a type is generic specialized
+	    I do this by checking whether the last item is an array, however this can apply to any part of the path
+		Should probably generalize this to an analysis step
 	  Figure out a way to apply annotations to tuples
 	    Possibly consider not attaching annotations directly at parse time (would allow for "@<var>!" syntax)
 	  Figure out contexts to interpret "a :: T" as a type-check and not an annotation
@@ -78,6 +80,9 @@ Current Project Plan
       Find a way to make indexing really trivial (ie. reduce the number of rewrites)
       Thinking is whether I can find a way to cast 'mut' as a monad/HKT parameter
         The guess is you'd then be able to 'map' over it or something like that
+	Figure out if ".3" should be an error or be an forwarded function
+	Improve documentation, make sure it's up-to-date
+	Work on language tutorial/introduction
   Basic Mutability Tracking
     Modify 'SymTable' to track the mutability of the variable (this can be done within the current system)
 	Throw errors when a Reassign node attempts to change the value of an immutable variable

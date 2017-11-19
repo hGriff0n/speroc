@@ -232,22 +232,31 @@ namespace spero::compiler::ast {
 		return name;
 	}
 
-	QualifiedBinding::QualifiedBinding(ptr<BasicBinding> b, Location loc) : Sequence{ MK_DEQUE(std::move(b)), loc } {}
-	QualifiedBinding::QualifiedBinding(std::deque<ptr<BasicBinding>> ps, Location loc) : Sequence{ std::move(ps), loc } {}
-	void QualifiedBinding::accept(Visitor& v) {
-		v.visitQualifiedBinding(*this);
-	}
-	DEF_PRINTER(QualifiedBinding) {
-		return s << std::string(buf, ' ') << context << "ast.QualifiedBinding " << toString();
-	}
-	std::string QualifiedBinding::toString() {
-		std::string result = elems.front()->toString();
 
+	PathPart::PathPart(std::string n, BindingType t, Location loc)
+		: Ast{ loc }, name{ n }, type{ t } {}
+	void PathPart::accept(Visitor& v) {
+		//v.visitBasicBinding(*this);
+	}
+	DEF_PRINTER(PathPart) {
+		s << name;
+		if (gens) s << "[_]";
+		return s;
+		//return s << std::string(buf, ' ') << context << "ast.PathPart (var=" << name << ", type=" << type._to_string() << ")";
+	}
+
+	Path::Path(ptr<PathPart> b, Location loc) : Sequence{ MK_DEQUE(std::move(b)), loc } {}
+	void Path::accept(Visitor& v) {
+		//v.visitQualifiedBinding(*this);
+	}
+	DEF_PRINTER(Path) {
+		s << std::string(buf, ' ') << context << "ast.Path ";
+
+		elems.front()->prettyPrint(s, 0);
 		for (auto p = std::begin(elems) + 1; p != std::end(elems); ++p) {
-			result += ":" + p->get()->toString();
+			p->get()->prettyPrint(s << ':', 0);
 		}
-
-		return result;
+		return s;
 	}
 
 	Pattern::Pattern(Location loc) : Ast{ loc } {}
@@ -271,7 +280,7 @@ namespace spero::compiler::ast {
 		return s << std::string(buf, ' ') << ')';
 	}
 
-	VarPattern::VarPattern(ptr<QualifiedBinding> n, Location loc) : Pattern{ loc }, name{ std::move(n) } {}
+	VarPattern::VarPattern(ptr<Path> n, Location loc) : Pattern{ loc }, name{ std::move(n) } {}
 	void VarPattern::accept(Visitor& v) {
 		v.visitVarPattern(*this);
 	}
@@ -279,13 +288,13 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.VarPattern (capture=" << cap._to_string() << ')';
 		name->prettyPrint(s, 1);
 		/*if (type) {
-			type->prettyPrint(s << '\n', buf + 2, "type=");
+		type->prettyPrint(s << '\n', buf + 2, "type=");
 		}*/
 
 		return s;
 	}
 
-	AdtPattern::AdtPattern(ptr<QualifiedBinding> n, ptr<TuplePattern> pat, Location loc)
+	AdtPattern::AdtPattern(ptr<Path> n, ptr<TuplePattern> pat, Location loc)
 		: VarPattern{ std::move(n), loc }, args{ std::move(pat) } {}
 	void AdtPattern::accept(Visitor& v) {
 		v.visitAdtPattern(*this);
@@ -340,17 +349,17 @@ namespace spero::compiler::ast {
 	//
 	// TYPES
 	//
-	SourceType::SourceType(ptr<QualifiedBinding> b, Location loc)
+	SourceType::SourceType(ptr<Path> b, Location loc)
 		: Type{ loc }, name{ std::move(b) }, _ptr{ PtrStyling::NA } {}
 	void SourceType::accept(Visitor& v) {
-		v.visitSourceType(*this);
+		//v.visitSourceType(*this);
 	}
 	DEF_PRINTER(SourceType) {
 		s << std::string(buf, ' ') << context << "ast.SourceType \"";
 		return name->prettyPrint(s, 0) << "\" (ptr=" << _ptr._to_string() << ")";
 	}
 
-	GenericType::GenericType(ptr<QualifiedBinding> b, ptr<Array> a, Location loc)
+	GenericType::GenericType(ptr<Path> b, ptr<Array> a, Location loc)
 		: SourceType{ std::move(b), loc }, inst{ std::move(a) } {}
 	void GenericType::accept(Visitor& v) {
 		v.visitGenericType(*this);
@@ -686,13 +695,13 @@ namespace spero::compiler::ast {
 	// STMTS
 	//
 
-	ModDec::ModDec(ptr<QualifiedBinding> v, Location loc) : Statement{ loc }, module{ std::move(v) } {}
+	ModDec::ModDec(ptr<Path> v, Location loc) : Statement{ loc }, _module{ std::move(v) } {}
 	void ModDec::accept(Visitor& v) {
 		v.visitModDec(*this);
 	}
 	DEF_PRINTER(ModDec) {
 		s << std::string(buf, ' ') << context << "ast.ModuleDec (module=";
-		module->prettyPrint(s, 0) << ')';
+		_module->prettyPrint(s, 0) << ')';
 		return Statement::prettyPrint(s, buf + 2);
 	}
 
@@ -714,8 +723,7 @@ namespace spero::compiler::ast {
 	}
 
 	ModRebindImport::ModRebindImport(Location loc) : Statement{ loc }, _module{ nullptr } {}
-	ModRebindImport::ModRebindImport(ptr<QualifiedBinding> mod, Location loc)
-		: Statement{ loc }, _module{ std::move(mod) } {}
+	ModRebindImport::ModRebindImport(ptr<Path> mod, Location loc) : Statement{ loc }, _module{ std::move(mod) } {}
 	DEF_PRINTER(ModRebindImport) {
 		if (_module) {
 			_module->prettyPrint(s, buf, context);
@@ -726,21 +734,16 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	SingleImport::SingleImport(ptr<QualifiedBinding> mod, ptr<BasicBinding> name, Location loc)
-		: ModRebindImport{ std::move(mod), loc }, binding{ std::move(name) } {}
+	SingleImport::SingleImport(ptr<Path> mod, Location loc) : ModRebindImport{ std::move(mod), loc } {}
 	void SingleImport::accept(Visitor& v) {
 		v.visitSingleImport(*this);
 	}
 	DEF_PRINTER(SingleImport) {
-		s << std::string(buf, ' ') << context << "ast.SingleImport";
-		Statement::prettyPrint(s, buf + 2);
-		ModRebindImport::prettyPrint(s << '\n', buf + 2, "from=");
-
-		return binding->prettyPrint(s << '\n', buf + 2, "import=");
+		s << std::string(buf, ' ') << context << "ast.SingleImport ";
+		return ModRebindImport::prettyPrint(s, 0);
 	}
 
-	MultipleImport::MultipleImport(ptr<QualifiedBinding> mod, std::deque<ptr<BasicBinding>> names, Location loc)
-		: Sequence{ std::move(names), loc } {
+	MultipleImport::MultipleImport(ptr<Path> mod, std::deque<ptr<PathPart>> names, Location loc) : Sequence{ std::move(names), loc } {
 		_module = std::move(mod);
 	}
 	void MultipleImport::accept(Visitor& v) {
@@ -754,14 +757,14 @@ namespace spero::compiler::ast {
 		s << '\n' << std::string(buf + 2, ' ') << "import= {";
 
 		for (auto&& name : elems) {
-			name->prettyPrint(s << '\n', buf + 4);
+			name->prettyPrint(s, 0) << ", ";
 		}
 
-		return s << '\n' << std::string(buf + 2, ' ') << '}';
+		return s << '}';
 	}
 
-	Rebind::Rebind(ptr<QualifiedBinding> mod, ptr<BasicBinding> bind, ptr<Array> arr, ptr<BasicBinding> nbind, ptr<Array> narr, Location loc)
-		: ModRebindImport{ std::move(mod), loc }, old_name{ std::move(bind) }, old_gen{ std::move(arr) }, new_name{ std::move(nbind) }, new_gen{ std::move(narr) } {}
+	Rebind::Rebind(ptr<Path> mod, ptr<Path> bind, Location loc)
+		: ModRebindImport{ std::move(mod), loc }, new_name{ std::move(bind) } {}
 	void Rebind::accept(Visitor& v) {
 		v.visitRebind(*this);
 	}
@@ -770,15 +773,7 @@ namespace spero::compiler::ast {
 		Statement::prettyPrint(s, buf + 2);
 		ModRebindImport::prettyPrint(s << '\n', buf + 2, "from=");
 
-		old_name->prettyPrint(s << '\n', buf + 2, "rebind=");
-		if (old_gen) {
-			old_gen->prettyPrint(s << '\n', buf + 4, "inst=");
-		}
-
-		new_name->prettyPrint(s << '\n', buf + 2, "as=");
-		if (new_gen) {
-			new_gen->prettyPrint(s << '\n', buf + 4, "inst=");
-		}
+		new_name->prettyPrint(s << '\n', buf + 2, "to=");
 
 		return s;
 	}
@@ -850,8 +845,8 @@ namespace spero::compiler::ast {
 		return expr->prettyPrint(s << '\n', buf + 2, "value=");
 	}
 
-	TypeExtension::TypeExtension(ptr<QualifiedBinding> t, ptr<Array> g, ptr<Tuple> a, ptr<Block> e, Location loc)
-		: ValExpr{ loc }, typ_name{ std::move(t) }, gen{ std::move(g) }, args{ std::move(a) }, ext{ std::move(e) } {}
+	TypeExtension::TypeExtension(ptr<Path> t, ptr<Tuple> a, ptr<Block> e, Location loc)
+		: ValExpr{ loc }, typ_name{ std::move(t) }, args{ std::move(a) }, ext{ std::move(e) } {}
 	void TypeExtension::accept(Visitor& v) {
 		v.visitTypeExtension(*this);
 	}
@@ -859,9 +854,6 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.AnonymousType";
 		typ_name->prettyPrint(s << '\n', buf + 2, "extend=");
 
-		if (gen) {
-			gen->prettyPrint(s << '\n', buf + 4);
-		}
 		if (args) {
 			args->prettyPrint(s << '\n', buf + 4);
 		}
@@ -873,21 +865,15 @@ namespace spero::compiler::ast {
 	//
 	// EXPRESSIONS
 	//
-	Variable::Variable(ptr<QualifiedBinding> n, ptr<Array> i, Location loc)
-		: ValExpr{ loc }, name{ std::move(n) }, inst_args{ std::move(i) } {}
+	Variable::Variable(ptr<Path> n, Location loc)
+		: ValExpr{ loc }, name{ std::move(n) } {}
 	void Variable::accept(Visitor& v) {
 		v.visitVariable(*this);
 	}
 	DEF_PRINTER(Variable) {
 		s << std::string(buf, ' ') << context << "ast.Variable (";
 		ValExpr::prettyPrint(s, buf);
-		name->prettyPrint(s << "\n", buf + 2, "name=");
-
-		if (inst_args) {
-			inst_args->prettyPrint(s << '\n', buf + 2, "inst=");
-		}
-
-		return s;
+		return name->prettyPrint(s << "\n", buf + 2, "name=");
 	}
 
 	/*UnOpCall::UnOpCall(ptr<ValExpr> e, std::string op, Location loc)
@@ -982,4 +968,7 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(ValError) {
 		return s << std::string(buf, ' ') << context << "ast.Error";
 	}
+
+	ImportError::ImportError(Location loc) : ModRebindImport{ loc } {}
+	void ImportError::accept(Visitor&) {}
 }

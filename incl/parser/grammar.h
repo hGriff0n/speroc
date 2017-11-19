@@ -122,32 +122,32 @@ namespace spero::parser::grammar {
 	/*
 	 * Identifiers
 	 */
+	 // TODO: Error if name matches a keyword (analysis?)
+	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
 	struct typ_ch : range<'A', 'Z'> {};
 	struct typ : seq<typ_ch, star<ascii::identifier>> {};
-	struct qualtyp : seq<typ> {};
-	// TODO: Error if name matches a keyword (analysis?)
-	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
-	// TODO: Error if var not used (deferred)
-	struct mod_path : plus<one<':'>, not_at<sor<typ_ch, one<':'>>>, var> {};
-	struct varname : seq<var, opt<mod_path>> {};
-	// TODO: Error if typ not used (deferred)
-	struct type_path : seq<one<':'>, typ> {};
-	struct typname : sor<seq<varname, plus<type_path>>, typ> {};
-	struct binding : seq<sor<var, typ>, ig_s> {};
 	struct unop : one_of<'!', '-', '~'> {};
 	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
-	struct binop :
-		if_then_else<sor<pstr("->"), pstr("=>")>, failure, seq<opt<one<'!'>>, plus<binop_ch>>> {};
+	struct binop : if_then_else<sor<pstr("->"), pstr("=>")>, failure, seq<opt<one<'!'>>, plus<binop_ch>>> {};
 	struct op : disable<sor<binop, unop>> {};
+	struct pvar : disable<var> {};
+	struct ptyp : disable<typ> {};
+	struct pname : sor<pvar, ptyp> {};
+	// TODO: I need a way to peel off the array in some cases (explicitly need to match on having an array at the end)
+	struct path_part : seq<pname, opt<_array>> {};
+	struct path : star<path_part, one<':'>> {};
+	struct pathed_name : seq<path, disable<path_part>> {};
+	struct typname : seq<pathed_name> {};
+	struct pat_any : disable<plambda> {};
 	// TODO: Error if ',' not used (immediate)
 	struct pat_tuple : opt_sequence<oparen, pattern, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
-	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
 	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut, eps> {};
-	struct pat_name : seq<var, not_at<one<':'>>, ig_s> {};
+	struct pat_adt : seq<pat_tuple> {};
+	struct resolve_constants : seq<eps> {};
+	struct pat_name_adt : seq<pathed_name, ig_s, if_then_else<at<one<'('>>, pat_adt, resolve_constants>> {};
 	// TODO: Error if invalid capture_desc used, pat_tuple or pat_name not used (deferred)
-	struct capture : seq<capture_desc, sor<pat_tuple, pat_name>> {};
-	struct pat_any : disable<plambda> {};
-	struct pattern : seq<sor<pat_any, pat_lit, pat_adt, capture>, ig_s> {};
+	struct capture : seq<capture_desc, sor<pat_tuple, pat_name_adt>> {};
+	struct pattern : seq<sor<pat_any, pat_lit, capture>, ig_s> {};
 	// TODO: Error if ',' not used (immediate)
 	struct assign_tuple : sequence<oparen, assign_pat, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
 	struct assign_drop : disable<plambda> {};
@@ -163,6 +163,7 @@ namespace spero::parser::grammar {
 	struct typ_ref : one<'&'> {};
 	struct typ_ptr : one<'*'> {};
 	struct ptr_styling : sor<typ_view, typ_ref, typ_ptr> {};
+	// TODO: `array` never gets matched with the new pathed_name grammar (always sucked into typname)
 	struct single_type : seq<typname, ig_s, opt<_array>> {};
 	struct ref_type : seq<single_type, opt<ptr_styling, ig_s>> {};
 	// TODO: Error if ',' not used (immediate)
@@ -219,6 +220,7 @@ namespace spero::parser::grammar {
 	// TODO: Error if no mvexpr or mvdexpr (deferred)
 	struct infor : seq<kin, mvexpr, mvdexpr> {};
 	struct missing_in : seq<eps> {};
+	// TODO: Look into allowing "for k, v in map ..." syntax
 	struct forl : seq<kfor, pattern, sor<infor, missing_in>> {};														// Immediate error if 'in' not used
 	// TODO: Error if no mvexpr (deferred)
 	struct whilel : seq<kwhile, mvexpr, mvdexpr> {};
@@ -290,14 +292,15 @@ namespace spero::parser::grammar {
 	// TODO: Error if wrong keyword used (deferred?)
 	// TODO: Error if exprs not used (deferred)
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
-	struct type_var : seq<plus<type_path>, ig_s, opt<_array>> {};
-	struct op_var : seq<binop> {};
-	struct vareps : opt<_array> {};
+
+	// TODO: Moved up to identifiers
+	// Then I need to move to using 'paths' throughout the entire codebase
+		// If it uses `BasicBinding` or `QualifiedBinding` it will be replaced
 	struct call : enable<tuple> {};
-	struct type_const_tail : seq<opt<_array>, opt<disable<call>, opt<anon_type>>> {};
-	struct raw_const : seq<typ, ig_s, type_const_tail> {};
-	struct type_const : seq<type_var, ig_s, type_const_tail> {};
-	struct var_val : sor<seq<varname, sor<type_const, vareps>>, raw_const, op_var> {};
+	struct type_const_tail : opt<disable<call>, opt<anon_type>> {};
+	struct op_var : seq<binop> {};
+	struct pathed_var : sor<pathed_name, op_var> {};
+	struct var_val : seq<pathed_var, type_const_tail, ig_s> {};
 	struct fncall : seq<sor<atom, var_val>, star<call>> {};
 	struct indexeps : seq<eps> {};
 	// TODO: Error if '.' and no fncall (deferred)
@@ -313,23 +316,20 @@ namespace spero::parser::grammar {
 	 * Statements
 	 */
 	// TODO: Error if eolf or ';' not used (immediate)
-	struct mod_dec : seq<kmod, varname, ign_s, must<sor<endc, eolf>>, ig_s> {};
-	// TODO: Error if wrong keyword (immediate)
+	struct mod_dec : seq<kmod, pathed_name, ig_s, must<sor<endc, eolf>>, ig_s> {};
 	// TODO: Error if no type used (deferred)
 	struct for_type : seq<kfor, single_type> {};
+	struct impl_errchars : plus<not_at<disable<obrace>>, any> {};														// Immediate error if unexpected characters encountered
 	// TODO: Error if no scope, no type used (deferred)
-	struct impl : seq<kimpl, single_type, opt<for_type>, scope> {};
-	struct alieps : seq<eps> {};
-	struct imps : seq<eps> {};
-	// TODO: Error if binding not used (deferred)
-	// TODO: Error if "as" not used (immediate)
-	struct alias : seq<alieps, opt<_array>, kas, binding, opt<_array>> {};
-	struct imp_type : sor<plus<type_path>, typ> {};
-	struct imp_alias : seq<opt<imp_type>, ig_s, opt<alias>> {};
-	// TODO: Error if ',' and no binding used (deferred)
-	struct mul_imp : seq<opt<one<':'>>, sequence<obrace, binding, sor<cbrace, errorbrace>>> {};							// Immediate error if no closing '}'
-	// TODO: Error if no mul_imp, or imp_alias (deferred)
-	struct mod_alias : seq<kuse, opt<var, sor<mod_path, imps>>, sor<mul_imp, imp_alias>> {};
+	struct impl : seq<kimpl, single_type, opt<for_type>, opt<impl_errchars>, scope> {};
+	struct mul_imp : sequence<obrace, seq<ig_s, pname, ig_s>, sor<cbrace, errorbrace>> {};
+	struct at_rebind_point : seq<ig_s, sor<disable<_array>, at<kas>>> {};
+	struct err_rebind : seq<eps> {};
+	struct rebind : seq<kas, path_part> {};
+	struct maybe_rebind : sor<rebind, err_rebind> {};
+	struct import_single : seq<eps> {};
+	struct imp_alias : seq<disable<pname>, if_then_else<at_rebind_point, maybe_rebind, import_single>> {};
+	struct mod_alias : seq<kuse, opt<path>, sor<mul_imp, imp_alias>> {};
 	// TODO: Error if '=' not used (immediate)
 	// TODO: Error if scope not used (deferred)
 	struct type_assign : seq<assign_typ, opt<_generic>, equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, scope> {};

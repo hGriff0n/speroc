@@ -88,10 +88,11 @@ namespace spero::compiler::gen {
 	// Names
 	//
 	void AsmGenerator::visitVariable(ast::Variable& v) {
-		auto loc = current->getVar(v.name->toString());
+		auto var = v.name->elems.back()->name;
+		auto loc = current->getVar(var);
 
 		if (!loc) {
-			state.log(ID::err, "Attempt to use variable `{}` before it was declared <at {}>", v.name->toString(), v.loc);
+			state.log(ID::err, "Attempt to use variable `{}` before it was declared <at {}>", var, v.loc);
 			return;
 		}
 
@@ -196,7 +197,7 @@ namespace spero::compiler::gen {
 
 			// Evaluate the value and perform the assignment
 			b.rhs->accept(*this);
-			assign(_lhs->name->toString(), false, b.loc);
+			assign(_lhs->name->elems.back()->name, false, b.loc);
 
 		} else {
 			Register esp{ "esp" };
