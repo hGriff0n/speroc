@@ -23,7 +23,23 @@ namespace spero::compiler::ast {
 		DEF_VISIT(Statement);
 		DEF_VISIT(ValExpr);
 
-		// Bindings
+		// Literals
+		DEF_VISIT(Literal);
+		DEF_VISIT(Bool);
+		DEF_VISIT(Byte);
+		DEF_VISIT(Float);
+		DEF_VISIT(Int);
+		DEF_VISIT(Char);
+		DEF_VISIT(String);
+		DEF_VISIT(Future);
+
+		// Atoms
+		DEF_VISIT(Tuple);
+		DEF_VISIT(Array);
+		DEF_VISIT(Block);
+		DEF_VISIT(Function);
+
+		// Names
 		DEF_VISIT(BasicBinding);
 		DEF_VISIT(QualifiedBinding);
 		DEF_VISIT(Pattern);
@@ -43,7 +59,7 @@ namespace spero::compiler::ast {
 		DEF_VISIT(AndType);
 		DEF_VISIT(OrType);
 
-		// Decorators
+		// Decorations
 		DEF_VISIT(Annotation);
 		DEF_VISIT(LocalAnnotation);
 		DEF_VISIT(GenericPart);
@@ -54,20 +70,6 @@ namespace spero::compiler::ast {
 		DEF_VISIT(Adt);
 		DEF_VISIT(Argument);
 		DEF_VISIT(ArgTuple);
-
-		// Literals
-		DEF_VISIT(Literal);
-		DEF_VISIT(Bool);
-		DEF_VISIT(Byte);
-		DEF_VISIT(Float);
-		DEF_VISIT(Int);
-		DEF_VISIT(Char);
-		DEF_VISIT(String);
-		DEF_VISIT(Future);
-		DEF_VISIT(Tuple);
-		DEF_VISIT(Array);
-		DEF_VISIT(Block);
-		DEF_VISIT(Function);
 
 		// Control
 		DEF_VISIT(Branch);
@@ -93,10 +95,10 @@ namespace spero::compiler::ast {
 		DEF_VISIT(TypeExtension);
 
 		// Expression
+		DEF_VISIT(InAssign);
 		DEF_VISIT(Variable);
 		DEF_VISIT(UnOpCall);
 		DEF_VISIT(BinOpCall);
-		DEF_VISIT(InAssign);
 		DEF_VISIT(Index);
 		DEF_VISIT(FnCall);
 

@@ -3,22 +3,17 @@
 #include <chrono>
 #include <memory>
 #include <deque>
+
 #include <spdlog.h>
 #include <logger.h>
-#include "pegtl/position.hpp"
+#include <fmt/ostr.h>
+
+#include "parser/base.h"
 
 #define abstract =0;
 
 
 // Forward Declarations
-namespace spero::compiler {
-	template<class T> using ptr = std::unique_ptr<T>;
-}
-
-namespace spero::compiler::ast {
-	struct Ast;
-}
-
 namespace spero::parser {
 	using Stack = std::deque<compiler::ptr<compiler::ast::Ast>>;
 }
@@ -69,9 +64,6 @@ namespace spero::compiler {
 
 			size_t failed();
 
-			// Temp function for formatting position
-			static std::string location(tao::pegtl::position);
-
 			// Compilation Stage Control
 			virtual bool produceExe() abstract;
 	};
@@ -100,7 +92,7 @@ namespace spero::compiler {
 		}
 
 		bool produceExe() {
-			return !opts["asm"].as<bool>();
+			return !opts["stop"].as<bool>();
 		}
 	};
 }

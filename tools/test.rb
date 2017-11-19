@@ -78,10 +78,10 @@ yaml.each do |name, tests|
             # Generate strings for correctly calling the compiler from the runner
             in_files = compile['files'].map { |file| "./#{options[:dir]}/#{file}" }.join(' ')
             args = compile['args'].join(' ')
-            speroc_cmd = "./#{options[:dir]}/speroc #{in_files} -o ./#{compile['exec']} -t #{args}"
+            speroc_cmd = "./#{options[:dir]}/speroc #{in_files} -o ./#{compile['exec']} --nodel #{args}"
 
             # Generate a smaller string to simplify test print messages
-            simple_cmd = "speroc #{compile['files'].join(' ')} -o #{run['exec']} -t #{args}"
+            simple_cmd = "speroc #{compile['files'].join(' ')} -o #{run['exec']} --nodel #{args}"
 
 
             # Compile the program and report errors (if any)

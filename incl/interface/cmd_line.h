@@ -19,7 +19,5 @@ namespace spero {
 
 
 	// Parsing yaml files
-	namespace yaml {
-
-	}
+	namespace yaml { }
 }

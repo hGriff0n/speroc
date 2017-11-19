@@ -57,7 +57,7 @@ literals:
       compile:
         files: [ 'scoped.spr' ]
       tests:
-        - return: 15
+        - return: 18
     - desc: ""
       exec: 'fail_type.exe'
       compile:

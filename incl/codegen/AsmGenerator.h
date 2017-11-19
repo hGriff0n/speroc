@@ -21,9 +21,7 @@ namespace spero::compiler::gen {
 		analysis::SymTable globals;
 		analysis::SymTable* current = &globals;
 
-		void loadVariable(ast::Variable&);
-		void performAssign(ast::AssignPattern&, bool);
-		void performAssign(std::string&, ast::Location, bool);
+		void assign(std::string&, bool, Location);
 
 		public:
 			AsmGenerator(std::ostream&, compiler::CompilationState&);
@@ -39,22 +37,27 @@ namespace spero::compiler::gen {
 			virtual void visitChar(ast::Char&) final;
 			//virtual void visitString(ast::String&) final;
 
+			// Atoms
+			virtual void visitBlock(ast::Block&) final;
+
 			// Names
 			virtual void visitVariable(ast::Variable&) final;
+			virtual void visitAssignName(ast::AssignName&) final;
 
 			// Types
 
 			// Decorations
 
 			// Control
-			virtual void visitBlock(ast::Block&) final;
 
 			// Statements
+			virtual void visitVarAssign(ast::VarAssign&) final;
+
+			// Expressions
+			virtual void visitInAssign(ast::InAssign&) final;
 			virtual void visitFunction(ast::Function&) final;
 			virtual void visitBinOpCall(ast::BinOpCall&) final;
-			//virtual void visitReassign(ast::Reassign&) final;
 			virtual void visitUnOpCall(ast::UnOpCall&) final;
-			virtual void visitVarAssign(ast::VarAssign&) final;
 	};
 
 }

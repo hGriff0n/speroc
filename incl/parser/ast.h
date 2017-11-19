@@ -1,17 +1,13 @@
 #pragma once
 
 #include <variant>
-#include <memory>
 #include <deque>
 #include <string>
 
 #include "enum.h"
-#include "analysis/SymTable.h"
+#include "base.h"
 
 namespace spero::compiler {
-	// Cut down on typing for unique_ptr
-	template<class T> using ptr = std::unique_ptr<T>;
-
 	/*
 	* Templates to check if a variant could hold a T
 	*/
@@ -28,16 +24,14 @@ namespace spero::compiler::ast {
 	* Enums and other basic types
 	*/
 	using Sentinel = nullptr_t;
-	using Location = tao::pegtl::position;
 	BETTER_ENUM(KeywordType, char, LET, DEF, STATIC, MUT, DO,
 		MOD, USE, MATCH, IF, ELSIF, ELSE, WHILE, FOR, LOOP,
-		BREAK, CONT, YIELD, RET, WAIT, IMPL, F_IN)
+		BREAK, CONT, YIELD, RET, WAIT, IMPL, F_IN, AS)
 	BETTER_ENUM(PtrStyling, char, PTR, REF, VIEW, NA)
 	BETTER_ENUM(VarianceType, char, COVARIANT, CONTRAVARIANT, INVARIANT, VARIADIC)
 	BETTER_ENUM(RelationType, char, IMPLS, NOT_IMPLS, SUBTYPE, SUPERTYPE, NA)
-	BETTER_ENUM(VisibilityType, char, PUBLIC, PROTECTED, PRIVATE, STATIC)
+	BETTER_ENUM(VisibilityType, char, PUBLIC, PROTECTED, PRIVATE)
 	BETTER_ENUM(BindingType, char, TYPE, VARIABLE, OPERATOR)
-	BETTER_ENUM(UnaryType, char, DEREF, NOT, MINUS, RESERVED, NA)
 	BETTER_ENUM(CaptureType, char, NORM, MUT, REF, MUTREF)
 
 
@@ -45,7 +39,6 @@ namespace spero::compiler::ast {
 	* Forward declarations
 	*/
 	struct LocalAnnotation;
-	struct Visitor;
 
 
 	//
@@ -53,26 +46,6 @@ namespace spero::compiler::ast {
 	// 
 	// This section contains the base nodes within the heirarchy
 	//
-
-
-	/*
-	 * Base class for all ast nodes
-	 *
-	 * Specifies the required information that all ast nodes must contain
-	 *
- 	 * Exports:
-	 *   loc - Structure containing the location data for the node
-	 *   visit - Polymorphic method to accept a visitor object for iteration
-	 */
-	struct Ast {
-		Location loc;
-
-		Ast(Location);
-
-		virtual void accept(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
-	};
-
 
 	/*
 	 * Base class for representing a token during parsing on the stack
@@ -84,7 +57,7 @@ namespace spero::compiler::ast {
 	 */
 	struct Token : Ast {
 		using token_type = std::variant<KeywordType, PtrStyling, VarianceType, RelationType,
-			VisibilityType, BindingType, UnaryType, CaptureType>;
+			VisibilityType, BindingType, CaptureType>;
 		token_type value;
 
 		template<class T, class = std::enable_if_t<can_hold_v<T, token_type>>>
@@ -341,18 +314,43 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Represents a complete Spero binding
+	 * A piece of a fully qualified spero binding name
+	 *   This solution generalizes to allow for the chaining of types and generics
+	 *   This is important as types may have static members or even subtypes
+	 *   And generics, particularly generic types, are no exception
 	 *
-	 * Extends: Seqeuence<BasicBinding, Ast>
+	 * NOTE: The implementation mimics alot from BasicBinding
+	 *   However the use cases are different enough that it's not worth porting
+	 *   over the full implementation of Paths to replace BasicBinding
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   name - the string name that this section maps to
+	 *   type - whether this part is a type, variable, or operator
+	 *   gens - array that is being used as the instantiation arguments
 	 */
-	struct QualifiedBinding : Sequence<BasicBinding, Ast> {
-		QualifiedBinding(ptr<BasicBinding>, Location);
-		QualifiedBinding(std::deque<ptr<BasicBinding>>, Location);
+	struct PathPart : Ast {
+		std::string name;
+		BindingType type;
+		ptr<Array> gens;
+
+		PathPart(std::string, BindingType, Location);
+
+		virtual void accept(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
+
+	/*
+	 * The fully qualified spero binding
+	 *
+	 * Extends: Sequence<PathPart, Ast>
+	 */
+	struct Path : Sequence<PathPart, Ast> {
+		Path(ptr<PathPart>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
-
-		std::string toString();
 	};
 
 	/*
@@ -397,9 +395,9 @@ namespace spero::compiler::ast {
 	 *   name - the value to bind to
 	 */
 	struct VarPattern : Pattern {
-		ptr<QualifiedBinding> name;
+		ptr<Path> name;
 
-		VarPattern(ptr<QualifiedBinding>, Location);
+		VarPattern(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
@@ -417,7 +415,7 @@ namespace spero::compiler::ast {
 	struct AdtPattern : VarPattern {
 		ptr<TuplePattern> args;
 
-		AdtPattern(ptr<QualifiedBinding>, ptr<TuplePattern>, Location);
+		AdtPattern(ptr<Path>, ptr<TuplePattern>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -505,10 +503,10 @@ namespace spero::compiler::ast {
 	 *   pointer - any pointer/view styling applied to the type
 	 */
 	struct SourceType : Type {
-		ptr<QualifiedBinding> name;
+		ptr<Path> name;
 		PtrStyling _ptr;
 
-		SourceType(ptr<QualifiedBinding>, Location);
+		SourceType(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
@@ -525,7 +523,7 @@ namespace spero::compiler::ast {
 	struct GenericType : SourceType {
 		ptr<Array> inst;
 
-		GenericType(ptr<QualifiedBinding>, ptr<Array>, Location);
+		GenericType(ptr<Path>, ptr<Array>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -945,12 +943,12 @@ namespace spero::compiler::ast {
 	 * Extends: Statement
 	 *
 	 * Exports:
-	 *   module - the name of the created module
+	 *   _module - the name of the created module
 	 */
 	struct ModDec : Statement {
-		ptr<QualifiedBinding> module;
+		ptr<Path> _module;
 
-		ModDec(ptr<QualifiedBinding>, Location);
+		ModDec(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -984,10 +982,10 @@ namespace spero::compiler::ast {
 	 * Extends: Statement
 	 */
 	struct ModRebindImport : Statement {
-		ptr<QualifiedBinding> _module;
+		ptr<Path> _module;
 
 		ModRebindImport(Location);
-		ModRebindImport(ptr<QualifiedBinding>, Location);
+		ModRebindImport(ptr<Path>, Location);
 
 		virtual void accept(Visitor&) = 0;
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
@@ -997,14 +995,9 @@ namespace spero::compiler::ast {
 	 * Import a single binding into the current scope
 	 *
 	 * Extends: ModRebindImport
-	 *
-	 * Exports:
-	 *   imp - the binding that is being imported
 	 */
 	struct SingleImport : ModRebindImport {
-		ptr<BasicBinding> binding;
-
-		SingleImport(ptr<QualifiedBinding>, ptr<BasicBinding>, Location);
+		SingleImport(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1015,8 +1008,8 @@ namespace spero::compiler::ast {
 	 *
 	 * Extends: Sequence<BasicBinding, ModRebindImport>
 	 */
-	struct MultipleImport : Sequence<BasicBinding, ModRebindImport> {
-		MultipleImport(ptr<QualifiedBinding>, std::deque<ptr<BasicBinding>>, Location);
+	struct MultipleImport : Sequence<PathPart, ModRebindImport> {
+		MultipleImport(ptr<Path>, std::deque<ptr<PathPart>>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1026,17 +1019,14 @@ namespace spero::compiler::ast {
 	 * Rebind a name in the current scope in some fashion
 	 *
 	 * Extends: ModRebindImport
-	 *
+	 * 
 	 * Exports:
+	 *   new_name - the new name for the imported entity
 	 */
 	struct Rebind : ModRebindImport {
-		ptr<BasicBinding> old_name;
-		ptr<Array> old_gen;
+		ptr<Path> new_name;
 
-		ptr<BasicBinding> new_name;
-		ptr<Array> new_gen;
-
-		Rebind(ptr<QualifiedBinding>, ptr<BasicBinding>, ptr<Array>, ptr<BasicBinding>, ptr<Array>, Location);
+		Rebind(ptr<Path>, ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1113,17 +1103,15 @@ namespace spero::compiler::ast {
 	 *
 	 * Exports:
 	 *   typ_name - type being extended
-	 *   gen - generic instance arguments for the extended type
 	 *   args - arguments for the extended type's constructor
 	 *   ext - extension block
 	 */
 	struct TypeExtension : ValExpr {
-		ptr<QualifiedBinding> typ_name;
-		ptr<Array> gen;
+		ptr<Path> typ_name;
 		ptr<Tuple> args;
 		ptr<Block> ext;
 
-		TypeExtension(ptr<QualifiedBinding>, ptr<Array>, ptr<Tuple>, ptr<Block>, Location);
+		TypeExtension(ptr<Path>, ptr<Tuple>, ptr<Block>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1137,19 +1125,37 @@ namespace spero::compiler::ast {
 	//
 
 	/*
+	 * Represents a scoped binding assignment, where a variable is declared for use in
+	 *   a single expression and is only visible within that context
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   bind - the assignment binding the variable to some value
+	 *    expr - the statement in which the binding is visible
+	 */
+	struct InAssign : ValExpr {
+		ptr<VarAssign> bind;
+		ptr<ValExpr> expr;
+
+		InAssign(ptr<VarAssign>, ptr<ValExpr>, Location);
+
+		virtual void accept(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
 	 * Basic class that represents a variable name
 	 *
 	 * Extends: ValExpr
 	 *
 	 * Exports:
 	 *   name - qualified binding that represents the variable
-	 *   inst_args - generic instantiation argument array
 	 */
 	struct Variable : ValExpr {
-		ptr<QualifiedBinding> name;
-		ptr<Array> inst_args;
+		ptr<Path> name;
 
-		Variable(ptr<QualifiedBinding>, ptr<Array>, Location);
+		Variable(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1189,36 +1195,13 @@ namespace spero::compiler::ast {
 	struct BinOpCall : ValExpr {
 		ptr<ValExpr> lhs;
 		ptr<ValExpr> rhs;
-		ptr<BasicBinding> op;
-		//std::string op;
+		std::string op;
 
-		//BinOpCall(ptr<ValExpr>, ptr<ValExpr>, std::string, Location);
-		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, ptr<BasicBinding>, Location);
+		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, std::string, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
-
-	/*
-	 * Represents a scoped binding assignment, where a variable is declared for use in
-	 *   a single expression and is only visible within that context
-	 *
-	 * Extends: ValExpr
-	 *
-	 * Exports:
-	 *   bind - the assignment binding the variable to some value
-	 *   expr - the statement in which the binding is visible
-	 */
-	struct InAssign : ValExpr {
-		ptr<VarAssign> bind;
-		ptr<ValExpr> expr;
-
-		InAssign(ptr<VarAssign>, ptr<ValExpr>, Location);
-
-		virtual void accept(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
-	};
-
 
 	/*
 	 * Represents a sequence of values where the each one is used to index the prior
@@ -1260,10 +1243,58 @@ namespace spero::compiler::ast {
 	// This section represents all structures that represent something wrong
 	//
 
-	template<class T>
+	/*
+	 * Helper node for tracking a symbol appearance for error reporting
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   ch - the character that this node was created for
+	 */
+	struct Symbol : Ast {
+		char ch;
+
+		Symbol(char, Location);
+	};
+
+	/*
+	 * Base node for representing all error contexts
+	 *   Provides overload of `prettyPrint` for all error classes
+	 *
+	 * Extends: Ast
+	 */
+	struct Error : Ast {
+		Error(Location loc);
+
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
+	 * Sentinel struct representing a missing close symbol
+	 *
+	 * Extends: Error
+	 */
+	struct CloseSymbolError : Error {
+		CloseSymbolError(Location);
+	};
+
+	/*
+	 * Temporary sentinel struct to allow for using errors as value expressions
+	 */
+	struct ValError : ValExpr {
+		ValError(Location loc);
+
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*template<class T>
 	struct Error : T { };
 
 	template<class T>
-	struct SyntaxError : Error<T> {};
+	struct SyntaxError : Error<T> {};*/
+	struct ImportError : ModRebindImport {
+		ImportError(Location);
+		virtual void accept(Visitor&);
+	};
 
 }

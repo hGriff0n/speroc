@@ -9,7 +9,6 @@ namespace spero::compiler {
 	std::deque<std::string>& CompilationState::files() {
 		return input_files;
 	}
-	//const std::string& output() { return output_file; }
 
 
 	// Time loggers
@@ -40,16 +39,6 @@ namespace spero::compiler {
 	// Error reporting/collection
 	spdlog::logger& CompilationState::getLogger(ID msg_id) {
 		return *logger;
-	}
-
-	std::string CompilationState::location(tao::pegtl::position pos) {
-		std::string ret = "at line:";
-		ret += std::to_string(pos.line);
-		ret += " col:";
-		ret += std::to_string(pos.byte_in_line);
-		ret += " of source '";
-		ret += pos.source;
-		return ret + '\'';
 	}
 
 	size_t CompilationState::failed() {

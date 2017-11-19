@@ -1,5 +1,4 @@
 #include "interface/cmd_line.h"
-#include <iostream>
 #include <vector>
 
 namespace spero::cmd {
@@ -28,6 +27,12 @@ namespace spero::cmd {
 	}
 
 	compiler::OptionState<cxxopts::Options> parse(int& argc, char**& argv) {
+		// Automatically add in "interactive" and "nodel" flags for debug running
+		if (argc == 1) {
+			argc = 3;
+			argv = new char*[3]{ "speroc.exe", "-i", "--nodel" };
+		}
+
 		// Use the cxxopts library to parse out basic interfaces
 		auto opts = getOptions();
 		opts.parse(argc, argv);

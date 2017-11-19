@@ -14,33 +14,27 @@ namespace spero::compiler {
 	std::tuple<size_t, Stack> parse_impl(Fn&& parse) {
 		// Setup parser state
 		Stack ast;
-		ast.emplace_back(ast::Sentinel{});
 
 		// Perform a parsing run, switching on whether the input is a file or not
 		auto succ = parse(ast);
 
-		// Maintain the ast stack invariants (no nullptr [at 0], non-empty)
-		ast.pop_front();
-
 		// Return the completed ast
-		return std::make_tuple(!succ || ast.size() == 0, std::move(ast));
+		return std::make_tuple(!succ, std::move(ast));
 	}
 
 	std::tuple<size_t, Stack> parse(std::string input, CompilationState& state) {
-		using namespace tao::pegtl;
 		using namespace spero::parser;
 
 		return parse_impl([&input, &state](Stack& ast) {
-			return tao::pegtl::parse<grammar::program, actions::action>(string_input<>{ input, "speroc:repl" }, ast, state);
+			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::string_input<>{input, "speroc:repl" }, ast, state);
 		});
 	}
 
 	std::tuple<size_t, Stack> parseFile(std::string file, CompilationState& state) {
-		using namespace tao::pegtl;
 		using namespace spero::parser;
 
 		return parse_impl([&file, &state](Stack& ast) {
-			return tao::pegtl::parse<grammar::program, actions::action>(file_input<>{ file }, ast, state);
+			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::file_input<>{ file }, ast, state);
 		});
 	}
 

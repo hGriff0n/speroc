@@ -14,9 +14,10 @@
 		template<class Input> \
 		static void apply(const Input& in, Stack& s, CompilationState& state)
 #define END }
-#define MAKE(Node, ...) std::make_unique<ast::Node>(__VA_ARGS__, in.position())
+#define LOCATION Location{ in.iterator(), in.input().source() }
+#define MAKE(Node, ...) std::make_unique<ast::Node>(__VA_ARGS__, LOCATION)
 #define PUSH(Node, ...) s.emplace_back(MAKE(Node, __VA_ARGS__))
-#define MAKE_NODE(Node) std::make_unique<ast::Node>(in.position())
+#define MAKE_NODE(Node) std::make_unique<ast::Node>(LOCATION)
 #define PUSH_NODE(Node) s.emplace_back(MAKE_NODE(Node))
 #define POP(Node) util::pop<ast::Node>(s)
 #define INHERIT(gram, base) template<> struct action<grammar::gram> : action<grammar::base> {}
@@ -37,37 +38,52 @@ namespace spero::parser::actions {
 	//
 	// Sentinel Nodes
 	//
-	SENTINEL(obrace);
-	SENTINEL(obrack);
-	SENTINEL(oparen);
+	RULE(obrace) { PUSH(Symbol, '{'); } END;
+	RULE(obrack) { PUSH(Symbol, '['); } END;
+	RULE(oparen) { PUSH(Symbol, '('); } END;
+	RULE(ochar) { PUSH(Symbol, '\''); } END;
+	RULE(oquote) { PUSH(Symbol, '"'); } END;
 
 
 	//
 	// Keyword Tokens (may remove a couple as it becomes beneficial)
 	//
+	TOKEN(kas, ast::KeywordType::AS);
 	TOKEN(kmut, ast::KeywordType::MUT);
 	TOKEN(klet, ast::VisibilityType::PROTECTED);
 	TOKEN(kdef, ast::VisibilityType::PUBLIC);
-	TOKEN(kstatic, ast::VisibilityType::STATIC);
+	TOKEN(kpriv, ast::VisibilityType::PRIVATE);
 	TOKEN(kwait, ast::KeywordType::WAIT);
 	TOKEN(kyield, ast::KeywordType::YIELD);
 	TOKEN(kret, ast::KeywordType::RET);
 	TOKEN(kcontinue, ast::KeywordType::CONT);
 	TOKEN(kbreak, ast::KeywordType::BREAK);
+	TOKEN(kfor, ast::KeywordType::FOR);
 
 
 	//
 	// Literals (done)
 	//
 	RULE(bin_body) {
-		PUSH(Byte, in.string(), 2);
+		if (in.string().size() == 0) {
+			state.log(compiler::ID::err, "Missing binary body: `0b` must be followed by a sequence of binary digits <at {}>", LOCATION);
+			PUSH_NODE(ValError);
+		} else {
+			PUSH(Byte, in.string(), 2);
+		}
 	} END;
 	RULE(hex_body) {
-		PUSH(Byte, in.string(), 16);
+		if (in.string().size() == 0) {
+			state.log(compiler::ID::err, "Missing hex body: `0x` must be followed by a sequence of hexadecimal digits <at {}>", LOCATION);
+			PUSH_NODE(ValError);
+		} else {
+			PUSH(Byte, in.string(), 16);
+		}
 	} END;
 	RULE(decimal) {
 		auto str = in.string();
-		if (str.find('.') != std::string::npos) {
+
+		if (auto dot_pos = str.find('.'); dot_pos != std::string::npos) {
 			PUSH(Float, str);
 		} else {
 			PUSH(Int, str);
@@ -76,8 +92,30 @@ namespace spero::parser::actions {
 	RULE(char_body) {
 		PUSH(Char, in.string()[0]);
 	} END;
+	RULE(_char) {
+		// stack: {} char error?
+		auto err = POP(CloseSymbolError);
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+		auto sym = POP(Symbol);
+
+		if (err) {
+			state.log(compiler::ID::err, "No closing quote found for opening ' <char at {}>", sym->loc);
+		}
+		// stack: char
+	} END;
 	RULE(str_body) {
 		PUSH(String, util::escape(in.string()));
+	} END;
+	RULE(string) {
+		// stack: {} char error?
+		auto err = POP(CloseSymbolError);
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+		auto sym = POP(Symbol);
+
+		if (err) {
+			state.log(compiler::ID::err, "No closing quote found for opening \" <string at {}>", sym->loc);
+		}
+		// stack: char
 	} END;
 	RULE(kfalse) {
 		PUSH(Bool, false);
@@ -94,23 +132,44 @@ namespace spero::parser::actions {
 	// Atoms (done)
 	//
 	RULE(scope) {
-		// stack: {} stmt*
+		// stack: symbol stmt* error?
+		auto err = POP(CloseSymbolError);
 		auto vals = util::popSeq<ast::Statement>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing brace found for opening '{}' <scope at {}>", '{', sym->loc);
+		}
+
 		PUSH(Block, std::move(vals));
 		// stack: block
 	} END;
 	RULE(tuple) {
-		// stack: {} valexpr*
+		// stack: symbol valexpr* error?
+		auto err = POP(CloseSymbolError);
 		auto vals = util::popSeq<ast::ValExpr>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <tuple at {}>", sym->loc);
+		}
+
 		PUSH(Tuple, std::move(vals));
 		// stack: tuple
 	} END;
 	RULE(_array) {
 		// stack: {} valexpr*
+		auto err = POP(CloseSymbolError);
 		auto vals = util::popSeq<ast::ValExpr>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing bracket found for opening '[' <array at {}>", sym->loc);
+		}
+
 		PUSH(Array, std::move(vals));
 		// stack: array
 	} END;
@@ -120,7 +179,7 @@ namespace spero::parser::actions {
 		PUSH(Function, POP(Tuple), std::move(body));
 		// stack: fndef
 	} END;
-	RULE(dot_eps) {
+	RULE(fwd_dot) {
 		PUSH(Future, true);
 	} END;
 
@@ -128,6 +187,7 @@ namespace spero::parser::actions {
 	//
 	// Identifiers
 	//
+	// TODO: Remove once fully converted to path
 	RULE(typ) {
 		PUSH(BasicBinding, in.string(), ast::BindingType::TYPE);
 	} END;
@@ -139,63 +199,63 @@ namespace spero::parser::actions {
 	} END;
 	INHERIT(unop, op);
 	INHERIT(binop, op);
-	RULE(mod_path) {
-		// stack: (BasicBinding | QualifiedBinding) BasicBinding
-		auto part = POP(BasicBinding);
-
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
-		}
-
-		util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(part));
-		// stack: QualifiedBinding
+	RULE(ptyp) {
+		PUSH(PathPart, in.string(), ast::BindingType::TYPE);
 	} END;
-	RULE(qualtyp) {
-		// stack: (QualifiedBinding | BasicBinding)? BasicBinding
-		auto typ = POP(BasicBinding);
+	RULE(pvar) {
+		PUSH(PathPart, in.string(), ast::BindingType::VARIABLE);
+	} END;
+	RULE(path_part) {
+		// stack: Path? PathPart array?
+		auto gens = POP(Array);
+		auto part = POP(PathPart);
+		part->gens = std::move(gens);
 
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
-		}
-
-		if (util::at_node<ast::QualifiedBinding>(s)) {
-			util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(typ));
-
+		if (!util::at_node<ast::Path>(s)) {
+			PUSH(Path, std::move(part));
 		} else {
-			PUSH(QualifiedBinding, std::move(typ));
+			util::view_as<ast::Path>(s.back())->elems.push_back(std::move(part));
 		}
-		// stack: QualifiedBinding
+		// stack: Path
 	} END;
-	INHERIT(typname, qualtyp);
+	RULE(typname) {
+		// stack: Path
+		if (util::at_node<ast::Path>(s)) {
+			auto* node = util::view_as<ast::Path>(s.back());
+
+			if (node->elems.back()->type != +ast::BindingType::TYPE) {
+				state.log(compiler::ID::err, "Expected type name, found something else <qualtyp at {}>", node->loc);
+			}
+		}
+		// stack: Path
+	} END;
 	RULE(pat_tuple) {
-		// stack: {} pattern*
+		// stack: {} pattern* error?
+		auto err = POP(CloseSymbolError);
 		auto pats = util::popSeq<ast::Pattern>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <pat_tuple at {}>", sym->loc);
+		}
+
 		PUSH(TuplePattern, std::move(pats));
 		// stack: pattern
 	} END;
-	RULE(pat_name) {
-		// stack: BasicBind cap BasicBind (due to pat_adt partially matching varname)
-		auto var = POP(BasicBinding);
-
-		// Swap around the cap and the binding to remove the duplicate binding
-		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
-		s.pop_back();
-
-		PUSH(VarPattern, MAKE(QualifiedBinding, std::move(var)));
-		// stack: pattern
-	} END;
 	RULE(pat_adt) {
-		// stack: QualBind pattern?
+		// stack: Path pattern?
 		auto tup = POP(TuplePattern);
-		PUSH(AdtPattern, POP(QualifiedBinding), std::move(tup));
+		PUSH(AdtPattern, POP(Path), std::move(tup));
 		// stack: pattern
-	} END;
-	RULE(desc_eps) {
-		PUSH(Token, ast::CaptureType::NORM);
 	} END;
 	RULE(capture_desc) {
 		// stack: kmut?
+		if (in.string().size() == 0) {
+			PUSH(Token, ast::CaptureType::NORM);
+			return;
+		}
+
 		bool is_ref = (in.string()[0] == '&');
 
 		if (util::at_node<ast::Token>(s)) {
@@ -227,6 +287,24 @@ namespace spero::parser::actions {
 	RULE(pat_lit) {
 		PUSH(ValPattern, POP(ValExpr));
 	} END;
+	RULE(resolve_constants) {
+		// stack: path
+		if (util::at_node<ast::Path>(s)) {
+			if (util::view_as<ast::Path>(s.back())->elems.back()->type == +ast::BindingType::TYPE) {
+				return action<grammar::pat_adt>::apply(in, s, state);
+			}
+
+			auto name = POP(Path);
+			if (name->elems.size() > 1) {
+				s.emplace_back(std::make_unique<ast::Variable>(std::move(name), name->loc));
+				action<grammar::pat_lit>::apply(in, s, state);
+
+			} else {
+				s.emplace_back(std::make_unique<ast::VarPattern>(std::move(name), name->loc));
+			}
+		}
+		// stack: patlit | patname
+	} END;
 	RULE(assign_name) {
 		// stack: bind
 		PUSH(AssignName, POP(BasicBinding));
@@ -236,9 +314,16 @@ namespace spero::parser::actions {
 		PUSH_NODE(AssignPattern);
 	} END;
 	RULE(assign_tuple) {
-		// stack: {} asgn_pat*
+		// stack: {} asgn_pat* error?
+		auto err = POP(CloseSymbolError);
 		auto pats = util::popSeq<ast::AssignPattern>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <assign_tuple at {}>", sym->loc);
+		}
+
 		PUSH(AssignTuple, std::move(pats));
 		// stack: AssignTuple
 	} END;
@@ -252,14 +337,13 @@ namespace spero::parser::actions {
 	TOKEN(typ_ref, ast::PtrStyling::REF);
 	TOKEN(typ_ptr, ast::PtrStyling::PTR);
 	RULE(single_type) {
-		// stack: QualBind array?
+		// stack: Path array?
 		auto gen = POP(Array);
-		auto typname = POP(QualifiedBinding);
 
 		if (gen) {
-			PUSH(GenericType, std::move(typname), std::move(gen));
+			PUSH(GenericType, POP(Path), std::move(gen));
 		} else {
-			PUSH(SourceType, std::move(typname));
+			PUSH(SourceType, POP(Path));
 		}
 		// stack: type
 	} END;
@@ -275,9 +359,16 @@ namespace spero::parser::actions {
 		// stack: type
 	} END;
 	RULE(tuple_type) {
-		// stack: {} type*
+		// stack: {} type* error?
+		auto err = POP(CloseSymbolError);
 		auto types = util::popSeq<ast::Type>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <tuple_type at {}>", sym->loc);
+		}
+
 		PUSH(TupleType, std::move(types));
 		// stack: tupleType
 	} END;
@@ -302,6 +393,18 @@ namespace spero::parser::actions {
 		}
 
 		s.push_back(std::move(typ));
+		// stack: type
+	} END;
+	RULE(braced_type) {
+		// stack: {} type error?
+		auto err = POP(CloseSymbolError);
+		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
+
+		// Error handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '{}' <braced_type at {}>", '{', sym->loc);
+		}
 		// stack: type
 	} END;
 	RULE(and_cont) {
@@ -343,9 +446,10 @@ namespace spero::parser::actions {
 		PUSH(Annotation, POP(BasicBinding), std::move(tup));
 		// stack: anot
 	} END;
-	TOKEN(veps, ast::VarianceType::INVARIANT);
 	RULE(variance) {
-		if (in.string()[0] == '+') {
+		if (in.string().size() == 0) {
+			PUSH(Token, ast::VarianceType::INVARIANT);
+		} else if (in.string()[0] == '+') {
 			PUSH(Token, ast::VarianceType::COVARIANT);
 		} else {
 			PUSH(Token, ast::VarianceType::CONTRAVARIANT);
@@ -384,9 +488,16 @@ namespace spero::parser::actions {
 		// stack: val_gen
 	} END;
 	RULE(_generic) {
-		// stack: {} gen_part*
+		// stack: {} gen_part* error?
+		auto err = POP(CloseSymbolError);
 		auto parts = util::popSeq<ast::GenericPart>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '[' <generic at {}>", sym->loc);
+		}
+
 		PUSH(GenericArray, std::move(parts));
 		// stack: gentype
 	} END;
@@ -396,7 +507,7 @@ namespace spero::parser::actions {
 		PUSH(Adt, POP(BasicBinding), std::move(typ_args));
 		// stack: adt
 	} END;
-	SENTINEL(argeps);
+	SENTINEL(arg_sentinel);
 	RULE(arg) {
 		// stack: bind type?
 		auto typ = POP(Type);
@@ -407,9 +518,16 @@ namespace spero::parser::actions {
 		// stack: arg
 	} END;
 	RULE(arg_tuple) {
-		// stack: {} arg*
+		// stack: {} arg* error?
+		auto err = POP(CloseSymbolError);
 		auto args = util::popSeq<ast::Argument>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing parenthesis found for opening '(' <arg_tuple at {}>", sym->loc);
+		}
+
 		PUSH(ArgTuple, std::move(args));
 		// stack: argtuple
 	} END;
@@ -418,11 +536,22 @@ namespace spero::parser::actions {
 	//
 	// Control
 	//
-	RULE(forl) {
-		// stack: pattern gen body
+	RULE(missing_in) {
+		// stack: "for" pattern
+		POP(Pattern);
+		auto key = POP(Token);
+		state.log(compiler::ID::err, "Missing keyword `in` <for loop at {}>", key->loc);
+
+		// TODO: Need to push a valexpr on the stack to prevent errors
+		// stack: 
+	} END;
+	RULE(infor) {
+		// stack: "for" pattern gen body
 		auto body = POP(ValExpr);
 		auto generator = POP(ValExpr);
-		PUSH(For, POP(Pattern), std::move(generator), std::move(body));
+		auto pat = POP(Pattern);
+		POP(Token);
+		PUSH(For, std::move(pat), std::move(generator), std::move(body));
 		// stack: for
 	} END;
 	RULE(whilel) {
@@ -469,9 +598,20 @@ namespace spero::parser::actions {
 		// stack: case
 	} END;
 	RULE(matchs) {
-		// stack: valexpr {} case+
+		// stack: valexpr {} case+ keyword error?
+		auto err = POP(CloseSymbolError);
+		POP(Token);
 		auto cases = util::popSeq<ast::Case>(s);
-		s.pop_back();
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing brace found for opening '{}' <match at {}>", '{', sym->loc);
+		}
+		if (cases.size() == 0) {
+			state.log(compiler::ID::err, "Match expression with no cases <at {}>", sym->loc);
+		}
+
 		PUSH(Match, POP(ValExpr), std::move(cases));
 		// stack: match
 	} END;
@@ -488,10 +628,11 @@ namespace spero::parser::actions {
 		PUSH(While, std::move(test), POP(ValExpr));
 		// stack: while
 	} END;
-	RULE(dotfor) {
-		// stack: body pattern gen
+	RULE(dot_infor) {
+		// stack: body "for" pattern gen
 		auto generator = POP(ValExpr);
 		auto pattern = POP(Pattern);
+		POP(Token);
 		PUSH(For, std::move(pattern), std::move(generator), POP(ValExpr));
 		// stack: for
 	} END;
@@ -520,49 +661,33 @@ namespace spero::parser::actions {
 		PUSH(FnCall, POP(ValExpr), std::move(tup));
 		// stack: fncall
 	} END;
+	RULE(pathed_var) {
+		// stack: path | var
+		if (util::at_node<ast::Path>(s)) {
+			auto loc = s.back()->loc;
+			s.emplace_back(std::make_unique<ast::Variable>(POP(Path), loc));
+		}
+		// stack: var
+	} END;
 	RULE(op_var) {
-		// stack: basicbind | qualbind
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(Variable, MAKE(QualifiedBinding, POP(BasicBinding)), nullptr);
-		} else {
-			PUSH(Variable, POP(QualifiedBinding), nullptr);
-		}
-		// stack: variable
+		// stack: binding
+		auto bind = POP(BasicBinding);
+		s.emplace_back(std::make_unique<ast::Path>(std::make_unique<ast::PathPart>(bind->name, ast::BindingType::OPERATOR, bind->loc), bind->loc));
+		action<grammar::pathed_var>::apply(in, s, state);
+		// stack: var
 	} END;
-	RULE(type_var) {
-		// stack: variable? bind array?
-		auto inst = POP(Array);
-		auto typ = POP(BasicBinding);
-
-		if (util::at_node<ast::Variable>(s)) {
-			auto* var = util::view_as<ast::Variable>(s.back());
-			var->name->elems.emplace_back(std::move(typ));
-			var->inst_args = std::move(inst);
-		} else {
-			PUSH(Variable, MAKE(QualifiedBinding, std::move(typ)), std::move(inst));
-		}
-		// stack: variable
-	} END;
-	RULE(type_const) {
-		// stack: variable tuple? block?
+	RULE(type_const_tail) {
+		// stack: var tuple? block?
 		auto body = POP(Block);
 		auto args = POP(Tuple);
 
 		if (body) {
 			auto var = POP(Variable);
-			 PUSH(TypeExtension, std::move(var->name), std::move(var->inst_args), std::move(args), std::move(body));
+			PUSH(TypeExtension, std::move(var->name), std::move(args), std::move(body));
 		} else if (args) {
-			PUSH(FnCall, POP(Variable),std::move(args));
+			PUSH(FnCall, POP(Variable), std::move(args));
 		}
 		// stack: FnCall | Var | TypeExt
-	} END;
-	RULE(var_val) {
-		// stack: variable array?
-		auto inst = POP(Array);
-		if (inst) {
-			util::view_as<ast::Variable>(s.back())->inst_args = std::move(inst);
-		}
-		// stack: variable
 	} END;
 
 	RULE(indexeps) {
@@ -592,15 +717,19 @@ namespace spero::parser::actions {
 	// Statements
 	//
 	RULE(mod_dec) {
-		// stack: basicbind | qualbind
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
+		// stack: Path
+		auto path = POP(Path);
+		
+		for (auto&& part : path->elems) {
+			if (part->type != +ast::BindingType::VARIABLE || part->gens != nullptr) {
+				state.log(compiler::ID::err, "Module path parts must be basic vars <at {}>", part->loc);
+			}
 		}
 
-		PUSH(ModDec, POP(QualifiedBinding));
+		PUSH(ModDec, std::move(path));
 		// stack: ModDec
 	} END;
-	TOKEN(impleps, ast::KeywordType::FOR);
+	TOKEN(for_type, ast::KeywordType::FOR);
 	RULE(impl) {
 		// stack: type (type "for")? scope
 		auto block = POP(Block);
@@ -609,73 +738,50 @@ namespace spero::parser::actions {
 		// stack: impl
 	} END;
 	RULE(mul_imp) {
-		// stack: qualbind {} bind*
-		auto bindings = util::popSeq<ast::BasicBinding>(s);
-		s.pop_back();
-		PUSH(MultipleImport, POP(QualifiedBinding), std::move(bindings));
+		// stack: path {} PathPart* error?
+		auto err = POP(CloseSymbolError);
+		auto bindings = util::popSeq<ast::PathPart>(s);
+
+		// Error Handling
+		auto sym = POP(Symbol);
+		if (err) {
+			state.log(compiler::ID::err, "No closing brace found for opening '{}' <mul_imp at {}>", '{', sym->loc);
+		}
+
+		PUSH(MultipleImport, POP(Path), std::move(bindings));
 		// stack: MultipleImport
 	} END;
-	RULE(alieps) {
-		// stack: qualbind bind?
-		auto bind = POP(BasicBinding);
+	RULE(rebind) {
+		// stack: Path {} Path
+		auto new_name = POP(Path);
+		s.pop_back();
+		auto old_name = POP(Path);
 
-		// If 'bind' is a var, then mod_path/imps gobbles it into the qualified binding
-		// This restores the division to match our expected/desired behavior
-		if (!bind) {
-			auto mod = POP(QualifiedBinding);
-			bind = std::move(mod->elems.back());
-			mod->elems.pop_back();
-
-			if (mod->elems.size() == 0) { mod = nullptr; }
-			s.emplace_back(std::move(mod));
-
-		// If there is no module on the stack at all, mimic one for `alias`
-		} else if (!util::at_node<ast::QualifiedBinding>(s)) {
-			s.emplace_back(nullptr);
+		// TODO: Add in error handling
+		if (old_name->elems.back()->type != new_name->elems.back()->type) {
+			state.log(compiler::ID::err, "Attempt to rebind a {} as a {} <at {}>", old_name->elems.back()->type._to_string(), new_name->elems.back()->type._to_string(), LOCATION);
 		}
 
-		s.emplace_back(std::move(bind));
-		// stack: (qualbind | {}) bind
+		PUSH(Rebind, std::move(old_name), std::move(new_name));
+		// stack: ModRebind
 	} END;
-	RULE(alias) {
-		// stack: (qualbind | {}) bind? array? bind array??
-		auto narr = POP(Array);
-		auto nbind = POP(BasicBinding);
-		auto arr = POP(Array);
-		auto bind = POP(BasicBinding);
-		auto mod = POP(QualifiedBinding);
+	RULE(err_rebind) {
+		// stack: Path {}
+		POP(Token);
+		auto loc = util::view_as<ast::Path>(s.back())->loc;
 
-		// If 'alieps' pushed a nullptr on the stack
-		if (!mod) { s.pop_back(); }
+		// TODO: Provide better context (ie. why must I provide a new name?)
+			// Either because an "as" was used, or the imported name is (directly) generic instantiated
+		state.log(compiler::ID::err, "Rebind context must provide a new name <at {}>", loc);
 
-		PUSH(Rebind, std::move(mod), std::move(bind), std::move(arr), std::move(nbind), std::move(narr));
-		// stack: Rebind
+		// TODO: Using `SingleImport` to prevent errors along the way
+		PUSH(SingleImport, POP(Path));
+		// stack: Path
 	} END;
-	RULE(imps) {
-		PUSH(QualifiedBinding, POP(BasicBinding));
-	} END;
-	RULE(imp_alias) {
-		// stack: (qualbind basicbind?) | rebind
-		if (!util::at_node<ast::Rebind>(s)) {
-			auto typ = POP(BasicBinding);
-			auto mod = POP(QualifiedBinding);
-
-			if (!typ && mod->elems.size()) {
-				// If 'bind' is a var, then mod_path/imps gobbles it into the qualified binding
-				// This restores the division to match our expected/desired behavior
-				auto bind = std::move(mod->elems.back());
-
-				mod->elems.pop_back();
-				if (mod->elems.size() == 0) {
-					mod = nullptr;
-				}
-
-				PUSH(SingleImport, std::move(mod), std::move(bind));
-			} else {
-				PUSH(SingleImport, std::move(mod), std::move(typ));
-			}
-		}
-		// stack: singleimport | rebind
+	RULE(import_single) {
+		// stack: Path
+		PUSH(SingleImport, POP(Path));
+		// stack: ModRebindImport
 	} END;
 	RULE(type_assign) {
 		// stack: vis pat gen? "mut"? cons* scope
@@ -743,8 +849,8 @@ namespace spero::parser::actions {
 		if (!rhs) {
 			rhs = std::make_unique<ast::Future>(true, op->loc);
 		}
-
-		PUSH(BinOpCall, POP(ValExpr), std::move(rhs), std::move(op));
+		
+		PUSH(BinOpCall, POP(ValExpr), std::move(rhs), op->name);
 		// stack: binexpr
 	} END;
 	INHERIT(binary_cont2, binary_cont1);
@@ -776,6 +882,16 @@ namespace spero::parser::actions {
 		s.emplace_back(std::move(stmt));
 		// stack: stmt
 	} END;
+
+
+	// Errors
+	RULE(errorparen) {
+		PUSH_NODE(CloseSymbolError);
+	} END;
+	INHERIT(errorbrack, errorparen);
+	INHERIT(errorbrace, errorparen);
+	INHERIT(errorchar, errorparen);
+	INHERIT(errorquote, errorparen);
 
 }
 

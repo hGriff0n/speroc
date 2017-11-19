@@ -3,13 +3,13 @@
 namespace spero::compiler::analysis {
 
 	impl::Data::Data() : loc{}, src{} {}
-	impl::Data::Data(int loc, impl::Location src) : loc{ loc }, src{ src } {}
+	impl::Data::Data(int loc, Location src) : loc{ loc }, src{ src } {}
 
 	SymTable::SymTable() {}
 
 	SymTable::~SymTable() {}
 
-	int SymTable::insert(std::string name, int off, impl::Location src) {
+	int SymTable::insert(std::string name, int off, Location src) {
 		// TODO: Add in check against "shadowing" ???
 		impl::Data sym{ off - ebp_offset, src };
 
@@ -35,7 +35,7 @@ namespace spero::compiler::analysis {
 
 	void SymTable::setParent(SymTable* p, bool offset_ebp) {
 		parent = p;
-		ebp_offset = offset_ebp * p->getCount() * 4;
+		ebp_offset = offset_ebp * (p->ebp_offset + (p->getCount() * 4));
 	}
 
 	SymTable* SymTable::getParent() {
