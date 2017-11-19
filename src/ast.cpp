@@ -311,9 +311,22 @@ namespace spero::compiler::ast {
 
 		return s;
 	}
+	VarPatternPath::VarPatternPath(ptr<Path> n, Location loc) : Pattern{ loc }, name{ std::move(n) } {}
+	void VarPatternPath::accept(Visitor& v) {
+		//v.visitVarPattern(*this);
+	}
+	DEF_PRINTER(VarPatternPath) {
+		s << std::string(buf, ' ') << context << "ast.VarPattern (capture=" << cap._to_string() << ')';
+		name->prettyPrint(s, 1);
+		/*if (type) {
+		type->prettyPrint(s << '\n', buf + 2, "type=");
+		}*/
 
-	AdtPattern::AdtPattern(ptr<QualifiedBinding> n, ptr<TuplePattern> pat, Location loc)
-		: VarPattern{ std::move(n), loc }, args{ std::move(pat) } {}
+		return s;
+	}
+
+	AdtPattern::AdtPattern(ptr<Path> n, ptr<TuplePattern> pat, Location loc)
+		: VarPatternPath{ std::move(n), loc }, args{ std::move(pat) } {}
 	void AdtPattern::accept(Visitor& v) {
 		v.visitAdtPattern(*this);
 	}
@@ -367,17 +380,17 @@ namespace spero::compiler::ast {
 	//
 	// TYPES
 	//
-	SourceType::SourceType(ptr<QualifiedBinding> b, Location loc)
+	SourceType::SourceType(ptr<Path> b, Location loc)
 		: Type{ loc }, name{ std::move(b) }, _ptr{ PtrStyling::NA } {}
 	void SourceType::accept(Visitor& v) {
-		v.visitSourceType(*this);
+		//v.visitSourceType(*this);
 	}
 	DEF_PRINTER(SourceType) {
 		s << std::string(buf, ' ') << context << "ast.SourceType \"";
 		return name->prettyPrint(s, 0) << "\" (ptr=" << _ptr._to_string() << ")";
 	}
 
-	GenericType::GenericType(ptr<QualifiedBinding> b, ptr<Array> a, Location loc)
+	GenericType::GenericType(ptr<Path> b, ptr<Array> a, Location loc)
 		: SourceType{ std::move(b), loc }, inst{ std::move(a) } {}
 	void GenericType::accept(Visitor& v) {
 		v.visitGenericType(*this);
@@ -863,8 +876,8 @@ namespace spero::compiler::ast {
 		return expr->prettyPrint(s << '\n', buf + 2, "value=");
 	}
 
-	TypeExtension::TypeExtension(ptr<QualifiedBinding> t, ptr<Array> g, ptr<Tuple> a, ptr<Block> e, Location loc)
-		: ValExpr{ loc }, typ_name{ std::move(t) }, gen{ std::move(g) }, args{ std::move(a) }, ext{ std::move(e) } {}
+	TypeExtension::TypeExtension(ptr<Path> t, ptr<Tuple> a, ptr<Block> e, Location loc)
+		: ValExpr{ loc }, typ_name{ std::move(t) }, args{ std::move(a) }, ext{ std::move(e) } {}
 	void TypeExtension::accept(Visitor& v) {
 		v.visitTypeExtension(*this);
 	}
@@ -872,9 +885,6 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.AnonymousType";
 		typ_name->prettyPrint(s << '\n', buf + 2, "extend=");
 
-		if (gen) {
-			gen->prettyPrint(s << '\n', buf + 4);
-		}
 		if (args) {
 			args->prettyPrint(s << '\n', buf + 4);
 		}
@@ -886,21 +896,15 @@ namespace spero::compiler::ast {
 	//
 	// EXPRESSIONS
 	//
-	Variable::Variable(ptr<QualifiedBinding> n, ptr<Array> i, Location loc)
-		: ValExpr{ loc }, name{ std::move(n) }, inst_args{ std::move(i) } {}
+	Variable::Variable(ptr<Path> n, Location loc)
+		: ValExpr{ loc }, name{ std::move(n) } {}
 	void Variable::accept(Visitor& v) {
 		v.visitVariable(*this);
 	}
 	DEF_PRINTER(Variable) {
 		s << std::string(buf, ' ') << context << "ast.Variable (";
 		ValExpr::prettyPrint(s, buf);
-		name->prettyPrint(s << "\n", buf + 2, "name=");
-
-		if (inst_args) {
-			inst_args->prettyPrint(s << '\n', buf + 2, "inst=");
-		}
-
-		return s;
+		return name->prettyPrint(s << "\n", buf + 2, "name=");
 	}
 
 	/*UnOpCall::UnOpCall(ptr<ValExpr> e, std::string op, Location loc)

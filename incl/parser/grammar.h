@@ -126,40 +126,35 @@ namespace spero::parser::grammar {
 	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
 	struct typ_ch : range<'A', 'Z'> {};
 	struct typ : seq<typ_ch, star<ascii::identifier>> {};
+	struct unop : one_of<'!', '-', '~'> {};
+
+	// TODO: Replace with path
+	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
+	struct binop : if_then_else<sor<pstr("->"), pstr("=>")>, failure, seq<opt<one<'!'>>, plus<binop_ch>>> {};
+	struct op : disable<sor<binop, unop>> {};
 
 	 // Then I need to move to using 'paths' throughout the entire codebase
 	 // If it uses `BasicBinding` or `QualifiedBinding` it will be replaced
 	struct pvar : disable<var> {};
 	struct ptyp : disable<typ> {};
 	struct pname : sor<pvar, ptyp> {};
+	// TODO: I need a way to peel off the array in some cases (explicitly need to match on having an array at the end)
 	struct path_part : seq<pname, opt<_array>> {};
 	struct path : star<path_part, one<':'>> {};
 	struct pathed_name : seq<path, disable<path_part>> {};
 
-	// TODO: Error if var not used (deferred)
+	struct typname : seq<pathed_name> {};
+
 	// TODO: Replace with path
-	struct mod_path : plus<one<':'>, not_at<sor<typ_ch, one<':'>>>, var> {};
-	// TODO: Replace with path
-	struct varname : seq<var, opt<mod_path>> {};
-	// TODO: Error if typ not used (deferred)
-	// TODO: Replace with path
-	struct type_path : seq<one<':'>, typ> {};
-	// TODO: Replace with path
-	struct typname : sor<seq<varname, plus<type_path>>, typ> {};
-	struct unop : one_of<'!', '-', '~'> {};
-	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
-	struct binop :
-		if_then_else<sor<pstr("->"), pstr("=>")>, failure, seq<opt<one<'!'>>, plus<binop_ch>>> {};
-	struct op : disable<sor<binop, unop>> {};
 	// TODO: Error if ',' not used (immediate)
+	struct pat_any : disable<plambda> {};
 	struct pat_tuple : opt_sequence<oparen, pattern, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
-	// TODO: Replace with path
+
 	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
 	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut, eps> {};
 	struct pat_name : seq<var, not_at<one<':'>>, ig_s> {};
 	// TODO: Error if invalid capture_desc used, pat_tuple or pat_name not used (deferred)
 	struct capture : seq<capture_desc, sor<pat_tuple, pat_name>> {};
-	struct pat_any : disable<plambda> {};
 	struct pattern : seq<sor<pat_any, pat_lit, pat_adt, capture>, ig_s> {};
 	// TODO: Error if ',' not used (immediate)
 	struct assign_tuple : sequence<oparen, assign_pat, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
@@ -176,7 +171,7 @@ namespace spero::parser::grammar {
 	struct typ_ref : one<'&'> {};
 	struct typ_ptr : one<'*'> {};
 	struct ptr_styling : sor<typ_view, typ_ref, typ_ptr> {};
-	// TODO: Replace with path
+	// TODO: `array` never gets matched with the new pathed_name grammar (always sucked into typname)
 	struct single_type : seq<typname, ig_s, opt<_array>> {};
 	struct ref_type : seq<single_type, opt<ptr_styling, ig_s>> {};
 	// TODO: Error if ',' not used (immediate)
@@ -308,16 +303,11 @@ namespace spero::parser::grammar {
 	// TODO: Moved up to identifiers
 	// Then I need to move to using 'paths' throughout the entire codebase
 		// If it uses `BasicBinding` or `QualifiedBinding` it will be replaced
-
-	struct type_var : seq<plus<type_path>, ig_s, opt<_array>> {};
-	struct op_var : seq<binop> {};
-	struct vareps : opt<_array> {};
 	struct call : enable<tuple> {};
-	struct type_const_tail : seq<opt<_array>, opt<disable<call>, opt<anon_type>>> {};
-	struct raw_const : seq<typ, ig_s, type_const_tail> {};
-	struct type_const : seq<type_var, ig_s, type_const_tail> {};
-	// TODO: Replace with path
-	struct var_val : sor<seq<varname, sor<type_const, vareps>>, raw_const, op_var> {};
+	struct type_const_tail : opt<disable<call>, opt<anon_type>> {};
+	struct op_var : seq<binop> {};
+	struct pathed_var : sor<pathed_name, op_var> {};
+	struct var_val : seq<pathed_var, type_const_tail, ig_s> {};
 	struct fncall : seq<sor<atom, var_val>, star<call>> {};
 	struct indexeps : seq<eps> {};
 	// TODO: Error if '.' and no fncall (deferred)

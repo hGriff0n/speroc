@@ -199,24 +199,6 @@ namespace spero::parser::actions {
 	} END;
 	INHERIT(unop, op);
 	INHERIT(binop, op);
-	// TODO: Remove once fully converted to path
-	RULE(mod_path) {
-		// stack: (BasicBinding | QualifiedBinding) BasicBinding
-		auto part = POP(BasicBinding);
-
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
-		}
-		
-		if (!util::at_node<ast::QualifiedBinding>(s)) {
-			PUSH(QualifiedBinding, std::move(part));
-		} else {
-			util::view_as<ast::QualifiedBinding>(s.back())->elems.push_back(std::move(part));
-		}
-		// stack: QualifiedBinding
-	} END;
-	// TODO: Remove once fully converted to path
-	INHERIT(type_path, mod_path);
 	RULE(ptyp) {
 		PUSH(PathPart, in.string(), ast::BindingType::TYPE);
 	} END;
@@ -236,22 +218,16 @@ namespace spero::parser::actions {
 		}
 		// stack: Path
 	} END;
-	// TODO: Fully converted to path
 	RULE(typname) {
-		//	// stack: Path
-		//	if (util::at_node<ast::Path>(s)) {
-		//		auto* node = util::view_as<ast::Path>(s.back());
-		//		if (node->elems.back()->type != +ast::BindingType::TYPE) {
-		//			state.log(compiler::ID::err, "Expected type name, found something else <qualtyp at {}>", node->->loc);
-		//		}
-		//	}
-		//	// stack: Path
+		// stack: Path
+		if (util::at_node<ast::Path>(s)) {
+			auto* node = util::view_as<ast::Path>(s.back());
 
-		// stack: qualbind | basicbind
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(QualifiedBinding, POP(BasicBinding));
+			if (node->elems.back()->type != +ast::BindingType::TYPE) {
+				state.log(compiler::ID::err, "Expected type name, found something else <qualtyp at {}>", node->loc);
+			}
 		}
-		// stack: qualbind
+		// stack: Path
 	} END;
 	RULE(pat_tuple) {
 		// stack: {} pattern* error?
@@ -279,9 +255,9 @@ namespace spero::parser::actions {
 		// stack: pattern
 	} END;
 	RULE(pat_adt) {
-		// stack: QualBind pattern?
+		// stack: Path pattern?
 		auto tup = POP(TuplePattern);
-		PUSH(AdtPattern, POP(QualifiedBinding), std::move(tup));
+		PUSH(AdtPattern, POP(Path), std::move(tup));
 		// stack: pattern
 	} END;
 	RULE(capture_desc) {
@@ -354,14 +330,13 @@ namespace spero::parser::actions {
 	TOKEN(typ_ref, ast::PtrStyling::REF);
 	TOKEN(typ_ptr, ast::PtrStyling::PTR);
 	RULE(single_type) {
-		// stack: QualBind array?
+		// stack: Path array?
 		auto gen = POP(Array);
-		auto typname = POP(QualifiedBinding);
 
 		if (gen) {
-			PUSH(GenericType, std::move(typname), std::move(gen));
+			PUSH(GenericType, POP(Path), std::move(gen));
 		} else {
-			PUSH(SourceType, std::move(typname));
+			PUSH(SourceType, POP(Path));
 		}
 		// stack: type
 	} END;
@@ -679,58 +654,33 @@ namespace spero::parser::actions {
 		PUSH(FnCall, POP(ValExpr), std::move(tup));
 		// stack: fncall
 	} END;
-	RULE(vareps) {
-		// stack: basicbind | qualbind array
-		auto inst = POP(Array);
-		if (util::at_node<ast::BasicBinding>(s)) {
-			PUSH(Variable, MAKE(QualifiedBinding, POP(BasicBinding)), std::move(inst));
-		} else {
-			PUSH(Variable, POP(QualifiedBinding), std::move(inst));
+	RULE(pathed_var) {
+		// stack: path | var
+		if (util::at_node<ast::Path>(s)) {
+			auto loc = s.back()->loc;
+			s.emplace_back(std::make_unique<ast::Variable>(POP(Path), loc));
 		}
-		// stack: variable
+		// stack: var
 	} END;
-	INHERIT(op_var, vareps);
-	RULE(type_var) {
-		// stack: qualbind array?
-		auto inst = POP(Array);
-		PUSH(Variable, POP(QualifiedBinding), std::move(inst));
-		// stack: variable
+	RULE(op_var) {
+		// stack: binding
+		auto bind = POP(BasicBinding);
+		s.emplace_back(std::make_unique<ast::Path>(std::make_unique<ast::PathPart>(bind->name, ast::BindingType::OPERATOR, bind->loc), bind->loc));
+		action<grammar::pathed_var>::apply(in, s, state);
+		// stack: var
 	} END;
-	RULE(type_const) {
-		// stack: variable tuple? block?
+	RULE(type_const_tail) {
+		// stack: var tuple? block?
 		auto body = POP(Block);
 		auto args = POP(Tuple);
 
 		if (body) {
 			auto var = POP(Variable);
-			 PUSH(TypeExtension, std::move(var->name), std::move(var->inst_args), std::move(args), std::move(body));
-		} else if (args) {
-			PUSH(FnCall, POP(Variable),std::move(args));
-		}
-		// stack: FnCall | Var | TypeExt
-	} END;
-	RULE(raw_const) {
-		// stack: basicbind array? tuple? block?
-		auto body = POP(Block);
-		auto args = POP(Tuple);
-
-		action<grammar::vareps>::apply(in, s, state);
-		if (body) {
-			auto var = POP(Variable);
-			PUSH(TypeExtension, std::move(var->name), std::move(var->inst_args), std::move(args), std::move(body));
-
+			PUSH(TypeExtension, std::move(var->name), std::move(args), std::move(body));
 		} else if (args) {
 			PUSH(FnCall, POP(Variable), std::move(args));
 		}
 		// stack: FnCall | Var | TypeExt
-	} END;
-	RULE(var_val) {
-		// stack: variable array?
-		auto inst = POP(Array);
-		if (inst) {
-			util::view_as<ast::Variable>(s.back())->inst_args = std::move(inst);
-		}
-		// stack: variable
 	} END;
 
 	RULE(indexeps) {
@@ -888,13 +838,12 @@ namespace spero::parser::actions {
 		// stack: valexpr op valexpr?
 		auto rhs = POP(ValExpr);
 		auto op = POP(BasicBinding);
-		auto oper = op->name;
 
 		if (!rhs) {
 			rhs = std::make_unique<ast::Future>(true, op->loc);
 		}
 		
-		PUSH(BinOpCall, POP(ValExpr), std::move(rhs), oper);
+		PUSH(BinOpCall, POP(ValExpr), std::move(rhs), op->name);
 		// stack: binexpr
 	} END;
 	INHERIT(binary_cont2, binary_cont1);

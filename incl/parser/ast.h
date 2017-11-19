@@ -403,6 +403,14 @@ namespace spero::compiler::ast {
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
+	struct VarPatternPath : Pattern {
+		ptr<Path> name;
+
+		VarPatternPath(ptr<Path>, Location);
+
+		virtual void accept(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+	};
 
 	/*
 	 * Instance class for matching against a decomposed ADT
@@ -413,10 +421,10 @@ namespace spero::compiler::ast {
 	 * Exports:
 	 *   args - the tuple to match values against
 	 */
-	struct AdtPattern : VarPattern {
+	struct AdtPattern : VarPatternPath {
 		ptr<TuplePattern> args;
 
-		AdtPattern(ptr<QualifiedBinding>, ptr<TuplePattern>, Location);
+		AdtPattern(ptr<Path>, ptr<TuplePattern>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -504,10 +512,10 @@ namespace spero::compiler::ast {
 	 *   pointer - any pointer/view styling applied to the type
 	 */
 	struct SourceType : Type {
-		ptr<QualifiedBinding> name;
+		ptr<Path> name;
 		PtrStyling _ptr;
 
-		SourceType(ptr<QualifiedBinding>, Location);
+		SourceType(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
@@ -524,7 +532,7 @@ namespace spero::compiler::ast {
 	struct GenericType : SourceType {
 		ptr<Array> inst;
 
-		GenericType(ptr<QualifiedBinding>, ptr<Array>, Location);
+		GenericType(ptr<Path>, ptr<Array>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1104,17 +1112,15 @@ namespace spero::compiler::ast {
 	 *
 	 * Exports:
 	 *   typ_name - type being extended
-	 *   gen - generic instance arguments for the extended type
 	 *   args - arguments for the extended type's constructor
 	 *   ext - extension block
 	 */
 	struct TypeExtension : ValExpr {
-		ptr<QualifiedBinding> typ_name;
-		ptr<Array> gen;
+		ptr<Path> typ_name;
 		ptr<Tuple> args;
 		ptr<Block> ext;
 
-		TypeExtension(ptr<QualifiedBinding>, ptr<Array>, ptr<Tuple>, ptr<Block>, Location);
+		TypeExtension(ptr<Path>, ptr<Tuple>, ptr<Block>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
@@ -1154,13 +1160,11 @@ namespace spero::compiler::ast {
 	 *
 	 * Exports:
 	 *   name - qualified binding that represents the variable
-	 *   inst_args - generic instantiation argument array
 	 */
 	struct Variable : ValExpr {
-		ptr<QualifiedBinding> name;
-		ptr<Array> inst_args;
+		ptr<Path> name;
 
-		Variable(ptr<QualifiedBinding>, ptr<Array>, Location);
+		Variable(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
