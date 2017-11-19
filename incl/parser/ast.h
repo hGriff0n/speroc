@@ -314,23 +314,21 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Represents a complete Spero binding
+	 * A piece of a fully qualified spero binding name
+	 *   This solution generalizes to allow for the chaining of types and generics
+	 *   This is important as types may have static members or even subtypes
+	 *   And generics, particularly generic types, are no exception
 	 *
-	 * Extends: Seqeuence<BasicBinding, Ast>
-	 */
-	struct QualifiedBinding : Sequence<BasicBinding, Ast> {
-		QualifiedBinding(ptr<BasicBinding>, Location);
-		QualifiedBinding(std::deque<ptr<BasicBinding>>, Location);
-
-		virtual void accept(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
-
-		std::string toString();
-	};
-
-	/*
-	 * Generalization of Spero path parts to handle all cases
-	 *   NOTE: This is a current work in progress to replace BasicBinding
+	 * NOTE: The implementation mimics alot from BasicBinding
+	 *   However the use cases are different enough that it's not worth porting
+	 *   over the full implementation of Paths to replace BasicBinding
+	 *
+	 * Extends: Ast
+	 *
+	 * Exports:
+	 *   name - the string name that this section maps to
+	 *   type - whether this part is a type, variable, or operator
+	 *   gens - array that is being used as the instantiation arguments
 	 */
 	struct PathPart : Ast {
 		std::string name;
@@ -344,8 +342,9 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Generalization of Spero bindings to handle all cases
-	 *   NOTE: This is a current work in progress to replace QualifiedBinding
+	 * The fully qualified spero binding
+	 *
+	 * Extends: Sequence<PathPart, Ast>
 	 */
 	struct Path : Sequence<PathPart, Ast> {
 		Path(ptr<PathPart>, Location);
@@ -396,17 +395,9 @@ namespace spero::compiler::ast {
 	 *   name - the value to bind to
 	 */
 	struct VarPattern : Pattern {
-		ptr<QualifiedBinding> name;
-
-		VarPattern(ptr<QualifiedBinding>, Location);
-
-		virtual void accept(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
-	};
-	struct VarPatternPath : Pattern {
 		ptr<Path> name;
 
-		VarPatternPath(ptr<Path>, Location);
+		VarPattern(ptr<Path>, Location);
 
 		virtual void accept(Visitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
@@ -421,7 +412,7 @@ namespace spero::compiler::ast {
 	 * Exports:
 	 *   args - the tuple to match values against
 	 */
-	struct AdtPattern : VarPatternPath {
+	struct AdtPattern : VarPattern {
 		ptr<TuplePattern> args;
 
 		AdtPattern(ptr<Path>, ptr<TuplePattern>, Location);

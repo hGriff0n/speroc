@@ -232,24 +232,6 @@ namespace spero::compiler::ast {
 		return name;
 	}
 
-	QualifiedBinding::QualifiedBinding(ptr<BasicBinding> b, Location loc) : Sequence{ MK_DEQUE(std::move(b)), loc } {}
-	QualifiedBinding::QualifiedBinding(std::deque<ptr<BasicBinding>> ps, Location loc) : Sequence{ std::move(ps), loc } {}
-	void QualifiedBinding::accept(Visitor& v) {
-		v.visitQualifiedBinding(*this);
-	}
-	DEF_PRINTER(QualifiedBinding) {
-		return s << std::string(buf, ' ') << context << "ast.QualifiedBinding " << toString();
-	}
-	std::string QualifiedBinding::toString() {
-		std::string result = elems.front()->toString();
-
-		for (auto p = std::begin(elems) + 1; p != std::end(elems); ++p) {
-			result += ":" + p->get()->toString();
-		}
-
-		return result;
-	}
-
 
 	PathPart::PathPart(std::string n, BindingType t, Location loc)
 		: Ast{ loc }, name{ n }, type{ t } {}
@@ -298,24 +280,11 @@ namespace spero::compiler::ast {
 		return s << std::string(buf, ' ') << ')';
 	}
 
-	VarPattern::VarPattern(ptr<QualifiedBinding> n, Location loc) : Pattern{ loc }, name{ std::move(n) } {}
+	VarPattern::VarPattern(ptr<Path> n, Location loc) : Pattern{ loc }, name{ std::move(n) } {}
 	void VarPattern::accept(Visitor& v) {
 		v.visitVarPattern(*this);
 	}
 	DEF_PRINTER(VarPattern) {
-		s << std::string(buf, ' ') << context << "ast.VarPattern (capture=" << cap._to_string() << ')';
-		name->prettyPrint(s, 1);
-		/*if (type) {
-			type->prettyPrint(s << '\n', buf + 2, "type=");
-		}*/
-
-		return s;
-	}
-	VarPatternPath::VarPatternPath(ptr<Path> n, Location loc) : Pattern{ loc }, name{ std::move(n) } {}
-	void VarPatternPath::accept(Visitor& v) {
-		//v.visitVarPattern(*this);
-	}
-	DEF_PRINTER(VarPatternPath) {
 		s << std::string(buf, ' ') << context << "ast.VarPattern (capture=" << cap._to_string() << ')';
 		name->prettyPrint(s, 1);
 		/*if (type) {
@@ -326,7 +295,7 @@ namespace spero::compiler::ast {
 	}
 
 	AdtPattern::AdtPattern(ptr<Path> n, ptr<TuplePattern> pat, Location loc)
-		: VarPatternPath{ std::move(n), loc }, args{ std::move(pat) } {}
+		: VarPattern{ std::move(n), loc }, args{ std::move(pat) } {}
 	void AdtPattern::accept(Visitor& v) {
 		v.visitAdtPattern(*this);
 	}

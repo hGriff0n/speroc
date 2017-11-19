@@ -243,17 +243,6 @@ namespace spero::parser::actions {
 		PUSH(TuplePattern, std::move(pats));
 		// stack: pattern
 	} END;
-	RULE(pat_name) {
-		// stack: BasicBind cap BasicBind (due to pat_adt partially matching varname)
-		auto var = POP(BasicBinding);
-
-		// Swap around the cap and the binding to remove the duplicate binding
-		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
-		s.pop_back();
-
-		PUSH(VarPattern, MAKE(QualifiedBinding, std::move(var)));
-		// stack: pattern
-	} END;
 	RULE(pat_adt) {
 		// stack: Path pattern?
 		auto tup = POP(TuplePattern);
@@ -297,6 +286,24 @@ namespace spero::parser::actions {
 	} END;
 	RULE(pat_lit) {
 		PUSH(ValPattern, POP(ValExpr));
+	} END;
+	RULE(resolve_constants) {
+		// stack: path
+		if (util::at_node<ast::Path>(s)) {
+			if (util::view_as<ast::Path>(s.back())->elems.back()->type == +ast::BindingType::TYPE) {
+				return action<grammar::pat_adt>::apply(in, s, state);
+			}
+
+			auto name = POP(Path);
+			if (name->elems.size() > 1) {
+				s.emplace_back(std::make_unique<ast::Variable>(std::move(name), name->loc));
+				action<grammar::pat_lit>::apply(in, s, state);
+
+			} else {
+				s.emplace_back(std::make_unique<ast::VarPattern>(std::move(name), name->loc));
+			}
+		}
+		// stack: patlit | patname
 	} END;
 	RULE(assign_name) {
 		// stack: bind

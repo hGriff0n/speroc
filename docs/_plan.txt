@@ -18,8 +18,6 @@ Current Project Plan
       TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
-    Need to rework grammar to correctly handle paths
-	  Need to get variables, types, and operators to be able to use these paths
 	Add in syntax error checking and handling
 	  Write rules/actions to report missing keywords/symbols
 	    alias, type_assign, asgn_val, elsif_case, in_assign

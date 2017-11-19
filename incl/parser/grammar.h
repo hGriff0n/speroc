@@ -127,14 +127,9 @@ namespace spero::parser::grammar {
 	struct typ_ch : range<'A', 'Z'> {};
 	struct typ : seq<typ_ch, star<ascii::identifier>> {};
 	struct unop : one_of<'!', '-', '~'> {};
-
-	// TODO: Replace with path
 	struct binop_ch : one_of<'!', '$', '%', '^', '&', '*', '?', '<', '>', '|', '/', '\\', '-', '=', '+', '~'> {};
 	struct binop : if_then_else<sor<pstr("->"), pstr("=>")>, failure, seq<opt<one<'!'>>, plus<binop_ch>>> {};
 	struct op : disable<sor<binop, unop>> {};
-
-	 // Then I need to move to using 'paths' throughout the entire codebase
-	 // If it uses `BasicBinding` or `QualifiedBinding` it will be replaced
 	struct pvar : disable<var> {};
 	struct ptyp : disable<typ> {};
 	struct pname : sor<pvar, ptyp> {};
@@ -142,20 +137,17 @@ namespace spero::parser::grammar {
 	struct path_part : seq<pname, opt<_array>> {};
 	struct path : star<path_part, one<':'>> {};
 	struct pathed_name : seq<path, disable<path_part>> {};
-
 	struct typname : seq<pathed_name> {};
-
-	// TODO: Replace with path
-	// TODO: Error if ',' not used (immediate)
 	struct pat_any : disable<plambda> {};
+	// TODO: Error if ',' not used (immediate)
 	struct pat_tuple : opt_sequence<oparen, pattern, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
-
-	struct pat_adt : seq<not_at<disable<kmut>>, typname, ig_s, opt<pat_tuple>> {};
 	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut, eps> {};
-	struct pat_name : seq<var, not_at<one<':'>>, ig_s> {};
+	struct pat_adt : seq<pat_tuple> {};
+	struct resolve_constants : seq<eps> {};
+	struct pat_name_adt : seq<pathed_name, ig_s, if_then_else<at<one<'('>>, pat_adt, resolve_constants>> {};
 	// TODO: Error if invalid capture_desc used, pat_tuple or pat_name not used (deferred)
-	struct capture : seq<capture_desc, sor<pat_tuple, pat_name>> {};
-	struct pattern : seq<sor<pat_any, pat_lit, pat_adt, capture>, ig_s> {};
+	struct capture : seq<capture_desc, sor<pat_tuple, pat_name_adt>> {};
+	struct pattern : seq<sor<pat_any, pat_lit, capture>, ig_s> {};
 	// TODO: Error if ',' not used (immediate)
 	struct assign_tuple : sequence<oparen, assign_pat, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
 	struct assign_drop : disable<plambda> {};
@@ -228,6 +220,7 @@ namespace spero::parser::grammar {
 	// TODO: Error if no mvexpr or mvdexpr (deferred)
 	struct infor : seq<kin, mvexpr, mvdexpr> {};
 	struct missing_in : seq<eps> {};
+	// TODO: Look into allowing "for k, v in map ..." syntax
 	struct forl : seq<kfor, pattern, sor<infor, missing_in>> {};														// Immediate error if 'in' not used
 	// TODO: Error if no mvexpr (deferred)
 	struct whilel : seq<kwhile, mvexpr, mvdexpr> {};
