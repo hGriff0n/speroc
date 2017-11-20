@@ -249,6 +249,16 @@ namespace spero::parser::actions {
 		PUSH(AdtPattern, POP(Path), std::move(tup));
 		// stack: pattern
 	} END;
+	RULE(pat_missing) {
+		// stack: cap?
+		if (util::at_node<ast::Token>(s) && util::view_as<ast::Token>(s.back())->holds<ast::CaptureType>()) {
+			state.log(compiler::ID::err, "Missing pattern to match specified capture declaration <pattern at {}>", LOCATION);
+		} else {
+			state.log(compiler::ID::err, "Unexpected Input: Could not match Spero expression \"{}\" <pattern at {}>", in.string(), LOCATION);
+		}
+		PUSH_NODE(Pattern);
+		// stack: Pattern
+	} END;
 	RULE(capture_desc) {
 		// stack: kmut?
 		if (in.string().size() == 0) {
@@ -257,17 +267,16 @@ namespace spero::parser::actions {
 		}
 
 		bool is_ref = (in.string()[0] == '&');
+		bool is_mut = false;
 
 		if (util::at_node<ast::Token>(s)) {
-			if (util::view_as<ast::Token>(s.back())->get<ast::KeywordType>() == +ast::KeywordType::MUT) {
-				s.pop_back();
+			auto* node = util::view_as<ast::Token>(s.back());
+			is_mut = node->holds<ast::KeywordType>() && node->get<ast::KeywordType>() == +ast::KeywordType::MUT;
+		}
 
-				if (is_ref) {
-					PUSH(Token, ast::CaptureType::MUTREF);
-				} else {
-					PUSH(Token, ast::CaptureType::MUT);
-				}
-			}
+		if (is_mut) {
+			s.pop_back();
+			PUSH(Token, is_ref ? ast::CaptureType::MUTREF : ast::CaptureType::MUT);
 
 		} else if (is_ref) {
 			PUSH(Token, ast::CaptureType::REF);
@@ -892,6 +901,9 @@ namespace spero::parser::actions {
 	INHERIT(errorbrace, errorparen);
 	INHERIT(errorchar, errorparen);
 	INHERIT(errorquote, errorparen);
+	RULE(leftovers) {
+		state.log(compiler::ID::err, "Unexpected input: Could not match spero expression \"{}\" <at {}>", in.string(), LOCATION);
+	} END;
 
 }
 

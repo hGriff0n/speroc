@@ -300,8 +300,8 @@ namespace spero::compiler::ast {
 		v.visitAdtPattern(*this);
 	}
 	DEF_PRINTER(AdtPattern) {
-		s << std::string(buf, ' ') << context << "ast.AdtPattern";
-		name->prettyPrint(s, 1, "(type=") << ')';
+		s << std::string(buf, ' ') << context << "ast.AdtPattern (capture=" << cap._to_string();
+		name->prettyPrint(s, 0, ", type=") << ')';
 		if (args) {
 			args->prettyPrint(s << '\n', buf + 2);
 		}

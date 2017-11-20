@@ -133,22 +133,19 @@ namespace spero::parser::grammar {
 	struct pvar : disable<var> {};
 	struct ptyp : disable<typ> {};
 	struct pname : sor<pvar, ptyp> {};
-	// TODO: I need a way to peel off the array in some cases (explicitly need to match on having an array at the end)
 	struct path_part : seq<pname, opt<_array>> {};
 	struct path : star<path_part, one<':'>> {};
 	struct pathed_name : seq<path, disable<path_part>> {};
 	struct typname : seq<pathed_name> {};
 	struct pat_any : disable<plambda> {};
-	// TODO: Error if ',' not used (immediate)
 	struct pat_tuple : opt_sequence<oparen, pattern, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
 	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut, eps> {};
 	struct pat_adt : seq<pat_tuple> {};
 	struct resolve_constants : seq<eps> {};
 	struct pat_name_adt : seq<pathed_name, ig_s, if_then_else<at<one<'('>>, pat_adt, resolve_constants>> {};
-	// TODO: Error if invalid capture_desc used, pat_tuple or pat_name not used (deferred)
-	struct capture : seq<capture_desc, sor<pat_tuple, pat_name_adt>> {};
+	struct pat_missing : until<ig, any> {};
+	struct capture : seq<capture_desc, sor<pat_tuple, pat_name_adt, pat_missing>> {};
 	struct pattern : seq<sor<pat_any, pat_lit, capture>, ig_s> {};
-	// TODO: Error if ',' not used (immediate)
 	struct assign_tuple : sequence<oparen, assign_pat, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
 	struct assign_drop : disable<plambda> {};
 	struct assign_name : sor<var, op> {};
@@ -164,9 +161,9 @@ namespace spero::parser::grammar {
 	struct typ_ptr : one<'*'> {};
 	struct ptr_styling : sor<typ_view, typ_ref, typ_ptr> {};
 	// TODO: `array` never gets matched with the new pathed_name grammar (always sucked into typname)
-	struct single_type : seq<typname, ig_s, opt<_array>> {};
+	//struct single_type : seq<typname, ig_s, opt<_array>> {};
+	struct single_type : seq<typname, ig_s> {};
 	struct ref_type : seq<single_type, opt<ptr_styling, ig_s>> {};
-	// TODO: Error if ',' not used (immediate)
 	struct tuple_type : opt_sequence<oparen, type, sor<cparen, errorparen>> {};											// Immediate error if no closing ')'
 	// TODO: Error if no type used (deferred)
 	struct fn_type : seq<pstr("->"), ig_s, type> {};
@@ -209,7 +206,6 @@ namespace spero::parser::grammar {
 	// TODO: Error if no type used (deferred)
 	struct arg_inf : seq<pstr("::"), arg_sentinel, type> {};
 	struct arg : seq<var, ig_s, opt<arg_inf>> {};
-	// TODO: Error if no ',' used (immediate)
 	struct arg_tuple : opt_sequence<oparen, arg, sor<cparen, errorparen>> {};											// Immediate error if no closing ')'
 	struct anon_type : seq<pstr("::"), ig_s, scope> {};
 
@@ -292,10 +288,6 @@ namespace spero::parser::grammar {
 	// TODO: Error if wrong keyword used (deferred?)
 	// TODO: Error if exprs not used (deferred)
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
-
-	// TODO: Moved up to identifiers
-	// Then I need to move to using 'paths' throughout the entire codebase
-		// If it uses `BasicBinding` or `QualifiedBinding` it will be replaced
 	struct call : enable<tuple> {};
 	struct type_const_tail : opt<disable<call>, opt<anon_type>> {};
 	struct op_var : seq<binop> {};
@@ -374,9 +366,10 @@ namespace spero::parser::grammar {
 	struct statement : sor<ganot, mod_dec, mod_alias, impl, assign, seq<opt<kdo>, valexpr>> {};
 	// TODO: Error if no statement (deferred)
 	struct annotated : seq<star<annotation>, statement, opt<endc>> {};
-	// TODO: Look at "forward_set" gobbling
+	// TODO: Change to using "forward_set" gobbling (try to get as many "correct stuff" as possible, ie. "(3 4) 5")
+	struct leftovers : star<any> {};
 	// TODO: Look at adding a "catch" rule, for when no expressions match
-	struct program : seq<star<ig_s, annotated>, must<eolf>> {};
+	struct program : seq<star<ig_s, annotated>, sor<eolf, leftovers>> {};
 }
 
 #undef key
