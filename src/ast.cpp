@@ -402,7 +402,13 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.FunctionType";
 
 		args->prettyPrint(s << '\n', buf + 2, "args=");
-		return ret->prettyPrint(s << '\n', buf + 2, "ret=");
+		if (ret) {
+			ret->prettyPrint(s << '\n', buf + 2, "ret=");
+		} else {
+			s << '\n' << std::string(buf + 2, ' ') << "ret=<error: missing>";
+		}
+		
+		return s;
 	}
 
 	AndType::AndType(ptr<Type> typs, Location loc)
@@ -414,7 +420,11 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.AndType";
 
 		for (auto&& t : elems) {
-			t->prettyPrint(s << '\n', buf + 2);
+			if (t) {
+				t->prettyPrint(s << '\n', buf + 2);
+			} else {
+				s << '\n' << std::string(buf + 2, ' ') << "<error: missing>";
+			}
 		}
 
 		return s;

@@ -156,26 +156,22 @@ namespace spero::parser::grammar {
 	/*
 	 * Type System
 	 */
+	struct errortype : seq<eps> {};
 	struct typ_view : two<'.'> {};
 	struct typ_ref : one<'&'> {};
 	struct typ_ptr : one<'*'> {};
 	struct ptr_styling : sor<typ_view, typ_ref, typ_ptr> {};
-	// TODO: `array` never gets matched with the new pathed_name grammar (always sucked into typname)
-	//struct single_type : seq<typname, ig_s, opt<_array>> {};
 	struct single_type : seq<typname, ig_s> {};
 	struct ref_type : seq<single_type, opt<ptr_styling, ig_s>> {};
 	struct tuple_type : opt_sequence<oparen, type, sor<cparen, errorparen>> {};											// Immediate error if no closing ')'
-	// TODO: Error if no type used (deferred)
-	struct fn_type : seq<pstr("->"), ig_s, type> {};
+	struct fn_type : seq<pstr("->"), ig_s, sor<type, errortype>> {};
 	struct tuple_fn_type : seq<tuple_type, opt<fn_type>> {};
 	struct mut_type : seq<opt<kmut>, sor<tuple_fn_type, ref_type>> {};
 	struct braced_type : seq<obrace, type, sor<cbrace, errorbrace>> {};													// Immediate error if no closing '}'
 	struct ntype : sor<mut_type, braced_type> {};
-	// TODO: Error if no type used (deferred)
-	struct and_cont : seq<and, ntype> {};
+	struct and_cont : seq<and, sor<ntype, errortype>> {};
 	struct and_type : seq<ntype, star<and_cont>> {};
-	// TODO: Error if no type used (deferred)
-	struct or_cont : seq<bar, and_type> {};
+	struct or_cont : seq<bar, sor<and_type, errortype>> {};
 	struct or_type : seq<and_type, star<or_cont>> {};
 	struct type : or_type {};
 

@@ -382,8 +382,15 @@ namespace spero::parser::actions {
 		// stack: tupleType
 	} END;
 	RULE(fn_type) {
-		// stack: TupleType type
+		// stack: TupleType (type | error)
 		auto ret = POP(Type);
+
+		// Error handling
+		if (!ret) {
+			s.pop_back();
+			state.log(compiler::ID::err, "Missing required return type information <fn_type at {}>", LOCATION);
+		}
+
 		PUSH(FunctionType, POP(TupleType), std::move(ret));
 		// stack: FunctionType
 	} END;
@@ -417,8 +424,13 @@ namespace spero::parser::actions {
 		// stack: type
 	} END;
 	RULE(and_cont) {
-		// stack: (type | and_type) type
+		// stack: (type | and_type) (type | error)
 		auto typ = POP(Type);
+
+		if (!typ) {
+			s.pop_back();
+			state.log(compiler::ID::err, "Missing required type information <and_type at {}>", LOCATION);
+		}
 
 		if (!util::at_node<ast::AndType>(s)) {
 			PUSH(AndType, POP(Type));
@@ -428,8 +440,13 @@ namespace spero::parser::actions {
 		// stack: and_type
 	} END;
 	RULE(or_cont) {
-		// stack: (type | or_type) type
+		// stack: (type | or_type) (type | error)
 		auto typ = POP(Type);
+
+		if (!typ) {
+			s.pop_back();
+			state.log(compiler::ID::err, "Missing required type information <and_type at {}>", LOCATION);
+		}
 
 		if (!util::at_node<ast::OrType>(s)) {
 			PUSH(OrType, POP(Type));
@@ -901,6 +918,9 @@ namespace spero::parser::actions {
 	INHERIT(errorbrace, errorparen);
 	INHERIT(errorchar, errorparen);
 	INHERIT(errorquote, errorparen);
+	RULE(errortype) {
+		PUSH_NODE(Error);
+	} END;
 	RULE(leftovers) {
 		state.log(compiler::ID::err, "Unexpected input: Could not match spero expression \"{}\" <at {}>", in.string(), LOCATION);
 	} END;
