@@ -978,7 +978,4 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(ValError) {
 		return s << std::string(buf, ' ') << context << "ast.Error";
 	}
-
-	ImportError::ImportError(Location loc) : ModRebindImport{ loc } {}
-	void ImportError::accept(Visitor&) {}
 }

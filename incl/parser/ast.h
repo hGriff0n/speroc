@@ -1287,14 +1287,4 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
-	/*template<class T>
-	struct Error : T { };
-
-	template<class T>
-	struct SyntaxError : Error<T> {};*/
-	struct ImportError : ModRebindImport {
-		ImportError(Location);
-		virtual void accept(Visitor&);
-	};
-
 }

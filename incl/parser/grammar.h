@@ -179,24 +179,19 @@ namespace spero::parser::grammar {
 	/*
 	 * Decorators
 	 */
-	// TODO: Error if no var (deferred)
-	struct annotation : seq<one<'@'>, var, opt<tuple>, ig_s> {};
-	// TODO: Error if no var (deferred)
+	struct annotation : seq<one<'@'>, var, opt<tuple>, ig_s> {};														// NOTE: If `var` is missing, this fails to match anything else (an error itself)
 	struct ganot : seq<pstr("@!"), var, opt<tuple>, ig_s> {};
-	// TODO: Error if no type used (deferred)
-	struct type_inf : seq<pstr("::"), ig_s, type> {};
+	struct type_inf : seq<pstr("::"), ig_s, sor<type, errortype>> {};
 	struct variance : sor<one<'+'>, one<'-'>, eps> {};
 	struct variadic : seq<pstr(".."), ig_s> {};
 	struct relation : seq<sor<pstr("::"), pstr("!:")>, ig_s> {};
-	// TODO: Error if relation and no type used (deferred)
-	struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, opt<relation, type>> {};
-	// TODO: Error if relation and no type used (deferred)
-	struct val_gen : seq<var, ig_s, opt<relation, type>> {};
-	// TODO: Error if not type_gen, or val_gen (immediate?)
-	struct gen_part : sor<type_gen, val_gen> {};
+	struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, opt<relation, sor<type, errortype>>> {};
+	struct val_gen : seq<var, ig_s, opt<relation, sor<type, errortype>>> {};
+	struct gen_parterror : until<at<sor<one<']'>, one<','>>>> {};
+	struct gen_part : sor<type_gen, val_gen, gen_parterror> {};
 	struct _generic : sequence<obrack, gen_part, sor<cbrack, errorbrack>> {};											// Immediate error if no closing ']'
-	// TODO: Error if 'typ' not used, at '(' and no tuple_type (deferred)
-	struct adt : seq<typ, opt<tuple_type>, ig_s> {};
+	struct adt : seq<typ, if_then_else<at<one<'('>>, sor<tuple_type, errortype>, eps>, ig_s> {};						// NOTE: This produces two errors if a '(' is seen but no ')'
+	// TODO: Error if at '|' and no adt (deferred)
 	struct adt_dec : seq<adt, star<bar, adt>> {};
 	struct arg_sentinel : seq<ig_s> {};
 	// TODO: Error if no type used (deferred)

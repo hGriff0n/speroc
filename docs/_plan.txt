@@ -44,6 +44,9 @@ Current Project Plan
 	  Look into whether ptr styling can be forced to directly attach to the type
 	  Change binexpr to be left-associative (ie. "3 + 3 + 4" => "{3 + 3} + 4")
         Not sure if it's currently this way or not
+	  Extend the abilities of type extension syntax to allow creation of new types
+	    Basically remove the requirement to have "Foo() :: {}", instead allowing "Foo :: {}"
+	  Think about whether the generics system would require a rework to suppot explicit specialization (particularly for variables)
 	Language Considerations
 	  Can we generalize the usage of 'as' for rebinding generics?
 	    Right now, I force the usage of 'as' iff a type is generic specialized

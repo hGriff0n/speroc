@@ -463,14 +463,24 @@ namespace spero::parser::actions {
 	RULE(annotation) {
 		// stack: bind tuple?
 		auto tup = POP(Tuple);
+		//state.log(compiler::ID::err, "Missing required annotation name <annotation at {}>", LOCATION);
 		PUSH(LocalAnnotation, POP(BasicBinding), std::move(tup));
 		// stack: anot
 	} END;
 	RULE(ganot) {
 		// stack: bind tuple?
 		auto tup = POP(Tuple);
+		//state.log(compiler::ID::err, "Missing required annotation name <ganot at {}>", LOCATION);
 		PUSH(Annotation, POP(BasicBinding), std::move(tup));
 		// stack: anot
+	} END;
+	RULE(type_inf) {
+		// stack: type | error
+		auto err = POP(Error);
+		if (err) {
+			state.log(compiler::ID::err, "Missing required type information <type_inf at {}>", LOCATION);
+		}
+		// stack: type?
 	} END;
 	RULE(variance) {
 		if (in.string().size() == 0) {
@@ -490,9 +500,14 @@ namespace spero::parser::actions {
 		}
 	} END;
 	RULE(type_gen) {
-		// stack: bind var var? (rel type)?
+		// stack: bind var var? (rel (type | error))?
+		auto err = POP(Error);
+		if (err) {
+			state.log(compiler::ID::err, "Missing required type information <type_gen.rel at {}>", LOCATION);
+		}
+
 		auto typ = POP(Type);
-		auto rel = (typ ? POP(Token)->get<ast::RelationType>() : ast::RelationType::NA);
+		auto rel = (typ || err) ? POP(Token)->get<ast::RelationType>() : ast::RelationType::NA;
 		auto variadic = POP(Token);
 		auto variance = POP(Token);
 
@@ -506,12 +521,20 @@ namespace spero::parser::actions {
 	} END;
 	RULE(val_gen) {
 		// _stack: bind (rel type)? expr?
-		// stack: bind (rel type)?
+		// stack: bind (rel (type | error))?
+		auto err = POP(Error);
+		if (err) {
+			state.log(compiler::ID::err, "Missing required type information <val_gen.rel at {}>", LOCATION);
+		}
+
 		auto typ = POP(Type);
-		auto rel = (typ ? POP(Token)->get<ast::RelationType>() : ast::RelationType::NA);
+		auto rel = (typ || err) ? POP(Token)->get<ast::RelationType>() : ast::RelationType::NA;
 
 		PUSH(ValueGeneric, POP(BasicBinding), std::move(typ), rel);
 		// stack: val_gen
+	} END;
+	RULE(gen_parterror) {
+		state.log(compiler::ID::err, "Unexpected input: Could not match spero generic \"{}\" <gen_part {}>", in.string(), LOCATION);
 	} END;
 	RULE(_generic) {
 		// stack: {} gen_part* error?
@@ -528,8 +551,13 @@ namespace spero::parser::actions {
 		// stack: gentype
 	} END;
 	RULE(adt) {
-		// stack: typ type?
+		// stack: typ sym? type?
 		auto typ_args = POP(TupleType);
+		
+		if (POP(Symbol)) {
+			state.log(compiler::ID::err, "Missing expected tuple types indicated by opening '(' <adt at {}>", s.back()->loc);
+		}
+
 		PUSH(Adt, POP(BasicBinding), std::move(typ_args));
 		// stack: adt
 	} END;
