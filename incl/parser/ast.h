@@ -259,7 +259,7 @@ namespace spero::compiler::ast {
 		Block(std::deque<ptr<Statement>>, Location);
 
 		virtual void accept(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
 	/*
@@ -1287,4 +1287,15 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
+	struct TypeError : Type {
+		TypeError(Location loc);
+
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	struct ScopeError : Block {
+		ScopeError(Location loc);
+
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
 }

@@ -314,13 +314,13 @@ namespace spero::parser::grammar {
 	/*
 	 * Statements
 	 */
-	// TODO: Error if eolf or ';' not used
-	struct mod_dec : seq<kmod, pathed_name, ig_s, must<sor<endc, eolf>>, ig_s> {};
-	// TODO: Error if no type used
-	struct for_type : seq<kfor, single_type> {};
+	struct mod_dec : seq<kmod, pathed_name, ig_s, opt<endc>, ig_s> {};
+	SENTINEL(missing_fortype);
+	struct for_type : seq<kfor, sor<single_type, missing_fortype>> {};
 	struct impl_errchars : plus<not_at<disable<obrace>>, any> {};														// Immediate error if unexpected characters encountered
-	// TODO: Error if no scope, no type used
-	struct impl : seq<kimpl, single_type, opt<for_type>, opt<impl_errchars>, scope> {};
+	SENTINEL(missing_impltype);
+	SENTINEL(missing_impldef);
+	struct impl : seq<kimpl, sor<single_type, missing_impltype>, opt<for_type>, opt<impl_errchars>, sor<scope, missing_impldef>> {};
 	struct mul_imp : sequence<obrace, seq<ig_s, pname, ig_s>, sor<cbrace, errorbrace>> {};
 	struct at_rebind_point : seq<ig_s, sor<disable<_array>, at<kas>>> {};
 	SENTINEL(err_rebind);
@@ -329,19 +329,18 @@ namespace spero::parser::grammar {
 	SENTINEL(import_single);
 	struct imp_alias : seq<disable<pname>, if_then_else<at_rebind_point, maybe_rebind, import_single>> {};
 	struct mod_alias : seq<kuse, opt<path>, sor<mul_imp, imp_alias>> {};
-	// TODO: Error if '=' not used
-	// TODO: Error if scope not used
-	struct type_assign : seq<assign_typ, opt<_generic>, equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, scope> {};
-	// TODO: Error if no mvexpr
-	struct asgn_in : seq<kin, mvexpr> {};
-	// TODO: Error if '=' not used
-	// TODO: Error if no valexpr
-	struct asgn_val : seq<equals, valexpr, opt<asgn_in>> {};
+	SENTINEL(missing_typedef);
+	struct _type_assign : seq<equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, sor<scope, missing_typedef>> {};
+	SENTINEL(missing_type_assign);
+	struct type_assign : seq<assign_typ, opt<_generic>, sor<_type_assign, missing_type_assign>> {};
+	struct asgn_in : seq<in_scoped_expr> {};
+	SENTINEL(missing_val_assign);
+	struct asgn_val : seq<equals, sor<seq<valexpr, opt<asgn_in>>, missing_val_assign>> {};
 	struct _interface : seq<type_inf, opt<asgn_val>> {};
-	// TODO: Error if _interface or asgn_val not used
-	struct var_assign : seq<assign_pat, opt<_generic>, sor<_interface, asgn_val>> {};
-	// TODO: Error if invalid keyword
-	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};
+	SENTINEL(missing_interface);
+	struct var_assign : seq<assign_pat, opt<_generic>, sor<_interface, asgn_val, missing_interface>> {};
+	SENTINEL(standalone_visibility);
+	struct assign : seq<vcontext, sor<type_assign, var_assign, standalone_visibility>> {};
 
 
 	/*
@@ -364,17 +363,16 @@ namespace spero::parser::grammar {
 	/*
 	 * Organizational Structures
 	 */
-	// TODO: Error if no control or binexpr
 	struct valexpr : seq<opt<kmut>, sor<control, binexpr>, opt<type_inf>> {};
-	// TODO: Error if no valexpr or in_assign
 	struct mvexpr : sor<in_assign, valexpr> {};
 	struct mvdexpr : seq<opt<kdo>, mvexpr> {};
 	struct statement : sor<ganot, mod_dec, mod_alias, impl, assign, seq<opt<kdo>, valexpr>> {};
 	// TODO: Error if no statement
-	struct annotated : seq<star<annotation>, statement, opt<endc>> {};
+	SENTINEL(missing_stmt);
+	struct annotated : seq<if_then_else<plus<annotation>, sor<statement, missing_stmt>, statement>, opt<endc>> {};
+	//struct annotated : seq<star<annotation>, sor<statement, missing_stmt>, opt<endc>> {};
 	// TODO: Change to using "forward_set" gobbling (try to get as many "correct stuff" as possible, ie. "(3 4) 5")
 	struct leftovers : star<any> {};
-	// TODO: Look at adding a "catch" rule, for when no expressions match
 	struct program : seq<star<ig_s, annotated>, sor<eolf, leftovers>> {};
 }
 

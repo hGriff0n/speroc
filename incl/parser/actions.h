@@ -964,7 +964,19 @@ namespace spero::parser::actions {
 		PUSH(ModDec, std::move(path));
 		// stack: ModDec
 	} END;
+	RULE(missing_fortype) {
+		state.log(compiler::ID::err, "Missing implementor type <impl at {}>", s.back()->loc);
+		PUSH_NODE(TypeError);
+	} END;
 	TOKEN(for_type, ast::KeywordType::FOR);
+	RULE(missing_impltype) {
+		state.log(compiler::ID::err, "Missing implementation type <impl at {}>", s.back()->loc);
+		PUSH_NODE(TypeError);
+	} END;
+	RULE(missing_impldef) {
+		state.log(compiler::ID::err, "Missing implementation body <impl at {}>", s.back()->loc);
+		PUSH_NODE(TypeError);
+	} END;
 	RULE(impl) {
 		// stack: type (type "for")? scope
 		auto block = POP(Block);
@@ -1017,6 +1029,18 @@ namespace spero::parser::actions {
 		// stack: Path
 		PUSH(SingleImport, POP(Path));
 		// stack: ModRebindImport
+	} END;
+	RULE(missing_typedef) {
+		// stack: vis pat gen? mut? cons*
+		state.log(compiler::ID::err, "Missing type definition body <type_assign at {}>", s.back()->loc);
+		PUSH_NODE(ScopeError);
+		// stack: vis pat gen? mut? cons* error
+	} END;
+	RULE(missing_type_assign) {
+		// stack: vis pat gen?
+		state.log(compiler::ID::err, "Missing assignment operator '=' <type_assign at {}>", s.back()->loc);
+		PUSH_NODE(ScopeError);
+		// stack: vis pat gen? error
 	} END;
 	RULE(type_assign) {
 		// stack: vis pat gen? "mut"? cons* scope
@@ -1098,6 +1122,26 @@ namespace spero::parser::actions {
 		}
 		// stack: Interface | VarAssign
 	} END;
+	RULE(missing_val_assign) {
+		// stack:
+		state.log(compiler::ID::err, "Missing assignment value expression <val_assign at {}>", s.back()->loc);
+		PUSH_NODE(ValError);
+		// stack: error
+	} END;
+	RULE(missing_interface) {
+		// stack: vis pat gen?
+		POP(GenericArray);
+		POP(AssignPattern);
+		state.log(compiler::ID::err, "Missing interface/assignment indicated by varname <val_assign at {}>", POP(Token)->loc);
+		PUSH_NODE(ValError);
+		// stack: error
+	} END;
+	RULE(standalone_visibility) {
+		// stack: vis
+		state.log(compiler::ID::err, "Missing definition indicated by visibility <assign at {}>", POP(Token)->loc);
+		PUSH_NODE(ValError);
+		// stack: error
+	} END;
 
 
 	// Binexpr Precedence
@@ -1139,6 +1183,12 @@ namespace spero::parser::actions {
 		expr->is_mut = (bool)mut;
 		s.emplace_back(std::move(expr));
 		// stack: expr
+	} END;
+	RULE(missing_stmt) {
+		// stack:
+		state.log(compiler::ID::err, "Statement Not Found: Could not bind local annotation to statement <stmt at {}>", LOCATION);
+		PUSH_NODE(ValError);
+		// stack: error
 	} END;
 	RULE(statement) {
 		// stack: annotation* stmt
