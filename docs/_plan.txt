@@ -20,12 +20,15 @@ Current Project Plan
   Grammar changes and modifications
 	Add in syntax error checking and handling
 	  Write rules/actions to report missing keywords/symbols
-	    alias, type_assign, asgn_val, elsif_case, in_assign
+	    asgn_val, elsif_case, in_assign
 	  Modify old code to use 'ValError' if possible
 	  Find a solution to allow for 'ValError' type nodes to be considered as 'T' nodes
 	    Can't use multiple inheritance of Ast types
 		  Maybe I can have a set of type tags for the types that I need this behavior from
 		  The relevant types would inherit from 'Ast' and the tag type (inheriting nothing from the tag)
+		This slightly produces issues with analysis passes (ValError, etc.)
+		  The visitor functions must all determine if they are errors first (otherwise nullptr)
+		    Could have a "strip errors" pass first
 	  Adapt rules/grammar to handle these new capabilities
 	Codebase Updates
 	  Update to VS 15.3 capabilities

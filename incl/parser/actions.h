@@ -624,7 +624,7 @@ namespace spero::parser::actions {
 		POP(Token);						// Pop extraneous token from failed capture_desc
 		auto loc = POP(Token)->loc;
 		state.log(compiler::ID::err, "Missing decomoposition pattern <for at {}>", loc);
-		PUSH_NODE(ValError);
+		PUSH_NODE(ValError);			// Push ValError to represent failed 'for' parsing (grammar skips the rest if this action is run)
 		// stack: error
 	} END;
 	RULE(infor) {
@@ -681,9 +681,16 @@ namespace spero::parser::actions {
 		}
 		// stack: loop | error
 	} END;
-
 	RULE(elseif_key) {
 		state.log(compiler::ID::err, "Invalid keyword: Use 'elsif' instead <branch at {}>", LOCATION);
+	} END;
+	RULE(missing_eitest) {
+		state.log(compiler::ID::err, "Missing branch test expression <elsif at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
+	RULE(missing_eibody) {
+		state.log(compiler::ID::err, "Missing branch body expression <elsif at {}>", LOCATION);
+		PUSH_NODE(ValError);
 	} END;
 	RULE(elsif_case) {
 		// stack: IfBranch test body
@@ -691,32 +698,73 @@ namespace spero::parser::actions {
 		PUSH(IfBranch, POP(ValExpr), std::move(body), true);
 		// stack: IfBranch IfBranch
 	} END;
+	RULE(missing_itest) {
+		state.log(compiler::ID::err, "Missing branch test expression <if at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
+	RULE(missing_ibody) {
+		state.log(compiler::ID::err, "Missing branch body expression <if at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
 	RULE(if_branch) {
-		// stack: test body
+		// stack: (test | error) (body | error)
 		auto body = POP(ValExpr);
 		PUSH(IfBranch, POP(ValExpr), std::move(body), false);
 		// stack: IfBranch
 	} END;
+	RULE(missing_ebody) {
+		state.log(compiler::ID::err, "Missing branch body expression <else at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
 	RULE(branch) {
-		// stack: IfBranch* valexpr?
+		// stack: IfBranch* (valexpr | error)?
 		auto _else_ = (util::at_node<ast::IfBranch>(s) ? nullptr : POP(ValExpr));
 		auto ifs = util::popSeq<ast::IfBranch>(s);
 		PUSH(IfElse, std::move(ifs), std::move(_else_));
 		// stack: IfElse
 	} END;
-
+	RULE(missing_arrow) {
+		// stack: pat _
+		// TODO: Find the pattern, not just the if_core
+		auto loc = (*s.rbegin())->loc;
+		state.log(compiler::ID::err, "Missing arrow keyword ('=>') <case at {}>", loc);
+		// stack: pat _
+	} END;
 	RULE(case_pat) {
 		// stack: <T> pattern*
 		auto pats = util::popSeq<ast::Pattern>(s);
 		PUSH(TuplePattern, std::move(pats));
 		// stack: <T> pattern
 	} END;
+	RULE(missing_cbody) {
+		state.log(compiler::ID::err, "Missing case body expression <case at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
+	RULE(missing_cpat) {
+		// stack: _
+		auto loc = POP(Token)->loc;
+		state.log(compiler::ID::err, "Missing continued pattern indicated by ',' <case at {}>", loc);
+		// stack:
+	} END;
 	RULE(_case) {
-		// stack: pattern valexpr? body
+		// stack: pattern valexpr? (body | error)
 		auto expr = POP(ValExpr);
 		auto if_guard = POP(ValExpr);
 		PUSH(Case, POP(TuplePattern), std::move(if_guard), std::move(expr));
 		// stack: case
+	} END;
+	RULE(missing_mexpr) {
+		// stack: 
+		state.log(compiler::ID::err, "Missing match switch expression <match at {}>", LOCATION);
+		PUSH_NODE(ValError);
+		PUSH(Symbol, '{');				// Push symbol on the stack for reporting of match errors
+		// stack: error
+	} END;
+	RULE(missing_brace) {
+		// stack: _
+		state.log(compiler::ID::err, "Missing opening brace '{}' <match at {}>", '{', s.back()->loc);
+		PUSH(Symbol, '{');
+		// stack: _ error
 	} END;
 	RULE(matchs) {
 		// stack: valexpr {} case+ keyword error?
@@ -730,7 +778,7 @@ namespace spero::parser::actions {
 			state.log(compiler::ID::err, "No closing brace found for opening '{}' <match at {}>", '{', sym->loc);
 		}
 		if (cases.size() == 0) {
-			state.log(compiler::ID::err, "Match expression with no cases <at {}>", sym->loc);
+			state.log(compiler::ID::err, "Missing match case expressions <match at {}>", sym->loc);
 		}
 
 		PUSH(Match, POP(ValExpr), std::move(cases));

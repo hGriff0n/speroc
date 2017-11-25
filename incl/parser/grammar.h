@@ -123,7 +123,7 @@ namespace spero::parser::grammar {
 	/*
 	 * Identifiers
 	 */
-	 // TODO: Error if name matches a keyword (analysis?)
+	 // TODO: Error if name matches a keyword (analysis? can this even happen anymore (yes, in some contexts, may be error created only)?)
 	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
 	struct typ_ch : range<'A', 'Z'> {};
 	struct typ : seq<typ_ch, star<ascii::identifier>> {};
@@ -216,47 +216,38 @@ namespace spero::parser::grammar {
 	struct whilel : seq<kwhile, sor<mvexpr, missing_wtest>, sor<mvdexpr, missing_wbody>> {};
 	SENTINEL(missing_lbody);
 	struct loop : seq<kloop, sor<mvdexpr, missing_lbody>> {};
-
-	// TODO: Error if no mvexpr (deferred)
 	SENTINEL(missing_itest);
-	struct _if_core : seq<kif, sor<mvexpr, missing_itest>> {};
-	struct if_core : seq<kif, mvexpr> {};
-	// TODO: Error if no mvexpr (deferred)
+	struct if_core : seq<kif, sor<mvexpr, missing_itest>> {};
 	SENTINEL(missing_ibody);
-	struct _if_branch : seq<if_core, sor<mvdexpr, missing_ibody>> {};
-	struct if_branch : seq<if_core, mvdexpr> {};
-	// TODO: Error if no mvexpr (deferred)
+	struct if_branch : seq<if_core, sor<mvdexpr, missing_ibody>> {};
 	SENTINEL(missing_eitest);
 	SENTINEL(missing_eibody);
-	struct elseif_key : key("elseif") {};
-	struct _elsif_case : seq<sor<kelsif, elseif_key>, sor<mvexpr, missing_eitest>, sor<mvdexpr, missing_eibody>> {};
-	struct elsif_case : seq<sor<kelsif, elseif_key>, mvexpr, mvdexpr> {};
-	// TODO: Error if no mvexpr (deferred)
+	struct elseif_key : key("elseif");
+	struct elsif_case : seq<sor<kelsif, elseif_key>, sor<mvexpr, missing_eitest>, sor<mvdexpr, missing_eibody>> {};
 	SENTINEL(missing_ebody);
-	struct _else_case : seq<kelse, sor<mvdexpr, missing_ebody>> {};
-	struct else_case : seq<kelse, mvdexpr> {};
-
+	struct else_case : seq<kelse, sor<mvdexpr, missing_ebody>> {};
 	struct branch : seq<if_branch, star<elsif_case>, opt<else_case>> {};
-	struct case_pat : seq<pattern, star<comma, pattern>> {};
-	// TODO: Error if no '=>' used (deferred)
-	// TODO: Error if no valid end character (';}\n') (immediate?)
-	struct _case : seq<case_pat, opt<if_core>, pstr("=>"), ig_s, mvexpr, opt<endc>> {};
-	// TODO: Error if no opening '{' (immediate-deferred)
-	struct matchs : seq<kmatch, mvexpr, obrace, star<_case>, sor<cbrace, errorbrace>> {};								// Immediate error if no closing '}', no case statements
+	SENTINEL(missing_cpat);
+	// TODO: Errors produced with "=> 3" case aren't too informative (keeps saying "no '=>'")
+	struct case_pat : seq<pattern, star<comma, sor<pattern, missing_cpat>>> {};
+	// TODO: Error if no valid end character (';}\n')
+	SENTINEL(missing_arrow);
+	SENTINEL(missing_cbody);
+	struct _case : seq<case_pat, opt<if_core>, sor<pstr("=>"), missing_arrow>, ig_s, sor<mvexpr, missing_cbody>, opt<endc>> {};
+	SENTINEL(missing_mexpr);
+	SENTINEL(missing_brace);
+	struct cases : seq<sor<obrace, missing_brace>, star<not_at<one<'}'>>, _case>, sor<cbrace, errorbrace>> {};
+	struct matchs : seq<kmatch, if_then_else<mvexpr, cases, missing_mexpr>> {};											// Immediate error if no closing '}', no case statements
 	struct jump : seq<jump_key, opt<mvexpr>> {};
-	
 	struct control : sor<matchs, forl, whilel, branch, jump, loop> {};
-
 	struct dotloop : seq<kloop> {};
 	struct dotwhile : seq<kwhile, sor<mvexpr, missing_wtest>> {};
 	struct dot_infor : seq<kin, sor<mvexpr, missing_gen>> {};
 	SENTINEL(missing_dotpat);
 	struct dotfor : seq<kfor, if_then_else<pattern, sor<dot_infor, missing_in>, missing_dotpat>> {};					// Errors: see 'forl'
-
-	// TODO: Do I need to add 'error if missing ...' here or is that handled automatically ???
 	struct dotif : seq<if_core> {};
 	struct dotbranch : seq<dotif, star<elsif_case>, opt<else_case>> {};
-	struct dotmatch : seq<kmatch, obrace, star<_case>, sor<cbrace, errorbrace>> {};										// Errors: see 'matchs'
+	struct dotmatch : seq<kmatch, sor<obrace, missing_brace>, star<_case>, sor<cbrace, errorbrace>> {};					// Errors: see 'matchs'
 	struct dotjump : seq<jump_key> {};
 	struct dot_ctrl : sor<dotloop, dotwhile, dotfor, dotbranch, dotmatch, dotjump> {};
 
@@ -276,14 +267,14 @@ namespace spero::parser::grammar {
 	struct lit : sor<binary, hex, decimal, _char, string, kfalse, ktrue> {};
 	struct pat_lit : seq<lit> {};
 	struct scope : seq<obrace, star<statement>, sor<cbrace, errorbrace>> {};											// Immediate error if no closing '}'
-	// TODO: Error if ',' and no mvexpr (immediate)
+	// TODO: Error if ',' and no mvexpr
 	struct tuple : opt_sequence<oparen, mvexpr, sor<cparen, errorparen>> {};											// Immediate error if no closing ')'
-	// TODO: Error if ',' and no mvexpr (immediate)
+	// TODO: Error if ',' and no mvexpr
 	struct _array : opt_sequence<obrack, mvexpr, sor<cbrack, errorbrack>> {};											// Immediate error if no closing ']'
-	// TODO: Error if no mvexpr used (deferred)
+	// TODO: Error if no mvexpr used
 	struct lambda : seq<pstr("->"), ig_s, mvexpr> {};
 	struct fwd_dot : seq<dot> {};
-	// TODO: Error if no dot_ctrl or index_cont (deferred)
+	// TODO: Error if no dot_ctrl or index_cont
 	struct dot_fn : seq<fwd_dot, sor<dot_ctrl, index_cont>> {};
 	struct fn_tuple : sor<seq<tuple, opt<lambda>>, dot_fn> {};
 	struct atom : sor<fn_tuple, _array, lit, plambda, scope> {};
@@ -292,9 +283,9 @@ namespace spero::parser::grammar {
 	/*
 	 * Expressions
 	 */
-	// TODO: Error if '=' not used, 'in' not used (immediate)
-	// TODO: Error if wrong keyword used (deferred?)
-	// TODO: Error if exprs not used (deferred)
+	// TODO: Error if '=' not used, 'in' not used
+	// TODO: Error if wrong keyword used
+	// TODO: Error if exprs not used
 	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
 	struct call : enable<tuple> {};
 	struct type_const_tail : opt<disable<call>, opt<anon_type>> {};
@@ -303,11 +294,11 @@ namespace spero::parser::grammar {
 	struct var_val : seq<pathed_var, type_const_tail, ig_s> {};
 	struct fncall : seq<sor<atom, var_val>, star<call>> {};
 	SENTINEL(indexeps);
-	// TODO: Error if '.' and no fncall (deferred)
+	// TODO: Error if '.' and no fncall
 	struct index_cont : seq<indexeps, fncall, star<dot, fncall>> {};
-	// TODO: Error if '.' and no dot_ctrl or index_cont (deferred)
+	// TODO: Error if '.' and no dot_ctrl or index_cont
 	struct index : seq<fncall, opt<dot, sor<dot_ctrl, index_cont>>> {};
-	// TODO: Error if unop and no index (deferred)
+	// TODO: Error if unop and no index
 	struct unopcall : seq<unop, index> {};
 	struct unexpr : sor<unopcall, index> {};
 
@@ -315,12 +306,12 @@ namespace spero::parser::grammar {
 	/*
 	 * Statements
 	 */
-	// TODO: Error if eolf or ';' not used (immediate)
+	// TODO: Error if eolf or ';' not used
 	struct mod_dec : seq<kmod, pathed_name, ig_s, must<sor<endc, eolf>>, ig_s> {};
-	// TODO: Error if no type used (deferred)
+	// TODO: Error if no type used
 	struct for_type : seq<kfor, single_type> {};
 	struct impl_errchars : plus<not_at<disable<obrace>>, any> {};														// Immediate error if unexpected characters encountered
-	// TODO: Error if no scope, no type used (deferred)
+	// TODO: Error if no scope, no type used
 	struct impl : seq<kimpl, single_type, opt<for_type>, opt<impl_errchars>, scope> {};
 	struct mul_imp : sequence<obrace, seq<ig_s, pname, ig_s>, sor<cbrace, errorbrace>> {};
 	struct at_rebind_point : seq<ig_s, sor<disable<_array>, at<kas>>> {};
@@ -330,18 +321,18 @@ namespace spero::parser::grammar {
 	SENTINEL(import_single);
 	struct imp_alias : seq<disable<pname>, if_then_else<at_rebind_point, maybe_rebind, import_single>> {};
 	struct mod_alias : seq<kuse, opt<path>, sor<mul_imp, imp_alias>> {};
-	// TODO: Error if '=' not used (immediate)
-	// TODO: Error if scope not used (deferred)
+	// TODO: Error if '=' not used
+	// TODO: Error if scope not used
 	struct type_assign : seq<assign_typ, opt<_generic>, equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, scope> {};
-	// TODO: Error if no mvexpr (deferred)
+	// TODO: Error if no mvexpr
 	struct asgn_in : seq<kin, mvexpr> {};
-	// TODO: Error if '=' not used (immediate)
-	// TODO: Error if no valexpr (deferred)
+	// TODO: Error if '=' not used
+	// TODO: Error if no valexpr
 	struct asgn_val : seq<equals, valexpr, opt<asgn_in>> {};
 	struct _interface : seq<type_inf, opt<asgn_val>> {};
-	// TODO: Error if _interface or asgn_val not used (deferred)
+	// TODO: Error if _interface or asgn_val not used
 	struct var_assign : seq<assign_pat, opt<_generic>, sor<_interface, asgn_val>> {};
-	// TODO: Error if invalid keyword (immediate?)
+	// TODO: Error if invalid keyword
 	struct assign : seq<vcontext, sor<type_assign, var_assign>> {};
 
 
@@ -365,14 +356,14 @@ namespace spero::parser::grammar {
 	/*
 	 * Organizational Structures
 	 */
-	// TODO: Error if no control or binexpr (deferred)
+	// TODO: Error if no control or binexpr
 	struct valexpr : seq<opt<kmut>, sor<control, binexpr>, opt<type_inf>> {};
-	// TODO: Error if unexpected keyword (immediate)
-	// TODO: Error if no valexpr or in_assign (deferred)
+	// TODO: Error if unexpected keyword
+	// TODO: Error if no valexpr or in_assign
 	struct mvexpr : sor<valexpr, in_assign> {};
 	struct mvdexpr : seq<opt<kdo>, mvexpr> {};
 	struct statement : sor<ganot, mod_dec, mod_alias, impl, assign, seq<opt<kdo>, valexpr>> {};
-	// TODO: Error if no statement (deferred)
+	// TODO: Error if no statement
 	struct annotated : seq<star<annotation>, statement, opt<endc>> {};
 	// TODO: Change to using "forward_set" gobbling (try to get as many "correct stuff" as possible, ie. "(3 4) 5")
 	struct leftovers : star<any> {};

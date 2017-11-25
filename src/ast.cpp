@@ -978,4 +978,5 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(ValError) {
 		return s << std::string(buf, ' ') << context << "ast.Error";
 	}
+
 }
