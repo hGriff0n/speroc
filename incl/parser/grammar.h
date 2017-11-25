@@ -191,11 +191,10 @@ namespace spero::parser::grammar {
 	struct gen_part : sor<type_gen, val_gen, gen_parterror> {};
 	struct _generic : sequence<obrack, gen_part, sor<cbrack, errorbrack>> {};											// Immediate error if no closing ']'
 	struct adt : seq<typ, if_then_else<at<one<'('>>, sor<tuple_type, errortype>, eps>, ig_s> {};						// NOTE: This produces two errors if a '(' is seen but no ')'
-	// TODO: Error if at '|' and no adt (deferred)
-	struct adt_dec : seq<adt, star<bar, adt>> {};
+	struct error_adt : seq<eps> {};
+	struct adt_dec : seq<adt, star<bar, sor<adt, error_adt>>> {};
 	struct arg_sentinel : seq<ig_s> {};
-	// TODO: Error if no type used (deferred)
-	struct arg_inf : seq<pstr("::"), arg_sentinel, type> {};
+	struct arg_inf : seq<pstr("::"), arg_sentinel, sor<type, errortype>> {};
 	struct arg : seq<var, ig_s, opt<arg_inf>> {};
 	struct arg_tuple : opt_sequence<oparen, arg, sor<cparen, errorparen>> {};											// Immediate error if no closing ')'
 	struct anon_type : seq<pstr("::"), ig_s, scope> {};

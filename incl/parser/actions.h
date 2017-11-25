@@ -561,7 +561,11 @@ namespace spero::parser::actions {
 		PUSH(Adt, POP(BasicBinding), std::move(typ_args));
 		// stack: adt
 	} END;
+	RULE(error_adt) {
+		state.log(compiler::ID::err, "Missing expected ADT constructor indicated by '|' <type at {}>", LOCATION);
+	} END;
 	SENTINEL(arg_sentinel);
+	INHERIT(arg_inf, type_inf);
 	RULE(arg) {
 		// stack: bind type?
 		auto typ = POP(Type);
