@@ -20,7 +20,8 @@ Current Project Plan
   Grammar changes and modifications
 	Add in syntax error checking and handling
 	  Find a better solution for error nodes than the '*Error' types
-	  Improve the new grammar capabilities and error accuracy
+	  Possibly replace some 'ValError' with 'StmtError' (depending on previous solution)
+	  Get compilation to produce correct binaries again
 	Codebase Updates
 	  Update to VS 15.3 capabilities
         "if (auto a = ...; ...)"
@@ -30,6 +31,7 @@ Current Project Plan
       Make sure documentation of ast nodes is up-to-date and helpful
 	Syntax Improvement Considerations
 	  Have all keywords push a token on the stack (for reporting consistent locations in error messages)
+	    not too helpful if I'm not able to accurately access the token (ie. don't know where it is)
 	  Should the "elsif not elseif" log be a warning (must fail the elsif branching grammar if so)
 	  Enable "3.return.if true" as a rewording of "if true return 3"
 	  Look into allowing generics to have default values (old grammar had this for ValueGeneric only)

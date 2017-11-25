@@ -979,7 +979,7 @@ namespace spero::compiler::ast {
 		return s << std::string(buf, ' ') << context << "ast.Error";
 	}
 
-	TypeError::TypeError(Location loc) : Type{ loc } {}
+	TypeError::TypeError(Location loc) : SourceType{ nullptr, loc } {}
 	DEF_PRINTER(TypeError) {
 		return s << std::string(buf, ' ') << context << "ast.Error";
 	}

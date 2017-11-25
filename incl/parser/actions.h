@@ -208,12 +208,17 @@ namespace spero::parser::actions {
 	//
 	// Identifiers
 	//
-	// TODO: Remove once fully converted to path
 	RULE(typ) {
 		PUSH(BasicBinding, in.string(), ast::BindingType::TYPE);
 	} END;
 	RULE(var) {
 		PUSH(BasicBinding, in.string(), ast::BindingType::VARIABLE);
+
+		// TODO: Figure out how to make the short version work
+		if (tao::pegtl::parse<grammar::keywords>(tao::pegtl::string_input<>{ in.string(), "" })) {
+		//if (tao::pegtl::parse<grammar::keywords>(in)) {
+			state.log(compiler::ID::err, "Attempt to use language keyword '{}' as variable <var at {}>", in.string(), LOCATION);
+		}
 	} END;
 	RULE(op) {
 		PUSH(BasicBinding, in.string(), ast::BindingType::OPERATOR);
@@ -225,6 +230,11 @@ namespace spero::parser::actions {
 	} END;
 	RULE(pvar) {
 		PUSH(PathPart, in.string(), ast::BindingType::VARIABLE);
+
+		if (tao::pegtl::parse<grammar::keywords>(tao::pegtl::string_input<>{ in.string(), "" })) {
+		//if (tao::pegtl::parse<grammar::keywords>(in))) {
+			state.log(compiler::ID::err, "Attempt to use language keyword '{}' as variable <var at {}>", in.string(), LOCATION);
+		}
 	} END;
 	RULE(path_part) {
 		// stack: Path? PathPart array?
@@ -951,7 +961,11 @@ namespace spero::parser::actions {
 	//
 	// Statements
 	//
-	RULE(mod_dec) {
+	RULE(missing_module) {
+		state.log(compiler::ID::err, "Missing module name indicated by 'mod' keyword <mod at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
+	RULE(_mod_dec) {
 		// stack: Path
 		auto path = POP(Path);
 		
@@ -970,12 +984,12 @@ namespace spero::parser::actions {
 	} END;
 	TOKEN(for_type, ast::KeywordType::FOR);
 	RULE(missing_impltype) {
-		state.log(compiler::ID::err, "Missing implementation type <impl at {}>", s.back()->loc);
+		state.log(compiler::ID::err, "Missing implementation type <impl at {}>", LOCATION);
 		PUSH_NODE(TypeError);
 	} END;
 	RULE(missing_impldef) {
 		state.log(compiler::ID::err, "Missing implementation body <impl at {}>", s.back()->loc);
-		PUSH_NODE(TypeError);
+		PUSH_NODE(ScopeError);
 	} END;
 	RULE(impl) {
 		// stack: type (type "for")? scope
@@ -1004,7 +1018,6 @@ namespace spero::parser::actions {
 		s.pop_back();
 		auto old_name = POP(Path);
 
-		// TODO: Add in error handling
 		if (old_name->elems.back()->type != new_name->elems.back()->type) {
 			state.log(compiler::ID::err, "Attempt to rebind a {} as a {} <at {}>", old_name->elems.back()->type._to_string(), new_name->elems.back()->type._to_string(), LOCATION);
 		}
@@ -1020,10 +1033,12 @@ namespace spero::parser::actions {
 		// TODO: Provide better context (ie. why must I provide a new name?)
 			// Either because an "as" was used, or the imported name is (directly) generic instantiated
 		state.log(compiler::ID::err, "Rebind context must provide a new name <at {}>", loc);
-
-		// TODO: Using `SingleImport` to prevent errors along the way
 		PUSH(SingleImport, POP(Path));
 		// stack: Path
+	} END;
+	RULE(missing_import) {
+		state.log(compiler::ID::err, "Missing import binding indicated by keyword 'use' <use at {}>", LOCATION);
+		PUSH_NODE(ValError);
 	} END;
 	RULE(import_single) {
 		// stack: Path
@@ -1173,6 +1188,15 @@ namespace spero::parser::actions {
 
 
 	// Organizational Tagging
+	RULE(missing_valexpr) {
+		state.log(compiler::ID::err, "Missing valexpr expression indicated by 'mut' keyword <valexpr at {}>", POP(Token)->loc);
+		PUSH_NODE(ValError);
+	} END;
+	RULE(missing_valexpr2) {
+		POP(Token);
+		state.log(compiler::ID::err, "Missing valexpr expression indicated by 'do' keyword <valexpr at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
 	RULE(valexpr) {
 		// stack: kmut? expr type?
 		auto inf = POP(Type);

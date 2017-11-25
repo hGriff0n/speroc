@@ -1,8 +1,8 @@
-speroc ver 0.3.1 - The reference compiler for the spero language
+speroc ver 0.3.2 - The reference compiler for the spero language
 
 Project Info:
 
-    size: 4778 sloc
+    size: 5131 sloc
     files: 9 .cpp, 17 .h, 3 .rb, 8 .rs
 
 Libraries Used:

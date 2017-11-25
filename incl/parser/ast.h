@@ -1287,7 +1287,7 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
-	struct TypeError : Type {
+	struct TypeError : SourceType {
 		TypeError(Location loc);
 
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;

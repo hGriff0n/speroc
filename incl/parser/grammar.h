@@ -116,14 +116,12 @@ namespace spero::parser::grammar {
 	struct kwait : key("wait");
 	struct vcontext : sor<klet, kdef> {};
 	struct jump_key : sor<kbreak, kcontinue, kret, kyield, kwait> {};
-	struct keywords : sor<jump_key, vcontext, ktrue, kfalse, kas, kuse, kimpl, kmod,				// This is mostly in-case I want to short-cut var-checking at some point
-		kwhile, kin, kfor, kelse, kelsif, kif, kmatch, kloop, kdo, kmut> {};
+	struct keywords : sor<kdo, kelsif, kelse, kin, kas, kpriv> {};														// These are the only keywords that can exist as variables
 
 
 	/*
 	 * Identifiers
 	 */
-	 // TODO: Error if name matches a keyword (analysis? can this even happen anymore (yes, in some contexts, may be error created only)?)
 	struct var : seq<range<'a', 'z'>, star<ascii::identifier>> {};
 	struct typ_ch : range<'A', 'Z'> {};
 	struct typ : seq<typ_ch, star<ascii::identifier>> {};
@@ -231,11 +229,11 @@ namespace spero::parser::grammar {
 	struct else_case : seq<kelse, sor<mvdexpr, missing_ebody>> {};
 	struct branch : seq<if_branch, star<elsif_case>, opt<else_case>> {};
 	SENTINEL(missing_cpat);
-	// TODO: Errors produced with "=> 3" case aren't too informative (keeps saying "no '=>'")
 	struct case_pat : seq<pattern, star<comma, sor<pattern, missing_cpat>>> {};
-	// TODO: Error if no valid end character (';}\n')
 	SENTINEL(missing_arrow);
 	SENTINEL(missing_cbody);
+	// TODO: Errors produced with "=> 3" case aren't too informative (keeps saying "no '=>'")
+	// TODO: Error if no valid end character (';}\n')
 	struct _case : seq<case_pat, opt<if_core>, sor<pstr("=>"), missing_arrow>, ig_s, sor<mvexpr, missing_cbody>, opt<endc>> {};
 	SENTINEL(missing_mexpr);
 	SENTINEL(missing_brace);
@@ -314,12 +312,16 @@ namespace spero::parser::grammar {
 	/*
 	 * Statements
 	 */
-	struct mod_dec : seq<kmod, pathed_name, ig_s, opt<endc>, ig_s> {};
+	SENTINEL(missing_module);
+	struct _mod_dec : seq<pathed_name, ig_s, opt<endc, ig_s>> {};
+	struct mod_dec : seq<kmod, sor<_mod_dec, missing_module>> {};
+	//struct mod_dec : seq<kmod, pathed_name, ig_s, opt<endc>, ig_s> {};
 	SENTINEL(missing_fortype);
 	struct for_type : seq<kfor, sor<single_type, missing_fortype>> {};
 	struct impl_errchars : plus<not_at<disable<obrace>>, any> {};														// Immediate error if unexpected characters encountered
 	SENTINEL(missing_impltype);
 	SENTINEL(missing_impldef);
+	// TODO: I might make 'for_type' required
 	struct impl : seq<kimpl, sor<single_type, missing_impltype>, opt<for_type>, opt<impl_errchars>, sor<scope, missing_impldef>> {};
 	struct mul_imp : sequence<obrace, seq<ig_s, pname, ig_s>, sor<cbrace, errorbrace>> {};
 	struct at_rebind_point : seq<ig_s, sor<disable<_array>, at<kas>>> {};
@@ -328,7 +330,9 @@ namespace spero::parser::grammar {
 	struct maybe_rebind : sor<rebind, err_rebind> {};
 	SENTINEL(import_single);
 	struct imp_alias : seq<disable<pname>, if_then_else<at_rebind_point, maybe_rebind, import_single>> {};
-	struct mod_alias : seq<kuse, opt<path>, sor<mul_imp, imp_alias>> {};
+	SENTINEL(missing_import);
+	struct _mod_alias : seq<opt<path>, sor<mul_imp, imp_alias>> {};
+	struct mod_alias : seq<kuse, sor<_mod_alias, missing_import>> {};
 	SENTINEL(missing_typedef);
 	struct _type_assign : seq<equals, opt<kmut>, sor<adt_dec, arg_tuple, eps>, sor<scope, missing_typedef>> {};
 	SENTINEL(missing_type_assign);
@@ -366,14 +370,15 @@ namespace spero::parser::grammar {
 	struct valexpr : seq<opt<kmut>, sor<control, binexpr>, opt<type_inf>> {};
 	struct mvexpr : sor<in_assign, valexpr> {};
 	struct mvdexpr : seq<opt<kdo>, mvexpr> {};
-	struct statement : sor<ganot, mod_dec, mod_alias, impl, assign, seq<opt<kdo>, valexpr>> {};
-	// TODO: Error if no statement
+	struct missing_valexpr : disable<kmut> {};
+	SENTINEL(missing_valexpr2);
+	struct statement_expr : if_then_else<kdo, sor<valexpr, missing_valexpr2>, sor<valexpr, missing_valexpr>> {};
+	struct statement : sor<ganot, mod_dec, mod_alias, impl, assign, statement_expr> {};
 	SENTINEL(missing_stmt);
 	struct annotated : seq<if_then_else<plus<annotation>, sor<statement, missing_stmt>, statement>, opt<endc>> {};
-	//struct annotated : seq<star<annotation>, sor<statement, missing_stmt>, opt<endc>> {};
-	// TODO: Change to using "forward_set" gobbling (try to get as many "correct stuff" as possible, ie. "(3 4) 5")
-	struct leftovers : star<any> {};
-	struct program : seq<star<ig_s, annotated>, sor<eolf, leftovers>> {};
+	struct forward_char : sor<alpha, digit, unop, binop, one<'('>, one<'['>, one<'{'>> {};								// NOTE: I'm not sure if this is complete or not
+	struct leftovers : until<at<forward_char>, any> {};
+	struct program : until<eolf, star<ig_s, annotated>, sor<eolf, leftovers>> {};
 }
 
 #undef key
