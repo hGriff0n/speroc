@@ -19,6 +19,7 @@ namespace spero::parser::grammar {
 	#define DEFINE_BINPREC_LEVEL_OP(lvl, prev, ...) \
 		struct binary_opch##lvl : one_of<__VA_ARGS__> {}; \
 		DEFINE_BINPREC_LEVEL(lvl, prev)
+	#define SENTINEL(name) struct name : seq<eps> {}
 
 
 	/*
@@ -141,7 +142,7 @@ namespace spero::parser::grammar {
 	struct pat_tuple : opt_sequence<oparen, pattern, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
 	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut, eps> {};
 	struct pat_adt : seq<pat_tuple> {};
-	struct resolve_constants : seq<eps> {};
+	SENTINEL(resolve_constants);
 	struct pat_name_adt : seq<pathed_name, ig_s, if_then_else<at<one<'('>>, pat_adt, resolve_constants>> {};
 	struct pat_missing : until<ig, any> {};
 	struct capture : seq<capture_desc, sor<pat_tuple, pat_name_adt, pat_missing>> {};
@@ -156,7 +157,7 @@ namespace spero::parser::grammar {
 	/*
 	 * Type System
 	 */
-	struct errortype : seq<eps> {};
+	SENTINEL(errortype);
 	struct typ_view : two<'.'> {};
 	struct typ_ref : one<'&'> {};
 	struct typ_ptr : one<'*'> {};
@@ -191,7 +192,7 @@ namespace spero::parser::grammar {
 	struct gen_part : sor<type_gen, val_gen, gen_parterror> {};
 	struct _generic : sequence<obrack, gen_part, sor<cbrack, errorbrack>> {};											// Immediate error if no closing ']'
 	struct adt : seq<typ, if_then_else<at<one<'('>>, sor<tuple_type, errortype>, eps>, ig_s> {};						// NOTE: This produces two errors if a '(' is seen but no ')'
-	struct error_adt : seq<eps> {};
+	SENTINEL(error_adt);
 	struct adt_dec : seq<adt, star<bar, sor<adt, error_adt>>> {};
 	struct arg_sentinel : seq<ig_s> {};
 	struct arg_inf : seq<pstr("::"), arg_sentinel, sor<type, errortype>> {};
@@ -203,24 +204,38 @@ namespace spero::parser::grammar {
 	/*
 	 * Control Structures
 	 */
-	// TODO: Error if no mvexpr or mvdexpr (deferred)
-	struct infor : seq<kin, mvexpr, mvdexpr> {};
-	struct missing_in : seq<eps> {};
+	SENTINEL(missing_gen);
+	SENTINEL(missing_fbody);
+	struct infor : seq<kin, sor<mvexpr, missing_gen>, sor<mvdexpr, missing_fbody>> {};
+	SENTINEL(missing_in);
+	SENTINEL(missing_pat);
 	// TODO: Look into allowing "for k, v in map ..." syntax
-	struct forl : seq<kfor, pattern, sor<infor, missing_in>> {};														// Immediate error if 'in' not used
+	struct forl : seq<kfor, if_then_else<pattern, sor<infor, missing_in>, missing_pat>> {};								// Immediate error if 'in' not used
+	SENTINEL(missing_wtest);
+	SENTINEL(missing_wbody);
+	struct whilel : seq<kwhile, sor<mvexpr, missing_wtest>, sor<mvdexpr, missing_wbody>> {};
+	SENTINEL(missing_lbody);
+	struct loop : seq<kloop, sor<mvdexpr, missing_lbody>> {};
+
 	// TODO: Error if no mvexpr (deferred)
-	struct whilel : seq<kwhile, mvexpr, mvdexpr> {};
-	// TODO: Error if no mvexpr (deferred)
-	struct loop : seq<kloop, mvdexpr> {};
-	// TODO: Error if no mvexpr (deferred)
+	SENTINEL(missing_itest);
+	struct _if_core : seq<kif, sor<mvexpr, missing_itest>> {};
 	struct if_core : seq<kif, mvexpr> {};
 	// TODO: Error if no mvexpr (deferred)
+	SENTINEL(missing_ibody);
+	struct _if_branch : seq<if_core, sor<mvdexpr, missing_ibody>> {};
 	struct if_branch : seq<if_core, mvdexpr> {};
-	// TODO: Error if 'elseif' used (immediate)
 	// TODO: Error if no mvexpr (deferred)
-	struct elsif_case : seq<kelsif, mvexpr, mvdexpr> {};
+	SENTINEL(missing_eitest);
+	SENTINEL(missing_eibody);
+	struct elseif_key : key("elseif") {};
+	struct _elsif_case : seq<sor<kelsif, elseif_key>, sor<mvexpr, missing_eitest>, sor<mvdexpr, missing_eibody>> {};
+	struct elsif_case : seq<sor<kelsif, elseif_key>, mvexpr, mvdexpr> {};
 	// TODO: Error if no mvexpr (deferred)
+	SENTINEL(missing_ebody);
+	struct _else_case : seq<kelse, sor<mvdexpr, missing_ebody>> {};
 	struct else_case : seq<kelse, mvdexpr> {};
+
 	struct branch : seq<if_branch, star<elsif_case>, opt<else_case>> {};
 	struct case_pat : seq<pattern, star<comma, pattern>> {};
 	// TODO: Error if no '=>' used (deferred)
@@ -229,13 +244,16 @@ namespace spero::parser::grammar {
 	// TODO: Error if no opening '{' (immediate-deferred)
 	struct matchs : seq<kmatch, mvexpr, obrace, star<_case>, sor<cbrace, errorbrace>> {};								// Immediate error if no closing '}', no case statements
 	struct jump : seq<jump_key, opt<mvexpr>> {};
+	
 	struct control : sor<matchs, forl, whilel, branch, jump, loop> {};
+
 	struct dotloop : seq<kloop> {};
-	// TODO: Error if no mvexpr (deferred)
-	struct dotwhile : seq<kwhile, mvexpr> {};
-	// TODO: Error if no 'mvexpr' (deferred)
-	struct dot_infor : seq<kin, mvexpr> {};
-	struct dotfor : seq<kfor, pattern, sor<dot_infor, missing_in>> {};													// Errors: see 'forl'
+	struct dotwhile : seq<kwhile, sor<mvexpr, missing_wtest>> {};
+	struct dot_infor : seq<kin, sor<mvexpr, missing_gen>> {};
+	SENTINEL(missing_dotpat);
+	struct dotfor : seq<kfor, if_then_else<pattern, sor<dot_infor, missing_in>, missing_dotpat>> {};					// Errors: see 'forl'
+
+	// TODO: Do I need to add 'error if missing ...' here or is that handled automatically ???
 	struct dotif : seq<if_core> {};
 	struct dotbranch : seq<dotif, star<elsif_case>, opt<else_case>> {};
 	struct dotmatch : seq<kmatch, obrace, star<_case>, sor<cbrace, errorbrace>> {};										// Errors: see 'matchs'
@@ -284,7 +302,7 @@ namespace spero::parser::grammar {
 	struct pathed_var : sor<pathed_name, op_var> {};
 	struct var_val : seq<pathed_var, type_const_tail, ig_s> {};
 	struct fncall : seq<sor<atom, var_val>, star<call>> {};
-	struct indexeps : seq<eps> {};
+	SENTINEL(indexeps);
 	// TODO: Error if '.' and no fncall (deferred)
 	struct index_cont : seq<indexeps, fncall, star<dot, fncall>> {};
 	// TODO: Error if '.' and no dot_ctrl or index_cont (deferred)
@@ -306,10 +324,10 @@ namespace spero::parser::grammar {
 	struct impl : seq<kimpl, single_type, opt<for_type>, opt<impl_errchars>, scope> {};
 	struct mul_imp : sequence<obrace, seq<ig_s, pname, ig_s>, sor<cbrace, errorbrace>> {};
 	struct at_rebind_point : seq<ig_s, sor<disable<_array>, at<kas>>> {};
-	struct err_rebind : seq<eps> {};
+	SENTINEL(err_rebind);
 	struct rebind : seq<kas, path_part> {};
 	struct maybe_rebind : sor<rebind, err_rebind> {};
-	struct import_single : seq<eps> {};
+	SENTINEL(import_single);
 	struct imp_alias : seq<disable<pname>, if_then_else<at_rebind_point, maybe_rebind, import_single>> {};
 	struct mod_alias : seq<kuse, opt<path>, sor<mul_imp, imp_alias>> {};
 	// TODO: Error if '=' not used (immediate)
@@ -365,3 +383,4 @@ namespace spero::parser::grammar {
 #undef key
 #undef DEFINE_BINPREC_LEVEL
 #undef DEFINE_BINPREC_LEVE_OP
+#undef SENTINEL

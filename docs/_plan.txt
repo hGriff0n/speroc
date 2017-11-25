@@ -35,6 +35,8 @@ Current Project Plan
 	    Update 'grammar.md' to reflect grammar
       Make sure documentation of ast nodes is up-to-date and helpful
 	Syntax Improvement Considerations
+	  Have all keywords push a token on the stack (for reporting consistent locations in error messages)
+	  Should the "elsif not elseif" log be a warning (must fail the elsif branching grammar if so)
 	  Enable "3.return.if true" as a rewording of "if true return 3"
 	  Look into allowing generics to have default values (old grammar had this for ValueGeneric only)
 	  Look into allowing "mut let i=0 in i" instead of "mut {let i=0 in i}" from `mvexpr`

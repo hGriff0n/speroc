@@ -598,33 +598,92 @@ namespace spero::parser::actions {
 	// Control
 	//
 	RULE(missing_in) {
-		// stack: "for" pattern
+		// stack: "for" pattern | error
 		POP(Pattern);
 		auto key = POP(Token);
 		state.log(compiler::ID::err, "Missing keyword `in` <for loop at {}>", key->loc);
-
-		// TODO: Need to push a valexpr on the stack to prevent errors
+		PUSH_NODE(ValError);
 		// stack: 
 	} END;
+	RULE(missing_gen) {
+		// stack: "for" _
+		auto loc = (*(s.rbegin() + 1))->loc;
+		state.log(compiler::ID::err, "Missing loop generator expression <for at {}>", loc);
+		PUSH_NODE(ValError);
+		// stack: "for" _ error
+	} END;
+	RULE(missing_fbody) {
+		// stack: "for" _ _
+		auto loc = (*(s.rbegin() + 2))->loc;
+		state.log(compiler::ID::err, "Missing loop body expression <for at {}>", loc);
+		PUSH_NODE(ValError);
+		// stack: "for" _ _ error
+	} END;
+	RULE(missing_pat) {
+		// stack: "for" _
+		POP(Token);						// Pop extraneous token from failed capture_desc
+		auto loc = POP(Token)->loc;
+		state.log(compiler::ID::err, "Missing decomoposition pattern <for at {}>", loc);
+		PUSH_NODE(ValError);
+		// stack: error
+	} END;
 	RULE(infor) {
-		// stack: "for" pattern gen body
+		// stack: "for" pattern (gen | error) (body | error)
 		auto body = POP(ValExpr);
 		auto generator = POP(ValExpr);
 		auto pat = POP(Pattern);
 		POP(Token);
-		PUSH(For, std::move(pat), std::move(generator), std::move(body));
-		// stack: for
+
+		// Push the completed for loop only if every sub-part completed successfully
+		if (!util::is_type<ast::ValError>(body) && !util::is_type<ast::ValError>(generator)) {
+			PUSH(For, std::move(pat), std::move(generator), std::move(body));
+		} else {
+			PUSH_NODE(ValError);
+		}
+		// stack: for | error
+	} END;
+	RULE(missing_wtest) {
+		// stack: 
+		state.log(compiler::ID::err, "Missing loop test expression <while at {}>", LOCATION);
+		PUSH_NODE(ValError);
+		// stack: error
+	} END;
+	RULE(missing_wbody) {
+		// stack: _
+		auto loc = (*s.rbegin())->loc;
+		state.log(compiler::ID::err, "Missing loop body expression <while at {}>", loc);
+		PUSH_NODE(ValError);
+		// stack: _ error
 	} END;
 	RULE(whilel) {
-		// stack: test body
+		// stack: (test | error) (body | error)
 		auto body = POP(ValExpr);
-		PUSH(While, POP(ValExpr), std::move(body));
-		// stack: while
+		auto test = POP(ValExpr);
+
+		if (!util::is_type<ast::ValError>(body) && !util::is_type<ast::ValError>(test)) {
+			PUSH(While, std::move(test), std::move(body));
+		} else {
+			PUSH_NODE(ValError);
+		}
+		// stack: loop | error
+	} END;
+	RULE(missing_lbody) {
+		// stack:
+		// TODO: Push "loop" token on stack so that I can extract the correct location information
+		state.log(compiler::ID::err, "Missing loop body expression <loop at {}>", LOCATION);
+		PUSH_NODE(ValError);
+		// stack: error
 	} END;
 	RULE(loop) {
-		// stack: valexpr
-		PUSH(Loop, POP(ValExpr));
-		// stack: loop
+		// stack: valexpr | error
+		if (!util::is_type<ast::ValError>(s.back())) {
+			PUSH(Loop, POP(ValExpr));
+		}
+		// stack: loop | error
+	} END;
+
+	RULE(elseif_key) {
+		state.log(compiler::ID::err, "Invalid keyword: Use 'elsif' instead <branch at {}>", LOCATION);
 	} END;
 	RULE(elsif_case) {
 		// stack: IfBranch test body
@@ -645,6 +704,7 @@ namespace spero::parser::actions {
 		PUSH(IfElse, std::move(ifs), std::move(_else_));
 		// stack: IfElse
 	} END;
+
 	RULE(case_pat) {
 		// stack: <T> pattern*
 		auto pats = util::popSeq<ast::Pattern>(s);
@@ -684,17 +744,38 @@ namespace spero::parser::actions {
 	} END;
 	INHERIT(dotloop, loop);
 	RULE(dotwhile) {
-		// stack: body test
+		// stack: body (test | error)
 		auto test = POP(ValExpr);
-		PUSH(While, std::move(test), POP(ValExpr));
+
+		if (!util::is_type<ast::ValError>(test)) {
+			PUSH(While, std::move(test), POP(ValExpr));
+		} else {
+			s.pop_back();
+			PUSH_NODE(ValError);
+		}
 		// stack: while
 	} END;
+	RULE(missing_dotpat) {
+		// stack: body "for" _
+		POP(Token);						// Pop off extraneous token from capture_desc
+		POP(Token);
+		auto loc = POP(ValExpr)->loc;
+		state.log(compiler::ID::err, "Missing decomoposition pattern <for at {}>", loc);
+		PUSH_NODE(ValError);
+		// stack: error
+	} END;
 	RULE(dot_infor) {
-		// stack: body "for" pattern gen
+		// stack: body "for" pattern (gen | error)
 		auto generator = POP(ValExpr);
 		auto pattern = POP(Pattern);
 		POP(Token);
-		PUSH(For, std::move(pattern), std::move(generator), POP(ValExpr));
+
+		if (!util::is_type<ast::ValError>(generator)) {
+			PUSH(For, std::move(pattern), std::move(generator), POP(ValExpr));
+		} else {
+			s.pop_back();
+			PUSH_NODE(ValError);
+		}
 		// stack: for
 	} END;
 	RULE(dotif) {
