@@ -145,6 +145,10 @@ namespace spero::parser::actions {
 		PUSH(Block, std::move(vals));
 		// stack: block
 	} END;
+	RULE(missing_texpr) {
+		state.log(compiler::ID::err, "Missing tuple item indicated by ',' <tuple at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
 	RULE(tuple) {
 		// stack: symbol valexpr* error?
 		auto err = POP(CloseSymbolError);
@@ -158,6 +162,10 @@ namespace spero::parser::actions {
 
 		PUSH(Tuple, std::move(vals));
 		// stack: tuple
+	} END;
+	RULE(missing_aexpr) {
+		state.log(compiler::ID::err, "Missing array item indicated by ',' <array at {}>", LOCATION);
+		PUSH_NODE(ValError);
 	} END;
 	RULE(_array) {
 		// stack: {} valexpr*
@@ -173,6 +181,12 @@ namespace spero::parser::actions {
 		PUSH(Array, std::move(vals));
 		// stack: array
 	} END;
+	RULE(missing_lexpr) {
+		// stack: tuple
+		state.log(compiler::ID::err, "Missing function body indicated by '->' <lambda at {}>", s.back()->loc);
+		PUSH_NODE(ValError);
+		// stack: tuple error
+	} END;
 	RULE(lambda) {
 		// stack: tuple expr
 		auto body = POP(ValExpr);
@@ -181,6 +195,13 @@ namespace spero::parser::actions {
 	} END;
 	RULE(fwd_dot) {
 		PUSH(Future, true);
+	} END;
+	RULE(missing_dexpr) {
+		// stack: future
+		state.log(compiler::ID::err, "Missing forwarded function body <dotfn at {}>", POP(Ast)->loc);
+		s.pop_back();						// Pop (TODO: ?) from the stack
+		PUSH_NODE(ValError);
+		// stack: error
 	} END;
 
 
@@ -228,6 +249,9 @@ namespace spero::parser::actions {
 			}
 		}
 		// stack: Path
+	} END;
+	RULE(missing_pat_tup) {
+		state.log(compiler::ID::err, "Missing pattern item indicated by ',' <pat_tuple at {}>", LOCATION);
 	} END;
 	RULE(pat_tuple) {
 		// stack: {} pattern* error?
@@ -366,6 +390,9 @@ namespace spero::parser::actions {
 			}
 		}
 		// stack: type
+	} END;
+	RULE(missing_type) {
+		state.log(compiler::ID::err, "Missing type item indicated by ',' <tuple_type at {}>", LOCATION);
 	} END;
 	RULE(tuple_type) {
 		// stack: {} type* error?
@@ -577,6 +604,9 @@ namespace spero::parser::actions {
 		}
 		PUSH(Argument, POP(BasicBinding), std::move(typ));
 		// stack: arg
+	} END;
+	RULE(missing_arg) {
+		state.log(compiler::ID::err, "Missing arg item indicated by ',' <arg_tuple at {}>", LOCATION);
 	} END;
 	RULE(arg_tuple) {
 		// stack: {} arg* error?
@@ -879,12 +909,15 @@ namespace spero::parser::actions {
 		}
 		// stack: FnCall | Var | TypeExt
 	} END;
-
 	RULE(indexeps) {
 		// stack: expr
 		s.emplace_back(nullptr);
 		std::iter_swap(std::rbegin(s), std::rbegin(s) + 1);
 		// stack: {} expr
+	} END;
+	RULE(missing_fncall) {
+		state.log(compiler::ID::err, "Missing fncall indicated by opening '.' <index at {}>", s.back()->loc);
+		PUSH_NODE(ValError);
 	} END;
 	RULE(index_cont) {
 		// stack: {} expr*
@@ -893,6 +926,12 @@ namespace spero::parser::actions {
 		PUSH(Index, std::move(exprs));
 		// stack: index
 	} END;
+	RULE(missing_index) {
+		auto val = POP(ValExpr);
+		s.pop_back();						// Pop leftover (TODO: ?) from the stack
+		state.log(compiler::ID::err, "Missing index/dot_ctrl indicated by opening '.' <index at {}>", val->loc);
+		s.emplace_back(std::move(val));
+	} END;
 	RULE(unopcall) {
 		// stack: bind expr
 		auto expr = POP(ValExpr);
@@ -900,6 +939,12 @@ namespace spero::parser::actions {
 
 		PUSH(UnOpCall, std::move(expr), std::move(bind));
 		// stack: unexpr
+	} END;
+	RULE(missing_unexpr) {
+		// stack: bind
+		state.log(compiler::ID::err, "Missing valexpr body indicated by unary operator <unop at {}>", s.back()->loc);
+		PUSH_NODE(ValError);
+		// stack: bind error
 	} END;
 
 
@@ -1001,14 +1046,46 @@ namespace spero::parser::actions {
 		}
 		// stack: VarAssign | in
 	} END;
-	RULE(in_assign) {
+	RULE(missing_invexpr) {
+		// stack: vis pat gen? type? val
+		state.log(compiler::ID::err, "Missing bound scoped expression <in_asign at {}>", s.back()->loc);
+		PUSH_NODE(ValError);
+		// stack: vis pat gen? type? val error
+	} END;
+	RULE(missing_asexpr) {
+		// stack: vis pat gen? type?
+		state.log(compiler::ID::err, "Missing assignment value expression <in_asign at {}>", s.back()->loc);
+		PUSH_NODE(ValError);
+		PUSH_NODE(ValError);
+		// stack: vis pat gen? type? error error
+	} END;
+	RULE(missing_inexpr) {
+		// stack: vis pat gen? type? val
+		state.log(compiler::ID::err, "Missing scoping operator 'in' <in_asign at {}>", s.back()->loc);
+		PUSH_NODE(ValError);
+		// stack: vis pat gen? type? val error
+	} END;
+	RULE(missing_assignment) {
+		// stack: vis pat gen? type?
+		state.log(compiler::ID::err, "Missing assignment operator '=' <in_asign at {}>", s.back()->loc);
+		PUSH_NODE(ValError);
+		PUSH_NODE(ValError);
+		// stack: vis pat gen? type? error error
+	} END;
+	RULE(missing_aspat) {
+		// stack: vis
+		state.log(compiler::ID::err, "Missing decomoposition pattern <in_asign at {}>", POP(Token)->loc);
+		PUSH_NODE(ValError);
+		// stack: error
+	} END;
+	RULE(_in_assign) {
 		// stack: vis pat gen? type? val expr
 		auto context = POP(ValExpr);
 		action<grammar::asgn_val>::apply(in, s, state);
 		PUSH(InAssign, POP(VarAssign), std::move(context));
 		// stack: InAssign
 	} END;
-	INHERIT(asgn_in, in_assign);
+	INHERIT(asgn_in, _in_assign);
 	RULE(_interface) {
 		// stack: (vis pat gen? type) | varasgn
 		if (!util::at_node<ast::VarAssign>(s)) {

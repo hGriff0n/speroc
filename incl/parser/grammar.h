@@ -39,8 +39,8 @@ namespace spero::parser::grammar {
 	struct one_of : sor<one<chs>...> {};
 	template<class Rule, char... chs>
 	struct _sor : sor<one<chs>..., Rule> {};
-	template<class Odelim, class Rule, class Cdelim, class Sep = comma>
-	struct opt_sequence : seq<Odelim, opt<Rule, star<Sep, Rule>>, Cdelim> {};
+	template<class Odelim, class Rule, class Cdelim, class Error = eps, class Sep = comma>
+	struct opt_sequence : seq<Odelim, opt<Rule, star<Sep, sor<Rule, Error>>>, Cdelim> {};
 	template<class Odelim, class Rule, class Cdelim, class Sep = comma>
 	struct sequence : seq<Odelim, Rule, star<Sep, Rule>, Cdelim> {};
 
@@ -139,7 +139,8 @@ namespace spero::parser::grammar {
 	struct pathed_name : seq<path, disable<path_part>> {};
 	struct typname : seq<pathed_name> {};
 	struct pat_any : disable<plambda> {};
-	struct pat_tuple : opt_sequence<oparen, pattern, sor<cparen, errorparen>> {};										// Immediate error if no closing ')'
+	SENTINEL(missing_pat_tup);
+	struct pat_tuple : opt_sequence<oparen, pattern, sor<cparen, errorparen>, missing_pat_tup> {};						// Immediate error if no closing ')'
 	struct capture_desc : sor<seq<one<'&'>, ig_s, opt<kmut>>, kmut, eps> {};
 	struct pat_adt : seq<pat_tuple> {};
 	SENTINEL(resolve_constants);
@@ -164,7 +165,8 @@ namespace spero::parser::grammar {
 	struct ptr_styling : sor<typ_view, typ_ref, typ_ptr> {};
 	struct single_type : seq<typname, ig_s> {};
 	struct ref_type : seq<single_type, opt<ptr_styling, ig_s>> {};
-	struct tuple_type : opt_sequence<oparen, type, sor<cparen, errorparen>> {};											// Immediate error if no closing ')'
+	SENTINEL(missing_type);
+	struct tuple_type : opt_sequence<oparen, type, sor<cparen, errorparen>, missing_type> {};							// Immediate error if no closing ')'
 	struct fn_type : seq<pstr("->"), ig_s, sor<type, errortype>> {};
 	struct tuple_fn_type : seq<tuple_type, opt<fn_type>> {};
 	struct mut_type : seq<opt<kmut>, sor<tuple_fn_type, ref_type>> {};
@@ -197,7 +199,8 @@ namespace spero::parser::grammar {
 	struct arg_sentinel : seq<ig_s> {};
 	struct arg_inf : seq<pstr("::"), arg_sentinel, sor<type, errortype>> {};
 	struct arg : seq<var, ig_s, opt<arg_inf>> {};
-	struct arg_tuple : opt_sequence<oparen, arg, sor<cparen, errorparen>> {};											// Immediate error if no closing ')'
+	SENTINEL(missing_arg);
+	struct arg_tuple : opt_sequence<oparen, arg, sor<cparen, errorparen>, missing_arg> {};								// Immediate error if no closing ')'
 	struct anon_type : seq<pstr("::"), ig_s, scope> {};
 
 
@@ -267,15 +270,15 @@ namespace spero::parser::grammar {
 	struct lit : sor<binary, hex, decimal, _char, string, kfalse, ktrue> {};
 	struct pat_lit : seq<lit> {};
 	struct scope : seq<obrace, star<statement>, sor<cbrace, errorbrace>> {};											// Immediate error if no closing '}'
-	// TODO: Error if ',' and no mvexpr
-	struct tuple : opt_sequence<oparen, mvexpr, sor<cparen, errorparen>> {};											// Immediate error if no closing ')'
-	// TODO: Error if ',' and no mvexpr
-	struct _array : opt_sequence<obrack, mvexpr, sor<cbrack, errorbrack>> {};											// Immediate error if no closing ']'
-	// TODO: Error if no mvexpr used
-	struct lambda : seq<pstr("->"), ig_s, mvexpr> {};
+	SENTINEL(missing_texpr);
+	struct tuple : opt_sequence<oparen, mvexpr, sor<cparen, errorparen>, missing_texpr> {};								// Immediate error if no closing ')'
+	SENTINEL(missing_aexpr);
+	struct _array : opt_sequence<obrack, mvexpr, sor<cbrack, errorbrack>, missing_aexpr> {};							// Immediate error if no closing ']'
+	SENTINEL(missing_lexpr);
+	struct lambda : seq<pstr("->"), ig_s, sor<mvexpr, missing_lexpr>> {};
 	struct fwd_dot : seq<dot> {};
-	// TODO: Error if no dot_ctrl or index_cont
-	struct dot_fn : seq<fwd_dot, sor<dot_ctrl, index_cont>> {};
+	SENTINEL(missing_dexpr);
+	struct dot_fn : seq<fwd_dot, sor<dot_ctrl, index_cont, missing_dexpr>> {};
 	struct fn_tuple : sor<seq<tuple, opt<lambda>>, dot_fn> {};
 	struct atom : sor<fn_tuple, _array, lit, plambda, scope> {};
 
@@ -283,10 +286,15 @@ namespace spero::parser::grammar {
 	/*
 	 * Expressions
 	 */
-	// TODO: Error if '=' not used, 'in' not used
-	// TODO: Error if wrong keyword used
-	// TODO: Error if exprs not used
-	struct in_assign : seq<vcontext, assign_pat, opt<_generic>, opt<type_inf>, equals, valexpr, kin, mvexpr> {};
+	SENTINEL(missing_invexpr);
+	struct in_scoped_expr : seq<kin, sor<mvexpr, missing_invexpr>> {};
+	SENTINEL(missing_asexpr);
+	SENTINEL(missing_inexpr);
+	struct assignment : seq<equals, if_then_else<valexpr, sor<in_scoped_expr, missing_inexpr>, missing_asexpr>> {};
+	SENTINEL(missing_assignment);
+	SENTINEL(missing_aspat);
+	struct _in_assign : seq<opt<_generic>, opt<type_inf>, sor<assignment, missing_assignment>> {};
+	struct in_assign : seq<vcontext, if_then_else<assign_pat, _in_assign, missing_aspat>> {};
 	struct call : enable<tuple> {};
 	struct type_const_tail : opt<disable<call>, opt<anon_type>> {};
 	struct op_var : seq<binop> {};
@@ -294,12 +302,12 @@ namespace spero::parser::grammar {
 	struct var_val : seq<pathed_var, type_const_tail, ig_s> {};
 	struct fncall : seq<sor<atom, var_val>, star<call>> {};
 	SENTINEL(indexeps);
-	// TODO: Error if '.' and no fncall
-	struct index_cont : seq<indexeps, fncall, star<dot, fncall>> {};
-	// TODO: Error if '.' and no dot_ctrl or index_cont
-	struct index : seq<fncall, opt<dot, sor<dot_ctrl, index_cont>>> {};
-	// TODO: Error if unop and no index
-	struct unopcall : seq<unop, index> {};
+	SENTINEL(missing_fncall);
+	struct index_cont : seq<indexeps, fncall, star<dot, sor<fncall, missing_fncall>>> {};
+	SENTINEL(missing_index);
+	struct index : seq<fncall, opt<dot, sor<dot_ctrl, index_cont, missing_index>>> {};
+	SENTINEL(missing_unexpr);
+	struct unopcall : seq<unop, sor<index, missing_unexpr>> {};
 	struct unexpr : sor<unopcall, index> {};
 
 
@@ -358,9 +366,8 @@ namespace spero::parser::grammar {
 	 */
 	// TODO: Error if no control or binexpr
 	struct valexpr : seq<opt<kmut>, sor<control, binexpr>, opt<type_inf>> {};
-	// TODO: Error if unexpected keyword
 	// TODO: Error if no valexpr or in_assign
-	struct mvexpr : sor<valexpr, in_assign> {};
+	struct mvexpr : sor<in_assign, valexpr> {};
 	struct mvdexpr : seq<opt<kdo>, mvexpr> {};
 	struct statement : sor<ganot, mod_dec, mod_alias, impl, assign, seq<opt<kdo>, valexpr>> {};
 	// TODO: Error if no statement
