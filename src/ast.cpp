@@ -300,8 +300,8 @@ namespace spero::compiler::ast {
 		v.visitAdtPattern(*this);
 	}
 	DEF_PRINTER(AdtPattern) {
-		s << std::string(buf, ' ') << context << "ast.AdtPattern";
-		name->prettyPrint(s, 1, "(type=") << ')';
+		s << std::string(buf, ' ') << context << "ast.AdtPattern (capture=" << cap._to_string();
+		name->prettyPrint(s, 0, ", type=") << ')';
 		if (args) {
 			args->prettyPrint(s << '\n', buf + 2);
 		}
@@ -402,7 +402,13 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.FunctionType";
 
 		args->prettyPrint(s << '\n', buf + 2, "args=");
-		return ret->prettyPrint(s << '\n', buf + 2, "ret=");
+		if (ret) {
+			ret->prettyPrint(s << '\n', buf + 2, "ret=");
+		} else {
+			s << '\n' << std::string(buf + 2, ' ') << "ret=<error: missing>";
+		}
+		
+		return s;
 	}
 
 	AndType::AndType(ptr<Type> typs, Location loc)
@@ -414,7 +420,11 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.AndType";
 
 		for (auto&& t : elems) {
-			t->prettyPrint(s << '\n', buf + 2);
+			if (t) {
+				t->prettyPrint(s << '\n', buf + 2);
+			} else {
+				s << '\n' << std::string(buf + 2, ' ') << "<error: missing>";
+			}
 		}
 
 		return s;
@@ -969,6 +979,14 @@ namespace spero::compiler::ast {
 		return s << std::string(buf, ' ') << context << "ast.Error";
 	}
 
-	ImportError::ImportError(Location loc) : ModRebindImport{ loc } {}
-	void ImportError::accept(Visitor&) {}
+	TypeError::TypeError(Location loc) : SourceType{ nullptr, loc } {}
+	DEF_PRINTER(TypeError) {
+		return s << std::string(buf, ' ') << context << "ast.Error";
+	}
+
+	ScopeError::ScopeError(Location loc) : Block{ {}, loc } {}
+	DEF_PRINTER(ScopeError) {
+		return s << std::string(buf, ' ') << context << "ast.Error";
+	}
+
 }

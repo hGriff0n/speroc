@@ -41,7 +41,6 @@ namespace spero::compiler::ast {
 
 		// Names
 		DEF_VISIT(BasicBinding);
-		DEF_VISIT(QualifiedBinding);
 		DEF_VISIT(Pattern);
 		DEF_VISIT(TuplePattern);
 		DEF_VISIT(VarPattern);

@@ -19,18 +19,9 @@ Current Project Plan
 	Add ability to "save state", make into true 'repl'
   Grammar changes and modifications
 	Add in syntax error checking and handling
-	  Write rules/actions to report missing keywords/symbols
-	    alias, type_assign, asgn_val, elsif_case, in_assign
-	  Modify old code to use 'ValError' if possible
-	  Find a solution to allow for 'ValError' type nodes to be considered as 'T' nodes
-	    Can't use multiple inheritance of Ast types
-		  Maybe I can have a set of type tags for the types that I need this behavior from
-		  The relevant types would inherit from 'Ast' and the tag type (inheriting nothing from the tag)
-	  Adapt rules/grammar to handle these new capabilities
-	Fix issues with grammar
-	  "match foo { 3 => 3 }" throws up an error with matching the '}' from a scope
-	  "for a in a a" crashes the compiler because it's trying to report an error
-	  Need to enable "3.return.if true" as a rewording of "if true return 3"
+	  Find a better solution for error nodes than the '*Error' types
+	  Possibly replace some 'ValError' with 'StmtError' (depending on previous solution)
+	  Get compilation to produce correct binaries again
 	Codebase Updates
 	  Update to VS 15.3 capabilities
         "if (auto a = ...; ...)"
@@ -39,19 +30,25 @@ Current Project Plan
 	    Update 'grammar.md' to reflect grammar
       Make sure documentation of ast nodes is up-to-date and helpful
 	Syntax Improvement Considerations
+	  Have all keywords push a token on the stack (for reporting consistent locations in error messages)
+	    not too helpful if I'm not able to accurately access the token (ie. don't know where it is)
+	  Should the "elsif not elseif" log be a warning (must fail the elsif branching grammar if so)
+	  Enable "3.return.if true" as a rewording of "if true return 3"
 	  Look into allowing generics to have default values (old grammar had this for ValueGeneric only)
 	  Look into allowing "mut let i=0 in i" instead of "mut {let i=0 in i}" from `mvexpr`
 	  Remove "static" keyword and adding in `<private>` keyword (just reserver `private` for now)
 	    static would be replaced by the '@static' annotation
 	  Look at modifying the grammar to allow for `anon_type` to be attached to `var_val`/`atom` calls (for metaprogramming)
 	  Look into whether ptr styling can be forced to directly attach to the type
-	  Allow for variables after type chains (to account for static variables/methods)
-          Change binexpr to be left-associative (ie. "3 + 3 + 4" => "{3 + 3} + 4")
-            Not sure if it's currently this way or not
+	  Change binexpr to be left-associative (ie. "3 + 3 + 4" => "{3 + 3} + 4")
+        Not sure if it's currently this way or not
+	  Extend the abilities of type extension syntax to allow creation of new types
+	    Basically remove the requirement to have "Foo() :: {}", instead allowing "Foo :: {}"
+	  Think about whether the generics system would require a rework to suppot explicit specialization (particularly for variables)
 	Language Considerations
-	  Right now I force using 'as' if a type is generic specialized
-	    I do this by checking whether the last item is an array, however this can apply to any part of the path
-		Should probably generalize this to an analysis step
+	  Can we generalize the usage of 'as' for rebinding generics?
+	    Right now, I force the usage of 'as' iff a type is generic specialized
+		However, it would probably be better to not force it, but report the error in the action callback
 	  Figure out a way to apply annotations to tuples
 	    Possibly consider not attaching annotations directly at parse time (would allow for "@<var>!" syntax)
 	  Figure out contexts to interpret "a :: T" as a type-check and not an annotation
@@ -59,9 +56,7 @@ Current Project Plan
 	    Utilize the same analysis pass that converts `plambda` to function declaration
 	  Figure out how generic parameters are introduced/constrained in "impl"
   Add error/exception handling and reporting
-	Adapt the parser and grammar to report errors
-	  Look into utilising the 'raise'/'try_catch'/'try_catch_type' rules to add in error handling
-	    A way to get custom error messages is to create custom rules specifically for these cases (that throw the exceptions)
+    Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
 	Move 'compiler' exceptions from log-level to error-level
 	  Add in 'error indices' and automatic message population capbilities
 	Add in 'xor' code to ensure that '%eax' has the correct value after 'set..' is used
