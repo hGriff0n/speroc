@@ -26,7 +26,7 @@ namespace spero::parser::grammar {
 	 * Forward declarations
 	 */
 	struct mvdexpr;		struct mvexpr;		struct _array;
-	struct tuple;		struct statement;	struct assign_pat;
+	struct tuple;		struct annotated;	struct assign_pat;
 	struct index_cont;	struct scope;		struct pat_lit;
 	struct pattern;		struct type;		struct valexpr;
 
@@ -267,7 +267,7 @@ namespace spero::parser::grammar {
 	struct string : seq<oquote, str_body, sor<one<'"'>, errorquote>, ig_s> {};											// Immediate error if no closing '"'
 	struct lit : sor<binary, hex, decimal, _char, string, kfalse, ktrue> {};
 	struct pat_lit : seq<lit> {};
-	struct scope : seq<obrace, star<statement>, sor<cbrace, errorbrace>> {};											// Immediate error if no closing '}'
+	struct scope : seq<obrace, star<annotated>, sor<cbrace, errorbrace>> {};											// Immediate error if no closing '}'
 	SENTINEL(missing_texpr);
 	struct tuple : opt_sequence<oparen, mvexpr, sor<cparen, errorparen>, missing_texpr> {};								// Immediate error if no closing ')'
 	SENTINEL(missing_aexpr);

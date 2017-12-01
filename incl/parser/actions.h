@@ -81,9 +81,7 @@ namespace spero::parser::actions {
 		}
 	} END;
 	RULE(decimal) {
-		auto str = in.string();
-
-		if (auto dot_pos = str.find('.'); dot_pos != std::string::npos) {
+		if (auto str = in.string(); str.find('.') != std::string::npos) {
 			PUSH(Float, str);
 		} else {
 			PUSH(Int, str);
@@ -251,9 +249,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(typname) {
 		// stack: Path
-		if (util::at_node<ast::Path>(s)) {
-			auto* node = util::view_as<ast::Path>(s.back());
-
+		if (auto* node = util::view_as<ast::Path>(s.back()); node) {
 			if (node->elems.back()->type != +ast::BindingType::TYPE) {
 				state.log(compiler::ID::err, "Expected type name, found something else <qualtyp at {}>", node->loc);
 			}
@@ -303,8 +299,7 @@ namespace spero::parser::actions {
 		bool is_ref = (in.string()[0] == '&');
 		bool is_mut = false;
 
-		if (util::at_node<ast::Token>(s)) {
-			auto* node = util::view_as<ast::Token>(s.back());
+		if (auto* node = util::view_as<ast::Token>(s.back()); node) {
 			is_mut = node->holds<ast::KeywordType>() && node->get<ast::KeywordType>() == +ast::KeywordType::MUT;
 		}
 
@@ -381,9 +376,7 @@ namespace spero::parser::actions {
 	TOKEN(typ_ptr, ast::PtrStyling::PTR);
 	RULE(single_type) {
 		// stack: Path array?
-		auto gen = POP(Array);
-
-		if (gen) {
+		if (auto gen = POP(Array); gen) {
 			PUSH(GenericType, POP(Path), std::move(gen));
 		} else {
 			PUSH(SourceType, POP(Path));
@@ -392,9 +385,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(ref_type) {
 		// stack: type ptrStyle?
-		if (util::at_node<ast::Token>(s)) {
-			auto tkn = POP(Token);
-
+		if (auto tkn = POP(Token); tkn) {
 			if (tkn->holds<ast::PtrStyling>()) {
 				util::view_as<ast::SourceType>(s.back())->_ptr = tkn->get<ast::PtrStyling>();
 			}
@@ -435,9 +426,7 @@ namespace spero::parser::actions {
 		// stack: kmut? type
 		auto typ = POP(Type);
 
-		if (util::at_node<ast::Token>(s)) {
-			auto tkn = POP(Token);
-
+		if (auto tkn = POP(Token); tkn) {
 			if (tkn->holds<ast::KeywordType>()) {
 				typ->is_mut = (tkn->get<ast::KeywordType>() == +ast::KeywordType::MUT);
 			} else {
@@ -513,8 +502,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(type_inf) {
 		// stack: type | error
-		auto err = POP(Error);
-		if (err) {
+		if (POP(Error)) {
 			state.log(compiler::ID::err, "Missing required type information <type_inf at {}>", LOCATION);
 		}
 		// stack: type?
@@ -716,7 +704,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(loop) {
 		// stack: valexpr | error
-		if (!util::is_type<ast::ValError>(s.back())) {
+		if (!util::at_node<ast::ValError>(s)) {
 			PUSH(Loop, POP(ValExpr));
 		}
 		// stack: loop | error

@@ -7,3 +7,4 @@ ipch
 _test/*tmp
 _test/*.exe
 _test/*.s
+*.vspx

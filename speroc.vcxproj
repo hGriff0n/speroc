@@ -172,7 +172,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\_readme.md" />
-    <None Include="grammar.md" />
     <None Include="LICENSE" />
     <None Include="README.md" />
     <None Include="tools\mk_readme.rb" />

@@ -20,9 +20,10 @@ namespace spero::compiler {
 }
 
 namespace spero::compiler::ast {
+
 	/*
-	* Enums and other basic types
-	*/
+	 * Enums and other basic types
+	 */
 	using Sentinel = nullptr_t;
 	BETTER_ENUM(KeywordType, char, LET, DEF, STATIC, MUT, DO,
 		MOD, USE, MATCH, IF, ELSIF, ELSE, WHILE, FOR, LOOP,
@@ -56,8 +57,7 @@ namespace spero::compiler::ast {
 	 *   value - a variant containing the actual token
 	 */
 	struct Token : Ast {
-		using token_type = std::variant<KeywordType, PtrStyling, VarianceType, RelationType,
-			VisibilityType, BindingType, CaptureType>;
+		using token_type = std::variant<KeywordType, PtrStyling, VarianceType, RelationType, VisibilityType, BindingType, CaptureType>;
 		token_type value;
 
 		template<class T, class = std::enable_if_t<can_hold_v<T, token_type>>>
@@ -68,6 +68,7 @@ namespace spero::compiler::ast {
 
 		template<class T, class=std::enable_if_t<can_hold_v<T, token_type>>>
 		bool holds() { return std::holds_alternative<T>(value); }
+
 		template<class T, class=std::enable_if_t<can_hold_v<T, token_type>>>
 		T get() { return std::get<T>(value); }
 	};
@@ -233,7 +234,9 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * TODO: Write a description
+	 * Represents a statically-sized indexable grouping of values with different types
+	 *
+	 * Extends: Sequence<ValExpr>
 	 */
 	struct Tuple : Sequence<ValExpr> {
 		Tuple(std::deque<ptr<ValExpr>>, Location);
@@ -242,6 +245,11 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
+	/*
+	 * Represents a dynamically-sized indexable grouping of values sharing the same base type
+	 *
+	 * Extends: Sequence<ValExpr>
+	 */
 	struct Array : Sequence<ValExpr> {
 		Array(std::deque<ptr<ValExpr>>, Location);
 
@@ -251,7 +259,13 @@ namespace spero::compiler::ast {
 
 
 	/*
-	 * TODO: Write a description
+	 * Represents an ordered sequence of executable expressions
+	 *   NOTE: The ordering property may depend on context (ie. in regards to types)
+	 *
+	 * Extends: Sequence<Statement, ValExpr>
+	 *
+	 * Exports:
+	 *   locals - a symbol table collecting analysed information about locally declared variables
 	 */
 	struct Block : Sequence<Statement, ValExpr> {
 		analysis::SymTable locals;
@@ -271,6 +285,8 @@ namespace spero::compiler::ast {
 	 *   forward - flag for whether the function body forwards arguments to the first expression
 	 *   args    - tuple for function binding function arguments
 	 *   body    - expression that the function evaluates
+	 *
+	 * TODO: How are arguments supposed to work with/without a scope body
 	 */
 	struct Function : ValExpr {
 		ptr<Tuple> args;
@@ -290,7 +306,7 @@ namespace spero::compiler::ast {
 	// 
 
 	/*
-	 * Represents the basic block of a Spero binding
+	 * Represents the basic block of a Spero binding. Basically just a string
 	 *
 	 * Extends: Ast
 	 *
@@ -315,13 +331,6 @@ namespace spero::compiler::ast {
 
 	/*
 	 * A piece of a fully qualified spero binding name
-	 *   This solution generalizes to allow for the chaining of types and generics
-	 *   This is important as types may have static members or even subtypes
-	 *   And generics, particularly generic types, are no exception
-	 *
-	 * NOTE: The implementation mimics alot from BasicBinding
-	 *   However the use cases are different enough that it's not worth porting
-	 *   over the full implementation of Paths to replace BasicBinding
 	 *
 	 * Extends: Ast
 	 *
@@ -342,7 +351,11 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * The fully qualified spero binding
+	 * A fully qualified spero binding. This solution encapsulates the following cases
+	 *   1) Basic bindings (ie. "foo" or "Bar")
+	 *   2) Qualified bindings (ie. "std:foo")
+	 *   3) Static type bindings (ie. "std:String:size")
+	 *   4) Generic bindings (ie. "std:Vector[Int]:size")
 	 *
 	 * Extends: Sequence<PathPart, Ast>
 	 */
@@ -407,7 +420,7 @@ namespace spero::compiler::ast {
 	 * Instance class for matching against a decomposed ADT
 	 *
 	 * Extends: PNamed
-	 *   Uses name as the ADT type to match againts
+	 *   NOTE: Uses name as the ADT type to match against
 	 *
 	 * Exports:
 	 *   args - the tuple to match values against
@@ -703,7 +716,7 @@ namespace spero::compiler::ast {
 
 	/*
 	 * Ast subtype to annotate a type constructor
-	 *   Currently empty
+	 *   TODO: Currently empty (ie. see `Adt`, `ArgTuple`)
 	 *
 	 * Extends: Ast
 	 */
@@ -733,7 +746,7 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Represents a function/constructor argument
+	 * Represents a function/constructor named argument (with type information)
 	 *
 	 * Extends: Ast
 	 *
@@ -752,7 +765,7 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Represents a simple argument tuple for a type constructor
+	 * Represents a possible argument tuple for resolution in type construction
 	 *
 	 * Extends: Constructor
 	 */
@@ -782,7 +795,7 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * An infinite loop that just repeats the body
+	 * An infinite loop that just repeats the body forever
 	 *
 	 * Extends: ValExpr
 	 *
@@ -799,7 +812,7 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Represents a basic while loop construct
+	 * Represents a basic while loop construct, loop until test is true
 	 *
 	 * Extends: Loop
 	 *
@@ -818,7 +831,8 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Represents a for loop construct
+	 * Represents a for loop construct, loop over the provided generator
+	 *   TODO: Still need to determine how this is "implemented"
 	 *
 	 * Extends: Loop
 	 *
@@ -1258,7 +1272,7 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Base node for representing all error contexts
+	 * Base node for representing some error contexts
 	 *   Provides overload of `prettyPrint` for all error classes
 	 *
 	 * Extends: Ast
@@ -1279,7 +1293,7 @@ namespace spero::compiler::ast {
 	};
 
 	/*
-	 * Temporary sentinel struct to allow for using errors as value expressions
+	 * Sentinel structs to allow for displaying "errors" in the context of other expected node types
 	 */
 	struct ValError : ValExpr {
 		ValError(Location loc);

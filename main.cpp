@@ -187,10 +187,8 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 		try {
 			parser::Stack res;
 
-			auto command = input.substr(0, 2);
-
 			// Compile a file
-			if (command == ":c") {
+			if (auto command = input.substr(0, 2); command == ":c") {
 				if (state.files().size() == 0) { state.files().push_back(""); }
 				state.files()[0] = input.substr(3);
 
@@ -204,7 +202,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 					}
 				}
 
-				// Load and parse a file
+			// Load and parse a file
 			} else if (command == ":l") {
 				if (state.files().size() == 0) { state.files().push_back(""); }
 				state.files()[0] = input.substr(3);
@@ -215,7 +213,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 					state.log(ID::err, "Parsing of the input failed");
 				}
 
-				// Modify the command line arguments
+			// Modify the command line arguments
 			} else if (command == ":a") {
 				auto args = util::split(input.substr(3), ' ');
 				argv = new char*[args.size() + 2];
@@ -229,7 +227,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 
 				state = cmd::parse(argc, argv);
 
-				// Set an interactive flag
+			// Set an interactive flag
 			} else if (command == ":s") {
 				for (auto flag : util::split(input.substr(3), ',')) {
 					flags[flag] = !flags[flag];
@@ -237,11 +235,11 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 
 				continue;
 
-				// Quit
+			// Quit
 			} else if (command == ":q") {
 				break;
 
-				// Run the interactive mode
+			// Run the interactive mode
 			} else {
 				bool failed;
 				std::tie(failed, res) = compiler::parse(input, state);

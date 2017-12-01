@@ -5,8 +5,11 @@ Libraries Used:
     cxxopts: Cmd-line parsing
     x86: Interprets strings of x86 code
 
-I am currently in the process of rewritting the parser system to incorporate error checking and handling (and also improve it's capabilities). This means that some aspects of codegen are currently unconnected at the moment.
+## Current Project Status
 
-Once these changes are fully integrated, the compiler will have basic ability to "compile" basic arithmetic operations with some simple variable usage (all of these are currently unconnected though).
+At the moment, I'm currently working through the recent update of the grammar to accomodate syntactical error checking (also performing some codebase updates).
 
-Once the error checking is fully integrated, and other error tasks are completed, the next step is to add in mutability tracking and restriction before moving on to implementing basic aspects of the type system and function definition/calling.
+Currently supported: Basic integer addition and arithmatic, Basic variables and variable usage, Variable shadowing and "revealing" in the context of scopes.
+Run 'run_tests.bat' after compilation to see which systems are hooked up.
+
+The next step is to add in mutability tracking and restriction before moving on to implementing basic aspects of the type system and function definition/calling.

@@ -198,9 +198,6 @@
     <None Include="docs\_readme.md">
       <Filter>Resource Files\description</Filter>
     </None>
-    <None Include="grammar.md">
-      <Filter>Resource Files\description</Filter>
-    </None>
     <None Include="tools\version.yaml">
       <Filter>Resource Files\tools</Filter>
     </None>
