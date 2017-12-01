@@ -25,17 +25,14 @@ Current Project Plan
 	  Figure out what the differences in syntax are (what works and what doesn't)
 	  Adapt the AsmGenerator backend to reflect these changes
 	Syntax Improvement Considerations
-	  Have all keywords push a token on the stack (for reporting consistent locations in error messages)
-	    not too helpful if I'm not able to accurately access the token (ie. don't know where it is)
-	  Enable "3.return.if true" as a rewording of "if true return 3"
-	  Look into allowing generics to have default values (old grammar had this for ValueGeneric only)
 	  Look at modifying the grammar to allow for `anon_type` to be attached to `var_val`/`atom` calls (for metaprogramming)
 	    Basically remove the requirement to have "Foo() :: {}", instead allow "Foo :: {}"
 		NOTE: This should enable easy type creation syntax (look out for possible interactions here too)
 	  Look into whether ptr styling can be forced to directly attach to the type
-	    ie. allow "Int*" but not "Int *"
-	  Think about whether the generics system would require a rework to support explicit specialization (particularly for variables)
+	    ie. allow "Int*" but not "Int *" (this is a byproduct of typename though)
+	  Rework the generics system to support explicit specialization
 	    ie. "def Array[Int, 2] = { ... }" - can't match on the '2' currently
+		Also allow generic fields to have default values (type and value generics)
 	Language Considerations
 	  Can we generalize the usage of 'as' for rebinding generics?
 	    Right now, I force the usage of 'as' iff a type is generic specialized

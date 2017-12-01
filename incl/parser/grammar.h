@@ -250,7 +250,8 @@ namespace spero::parser::grammar {
 	struct dotbranch : seq<dotif, star<elsif_case>, opt<else_case>> {};
 	struct dotmatch : seq<kmatch, sor<obrace, missing_brace>, star<_case>, sor<cbrace, errorbrace>> {};					// Errors: see 'matchs'
 	struct dotjump : seq<jump_key> {};
-	struct dot_ctrl : sor<dotloop, dotwhile, dotfor, dotbranch, dotmatch, dotjump> {};
+	struct _dot_ctrl : sor<dotjump, dotloop, dotwhile, dotfor, dotbranch, dotmatch> {};
+	struct dot_ctrl : seq<_dot_ctrl, star<dot, _dot_ctrl>> {};
 
 
 	/*
@@ -379,6 +380,7 @@ namespace spero::parser::grammar {
 	struct forward_char : sor<alpha, digit, unop, binop, one<'('>, one<'['>, one<'{'>> {};								// NOTE: I'm not sure if this is complete or not
 	struct leftovers : until<at<forward_char>, any> {};
 	struct program : seq<ig_s, until<eolf, star<ig_s, annotated>, sor<eolf, leftovers>>> {};
+
 }
 
 #undef key
