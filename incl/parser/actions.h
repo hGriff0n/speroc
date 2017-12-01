@@ -1211,6 +1211,7 @@ namespace spero::parser::actions {
 	RULE(missing_stmt) {
 		// stack:
 		state.log(compiler::ID::err, "Statement Not Found: Could not bind local annotation to statement <stmt at {}>", LOCATION);
+		// TODO: Replace with StmtError?
 		PUSH_NODE(ValError);
 		// stack: error
 	} END;

@@ -15,6 +15,8 @@
 /*
  * Implementation of compilation function
  * Defined in 'main.cpp' for reasons
+ *
+ * TODO: Move this definition to 'compiler.cpp'
  */
 bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack) {
 	using namespace spero;
@@ -75,7 +77,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	if (!state.failed() && state.produceExe()) {
 		state.logTime();
 		if (system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
-			state.log(ID::err, "Compilation of `out.s` failed");
+			state.log(ID::err, "Compilation of `{}` failed", state.output());
 		}
 		state.logTime();
 

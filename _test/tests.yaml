@@ -93,7 +93,7 @@ functions:
         fail: true
         files: [ 'func_type_err.spr' ]
     - desc: ""
-      exec: 'func_pointlness.exe'
+      exec: 'func_pointless.exe'
       compile:
         files: [ 'func_pointless.spr' ]
       tests:

@@ -378,7 +378,7 @@ namespace spero::parser::grammar {
 	struct annotated : seq<if_then_else<plus<annotation>, sor<statement, missing_stmt>, statement>, opt<endc>> {};
 	struct forward_char : sor<alpha, digit, unop, binop, one<'('>, one<'['>, one<'{'>> {};								// NOTE: I'm not sure if this is complete or not
 	struct leftovers : until<at<forward_char>, any> {};
-	struct program : until<eolf, star<ig_s, annotated>, sor<eolf, leftovers>> {};
+	struct program : seq<ig_s, until<eolf, star<ig_s, annotated>, sor<eolf, leftovers>>> {};
 }
 
 #undef key
