@@ -558,6 +558,13 @@ namespace spero::parser::actions {
 		PUSH(ValueGeneric, POP(BasicBinding), std::move(typ), rel);
 		// stack: val_gen
 	} END;
+	RULE(lit_gen) {
+		// stack: lit
+		if (auto lit = POP(ValExpr); lit) {
+			PUSH(LitGeneric, std::move(lit));
+		}
+		// stack:
+	} END;
 	RULE(gen_parterror) {
 		state.log(compiler::ID::err, "Unexpected input: Could not match spero generic \"{}\" <gen_part {}>", in.string(), LOCATION);
 	} END;

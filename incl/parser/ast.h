@@ -703,6 +703,23 @@ namespace spero::compiler::ast {
 	};
 
 	/*
+	 * Instance class for literal values being used in generic contexts
+	 *
+	 * Extends: GenericPart
+	 *
+	 * Exports:
+ 	 *   value - the literal value
+     */
+	struct LitGeneric : GenericPart {
+		ptr<ValExpr> value;
+
+		LitGeneric(ptr<ValExpr>, Location);
+
+		virtual void accept(Visitor&);
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
+	};
+
+	/*
 	 * Collection class for generic declaration information
 	 *
 	 * Extends: Sequence<GenericPart, Ast>

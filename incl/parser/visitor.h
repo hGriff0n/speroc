@@ -64,6 +64,7 @@ namespace spero::compiler::ast {
 		DEF_VISIT(GenericPart);
 		DEF_VISIT(TypeGeneric);
 		DEF_VISIT(ValueGeneric);
+		DEF_VISIT(LitGeneric);
 		DEF_VISIT(GenericArray);
 		DEF_VISIT(Constructor);
 		DEF_VISIT(Adt);

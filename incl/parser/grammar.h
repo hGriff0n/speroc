@@ -29,6 +29,7 @@ namespace spero::parser::grammar {
 	struct tuple;		struct annotated;	struct assign_pat;
 	struct index_cont;	struct scope;		struct pat_lit;
 	struct pattern;		struct type;		struct valexpr;
+	struct lit_gen;
 
 
 	/*
@@ -189,7 +190,7 @@ namespace spero::parser::grammar {
 	struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, opt<relation, sor<type, errortype>>> {};
 	struct val_gen : seq<var, ig_s, opt<relation, sor<type, errortype>>> {};
 	struct gen_parterror : until<at<sor<one<']'>, one<','>>>> {};
-	struct gen_part : sor<type_gen, val_gen, gen_parterror> {};
+	struct gen_part : sor<type_gen, val_gen, lit_gen, gen_parterror> {};
 	struct _generic : sequence<obrack, gen_part, sor<cbrack, errorbrack>> {};											// Immediate error if no closing ']'
 	struct adt : seq<typ, if_then_else<at<one<'('>>, sor<tuple_type, errortype>, eps>, ig_s> {};						// NOTE: This produces two errors if a '(' is seen but no ')'
 	SENTINEL(error_adt);
@@ -267,6 +268,7 @@ namespace spero::parser::grammar {
 	struct str_body : until<at<sor<one<'"'>, tao::pegtl::eof>>, seq<opt<one<'\\'>>, any>> {};
 	struct string : seq<oquote, str_body, sor<one<'"'>, errorquote>, ig_s> {};											// Immediate error if no closing '"'
 	struct lit : sor<binary, hex, decimal, _char, string, kfalse, ktrue> {};
+	struct lit_gen : seq<lit> {};
 	struct pat_lit : seq<lit> {};
 	struct scope : seq<obrace, star<annotated>, sor<cbrace, errorbrace>> {};											// Immediate error if no closing '}'
 	SENTINEL(missing_texpr);

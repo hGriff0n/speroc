@@ -515,6 +515,16 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
+	LitGeneric::LitGeneric(ptr<ValExpr> r, Location loc)
+		: GenericPart{ nullptr, nullptr, RelationType::NA, loc }, value{ std::move(r) } {}
+	void LitGeneric::accept(Visitor& v) {
+		v.visitLitGeneric(*this);
+	}
+	DEF_PRINTER(LitGeneric) {
+		s << std::string(buf, ' ') << context << "ast.LitGeneric";
+		return value->prettyPrint(s << '\n', buf + 2);
+	}
+
 	GenericArray::GenericArray(std::deque<ptr<GenericPart>> elems, Location loc)
 		: Sequence{ std::move(elems), loc } {}
 	void GenericArray::accept(Visitor& v) {
