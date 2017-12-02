@@ -26,9 +26,10 @@ namespace spero::parser::grammar {
 	 * Forward declarations
 	 */
 	struct mvdexpr;		struct mvexpr;		struct _array;
-	struct tuple;		struct statement;	struct assign_pat;
+	struct tuple;		struct annotated;	struct assign_pat;
 	struct index_cont;	struct scope;		struct pat_lit;
 	struct pattern;		struct type;		struct valexpr;
+	struct lit_gen;		struct lit;
 
 
 	/*
@@ -186,10 +187,18 @@ namespace spero::parser::grammar {
 	struct variance : sor<one<'+'>, one<'-'>, eps> {};
 	struct variadic : seq<pstr(".."), ig_s> {};
 	struct relation : seq<sor<pstr("::"), pstr("!:")>, ig_s> {};
-	struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, opt<relation, sor<type, errortype>>> {};
-	struct val_gen : seq<var, ig_s, opt<relation, sor<type, errortype>>> {};
+	SENTINEL(error_gentyp);
+	struct default_type : seq<one<'='>, ig_s, sor<type, error_gentyp>> {};
+	struct related_type : opt<relation, sor<type, errortype>> {};
+	 struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, sor<default_type, related_type>> {};
+	SENTINEL(error_genval);
+	//struct error_inf : seq<ig_s, two<':'>> {};																		// For if I later want to provide an error for this situation
+	struct default_val : seq<one<'='>, ig_s, sor<lit, error_genval>> {};
+	struct related_val : opt<relation, sor<type, errortype>> {};
+	struct val_gen : seq<var, ig_s, sor<default_val, related_val, eps>> {};
+
 	struct gen_parterror : until<at<sor<one<']'>, one<','>>>> {};
-	struct gen_part : sor<type_gen, val_gen, gen_parterror> {};
+	struct gen_part : sor<type_gen, val_gen, lit_gen, gen_parterror> {};
 	struct _generic : sequence<obrack, gen_part, sor<cbrack, errorbrack>> {};											// Immediate error if no closing ']'
 	struct adt : seq<typ, if_then_else<at<one<'('>>, sor<tuple_type, errortype>, eps>, ig_s> {};						// NOTE: This produces two errors if a '(' is seen but no ')'
 	SENTINEL(error_adt);
@@ -250,7 +259,8 @@ namespace spero::parser::grammar {
 	struct dotbranch : seq<dotif, star<elsif_case>, opt<else_case>> {};
 	struct dotmatch : seq<kmatch, sor<obrace, missing_brace>, star<_case>, sor<cbrace, errorbrace>> {};					// Errors: see 'matchs'
 	struct dotjump : seq<jump_key> {};
-	struct dot_ctrl : sor<dotloop, dotwhile, dotfor, dotbranch, dotmatch, dotjump> {};
+	struct _dot_ctrl : sor<dotjump, dotloop, dotwhile, dotfor, dotbranch, dotmatch> {};
+	struct dot_ctrl : seq<_dot_ctrl, star<dot, _dot_ctrl>> {};
 
 
 	/*
@@ -266,8 +276,9 @@ namespace spero::parser::grammar {
 	struct str_body : until<at<sor<one<'"'>, tao::pegtl::eof>>, seq<opt<one<'\\'>>, any>> {};
 	struct string : seq<oquote, str_body, sor<one<'"'>, errorquote>, ig_s> {};											// Immediate error if no closing '"'
 	struct lit : sor<binary, hex, decimal, _char, string, kfalse, ktrue> {};
+	struct lit_gen : seq<lit> {};
 	struct pat_lit : seq<lit> {};
-	struct scope : seq<obrace, star<statement>, sor<cbrace, errorbrace>> {};											// Immediate error if no closing '}'
+	struct scope : seq<obrace, star<annotated>, sor<cbrace, errorbrace>> {};											// Immediate error if no closing '}'
 	SENTINEL(missing_texpr);
 	struct tuple : opt_sequence<oparen, mvexpr, sor<cparen, errorparen>, missing_texpr> {};								// Immediate error if no closing ')'
 	SENTINEL(missing_aexpr);
@@ -378,7 +389,8 @@ namespace spero::parser::grammar {
 	struct annotated : seq<if_then_else<plus<annotation>, sor<statement, missing_stmt>, statement>, opt<endc>> {};
 	struct forward_char : sor<alpha, digit, unop, binop, one<'('>, one<'['>, one<'{'>> {};								// NOTE: I'm not sure if this is complete or not
 	struct leftovers : until<at<forward_char>, any> {};
-	struct program : until<eolf, star<ig_s, annotated>, sor<eolf, leftovers>> {};
+	struct program : seq<ig_s, until<eolf, star<ig_s, annotated>, sor<eolf, leftovers>>> {};
+
 }
 
 #undef key

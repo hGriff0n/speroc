@@ -41,6 +41,8 @@ namespace spero::compiler::ast {
 
 		// Names
 		DEF_VISIT(BasicBinding);
+		DEF_VISIT(PathPart);
+		DEF_VISIT(Path);
 		DEF_VISIT(Pattern);
 		DEF_VISIT(TuplePattern);
 		DEF_VISIT(VarPattern);
@@ -64,6 +66,7 @@ namespace spero::compiler::ast {
 		DEF_VISIT(GenericPart);
 		DEF_VISIT(TypeGeneric);
 		DEF_VISIT(ValueGeneric);
+		DEF_VISIT(LitGeneric);
 		DEF_VISIT(GenericArray);
 		DEF_VISIT(Constructor);
 		DEF_VISIT(Adt);

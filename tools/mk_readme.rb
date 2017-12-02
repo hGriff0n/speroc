@@ -38,7 +38,9 @@ File.open("./README.md", "w") do |readme|
 
 
     # Move over the custom readme information into the public readme
-    File.open("./docs/_readme.md", "r").each_line do |line|
-        readme.puts line
+    File.open("./docs/_readme.md", "r") do |file|
+        file.each_line do |line|
+            readme.puts line
+        end
     end
 end

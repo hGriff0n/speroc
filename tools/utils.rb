@@ -9,7 +9,7 @@ class SourceStats
                 total, sloc = 0, 0
                 File.new(dir).each_line do |line|
                     comment_regex = get_comment_regex(ext)
-                    next if !comment_regex
+                    next unless comment_regex
 
                     sloc += (line =~ comment_regex) ? 1 : 0
                     total += 1
@@ -40,7 +40,6 @@ class SourceStats
             when ".spr"
                 # I'm pretty sure this regex isn't right, but I don't have time to write a better one
                 /^(?![ \s]*\r?\n|[ \s]*#).*\r?\n/
-            else nil
         end
     end
 

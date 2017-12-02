@@ -81,9 +81,7 @@ namespace spero::parser::actions {
 		}
 	} END;
 	RULE(decimal) {
-		auto str = in.string();
-
-		if (auto dot_pos = str.find('.'); dot_pos != std::string::npos) {
+		if (auto str = in.string(); str.find('.') != std::string::npos) {
 			PUSH(Float, str);
 		} else {
 			PUSH(Int, str);
@@ -251,9 +249,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(typname) {
 		// stack: Path
-		if (util::at_node<ast::Path>(s)) {
-			auto* node = util::view_as<ast::Path>(s.back());
-
+		if (auto* node = util::view_as<ast::Path>(s.back()); node) {
 			if (node->elems.back()->type != +ast::BindingType::TYPE) {
 				state.log(compiler::ID::err, "Expected type name, found something else <qualtyp at {}>", node->loc);
 			}
@@ -303,8 +299,7 @@ namespace spero::parser::actions {
 		bool is_ref = (in.string()[0] == '&');
 		bool is_mut = false;
 
-		if (util::at_node<ast::Token>(s)) {
-			auto* node = util::view_as<ast::Token>(s.back());
+		if (auto* node = util::view_as<ast::Token>(s.back()); node) {
 			is_mut = node->holds<ast::KeywordType>() && node->get<ast::KeywordType>() == +ast::KeywordType::MUT;
 		}
 
@@ -381,9 +376,7 @@ namespace spero::parser::actions {
 	TOKEN(typ_ptr, ast::PtrStyling::PTR);
 	RULE(single_type) {
 		// stack: Path array?
-		auto gen = POP(Array);
-
-		if (gen) {
+		if (auto gen = POP(Array); gen) {
 			PUSH(GenericType, POP(Path), std::move(gen));
 		} else {
 			PUSH(SourceType, POP(Path));
@@ -392,9 +385,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(ref_type) {
 		// stack: type ptrStyle?
-		if (util::at_node<ast::Token>(s)) {
-			auto tkn = POP(Token);
-
+		if (auto tkn = POP(Token); tkn) {
 			if (tkn->holds<ast::PtrStyling>()) {
 				util::view_as<ast::SourceType>(s.back())->_ptr = tkn->get<ast::PtrStyling>();
 			}
@@ -435,9 +426,7 @@ namespace spero::parser::actions {
 		// stack: kmut? type
 		auto typ = POP(Type);
 
-		if (util::at_node<ast::Token>(s)) {
-			auto tkn = POP(Token);
-
+		if (auto tkn = POP(Token); tkn) {
 			if (tkn->holds<ast::KeywordType>()) {
 				typ->is_mut = (tkn->get<ast::KeywordType>() == +ast::KeywordType::MUT);
 			} else {
@@ -513,8 +502,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(type_inf) {
 		// stack: type | error
-		auto err = POP(Error);
-		if (err) {
+		if (POP(Error)) {
 			state.log(compiler::ID::err, "Missing required type information <type_inf at {}>", LOCATION);
 		}
 		// stack: type?
@@ -536,7 +524,26 @@ namespace spero::parser::actions {
 			PUSH(Token, ast::RelationType::NOT_IMPLS);
 		}
 	} END;
-	RULE(type_gen) {
+	RULE(error_gentyp) {
+		state.log(compiler::ID::err, "Missing required default value <type_gen.def at {}>", LOCATION);
+		PUSH_NODE(TypeError);
+	} END;
+	RULE(default_type) {
+		// stack: bind var var? type
+		auto def_type = POP(Type);
+		auto variadic = POP(Token);
+		auto variance = POP(Token);
+
+		if (!variance) {
+			std::swap(variance, variadic);
+		}
+
+		PUSH(TypeGeneric, POP(BasicBinding), std::move(def_type));
+		util::view_as<ast::TypeGeneric>(s.back())->variance = variance->get<ast::VarianceType>();
+		util::view_as<ast::TypeGeneric>(s.back())->variadic = (bool)variadic;
+		// stack: type_gen
+	} END;
+	RULE(related_type) {
 		// stack: bind var var? (rel (type | error))?
 		auto err = POP(Error);
 		if (err) {
@@ -556,8 +563,11 @@ namespace spero::parser::actions {
 		PUSH(TypeGeneric, POP(BasicBinding), std::move(typ), rel, variance->get<ast::VarianceType>(), (bool)variadic);
 		// stack: type_gen
 	} END;
-	RULE(val_gen) {
-		// _stack: bind (rel type)? expr?
+	RULE(error_genval) {
+		state.log(compiler::ID::err, "Missing required default value <val_gen.def at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
+	RULE(related_val) {
 		// stack: bind (rel (type | error))?
 		auto err = POP(Error);
 		if (err) {
@@ -569,6 +579,19 @@ namespace spero::parser::actions {
 
 		PUSH(ValueGeneric, POP(BasicBinding), std::move(typ), rel);
 		// stack: val_gen
+	} END;
+	RULE(default_val) {
+		// stack: bind (val | error)
+		auto val = POP(ValExpr);
+		PUSH(ValueGeneric, POP(BasicBinding), std::move(val));
+		// stack: val_gen
+	} END;	
+	RULE(lit_gen) {
+		// stack: lit
+		if (auto lit = POP(ValExpr); lit) {
+			PUSH(LitGeneric, std::move(lit));
+		}
+		// stack:
 	} END;
 	RULE(gen_parterror) {
 		state.log(compiler::ID::err, "Unexpected input: Could not match spero generic \"{}\" <gen_part {}>", in.string(), LOCATION);
@@ -716,7 +739,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(loop) {
 		// stack: valexpr | error
-		if (!util::is_type<ast::ValError>(s.back())) {
+		if (!util::at_node<ast::ValError>(s)) {
 			PUSH(Loop, POP(ValExpr));
 		}
 		// stack: loop | error
@@ -1211,6 +1234,7 @@ namespace spero::parser::actions {
 	RULE(missing_stmt) {
 		// stack:
 		state.log(compiler::ID::err, "Statement Not Found: Could not bind local annotation to statement <stmt at {}>", LOCATION);
+		// TODO: Replace with StmtError?
 		PUSH_NODE(ValError);
 		// stack: error
 	} END;
