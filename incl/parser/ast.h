@@ -675,9 +675,12 @@ namespace spero::compiler::ast {
 	 *   variadic - flag for whether the type specifies a variadic collection
 	 */
 	struct TypeGeneric : GenericPart {
+		ptr<Type> default_type;
+
 		VarianceType variance;
 		bool variadic;
 
+		TypeGeneric(ptr<BasicBinding>, ptr<Type>, Location);
 		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType, bool, Location);
 
 		virtual void accept(Visitor&);
@@ -693,9 +696,9 @@ namespace spero::compiler::ast {
 	 *   value - default value for the generic field if none is provided or inferrable
 	 */
 	struct ValueGeneric : GenericPart {
-		//ptr<ValExpr> value;
+		ptr<ValExpr> default_val;
 
-		//ValueGeneric(ptr<BasicBinding>, ptr<Type>, ptr<ValExpr>, Location);
+		ValueGeneric(ptr<BasicBinding>, ptr<ValExpr>, Location);
 		ValueGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, Location);
 
 		virtual void accept(Visitor&);

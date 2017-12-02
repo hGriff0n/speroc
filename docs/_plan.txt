@@ -22,17 +22,15 @@ Current Project Plan
 	Update to utilize VS 15.5 features where possible (not I'm on 15.4 currently)
 	Simplify the commands available within the repl
 	  Also simplify the control path if possible
+  Convert to clang/llvm backend
+    Switch over to compiling the assembly files with clang
+	  Some instructions are different (clang appears to be in 64-bit mode)
+	  Adapt AsmGenerator to output the expected clang syntax
+	Integrate in the llvm compiler library
   Grammar changes and modifications
-	Convert to using clang backend (clang works finally)
-	  Figure out what the differences in syntax are (what works and what doesn't)
-	    Some instructions appear to require 'not 64 bit mode'
-	  Adapt the AsmGenerator backend to reflect these changes
-	Allow generic fields to have default values (type and value generics)
-    Ensure the visitor has methods for all ast types
-	Language Considerations
-	  Can we generalize the usage of 'as' for rebinding generics?
-	    Right now, I force the usage of 'as' iff a type is generic specialized
-		However, it would probably be better to not force it, but report the error in the action callback
+	Can we generalize the usage of 'as' for rebinding generics?
+	  Right now, I force the usage of 'as' iff a type is generic specialized
+	  However, it would probably be better to not force it, but report the error in the action callback
     Merge everything back in to master
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
@@ -41,6 +39,8 @@ Current Project Plan
   Improve "help" support
     Look into adding "code of conduct"
   Language Logic Checking
+	Look into allowing for "def Foo = Foo[Int]" type syntax
+	  Reconsider a lot of the grammar for types definition, particularly for specializing generics
     Determine how "Array[Int, a]" would be resolved if a is a global constant
 	Figure out contexts to interpret "a :: T" as a type-check and not an annotation
     Figure out what type system I want to support

@@ -486,8 +486,10 @@ namespace spero::compiler::ast {
 		v.visitGenericPart(*this);
 	}
 
+	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> def, Location loc)
+		: TypeGeneric{ std::move(b), nullptr, RelationType::NA, VarianceType::INVARIANT, false, loc } { default_type = std::move(def); }
 	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, VarianceType var1, bool var2, Location loc)
-		: GenericPart{ std::move(b), std::move(t), rel, loc }, variadic{ var2 }, variance{ var1 } {}
+		: GenericPart{ std::move(b), std::move(t), rel, loc }, variadic{ var2 }, variance{ var1 }, default_type{ nullptr } {}
 	void TypeGeneric::accept(Visitor& v) {
 		v.visitTypeGeneric(*this);
 	}
@@ -498,11 +500,16 @@ namespace spero::compiler::ast {
 		if (type) {
 			type->prettyPrint(s << '\n', buf + 2, "type=");
 		}
+		if (default_type) {
+			default_type->prettyPrint(s << '\n', buf + 2, "default=");
+		}
 		return s;
 	}
 
+	ValueGeneric::ValueGeneric(ptr<BasicBinding> b, ptr<ValExpr> v, Location loc)
+		: GenericPart{ std::move(b), nullptr, RelationType::NA, loc }, default_val{ std::move(v) } {}
 	ValueGeneric::ValueGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, Location loc)
-		: GenericPart{ std::move(b), std::move(t), rel, loc } {}
+		: GenericPart{ std::move(b), std::move(t), rel, loc }, default_val{ nullptr } {}
 	void ValueGeneric::accept(Visitor& v) {
 		v.visitValueGeneric(*this);
 	}
@@ -511,6 +518,9 @@ namespace spero::compiler::ast {
 		name->prettyPrint(s << '\n', buf + 2, "binding=");
 		if (type) {
 			type->prettyPrint(s << '\n', buf + 2, "type=");
+		}
+		if (default_val) {
+			default_val->prettyPrint(s << '\n', buf + 2, "default=");
 		}
 		return s;
 	}

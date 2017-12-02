@@ -524,7 +524,26 @@ namespace spero::parser::actions {
 			PUSH(Token, ast::RelationType::NOT_IMPLS);
 		}
 	} END;
-	RULE(type_gen) {
+	RULE(error_gentyp) {
+		state.log(compiler::ID::err, "Missing required default value <type_gen.def at {}>", LOCATION);
+		PUSH_NODE(TypeError);
+	} END;
+	RULE(default_type) {
+		// stack: bind var var? type
+		auto def_type = POP(Type);
+		auto variadic = POP(Token);
+		auto variance = POP(Token);
+
+		if (!variance) {
+			std::swap(variance, variadic);
+		}
+
+		PUSH(TypeGeneric, POP(BasicBinding), std::move(def_type));
+		util::view_as<ast::TypeGeneric>(s.back())->variance = variance->get<ast::VarianceType>();
+		util::view_as<ast::TypeGeneric>(s.back())->variadic = (bool)variadic;
+		// stack: type_gen
+	} END;
+	RULE(related_type) {
 		// stack: bind var var? (rel (type | error))?
 		auto err = POP(Error);
 		if (err) {
@@ -544,8 +563,11 @@ namespace spero::parser::actions {
 		PUSH(TypeGeneric, POP(BasicBinding), std::move(typ), rel, variance->get<ast::VarianceType>(), (bool)variadic);
 		// stack: type_gen
 	} END;
-	RULE(val_gen) {
-		// _stack: bind (rel type)? expr?
+	RULE(error_genval) {
+		state.log(compiler::ID::err, "Missing required default value <val_gen.def at {}>", LOCATION);
+		PUSH_NODE(ValError);
+	} END;
+	RULE(related_val) {
 		// stack: bind (rel (type | error))?
 		auto err = POP(Error);
 		if (err) {
@@ -558,6 +580,12 @@ namespace spero::parser::actions {
 		PUSH(ValueGeneric, POP(BasicBinding), std::move(typ), rel);
 		// stack: val_gen
 	} END;
+	RULE(default_val) {
+		// stack: bind (val | error)
+		auto val = POP(ValExpr);
+		PUSH(ValueGeneric, POP(BasicBinding), std::move(val));
+		// stack: val_gen
+	} END;	
 	RULE(lit_gen) {
 		// stack: lit
 		if (auto lit = POP(ValExpr); lit) {

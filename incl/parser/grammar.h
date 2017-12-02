@@ -29,7 +29,7 @@ namespace spero::parser::grammar {
 	struct tuple;		struct annotated;	struct assign_pat;
 	struct index_cont;	struct scope;		struct pat_lit;
 	struct pattern;		struct type;		struct valexpr;
-	struct lit_gen;
+	struct lit_gen;		struct lit;
 
 
 	/*
@@ -187,8 +187,16 @@ namespace spero::parser::grammar {
 	struct variance : sor<one<'+'>, one<'-'>, eps> {};
 	struct variadic : seq<pstr(".."), ig_s> {};
 	struct relation : seq<sor<pstr("::"), pstr("!:")>, ig_s> {};
-	struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, opt<relation, sor<type, errortype>>> {};
-	struct val_gen : seq<var, ig_s, opt<relation, sor<type, errortype>>> {};
+	SENTINEL(error_gentyp);
+	struct default_type : seq<one<'='>, ig_s, sor<type, error_gentyp>> {};
+	struct related_type : opt<relation, sor<type, errortype>> {};
+	 struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, sor<default_type, related_type>> {};
+	SENTINEL(error_genval);
+	//struct error_inf : seq<ig_s, two<':'>> {};																		// For if I later want to provide an error for this situation
+	struct default_val : seq<one<'='>, ig_s, sor<lit, error_genval>> {};
+	struct related_val : opt<relation, sor<type, errortype>> {};
+	struct val_gen : seq<var, ig_s, sor<default_val, related_val, eps>> {};
+
 	struct gen_parterror : until<at<sor<one<']'>, one<','>>>> {};
 	struct gen_part : sor<type_gen, val_gen, lit_gen, gen_parterror> {};
 	struct _generic : sequence<obrack, gen_part, sor<cbrack, errorbrack>> {};											// Immediate error if no closing ']'
