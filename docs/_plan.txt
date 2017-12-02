@@ -27,11 +27,6 @@ Current Project Plan
 	  Some instructions are different (clang appears to be in 64-bit mode)
 	  Adapt AsmGenerator to output the expected clang syntax
 	Integrate in the llvm compiler library
-  Grammar changes and modifications
-	Can we generalize the usage of 'as' for rebinding generics?
-	  Right now, I force the usage of 'as' iff a type is generic specialized
-	  However, it would probably be better to not force it, but report the error in the action callback
-    Merge everything back in to master
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
 	Move 'compiler' exceptions from log-level to error-level
