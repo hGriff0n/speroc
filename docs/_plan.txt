@@ -5,45 +5,45 @@ Current Project State
 	availability: standard-only
 	generics: no
 	inheritance: undetermined (not sure how inheritance will be handled, between Rust 'impl', C++ 'inheritance' or some mix)
-    recognized => Int, Bool
+    recognized => Int, Bool (literals and comparison operators)
 	...
   variables => basic shadowing and scoping
   functions => main-only
   annotations => ignored
 
 Current Project Plan
-  Work on integrating the rust x86 interpreter
-    Work on improving the rust code
-	  Expand the available memory to work with
-      TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
-	Add ability to "save state", make into true 'repl'
-  Code Quality Improvements
-    Const-correct codebase where possible
-	Update to utilize VS 15.5 features where possible (not I'm on 15.4 currently)
-	Simplify the commands available within the repl
-	  Also simplify the control path if possible
-  Convert to clang/llvm backend
-    Switch over to compiling the assembly files with clang
-	  Some instructions are different (clang appears to be in 64-bit mode)
-	  Adapt AsmGenerator to output the expected clang syntax
-	Integrate in the llvm compiler library
-  Improve error/exception handling and reporting
-    Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
-	Move 'compiler' exceptions from log-level to error-level
-	  Add in 'error indices' and automatic message population capbilities
-  Improve "help" support
-    Look into adding "code of conduct"
+  Improve x86 Interpreter Implementation
+	Implement all x86 instructions to spec
+	  Finalize the interface switchover work
+	Convert system over to recognizing clang generated assembly code/instructions
+    Redesign instructor architecture to accomodate re-entrant modality
+	  Best option: Add support for loading/storing to a file
+	    Compiler would then be responsible for maintaining the database mapping (how to handle globals?)
+  Basic Mutability Tracking
+    Ensure operator compilation proceeds correctly
+	  The comparison operators don't work
+	    Either because I put the values in the wrong spots or my interpreter is wrong
+	  Basically fix emitted code to handle realizations about how assembly performs
+	Add in code to handle reassignment and compound assignment
+	  Didn't I remove compound assignment from the language ???
+    Modify 'SymTable' to track the mutability of the variable
+	  Look into abstracting this out into a "collection" pass
+	    This would probably be the start of a generic "variable" finding pass (ie. type inference, etc)
+	Modify reassignment code to throw out an error when the variable is immutable
+	  Look into abstracting this out to an analysis pass
+	    We could do this within the current framework, if necessary
+	Create some test code to test the mutability checking (might be done)
   Language Logic Checking
-	Look into allowing for "def Foo = Foo[Int]" type syntax
+	Look into allowing "def Foo = Foo[Int]" type syntax
 	  Reconsider a lot of the grammar for types definition, particularly for specializing generics
     Determine how "Array[Int, a]" would be resolved if a is a global constant
 	Figure out contexts to interpret "a :: T" as a type-check and not an annotation
     Figure out what type system I want to support
 	  Ensure that it can be type-checked with the algebraic subtyping paper
 	  Figure out how generic parameters are introduced/constrained in "impl"
-	Figure out what concurrency systems I want to focus on
 	Flesh out the rules for mutability restrictions
 	  Ensure they maintain the semantics I want to have
+	Figure out what concurrency systems I want to focus on
     Figure out a way of simplifying mutable methods such as 'get'/'set'
       Find a way to make indexing really trivial (ie. reduce the number of rewrites)
       Thinking is whether I can find a way to cast 'mut' as a monad/HKT parameter
@@ -59,15 +59,41 @@ Current Project Plan
 	    Basically remove the requirement to have "Foo() :: {}", instead allow "Foo :: {}"
 		NOTE: This should enable easy type creation syntax (look out for possible interactions here too)
 	Work on language tutorial/introduction
-  Basic Mutability Tracking
-    Modify 'SymTable' to track the mutability of the variable (this can be done within the current system)
-	Throw errors when a Reassign node attempts to change the value of an immutable variable
-	Create some test code to test the mutability checking
+  Convert to using a tri-code IR (ie. max two operands to any instruction)
+	Backend stage would take this IR and optimize it to produce the final assembly
+	The current 'assembly' stage would be replaced with an IR-generation stage
+
+  Work on integrating the rust x86 interpreter
+    Work on improving the rust code
+	  Expand the available memory to work with
+      TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
+
+  Code Quality Improvements
+    Const-correct codebase where possible
+	Update to utilize VS 15.5 features where possible (not I'm on 15.4 currently)
+	  Switch some std::string applications to use std::string_view
+	Simplify the commands available within the repl
+	  Also simplify the control path if possible
+  Convert to clang/llvm backend
+    Adapt interpreter to accept the clang output format
+    Switch over to compiling the assembly files with clang
+	  Some instructions are different (clang appears to be in 64-bit mode)
+	  Adapt AsmGenerator to output the expected clang syntax
+	Integrate in the llvm compiler library
+  Improve error/exception handling and reporting
+    Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
+	Move 'compiler' exceptions from log-level to error-level
+	  Add in 'error indices' and automatic message population capbilities
+  Improve "help" support
+    Look into adding "code of conduct"
+
   Basic Types
     Add in tracking of variable/value types within the AST
 	  Ensure that 'malformed' expressions can throw up type errors
 	Add in handling of explicit annotations for automatically setting the types 
       Ensure these explicit annotations throw up errors on unrecognized types
+    Add in unsigned integers, boolean, and float types
+	  Extend assembly interpreter with floating point instructions
   Abstract variables collection, etc. into a separate analysis phase
     Rework the visitor system to allow for modification of sub-nodes
 	Have new system change VarAssign to Reassign nodes (after collecting relevant information)

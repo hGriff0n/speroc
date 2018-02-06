@@ -65,7 +65,7 @@ yaml.each do |name, tests|
     tests['runs'].each_with_index do |run, idx|
 
         # Setup run defaults and other variables
-        run_desc = run.key?('desc') ? run['desc'] : ""
+        # run_desc = run.key?('desc') ? run['desc'] : ""
         compile = compile_defaults(run)
         compile['exec'] = "#{options[:dir]}/#{options[:out_dir]}/#{run['exec']}"
         simple_cmd = run['exec']

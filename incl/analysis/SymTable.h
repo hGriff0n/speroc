@@ -31,7 +31,7 @@ namespace spero::compiler::analysis {
 			~SymTable();
 
 			int insert(std::string, int, Location);
-			std::optional<int> getVar(std::string, bool=false);
+			std::optional<int> getVar(std::string, bool=false);			// TODO: string_view
 
 			size_t getCount();
 

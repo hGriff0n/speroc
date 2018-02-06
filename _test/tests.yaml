@@ -51,7 +51,7 @@ literals:
       compile:
         files: [ 'bool.spr' ]
       tests:
-        - return: 1
+        - return: 0
     - desc: ""
       exec: 'scoped.exe'
       compile:

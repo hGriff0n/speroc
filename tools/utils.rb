@@ -2,27 +2,21 @@
 # Class to collect source file information within chosen directories
 class SourceStats
     def count_directory(dir)
-        if File.file?(dir)
-            # If the file is one of our supported extensions
-            if @exts.has_key?(ext = File.extname(dir))
+        if @exts.has_key?(ext = File.extname(dir))
+            total, sloc = 0, 0
+            comment_regex = get_comment_regex(ext)
+            
+            File.new(dir).each_line do |line|
+                # next unless comment_regex     # Uncommenting this adds a line?
+                sloc += (line =~ comment_regex) ? 1 : 0
+                total += 1
+            end if comment_regex
 
-                total, sloc = 0, 0
-                File.new(dir).each_line do |line|
-                    comment_regex = get_comment_regex(ext)
-                    next unless comment_regex
+            @exts[ext][:files] += 1
+            @exts[ext][:total] += total
+            @exts[ext][:sloc] += sloc
 
-                    sloc += (line =~ comment_regex) ? 1 : 0
-                    total += 1
-                end
-                
-                @exts[ext][:files] += 1
-                @exts[ext][:total] += total
-                @exts[ext][:sloc] += sloc
-                # puts "#{dir} => #{total} - #{sloc}"
-            end
-
-        # Otherwise recursively run through the structure
-        else
+        elsif File.directory?(dir)
             Dir.foreach(dir) do |file|
                 next if file == '.' || file == '..'
                 count_directory("#{dir}/#{file}")

@@ -72,14 +72,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
-    <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
+    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\asmtk\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\asmjit\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
+    <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\asmtk\src\asmtk;C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
     <LibraryPath>C:\Users\ghoop\Documents\GitHub\speroc\dep\_x86_inter\target\debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
-    <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
+    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\asmtk\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\asmjit\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
+    <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\asmtk\src\asmtk;C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
     <LibraryPath>C:\Users\ghoop\Documents\GitHub\speroc\dep\_x86_inter\target\debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -100,7 +100,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;ASMJIT_EMBED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -115,7 +115,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASMJIT_EMBED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -160,8 +160,39 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="asmjit_writer.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\arch.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\assembler.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\codebuilder.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\codecompiler.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\codeemitter.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\codeholder.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\constpool.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\cpuinfo.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\func.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\globals.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\inst.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\logging.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\operand.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\osutils.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\regalloc.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\runtime.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\string.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\utils.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\vmem.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\base\zone.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86assembler.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86builder.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86compiler.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86inst.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86instimpl.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86internal.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86logging.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86operand.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86operand_regs.cpp" />
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86regalloc.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="src\arch.cpp" />
+    <ClCompile Include="src\_arch.cpp" />
     <ClCompile Include="src\AsmEmitter.cpp" />
     <ClCompile Include="src\AsmGenerator.cpp" />
     <ClCompile Include="src\ast.cpp" />
@@ -171,13 +202,13 @@
     <ClCompile Include="src\SymTable.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="docs\version.yaml" />
     <None Include="docs\_readme.md" />
     <None Include="LICENSE" />
     <None Include="README.md" />
     <None Include="tools\mk_readme.rb" />
     <None Include="tools\test.rb" />
     <None Include="tools\utils.rb" />
-    <None Include="tools\version.yaml" />
     <None Include="x86_inter\src\emu.rs" />
     <None Include="x86_inter\src\inter.rs" />
     <None Include="x86_inter\src\lib.rs" />
@@ -210,8 +241,49 @@
     <Text Include="docs\_todo.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dep\asmjit\src\asmjit\arm.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\asmjit.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\asmjit_apibegin.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\asmjit_apiend.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\asmjit_build.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\arch.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\assembler.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\codebuilder.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\codecompiler.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\codeemitter.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\codeholder.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\constpool.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\cpuinfo.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\func.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\globals.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\inst.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\logging.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\misc_p.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\operand.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\osutils.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\regalloc_p.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\runtime.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\simdtypes.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\string.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\utils.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\vmem.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\base\zone.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86assembler.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86builder.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86compiler.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86emitter.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86globals.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86inst.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86instimpl_p.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86internal_p.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86logging_p.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86misc.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86operand.h" />
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86regalloc_p.h" />
     <ClInclude Include="incl\analysis\SymTable.h" />
-    <ClInclude Include="incl\codegen\arch.h" />
+    <ClInclude Include="incl\codegen\_arch.h" />
     <ClInclude Include="incl\codegen\AsmEmitter.h" />
     <ClInclude Include="incl\codegen\AsmGenerator.h" />
     <ClInclude Include="incl\compiler.h" />

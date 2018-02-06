@@ -29,6 +29,6 @@ namespace spero::compiler::ast {
 		Ast(Location);
 
 		virtual void accept(Visitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
+		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");				// TODO: string_view
 	};
 }
