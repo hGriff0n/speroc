@@ -2,14 +2,23 @@
 
 #include <iostream>
 #include <unordered_map>
+//#include <asmtk/asmtk.h>
 
 #include "compiler.h"
 #include "parser/base.h"
 #include "interface/cmd_line.h"
 #include "util/strings.h"
 
-// TODO: Convert to llvm once it works on windows
-#define ASM_COMPILER "g++"
+// TODO: Convert to llvm
+#define ASMJIT_NOT_INTEGRATED
+#ifndef ASMJIT_NOT_INTEGRATED
+#define CLANG_COMMAND "clang -masm=intel"
+#define GCC_COMMAND "g++ -masm=intel"
+#else
+#define CLANG_COMMAND "clang"
+#define GCC_COMMAND "g++"
+#endif
+#define ASM_COMPILER GCC_COMMAND
 
 
 /*

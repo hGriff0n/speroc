@@ -12,13 +12,20 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  Improve x86 Interpreter Implementation
-	Implement all x86 instructions to spec
-	  Finalize the interface switchover work
-	Convert system over to recognizing clang generated assembly code/instructions
-    Redesign instructor architecture to accomodate re-entrant modality
-	  Best option: Add support for loading/storing to a file
-	    Compiler would then be responsible for maintaining the database mapping (how to handle globals?)
+  Convert all x86 touching code over to using AsmJit
+	Figure out how labels interact with assembly generation
+	Find out whether the interface follows intel or at&t semantics (my guess: intel)
+	Swap in AsmJit for my custom Arch/Emitter codegen
+	  Create an "asmjit" wrapper file
+	    Provides more uniform integration (such as putting 'Imm' in the x86 namespace)
+	  Replace all usages in AsmGenerator with asmjit replacement
+	    Adapt command line and CompilationState to produce an asmjit::CodeInfo struct
+	  Remove the arch and AsmEmitter files
+	Add a new interpreter stand-in (same semantics)
+	  Remove the rust dependencies
+	Adapt new interpreter to have the capability to have "re-entrant evaluation"
+	  NOTE: The better part of this step would be in compiler variable tracking
+	Convert assembly compilation to use clang instead of gcc
   Basic Mutability Tracking
     Ensure operator compilation proceeds correctly
 	  The comparison operators don't work
