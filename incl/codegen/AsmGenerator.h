@@ -1,8 +1,8 @@
 #pragma once
 
 #include "parser/visitor.h"
-#include "AsmEmitter.h"
 #include "interface/CompilationState.h"
+#include "util/asmjit.h"
 
 namespace spero::compiler::gen {
 
@@ -13,7 +13,10 @@ namespace spero::compiler::gen {
 	 * TODO: Rewrite to utilize different IR structure
 	 */
 	class AsmGenerator : public ast::Visitor {
-		AsmEmitter emit;
+		//AsmEmitter emit;
+		// TODO: Need to get a `CodeHolder` into this class for initialization
+			// Probably best to get it from CompilationState (would have the references to target)
+		asmjit::x86::Builder emit;
 		std::ostream& out;
 
 		compiler::CompilationState& state;

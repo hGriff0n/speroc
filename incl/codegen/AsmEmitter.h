@@ -2,7 +2,7 @@
 
 #include <ostream>
 #include <bitset>
-#include "arch.h"
+#include "_arch.h"
 
 namespace spero::compiler::gen {
 	using namespace arch;
@@ -12,14 +12,14 @@ namespace spero::compiler::gen {
 
 	/* TODO:
      *   Adapt 'popByte' to consider differently sized types (dword v. qword)
-	 *   Add in ability to match register and value sizes (ie. %al can't hold INT_MAX)
+	 *   Add in ability to match _Register and value sizes (ie. %al can't hold INT_MAX)
 	 */
 
 	//[[ maybe_unused ]]
 	class AsmEmitter {
 		std::ostream& out;
 		std::bitset<5> flags;
-		
+
 		CPU_FLAG CF = 0;
 		CPU_FLAG PF = 1;
 		CPU_FLAG ZF = 2;
@@ -42,50 +42,52 @@ namespace spero::compiler::gen {
 			void label(std::string&&);
 
 			// Push/pop instructions
-			void push(Register&);
+			void push(_Register&);
 			void pushByte(size_t);
-			void pop(Register&);
+			void pop(_Register&);
 			void popByte(size_t);
 
 			// Mov instructions
-			void mov(Register&, Register&);
-			void mov(Literal, Register&);
-			void mov(Memory&, Register&);
-			void mov(Register&, Memory&);
-		
+			void mov(_Register&, _Register&);
+			void mov(Literal, _Register&);
+			void mov(Memory&, _Register&);
+			void mov(_Register&, Memory&);
+
+			void movzx(_Register&, _Register&);
+
 			// Add instructions
-			void add(Literal, Register&);
-			void add(Memory&, Register&);
+			void add(Literal, _Register&);
+			void add(Memory&, _Register&);
 
 			// Sub instructions
-			void sub(Register&, Memory&);
-			void neg(Register&);
+			void sub(_Register&, Memory&);
+			void neg(_Register&);
 
 			// Mul instructions
-			void imul(Memory&, Register&);
-			
+			void imul(Memory&, _Register&);
+
 			// Div instructions
-			void idiv(Memory&, Register&);
+			void idiv(Memory&);
 			void cdq();
 
 			// Logical instructions
-			void _xor(Register&, Register&);
-			void not(Register&);
-			void _or(Memory&, Register&);
+			void _xor(_Register&, _Register&);
+			void not(_Register&);
+			void _or(Memory&, _Register&);
 
 			// Test/Compare instructions
-			void test(Register&, Register&);
-			void cmp(Register&, Memory&);
-			void cmp(Memory&, Register&);
+			void test(_Register&, _Register&);
+			void cmp(_Register&, Memory&);
+			void cmp(Memory&, _Register&);
 
 			// Set instructions
-			void setz(Register&);
-			void setnz(Register&);
-			void setl(Register&);
+			void setz(_Register&);
+			void setnz(_Register&);
+			void setl(_Register&);
 			void setl(Memory&);
-			void setle(Register&);
-			void setg(Register&);
-			void setge(Register&);
+			void setle(_Register&);
+			void setg(_Register&);
+			void setge(_Register&);
 
 			// Control flow
 			void ret();

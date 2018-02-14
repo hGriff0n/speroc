@@ -1,0 +1,86 @@
+builder.cpp:748
+
+// ============================================================================
+// [asmjit::BaseBuilder - Comment]
+// ============================================================================
+
+Error BaseBuilder::write(const char* data, size_t size) {
+	if (ASMJIT_UNLIKELY(!_code))
+		return DebugUtils::errored(kErrorNotInitialized);
+
+	RawWriteNode* node = newRawWriteNode(data, size);
+	if (ASMJIT_UNLIKELY(!node))
+		return reportError(DebugUtils::errored(kErrorNoHeapMemory));
+
+	addNode(node);
+	return kErrorOk;
+}
+
+ASMJIT_END_NAMESPACE
+#include <string>
+ASMJIT_BEGIN_NAMESPACE
+
+Error BaseBuilder::writef(const char* fmt, ...) {
+	std::va_list ap;
+
+	va_start(ap, fmt);
+	StringBuilder sb;
+	sb.appendFormatVA(fmt, ap);
+	va_end(ap);
+
+	std::string str = sb.data();
+	return write(str.c_str());
+}
+
+builder.h: 94
+
+  //! Create a new `RawWriteNode`.
+  ASMJIT_API RawWriteNode* newRawWriteNode(const char* data, size_t size) noexcept;
+
+builder.h:208
+
+  // --------------------------------------------------------------------------
+  // [Write]
+  // --------------------------------------------------------------------------
+
+  ASMJIT_API Error write(const char* data, size_t size = Globals::kNullTerminated);
+  ASMJIT_API Error writef(const char* fmt, ...);
+
+builder.h: 299
+
+  kNodeRawWrite   = 32,				 //!< Custom node to output a raw string in dump
+
+builder.h:912
+
+// ============================================================================
+// [asmjit::RawWriteNode]
+// ============================================================================
+
+//! RawWriteNode node.
+class RawWriteNode : public BaseNode {
+public:
+	ASMJIT_NONCOPYABLE(RawWriteNode)
+
+	// --------------------------------------------------------------------------
+	// [Construction / Destruction]
+	// --------------------------------------------------------------------------
+
+	//! Create a new `RawWriteNode` instance.
+	inline RawWriteNode(BaseBuilder* cb, const char* comment) noexcept
+		: BaseNode(cb, kNodeRawWrite, 0) {
+
+		_inlineComment = comment;
+	}
+};
+
+logging.cpp: 447
+  
+  case BaseNode::kNodeRawWrite: {
+	const RawWriteNode* node = node_->as<RawWriteNode>();
+	ASMJIT_PROPAGATE(sb.appendString(node->inlineComment()));
+	break;
+  }
+
+intutils.h:228
+
+  constexpr uint32_t ctzGeneric(T x) noexcept {

@@ -2,9 +2,11 @@
 
 #include <string>
 
+#pragma warn("Deprecated")
+
 namespace spero::compiler::gen::arch {
 
-	struct Register;
+	struct _Register;
 	struct Memory;
 	struct Literal;
 
@@ -21,7 +23,7 @@ namespace spero::compiler::gen::arch {
 			friend Stream& operator<<(Stream& s, const Operand& op) {
 				switch (op.id) {
 					case Operand::REG: {
-						auto& reg = reinterpret_cast<const Register&>(op);
+						auto& reg = reinterpret_cast<const _Register&>(op);
 						return s << '%' << reg.name;
 					}
 					case Operand::MEM: {
@@ -39,15 +41,15 @@ namespace spero::compiler::gen::arch {
 	};
 
 	struct Memory : Operand {
-		Register& reg;
+		_Register& reg;
 		int offset;
 
-		Memory(Register&, int);
+		Memory(_Register&, int);
 	};
 
-	struct Register : Operand {
+	struct _Register : Operand {
 		std::string name;
-		Register(std::string);
+		_Register(std::string);
 
 		Memory at(int=0);
 	};

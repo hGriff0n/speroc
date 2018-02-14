@@ -1,22 +1,33 @@
 #include "codegen/AsmGenerator.h"
 #include "util/parser.h"
 
+using namespace asmjit;
+
+// TODO: Look at "extending" the Assembler with some of my own additions
+static void popBytes(asmjit::x86::Builder& emit, size_t nBytes) {
+	emit.add(x86::esp, nBytes);
+}
+
+static void popWords(asmjit::x86::Builder& emit, size_t nWords) {
+	popBytes(emit, nWords * 4);
+}
+
 namespace spero::compiler::gen {
-	AsmGenerator::AsmGenerator(std::ostream& s, compiler::CompilationState& state) : out{ s }, emit { s }, state{ state } {}
-	
+	AsmGenerator::AsmGenerator(std::ostream& s, compiler::CompilationState& state)
+		: out{ s }, emit{ nullptr }, state{ state } {}
+
 	void AsmGenerator::assign(std::string& var, bool force_curr, Location loc) {
-		Register eax{ "eax" };
 		auto variable = current->getVar(var, force_curr);
 
 		if (force_curr && !variable) {
 			int off = -4 * (current->getCount() + 1);
 			current->insert(var, off, loc);
 
-			emit.push(eax);
+			emit.push(x86::eax);
 
 		} else if (variable) {
-			Register ebp{ "ebp" };
-			emit.mov(eax, ebp.at(variable.value()));
+			auto dst = x86::ptr(x86::ebp, variable.value());
+			emit.mov(dst, x86::eax);
 		}
 	}
 
@@ -30,20 +41,16 @@ namespace spero::compiler::gen {
 	// Literals
 	//
 	void AsmGenerator::visitBool(ast::Bool& b) {
-		Register eax{ "eax" };
-		
-		if (b.val) {
-			emit.mov(b.val, eax);
+		emit.mov(x86::eax, b.val);
 
-		} else {
-			emit._xor(eax, eax);
-		}
+		// NOTE: clang emits `xor eax, eax` for false
 	}
 
 	void AsmGenerator::visitByte(ast::Byte& b) {
-		Register eax{ "eax" };
-		emit._xor(eax, eax);
-		emit.mov(b.val, eax);
+		emit.xor_(x86::eax, x86::eax);
+
+		// TODO: Fix this difficulty
+		emit.mov(x86::eax, (unsigned int)b.val);
 	}
 
 	void AsmGenerator::visitFloat(ast::Float& f) {
@@ -51,13 +58,11 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::visitInt(ast::Int& i) {
-		Register eax{ "eax" };
-		emit.mov(i.val, eax);
+		emit.mov(x86::eax, i.val);
 	}
 
 	void AsmGenerator::visitChar(ast::Char& c) {
-		Register al{ "al" };
-		emit.mov(c.val, al);
+		emit.mov(x86::al, c.val);
 	}
 
 
@@ -66,7 +71,7 @@ namespace spero::compiler::gen {
 	//
 	void AsmGenerator::visitBlock(ast::Block& b) {
 		// Reserve stack space for local variables
-		//Register esp{ "esp" };
+		//_Register esp{ "esp" };
 		//emit.add(4 * b.locals.getCount(), esp);
 
 		// Initialize current
@@ -79,7 +84,8 @@ namespace spero::compiler::gen {
 		}
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
-		emit.popByte(current->getCount());
+		// TODO: Make a `popByte` method to automate this
+		popWords(emit, current->getCount());			// pop n bytes 
 		current = current->getParent();
 	}
 
@@ -96,9 +102,7 @@ namespace spero::compiler::gen {
 			return;
 		}
 
-		Register eax{ "eax" };
-		Register ebp{ "ebp" };
-		emit.mov(ebp.at(loc.value()), eax);
+		emit.mov(x86::eax, x86::ptr(x86::ebp, loc.value()));
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
@@ -129,16 +133,20 @@ namespace spero::compiler::gen {
 		// TODO: Adding support for functions may require moving this to a separate stage
 		// TODO: Type checking will definitely require additional stages
 		if (util::is_type<ast::Function>(v.expr)) {
+			// Print out function datace
+			emit.write(".global _main");
+			emit.write(".def _main");
+			emit.write(".scl 2");
+			emit.writef(".scl %d", 2);
+			emit.write(".type %d", 32);
+			emit.write(".endef");
 
-			// Print out function data
-			emit.write("\t.globl _main\n");
-			emit.write("\t.def _main; .scl 2; .type 32; .endef\n");
-			emit.label("_main");
+			emit.newNamedLabel("_main");
 
 			v.expr->accept(*this);
 
 			// Print function ident information
-			emit.write("\t.ident \"speroc: 0.0.15 (Windows 2017)\"");
+			emit.writef(".ident \"%s: %d.%d.%d (%s)\"", "speroc", 0, 0, 15, "Windows 2018");
 
 		} else {
 			v.expr->accept(*this);					// Push the expression value onto the stack
@@ -161,17 +169,15 @@ namespace spero::compiler::gen {
 		in.expr->accept(*this);
 
 		// Pop off the symbol table
-		emit.popByte(current->getCount());
+		popWords(emit, current->getCount());
 		current = current->getParent();
 	}
 
 	void AsmGenerator::visitFunction(ast::Function& f) {
-		Register ebp{ "ebp" }, esp{ "esp" }, eax{ "eax" };
-
 		// Print function enter code
-		emit.label("LFB0");
-		emit.push(ebp);
-		emit.mov(esp, ebp);
+		emit.newNamedLabel("LFB0");
+		emit.push(x86::ebp);
+		emit.mov(x86::ebp, x86::esp);
 
 		// Print the body
 		f.body->accept(*this);
@@ -179,12 +185,10 @@ namespace spero::compiler::gen {
 		// Print function tail/endlog
 		emit.leave();
 		emit.ret();
-		emit.label("LFE0");
+		emit.newNamedLabel("LFE0");
 	}
 
 	void AsmGenerator::visitBinOpCall(ast::BinOpCall& b) {
-		Register eax{ "eax" };
-
 		// TODO: Abstract to enable '*=' behavior and fallback if possible (analysis?)
 		if (b.op == "=") {
 			auto _lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
@@ -200,64 +204,59 @@ namespace spero::compiler::gen {
 			assign(_lhs->name->elems.back()->name, false, b.loc);
 
 		} else {
-			Register esp{ "esp" };
-			Register al{ "al" };
-
 			// Evaluate the left side and store it on the stack
 			b.lhs->accept(*this);
-			emit.push(eax);
+			emit.push(x86::eax);
 
 			// Evaluate the right side
 			b.rhs->accept(*this);
 
 			// Perform the operator call
 			if (b.op == "+") {
-				emit.add(esp.at(), eax);
-				emit.popByte(1);
+				emit.add(x86::eax, x86::ptr(x86::esp));
+				popWords(emit, 1);
 
 			} else if (b.op == "-") {
-				emit.sub(eax, esp.at());
-				emit.pop(eax);
+				emit.sub(x86::ptr(x86::esp), x86::eax);
+				emit.pop(x86::eax);
 
 			} else if (b.op == "*") {
-				emit.imul(esp.at(), eax);
-				emit.popByte(1);
+				emit.imul(x86::eax, x86::ptr(x86::esp));
+				popWords(emit, 1);
 
 			} else if (b.op == "/") {
 				emit.cdq();
-				emit.idiv(esp.at(), eax);
-				emit.popByte(1);
+				emit.idiv(x86::ptr(x86::esp));
+				popWords(emit, 1);
 
 			} else if (b.op == "==") {
-				emit.cmp(eax, esp.at());
-				emit.setz(al);
-				emit.popByte(1);
-
-			} else if (b.op == "<") {
-				emit.cmp(eax, esp.at());
-				emit.setl(al);
-				emit.popByte(1);
-
-			} else if (b.op == ">") {
-				emit.cmp(eax, esp.at());
-				emit.setg(al);
-				emit.popByte(1);
+				emit.cmp(x86::ptr(x86::esp), x86::eax);
+				emit.setz(x86::al);
+				popWords(emit, 1);
 
 			} else if (b.op == "!=") {
-				emit.cmp(eax, esp.at());
-				emit.setnz(al);
-				emit.popByte(1);
+				emit.cmp(x86::ptr(x86::esp), x86::eax);
+				emit.setnz(x86::al);
+				popWords(emit, 1);
+
+			} else if (b.op == "<") {
+				// TODO: Implement
 
 			} else if (b.op == "<=") {
-				emit.cmp(eax, esp.at());
-				emit.setle(al);
-				emit.popByte(1);
+				// TODO: Implement
+
+			} else if (b.op == ">") {
+				// TODO: Implement
 
 			} else if (b.op == ">=") {
-				emit.cmp(eax, esp.at());
-				emit.setge(al);
-				emit.popByte(1);
+				// TODO: Implement
 
+			} else if (b.op == "%") {
+				emit.cdq();
+				emit.idiv(x86::ptr(x86::esp));
+
+				emit.mov(x86::edx, x86::eax);
+				popWords(emit, 1);
 			}
 		}
 	}
@@ -266,21 +265,17 @@ namespace spero::compiler::gen {
 		// Evaluate the expression
 		u.expr->accept(*this);
 
-		Register eax{ "eax" };
-
 		// Perform the operator call
 		// TODO: Perform type-based function lookup
 		auto& op = u.op->name;
 		if (op == "-") {
-			emit.neg(eax);
+			emit.neg(x86::eax);
 
 		} else if (op == "!") {
 			// Emit a 'test' if the 'zero flag' isn't set
-			if (!emit.zeroSet()) {
-				emit.test(eax, eax);
-			}
-
-			emit.setz(eax);
+			// TODO: See if I can optimize this out if the 0 flag already set
+			emit.test(x86::eax, x86::eax);
+			emit.setz(x86::eax);
 		}
 	}
 
