@@ -190,7 +190,7 @@ namespace spero::parser::grammar {
 	SENTINEL(error_gentyp);
 	struct default_type : seq<one<'='>, ig_s, sor<type, error_gentyp>> {};
 	struct related_type : opt<relation, sor<type, errortype>> {};
-	 struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, sor<default_type, related_type>> {};
+	struct type_gen : seq<typ, ig_s, variance, ig_s, opt<variadic>, sor<default_type, related_type>> {};
 	SENTINEL(error_genval);
 	//struct error_inf : seq<ig_s, two<':'>> {};																		// For if I later want to provide an error for this situation
 	struct default_val : seq<one<'='>, ig_s, sor<lit, error_genval>> {};

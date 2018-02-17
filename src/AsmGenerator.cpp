@@ -14,12 +14,26 @@ static void popWords(asmjit::x86::Builder& emit, size_t nWords) {
 
 namespace spero::compiler::gen {
 	AsmGenerator::AsmGenerator(std::ostream& s, compiler::CompilationState& state)
-		: out{ s }, emit{ nullptr }, state{ state } {}
+		: out{ s }, holder{}, emit{ nullptr }, state{ state }
+	{
+		// Produce a `CodeInfo` that describes the target architecture
+			// I have no idea what any of this means
+		asmjit::CodeInfo info;
+		info.init(asmjit::ArchInfo::kIdX86);
+
+		holder.init(info);
+		holder.attach(&emit);
+	}
 
 	void AsmGenerator::finalize() {
 		asmjit::StringBuilder sb;
 		emit.dump(sb);
-		out << sb.data();
+		std::string result = sb.data();
+		out << result;
+	}
+
+	asmjit::x86::Builder&& AsmGenerator::result() {
+		return std::move(emit);
 	}
 
 	void AsmGenerator::assign(std::string& var, bool force_curr, Location loc) {

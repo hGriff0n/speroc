@@ -13,8 +13,6 @@ Current Project State
 
 Current Project Plan
   Convert all x86 touching code over to using AsmJit
-	Change formatting rule for new lined functions/etc. (C++ code)
-	  open brace goes on a new line
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
 	  Figure out how labels interact with assembly generation
@@ -23,13 +21,22 @@ Current Project Plan
 	    emit.jz(loop)
 	    ```
 	  Find out whether the interface follows intel or at&t semantics (my guess: intel)
+	Improve the AsmGenerator framework to account for the asmjit workflow
+	  Change the AsmGenerator interface to not have a dependency on ostream
+	  Change the AsmGenerator interface to have a method that "extracts" the asmjit Builder (once done)
+	  Change compilation.cpp:codegen to seperate out the assembly production from the assembly writing (as demonstrated)
+	    Update compile accordingly
+	  KEY IDEA: The "return" of the Generator stage is the assembly nodes
+	    File output instead gets pushed back to a second stage
+	    By keeping around the assembly nodes, we get to add on optimizer passes a bit more easily
 	Add a new interpreter stand-in (same semantics)
-	  May need to add similar declaration additions to AsmTk (can just ignore)
+	  I might need to delete the Interpreter project (bring back the asmjit stuff, delete asmtk)
+	    With the AsmGenerator changes, I really just need to implement a single function
+	  Figure out what to do with "utils/asmjit.h" (all the asmjit stuff is in Interpreter)
 	  Completely remove the rust dependencies
 	Figure out how to add my AsmJit additions into the readme production
 	  Also need to add in references to all dependencies in README
 	  Make sure dependency usage satisfies licensing
-	Improve the AsmGenerator framework to account for the asmjit workflow
 	Adapt new interpreter to have the capability to have "re-entrant evaluation"
 	  NOTE: The better part of this step would be in compiler variable tracking
 	Convert assembly compilation to use clang instead of gcc
@@ -41,6 +48,7 @@ Current Project Plan
 	Add in code to handle reassignment and compound assignment
 	  Didn't I remove compound assignment from the language ???
     Modify 'SymTable' to track the mutability of the variable
+	  Need to improve the whole abstraction really
 	  Look into abstracting this out into a "collection" pass
 	    This would probably be the start of a generic "variable" finding pass (ie. type inference, etc)
 	Modify reassignment code to throw out an error when the variable is immutable

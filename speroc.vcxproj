@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\asmtk\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\asmjit\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\Interpreter;C:\Users\ghoop\Documents\GitHub\speroc\dep\asmjit\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
     <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\asmtk\src\asmtk;C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
     <LibraryPath>C:\Users\ghoop\Documents\GitHub\speroc\dep\_x86_inter\target\debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -161,68 +161,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="asmjit_writer.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\armassembler.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\armbuilder.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\armcallconv.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\armcompiler.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\armfeatures.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\arminstdb.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\arminternal.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\armlogging.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\armoperand.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\arm\armrapass.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\algorithm.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\arch.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\assembler.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\builder.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\callconv.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\codeholder.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\compiler.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\constpool.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\cpuinfo.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\emitter.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\func.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\globals.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\inst.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\intutils.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\jitallocator.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\jitruntime.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\jitutils.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\logging.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\memutils.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\operand.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\osutils.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\ralocal.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\rapass.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\rastack.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\stringbuilder.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\target.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\type.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\zone.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\zonehash.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\zonelist.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\zonerbtree.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\zonestack.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\core\zonevector.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86assembler.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86builder.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86callconv.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86compiler.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86features.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86instdb.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86internal.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86logging.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86operand.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86rapass.cpp" />
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86ssetoavx.cpp" />
-    <ClCompile Include="dep\asmtk\src\asmtk\asmparser.cpp" />
-    <ClCompile Include="dep\asmtk\src\asmtk\asmtokenizer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\AsmGenerator.cpp" />
     <ClCompile Include="src\ast.cpp" />
     <ClCompile Include="src\cmd_line.cpp" />
     <ClCompile Include="src\CompilationState.cpp" />
     <ClCompile Include="src\compilation.cpp" />
+    <ClCompile Include="src\strings.cpp" />
     <ClCompile Include="src\SymTable.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -265,85 +210,6 @@
     <Text Include="docs\_todo.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dep\asmjit\src\asmjit\arm.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armassembler.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armbuilder.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armcallconv_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armcompiler.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armemitter.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armfeatures.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armglobals.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\arminstdb.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\arminternal_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armlogging_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armoperand.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\arm\armrapass_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\asmjit.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\algorithm.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\arch.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\assembler.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\build.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\builder.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\callconv.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\codeholder.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\compiler.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\constpool.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\cpuinfo.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\emitter.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\features.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\func.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\globals.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\inst.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\intutils.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\jitallocator.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\jitruntime.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\jitutils.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\logging.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\memutils.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\misc_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\operand.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\osutils.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\raassignment_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\rabuilders_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\radefs_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\ralocal_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\rapass_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\rastack_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\simdtypes.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\stringbuilder.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\stringutils.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\target.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\type.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\zone.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\zonehash.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\zonelist.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\zonerbtree.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\zonestack.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\zonestring.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\core\zonevector.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86assembler.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86builder.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86callconv_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86compiler.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86emitter.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86features.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86globals.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86instdb.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86internal_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86logging_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86opcode_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86operand.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86rapass_p.h" />
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86ssetoavx_p.h" />
-    <ClInclude Include="dep\asmtk\src\asmtk\asmparser.h" />
-    <ClInclude Include="dep\asmtk\src\asmtk\asmtk.h" />
-    <ClInclude Include="dep\asmtk\src\asmtk\asmtokenizer.h" />
-    <ClInclude Include="dep\asmtk\src\asmtk\elfdefs.h" />
-    <ClInclude Include="dep\asmtk\src\asmtk\globals.h" />
-    <ClInclude Include="dep\asmtk\src\asmtk\parserutils.h" />
-    <ClInclude Include="dep\asmtk\src\asmtk\strtod.h" />
     <ClInclude Include="dep\better-enums\enum.h" />
     <ClInclude Include="dep\cxxopts\include\cxxopts.hpp" />
     <ClInclude Include="incl\analysis\SymTable.h" />
@@ -361,6 +227,11 @@
     <ClInclude Include="incl\util\parser.h" />
     <ClInclude Include="incl\util\strings.h" />
     <ClInclude Include="incl\util\utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Interpreter\Interpreter.vcxproj">
+      <Project>{a59c8638-ce1f-4459-8a94-dedd9f378e8c}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

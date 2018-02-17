@@ -13,10 +13,10 @@ namespace spero::compiler::gen {
 	 * TODO: Rewrite to utilize different IR structure
 	 */
 	class AsmGenerator : public ast::Visitor {
-		//AsmEmitter emit;
-		// TODO: Need to get a `CodeHolder` into this class for initialization
-			// Probably best to get it from CompilationState (would have the references to target)
+		asmjit::CodeHolder holder;
 		asmjit::x86::Builder emit;
+
+		// TODO: Deprecate
 		std::ostream& out;
 
 		compiler::CompilationState& state;
@@ -29,6 +29,7 @@ namespace spero::compiler::gen {
 		public:
 			AsmGenerator(std::ostream&, compiler::CompilationState&);
 			void finalize();
+			asmjit::x86::Builder&& result();
 
 			// Base Nodes
 			virtual void visit(ast::Ast&) final;
