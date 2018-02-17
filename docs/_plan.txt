@@ -13,22 +13,23 @@ Current Project State
 
 Current Project Plan
   Convert all x86 touching code over to using AsmJit
-	Setup fork of AsmJit in github to store my changes
-	  The speroc repo won't be "accurate" until I do so
-	Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
-	Figure out how labels interact with assembly generation
-	  ```
-	  Label loop = emit.newLabel();
-	  emit.jz(loop)
-	  ```
-	Find out whether the interface follows intel or at&t semantics (my guess: intel)
-	Swap in AsmJit for my custom Arch/Emitter codegen
-	  Remove the arch and AsmEmitter files
+    Remove the arch and AsmEmitter files
 	Change formatting rule for new lined functions/etc. (C++ code)
 	  open brace goes on a new line
+	Perform some more research on AsmJit
+	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
+	  Figure out how labels interact with assembly generation
+	    ```
+	    Label loop = emit.newLabel();
+	    emit.jz(loop)
+	    ```
+	  Find out whether the interface follows intel or at&t semantics (my guess: intel)
 	Add a new interpreter stand-in (same semantics)
 	  May need to add similar declaration additions to AsmTk (can just ignore)
-	  Remove the rust dependencies
+	  Completely remove the rust dependencies
+	Figure out how to add my AsmJit additions into the readme production
+	  Also need to add in references to all dependencies in README
+	  Make sure dependency usage satisfies licensing
 	Adapt new interpreter to have the capability to have "re-entrant evaluation"
 	  NOTE: The better part of this step would be in compiler variable tracking
 	Convert assembly compilation to use clang instead of gcc

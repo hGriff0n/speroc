@@ -15,7 +15,7 @@ File.open("./README.md", "w") do |readme|
 
 
     # Collect information about files in the project (TODO: See if I can add in more stats)
-    stats = SourceStats.new(["incl", "src", "tools", "main.cpp", "dep/_x86_inter"])
+    stats = SourceStats.new(["incl", "src", "tools", "main.cpp"])
     num_lines = stats.exts.reduce(0) do |acc, elem|
         acc + elem[1][:sloc]
     end
