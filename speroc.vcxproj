@@ -218,8 +218,6 @@
     <ClCompile Include="dep\asmtk\src\asmtk\asmparser.cpp" />
     <ClCompile Include="dep\asmtk\src\asmtk\asmtokenizer.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="src\_arch.cpp" />
-    <ClCompile Include="src\AsmEmitter.cpp" />
     <ClCompile Include="src\AsmGenerator.cpp" />
     <ClCompile Include="src\ast.cpp" />
     <ClCompile Include="src\cmd_line.cpp" />
@@ -265,7 +263,6 @@
     <Text Include="docs\_dev_plan.txt" />
     <Text Include="docs\_plan.txt" />
     <Text Include="docs\_todo.txt" />
-    <Text Include="asmjit_additions.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\asmjit\src\asmjit\arm.h" />
@@ -350,8 +347,6 @@
     <ClInclude Include="dep\better-enums\enum.h" />
     <ClInclude Include="dep\cxxopts\include\cxxopts.hpp" />
     <ClInclude Include="incl\analysis\SymTable.h" />
-    <ClInclude Include="incl\codegen\_arch.h" />
-    <ClInclude Include="incl\codegen\AsmEmitter.h" />
     <ClInclude Include="incl\codegen\AsmGenerator.h" />
     <ClInclude Include="incl\compiler.h" />
     <ClInclude Include="incl\interface\cmd_line.h" />

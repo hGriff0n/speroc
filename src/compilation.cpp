@@ -62,6 +62,8 @@ namespace spero::compiler {
 			node->accept(visitor);
 		}
 
+		visitor.finalize();
+
 		o << '\n';
 	}
 

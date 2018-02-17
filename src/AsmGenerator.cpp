@@ -16,6 +16,12 @@ namespace spero::compiler::gen {
 	AsmGenerator::AsmGenerator(std::ostream& s, compiler::CompilationState& state)
 		: out{ s }, emit{ nullptr }, state{ state } {}
 
+	void AsmGenerator::finalize() {
+		asmjit::StringBuilder sb;
+		emit.dump(sb);
+		out << sb.data();
+	}
+
 	void AsmGenerator::assign(std::string& var, bool force_curr, Location loc) {
 		auto variable = current->getVar(var, force_curr);
 

@@ -28,6 +28,7 @@ namespace spero::compiler::gen {
 
 		public:
 			AsmGenerator(std::ostream&, compiler::CompilationState&);
+			void finalize();
 
 			// Base Nodes
 			virtual void visit(ast::Ast&) final;

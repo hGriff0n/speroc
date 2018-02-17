@@ -13,7 +13,6 @@ Current Project State
 
 Current Project Plan
   Convert all x86 touching code over to using AsmJit
-    Remove the arch and AsmEmitter files
 	Change formatting rule for new lined functions/etc. (C++ code)
 	  open brace goes on a new line
 	Perform some more research on AsmJit
@@ -30,6 +29,7 @@ Current Project Plan
 	Figure out how to add my AsmJit additions into the readme production
 	  Also need to add in references to all dependencies in README
 	  Make sure dependency usage satisfies licensing
+	Improve the AsmGenerator framework to account for the asmjit workflow
 	Adapt new interpreter to have the capability to have "re-entrant evaluation"
 	  NOTE: The better part of this step would be in compiler variable tracking
 	Convert assembly compilation to use clang instead of gcc

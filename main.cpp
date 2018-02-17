@@ -10,14 +10,8 @@
 #include "util/strings.h"
 
 // TODO: Convert to llvm
-#define ASMJIT_NOT_INTEGRATED
-#ifndef ASMJIT_NOT_INTEGRATED
 #define CLANG_COMMAND "clang -masm=intel"
 #define GCC_COMMAND "g++ -masm=intel"
-#else
-#define CLANG_COMMAND "clang"
-#define GCC_COMMAND "g++"
-#endif
 #define ASM_COMPILER GCC_COMMAND
 
 

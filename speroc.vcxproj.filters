@@ -109,14 +109,8 @@
     <ClCompile Include="src\AsmGenerator.cpp">
       <Filter>Source Files\codegen</Filter>
     </ClCompile>
-    <ClCompile Include="src\AsmEmitter.cpp">
-      <Filter>Source Files\codegen</Filter>
-    </ClCompile>
     <ClCompile Include="src\SymTable.cpp">
       <Filter>Source Files\analysis</Filter>
-    </ClCompile>
-    <ClCompile Include="src\_arch.cpp">
-      <Filter>Source Files\codegen</Filter>
     </ClCompile>
     <ClCompile Include="asmjit_writer.cpp">
       <Filter>Source Files</Filter>
@@ -150,6 +144,48 @@
     </ClCompile>
     <ClCompile Include="dep\asmjit\src\asmjit\arm\armrapass.cpp">
       <Filter>Dependencies\asmjit\arm</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86assembler.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86builder.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86callconv.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86compiler.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86features.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86instdb.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86internal.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86logging.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86operand.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86rapass.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86ssetoavx.cpp">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compilation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmtk\src\asmtk\asmparser.cpp">
+      <Filter>Dependencies\asmtk</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\asmtk\src\asmtk\asmtokenizer.cpp">
+      <Filter>Dependencies\asmtk</Filter>
     </ClCompile>
     <ClCompile Include="dep\asmjit\src\asmjit\core\algorithm.cpp">
       <Filter>Dependencies\asmjit\core</Filter>
@@ -249,48 +285,6 @@
     </ClCompile>
     <ClCompile Include="dep\asmjit\src\asmjit\core\zonevector.cpp">
       <Filter>Dependencies\asmjit\core</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86assembler.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86builder.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86callconv.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86compiler.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86features.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86instdb.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86internal.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86logging.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86operand.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86rapass.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmjit\src\asmjit\x86\x86ssetoavx.cpp">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="src\compilation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmtk\src\asmtk\asmparser.cpp">
-      <Filter>Dependencies\asmtk</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\asmtk\src\asmtk\asmtokenizer.cpp">
-      <Filter>Dependencies\asmtk</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -401,9 +395,6 @@
     <Text Include="docs\rust_integration_list.txt">
       <Filter>Resource Files\tools</Filter>
     </Text>
-    <Text Include="asmjit_additions.txt">
-      <Filter>Header Files\codegen</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="incl\compiler.h">
@@ -430,9 +421,6 @@
     <ClInclude Include="incl\util\parser.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
-    <ClInclude Include="incl\codegen\AsmEmitter.h">
-      <Filter>Header Files\codegen</Filter>
-    </ClInclude>
     <ClInclude Include="incl\analysis\SymTable.h">
       <Filter>Header Files\analysis</Filter>
     </ClInclude>
@@ -450,9 +438,6 @@
     </ClInclude>
     <ClInclude Include="incl\parser\location.h">
       <Filter>Header Files\parser</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\codegen\_arch.h">
-      <Filter>Header Files\codegen</Filter>
     </ClInclude>
     <ClInclude Include="dep\asmjit\src\asmjit\arm\armassembler.h">
       <Filter>Dependencies\asmjit\arm</Filter>
@@ -489,6 +474,90 @@
     </ClInclude>
     <ClInclude Include="dep\asmjit\src\asmjit\arm\armrapass_p.h">
       <Filter>Dependencies\asmjit\arm</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86assembler.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86builder.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86callconv_p.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86compiler.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86emitter.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86features.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86globals.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86instdb.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86internal_p.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86logging_p.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86opcode_p.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86operand.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86rapass_p.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86ssetoavx_p.h">
+      <Filter>Dependencies\asmjit\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\arm.h">
+      <Filter>Dependencies\asmjit</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\asmjit.h">
+      <Filter>Dependencies\asmjit</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\core.h">
+      <Filter>Dependencies\asmjit</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmjit\src\asmjit\x86.h">
+      <Filter>Dependencies\asmjit</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\better-enums\enum.h">
+      <Filter>Dependencies\better-enums</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\cxxopts\include\cxxopts.hpp">
+      <Filter>Dependencies\cxxopts</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\util\asmjit.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmtk\src\asmtk\asmparser.h">
+      <Filter>Dependencies\asmtk</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmtk\src\asmtk\asmtk.h">
+      <Filter>Dependencies\asmtk</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmtk\src\asmtk\asmtokenizer.h">
+      <Filter>Dependencies\asmtk</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmtk\src\asmtk\elfdefs.h">
+      <Filter>Dependencies\asmtk</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmtk\src\asmtk\globals.h">
+      <Filter>Dependencies\asmtk</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmtk\src\asmtk\parserutils.h">
+      <Filter>Dependencies\asmtk</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\asmtk\src\asmtk\strtod.h">
+      <Filter>Dependencies\asmtk</Filter>
     </ClInclude>
     <ClInclude Include="dep\asmjit\src\asmjit\core\algorithm.h">
       <Filter>Dependencies\asmjit\core</Filter>
@@ -615,90 +684,6 @@
     </ClInclude>
     <ClInclude Include="dep\asmjit\src\asmjit\core\zonevector.h">
       <Filter>Dependencies\asmjit\core</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86assembler.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86builder.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86callconv_p.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86compiler.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86emitter.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86features.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86globals.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86instdb.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86internal_p.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86logging_p.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86opcode_p.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86operand.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86rapass_p.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86\x86ssetoavx_p.h">
-      <Filter>Dependencies\asmjit\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\arm.h">
-      <Filter>Dependencies\asmjit</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\asmjit.h">
-      <Filter>Dependencies\asmjit</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\core.h">
-      <Filter>Dependencies\asmjit</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmjit\src\asmjit\x86.h">
-      <Filter>Dependencies\asmjit</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\better-enums\enum.h">
-      <Filter>Dependencies\better-enums</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\cxxopts\include\cxxopts.hpp">
-      <Filter>Dependencies\cxxopts</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\util\asmjit.h">
-      <Filter>Header Files\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmtk\src\asmtk\asmparser.h">
-      <Filter>Dependencies\asmtk</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmtk\src\asmtk\asmtk.h">
-      <Filter>Dependencies\asmtk</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmtk\src\asmtk\asmtokenizer.h">
-      <Filter>Dependencies\asmtk</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmtk\src\asmtk\elfdefs.h">
-      <Filter>Dependencies\asmtk</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmtk\src\asmtk\globals.h">
-      <Filter>Dependencies\asmtk</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmtk\src\asmtk\parserutils.h">
-      <Filter>Dependencies\asmtk</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\asmtk\src\asmtk\strtod.h">
-      <Filter>Dependencies\asmtk</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
