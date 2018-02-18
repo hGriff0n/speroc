@@ -16,3 +16,30 @@ namespace asmjit {
 		using Label = ::asmjit::Label;
 	}
 }
+
+namespace spero::compiler::gen {
+
+	// TODO: The name could use some slight tweaking
+	class Assembler : public asmjit::x86::Builder {
+		asmjit::CodeHolder holder;
+
+		public:
+			inline Assembler() : asmjit::x86::Builder{ nullptr } {
+				asmjit::CodeInfo arch;
+				arch.init(asmjit::ArchInfo::kIdX86);
+
+				holder.init(arch);
+				holder.attach(this);
+			}
+			inline Assembler(Assembler&& o) : asmjit::x86::Builder{ std::move(o) }, holder{ std::move(o.holder) } {
+				auto idx = holder._emitters.indexOf(&o);
+				_code = &holder;
+				if (idx != asmjit::Globals::kNotFound) {
+					holder._emitters[idx] = this;
+				}
+			}
+			virtual ~Assembler() noexcept {
+				holder.detach(this);
+			}
+	};
+}

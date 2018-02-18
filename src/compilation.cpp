@@ -1,4 +1,4 @@
-#include "compiler.h"
+#include "compilation.h"
 #include "parser/actions.h"
 #include "codegen/AsmGenerator.h"
 
@@ -44,19 +44,18 @@ namespace spero::compiler {
 		return std::move(s);
 	}
 
-
-	/*
-	Proposed Interface Change:
-
-	asmjit::x86::Builder&& produceAssembly(IR_t& s, CompilationState& state) {
+	gen::Assembler backend(IR_t& s, CompilationState& state) {
 		gen::AsmGenerator visitor{ state };
 
 		for (const auto& node : s) {
 			node->accept(visitor);
 		}
 
-		return visitor->result();
+		return visitor.result();
 	}
+
+	/*
+	Proposed Interface Change:
 
 	void interpret(asmjit::x86::Builder& emit, CompilationState& state) {
 		
@@ -83,6 +82,11 @@ namespace spero::compiler {
 
 	// Perform the final compilation stages (produces direct assembly code)
 	void codegen(IR_t& s, const std::string& in, const std::string& out, CompilationState& state, bool output_header) {
+		// Produce the assembly code
+		asmjit::StringBuilder sb;
+		auto asmCode = backend(s, state);
+		asmCode.dump(sb);
+
 		// Open the output file
 		std::ofstream o{ out };
 
@@ -91,16 +95,8 @@ namespace spero::compiler {
 			o << "\t.file \"" << in << "\"\n.text\n\t.p2align 4, 0x90\n";
 		}
 
-		spero::compiler::gen::AsmGenerator visitor{ o, state };
-
-		// Print everything directly to the file
-		for (const auto& node : s) {
-			node->accept(visitor);
-		}
-
-		visitor.finalize();
-
-		o << '\n';
+		// Write everything to the file
+		o << sb.data() << '\n';
 	}
 
 }

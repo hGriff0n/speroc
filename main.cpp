@@ -4,7 +4,7 @@
 #include <unordered_map>
 //#include <asmtk/asmtk.h>
 
-#include "compiler.h"
+#include "compilation.h"
 #include "parser/base.h"
 #include "interface/cmd_line.h"
 #include "util/strings.h"

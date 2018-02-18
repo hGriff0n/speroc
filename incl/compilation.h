@@ -12,9 +12,13 @@ namespace spero::compiler {
 	std::tuple<size_t, spero::parser::Stack> parseFile(std::string, CompilationState&);
 
 
-	// Perform all steps related to analysis and secondary IR creation (may abstract IR to a differnt function)
+	// Perform all steps related to analysis and secondary IR creation (may abstract IR to a different function)
 	using IR_t = spero::parser::Stack;
 	IR_t analyze(spero::parser::Stack, CompilationState&);
+
+	
+	// Perform all steps related to backend production
+	gen::Assembler backend(IR_t&, CompilationState&);
 
 
 	// Perform all steps related to final codegen stages (produces assembly code)

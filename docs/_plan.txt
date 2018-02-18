@@ -22,13 +22,9 @@ Current Project Plan
 	    ```
 	  Find out whether the interface follows intel or at&t semantics (my guess: intel)
 	Improve the AsmGenerator framework to account for the asmjit workflow
-	  Change the AsmGenerator interface to not have a dependency on ostream
-	  Change the AsmGenerator interface to have a method that "extracts" the asmjit Builder (once done)
 	  Change compilation.cpp:codegen to seperate out the assembly production from the assembly writing (as demonstrated)
 	    Update compile accordingly
-	  KEY IDEA: The "return" of the Generator stage is the assembly nodes
-	    File output instead gets pushed back to a second stage
-	    By keeping around the assembly nodes, we get to add on optimizer passes a bit more easily
+	Add move constructor fixes to wip AsmJit
 	Add a new interpreter stand-in (same semantics)
 	  I might need to delete the Interpreter project (bring back the asmjit stuff, delete asmtk)
 	    With the AsmGenerator changes, I really just need to implement a single function
@@ -40,6 +36,8 @@ Current Project Plan
 	Adapt new interpreter to have the capability to have "re-entrant evaluation"
 	  NOTE: The better part of this step would be in compiler variable tracking
 	Convert assembly compilation to use clang instead of gcc
+	Improve build system and performance
+	  Tweak settings to get better compilation speeds, etc.
   Basic Mutability Tracking
     Ensure operator compilation proceeds correctly
 	  The comparison operators don't work
