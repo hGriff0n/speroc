@@ -21,6 +21,9 @@ namespace spero::compiler {
 
 	// Perform all steps related to final codegen stages (produces assembly code)
 	void codegen(gen::Assembler&, const std::string&, const std::string&, CompilationState&, bool=true);
+
+	// Run a JIT interpretation environment
+	void interpret(gen::Assembler&);
 }
 
 

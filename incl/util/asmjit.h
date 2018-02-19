@@ -22,18 +22,21 @@ namespace spero::compiler::gen {
 	// TODO: The name could use some slight tweaking
 	class Assembler : public asmjit::x86::Builder {
 		asmjit::CodeHolder holder;
+		asmjit::CBNode* front;
 
 		public:
-			inline Assembler() : asmjit::x86::Builder{ nullptr } {
+			inline Assembler() : asmjit::x86::Builder{ nullptr }, front{ cursor() } {
 				holder.init(asmjit::CodeInfo{ asmjit::ArchInfo::kIdX64 });
 				holder.attach(this);
 			}
-			inline Assembler(Assembler&& o) : asmjit::x86::Builder{ std::move(o) }, holder{ std::move(o.holder) } {
+			inline Assembler(Assembler&& o) : asmjit::x86::Builder{ std::move(o) }, front{ o.front }, holder{ std::move(o.holder) } {
 				auto idx = holder._emitters.indexOf(&o);
 				_code = &holder;
 				if (idx != asmjit::Globals::kNotFound) {
 					holder._emitters[idx] = this;
 				}
+
+				o.front = nullptr;
 			}
 			virtual ~Assembler() noexcept {
 				holder.detach(this);
@@ -51,5 +54,26 @@ namespace spero::compiler::gen {
 				return &holder;
 			}
 
+			// Setup the assembler for interpretation
+			// Basically turns the produced assembly into a `int()` function
+			void makeIFunction() {
+				// Setup the function
+				auto* cursor = setCursor(front);
+				asmjit::FuncDetail func;
+				func.init(asmjit::FuncSignatureT<int>(asmjit::CallConv::kIdHost));
+
+				asmjit::FuncFrame ffi;
+				ffi.init(func);
+				ffi.setAllDirty();
+				emitProlog(ffi);
+
+				// Tear-down the function
+				setCursor(cursor);
+				emitEpilog(ffi);
+
+				finalize();
+			}
+
+			using Function = int(*)();
 	};
 }

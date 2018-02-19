@@ -183,7 +183,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 	using compiler::ID;
 
 	std::string input;
-	std::unordered_map<std::string, bool> flags;
+	std::unordered_map<std::string, bool> flags{ { "compile", true } };
 
 	while (std::cout << "> " && getMultiline(std::cin, input)) {
 		try {
@@ -261,7 +261,8 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 
 						// TODO: Allow interpretation without requiring compilation displaying
 						if (flags["interpret"]) {
-							interpret_file("out.s");
+							compiler::interpret(asmCode);
+							//interpret_file("out.s");
 							std::cout << std::endl;
 						}
 
@@ -279,4 +280,38 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 			std::cout << e.what() << '\n';
 		}
 	}
+}
+
+
+// Interpret the produced assembly code (this doesn't produce any code. "CodeHolder" is apparently completely empty
+void spero::compiler::interpret(gen::Assembler& asmCode) {
+	// Setup the runtime environment
+	static asmjit::JitRuntime jt;
+
+	// Prepare the assembly code for interpretation
+	// I don't think this is quite accurate enough just yet (not sure what though)
+	asmCode.makeIFunction();
+
+	asmjit::StringBuilder sb;
+	asmCode.dump(sb);
+	std::cout << sb.data() << '\n';
+
+	// Register the assembly code as an `int()` function
+	gen::Assembler::Function fn;
+	asmjit::Error err = jt.add(&fn, asmCode.get());
+
+	if (err) {
+		std::cout << err << ':' << asmjit::kErrorNoCodeGenerated << '\n';
+	} else {
+		// Why is the function "invalid"?
+			// Any stack interaction apparently causes a write conflict
+			// Maybe an 'rsp'/'esp' issue?
+		int i = fn();
+		std::cout << "result: " << i << '\n';
+	}
+
+	// TODO: Add printing of all other registers
+	// TODO: Add re-entrant evaluation
+
+	jt.release(fn);
 }
