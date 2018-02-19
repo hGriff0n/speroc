@@ -25,10 +25,7 @@ namespace spero::compiler::gen {
 
 		public:
 			inline Assembler() : asmjit::x86::Builder{ nullptr } {
-				asmjit::CodeInfo arch;
-				arch.init(asmjit::ArchInfo::kIdX86);
-
-				holder.init(arch);
+				holder.init(asmjit::CodeInfo{ asmjit::ArchInfo::kIdX64 });
 				holder.attach(this);
 			}
 			inline Assembler(Assembler&& o) : asmjit::x86::Builder{ std::move(o) }, holder{ std::move(o.holder) } {
@@ -41,5 +38,18 @@ namespace spero::compiler::gen {
 			virtual ~Assembler() noexcept {
 				holder.detach(this);
 			}
+
+			void popBytes(size_t nBytes) {
+				add(asmjit::x86::esp, nBytes);
+			}
+
+			void popWords(size_t nWords) {
+				popBytes(nWords * 4);
+			}
+
+			asmjit::CodeHolder* get() {
+				return &holder;
+			}
+
 	};
 }

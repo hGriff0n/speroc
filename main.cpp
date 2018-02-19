@@ -23,27 +23,16 @@
  */
 bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack) {
 	using namespace spero;
-	using compiler::ID;
 
 	// TODO: Initialize timing and other compilation logging structures
 
 
 	/*
-	 * Perform parsing and initial recognization checks
-	 *
-	 * TODO: Rework the interface (failure state is now implicit)
+	 * Perform parsing and initial AST assembly
 	 */
-	{
-		size_t failed;
-
-		state.logTime();
-		std::tie(failed, stack) = compiler::parseFile(state.files()[0], state);
-		state.logTime();
-
-		if (failed) {
-			state.log(ID::err, "Unexpected error in parsing input");
-		}
-	}
+	state.logTime();
+	stack = compiler::parseFile(state.files()[0], state);
+	state.logTime();
 
 
 	/*
@@ -54,8 +43,18 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	 */
 	auto ir = (!state.failed())
 		? compiler::analyze(std::move(stack), state)
-		: spero::compiler::IR_t{};
+		: spero::compiler::MIR_t{};
 
+
+	/*
+	 * Run through the backend optimizations
+	 *
+	 * Don't mark this as a separate "phase" for timing purposes
+	 * The sub-phases perform their own timing passes
+	 */
+	auto asmCode = (!state.failed())
+		? compiler::backend(ir, state)
+		: spero::compiler::gen::Assembler{};
 
 	/*
 	 * Generate the boundary ir for the external tools
@@ -66,7 +65,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	 */
 	if (!state.failed()) {
 		state.logTime();
-		compiler::codegen(ir, state.files()[0], "out.s", state);
+		compiler::codegen(asmCode, state.files()[0], "out.s", state);
 		state.logTime();
 	}
 
@@ -80,7 +79,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	if (!state.failed() && state.produceExe()) {
 		state.logTime();
 		if (system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
-			state.log(ID::err, "Compilation of `{}` failed", state.output());
+			state.log(compiler::ID::err, "Compilation of `{}` failed", state.output());
 		}
 		state.logTime();
 
@@ -209,12 +208,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 			} else if (command == ":l") {
 				if (state.files().size() == 0) { state.files().push_back(""); }
 				state.files()[0] = input.substr(3);
-
-				bool failed;
-				std::tie(failed, res) = compiler::parseFile(state.files()[0], state);
-				if (failed) {
-					state.log(ID::err, "Parsing of the input failed");
-				}
+				res = compiler::parseFile(state.files()[0], state);
 
 			// Modify the command line arguments
 			} else if (command == ":a") {
@@ -244,17 +238,19 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 
 			// Run the interactive mode
 			} else {
-				bool failed;
-				std::tie(failed, res) = compiler::parse(input, state);
+				res = compiler::parse(input, state);
 
 				// Stop early if parsing failed
-				if (failed) {
-					state.log(ID::err, "Parsing of the input failed");
-
-				} else if (flags["compile"]) {
+				if (!state.failed() && flags["compile"]) {
 					// Analyze and compile the code
 					auto ir = compiler::analyze(std::move(res), state);
-					compiler::codegen(ir, "interactive", "out.s", state, false);
+					auto asmCode = compiler::backend(ir, state);
+
+					// TODO: Insert the interpret check before the codegen output
+					
+					// TODO: I don't need to output to a file anymore
+
+					compiler::codegen(asmCode, "interactive", "out.s", state, false);
 
 					// Print out the generated assembly
 					if (!state.failed()) {

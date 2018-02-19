@@ -3,19 +3,10 @@
 
 using namespace asmjit;
 
-// TODO: Look at "extending" the Assembler with some of my own additions
-static void popBytes(asmjit::x86::Builder& emit, size_t nBytes) {
-	emit.add(x86::esp, nBytes);
-}
-
-static void popWords(asmjit::x86::Builder& emit, size_t nWords) {
-	popBytes(emit, nWords * 4);
-}
-
 namespace spero::compiler::gen {
 	AsmGenerator::AsmGenerator(compiler::CompilationState& state) : emit{}, state{ state } {}
 
-	Assembler AsmGenerator::result() {
+	Assembler AsmGenerator::get() {
 		return std::move(emit);
 	}
 
@@ -87,8 +78,7 @@ namespace spero::compiler::gen {
 		}
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
-		// TODO: Make a `popByte` method to automate this
-		popWords(emit, current->getCount());			// pop n bytes 
+		emit.popWords(current->getCount());				// pop n bytes 
 		current = current->getParent();
 	}
 
@@ -172,7 +162,7 @@ namespace spero::compiler::gen {
 		in.expr->accept(*this);
 
 		// Pop off the symbol table
-		popWords(emit, current->getCount());
+		emit.popWords(current->getCount());
 		current = current->getParent();
 	}
 
@@ -217,7 +207,7 @@ namespace spero::compiler::gen {
 			// Perform the operator call
 			if (b.op == "+") {
 				emit.add(x86::eax, x86::ptr(x86::esp));
-				popWords(emit, 1);
+				emit.popWords(1);
 
 			} else if (b.op == "-") {
 				emit.sub(x86::ptr(x86::esp), x86::eax);
@@ -225,22 +215,22 @@ namespace spero::compiler::gen {
 
 			} else if (b.op == "*") {
 				emit.imul(x86::eax, x86::ptr(x86::esp));
-				popWords(emit, 1);
+				emit.popWords(1);
 
 			} else if (b.op == "/") {
 				emit.cdq();
 				emit.idiv(x86::ptr(x86::esp));
-				popWords(emit, 1);
+				emit.popWords(1);
 
 			} else if (b.op == "==") {
 				emit.cmp(x86::ptr(x86::esp), x86::eax);
 				emit.setz(x86::al);
-				popWords(emit, 1);
+				emit.popWords(1);
 
 			} else if (b.op == "!=") {
 				emit.cmp(x86::ptr(x86::esp), x86::eax);
 				emit.setnz(x86::al);
-				popWords(emit, 1);
+				emit.popWords(1);
 
 			} else if (b.op == "<") {
 				// TODO: Implement
@@ -259,7 +249,7 @@ namespace spero::compiler::gen {
 				emit.idiv(x86::ptr(x86::esp));
 
 				emit.mov(x86::edx, x86::eax);
-				popWords(emit, 1);
+				emit.popWords(1);
 			}
 		}
 	}

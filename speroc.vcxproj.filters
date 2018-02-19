@@ -100,9 +100,6 @@
     <ClCompile Include="src\SymTable.cpp">
       <Filter>Source Files\analysis</Filter>
     </ClCompile>
-    <ClCompile Include="asmjit_writer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\compilation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

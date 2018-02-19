@@ -23,7 +23,7 @@ namespace spero::compiler::gen {
 
 		public:
 			AsmGenerator(compiler::CompilationState&);
-			Assembler result();
+			Assembler get();
 
 			// Base Nodes
 			virtual void visit(ast::Ast&) final;
