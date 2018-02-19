@@ -22,10 +22,7 @@ Current Project Plan
 	    ```
 	  Add move constructor fixes to wip AsmJit
 	Add a new interpreter stand-in (same semantics)
-	  I might need to delete the Interpreter project (bring back the asmjit stuff, delete asmtk)
-	    With the AsmGenerator changes, I really just need to implement a single function
-	  Figure out what to do with "utils/asmjit.h" (all the asmjit stuff is in Interpreter)
-	    Move implementation stuff to .cpp file
+	  Get "3+4" and "let a=3" working
 	  Completely remove the rust dependencies
 	Figure out how to add my AsmJit additions into the readme production
 	  Also need to add in references to all dependencies in README

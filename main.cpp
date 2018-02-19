@@ -246,23 +246,21 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 					auto ir = compiler::analyze(std::move(res), state);
 					auto asmCode = compiler::backend(ir, state);
 
-					// TODO: Insert the interpret check before the codegen output
-					
-					// TODO: I don't need to output to a file anymore
-
-					compiler::codegen(asmCode, "interactive", "out.s", state, false);
 
 					// Print out the generated assembly
 					if (!state.failed()) {
-						std::ifstream out{ "out.s" };
-						while (std::getline(out, input)) {
-							std::cout << input << '\n';
+						asmjit::StringBuilder sb;
+						asmCode.dump(sb);
+						std::cout << sb.data() << '\n';
+						// compiler::codegen(asmCode, "interactive", std::cout, state, false);
+
+						if (flags["output"]) {
+							compiler::codegen(asmCode, "interactive", "out.s", state, false);
 						}
 
 						// TODO: Allow interpretation without requiring compilation displaying
 						if (flags["interpret"]) {
 							compiler::interpret(asmCode);
-							//interpret_file("out.s");
 							std::cout << std::endl;
 						}
 
