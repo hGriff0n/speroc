@@ -1,10 +1,9 @@
 Libraries Used:
 
-    PEGTL: PEG parsing
+    PEGTL: PEG parsing framework
     better-enums: Extended enum support
     cxxopts: Cmd-line parsing
-    asmjit: Framework for emitting assembly code
-    asmtk: Parses and interprets produced assembly code
+    asmjit: Assembly interaction framework
 
 ## Current Project Status
 

@@ -2,16 +2,15 @@ speroc ver 0.3.4 - The reference compiler for the spero language
 
 Project Info:
 
-    size: 3582 sloc
-    files: 8 .cpp, 15 .h, 3 .rb
+    size: 3640 sloc
+    files: 9 .cpp, 15 .h, 3 .rb
 
 Libraries Used:
 
-    PEGTL: PEG parsing
+    PEGTL: PEG parsing framework
     better-enums: Extended enum support
     cxxopts: Cmd-line parsing
-    asmjit: Framework for emitting assembly code
-    asmtk: Parses and interprets produced assembly code
+    asmjit: Assembly interaction framework
 
 ## Current Project Status
 

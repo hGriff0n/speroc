@@ -110,7 +110,6 @@ int main(int argc, char* argv[]) {
 	// Parse the command line arguments
 	auto state = cmd::parse(argc, argv);
 
-
 	// Compiler run
 	if (!state.opts["interactive"].as<bool>()) {
 		parser::Stack res;
@@ -282,10 +281,6 @@ void spero::compiler::interpret(gen::Assembler& asmCode) {
 	// I don't think this is quite accurate enough just yet (not sure what though)
 	asmCode.makeIFunction();
 
-	asmjit::StringBuilder sb;
-	asmCode.dump(sb);
-	std::cout << sb.data() << '\n';
-
 	// Register the assembly code as an `int()` function
 	gen::Assembler::Function fn;
 	asmjit::Error err = jt.add(&fn, asmCode.get());
@@ -293,9 +288,6 @@ void spero::compiler::interpret(gen::Assembler& asmCode) {
 	if (err) {
 		std::cout << err << ':' << asmjit::kErrorNoCodeGenerated << '\n';
 	} else {
-		// Why is the function "invalid"?
-			// Any stack interaction apparently causes a write conflict
-			// Maybe an 'rsp'/'esp' issue?
 		int i = fn();
 		std::cout << "result: " << i << '\n';
 	}

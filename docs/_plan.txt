@@ -21,23 +21,13 @@ Current Project Plan
 	    emit.jz(loop)
 	    ```
 	  Add move constructor fixes to wip AsmJit
-	Add a new interpreter stand-in (same semantics)
-	  Figure out a way to keep track of "unmatched" stack allocations (for local variables)
-	    I need to insert `pop`s of these in order to make the interpreter work
-		  This doesn't fix "3+4" and "let a=3; a" ???
-		  "3 + 4" was me not setting up the codeinfo struct appropriately (it was thinking it was a different architecture)
-		    Why do I clean up the stack usage for this? When did I add it
-		  "let a = 3; a" requires me to add code to pop off all the local variables I create
-		    Might want to abstract this a little (variables will be "globals" in the final implementation)
-			  Should pop off local variables though
-		Fix the interpretation of "let a = 3; a" (gives `1`, should give `3`)
-		Stress test the interpreter a bit more
-	  Completely remove the rust dependencies
-	Figure out how to add my AsmJit additions into the readme production
-	  Also need to add in references to all dependencies in README
-	  Make sure dependency usage satisfies licensing
-	Adapt new interpreter to have the capability to have "re-entrant evaluation"
-	  NOTE: The better part of this step would be in compiler variable tracking
+	    Look at changing codeinfo default constructor to assume host architecture as default
+	  "3 + 4" was me not setting up the codeinfo struct appropriately (it was thinking it was a different architecture)
+	Tidy up readme in regards to dependency usage
+	  Add a little blurb about how it's being used
+	  Make sure that my usage, etc. satisfies the licensing
+	  Update status report
+	  Maybe add some usage and contribution "help"
 	Convert assembly compilation to use clang instead of gcc
 	Improve build system and performance
 	  Tweak settings to get better compilation speeds, etc.
@@ -56,6 +46,9 @@ Current Project Plan
 	  Look into abstracting this out to an analysis pass
 	    We could do this within the current framework, if necessary
 	Create some test code to test the mutability checking (might be done)
+  Adapt new interpreter to have the capability to have "re-entrant evaluation"
+	NOTE: The better part of this step would be in compiler variable tracking
+	Convert global variable storage to use a custom "pool" instead of being stack-based
   Language Logic Checking
 	Look into allowing "def Foo = Foo[Int]" type syntax
 	  Reconsider a lot of the grammar for types definition, particularly for specializing generics

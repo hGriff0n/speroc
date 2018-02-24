@@ -392,9 +392,6 @@
     <Text Include="docs\_todo.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="docs\rust_integration_list.txt">
-      <Filter>Resource Files\tools</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="incl\parser\ast.h">

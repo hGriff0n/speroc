@@ -32,6 +32,7 @@ namespace spero::compiler::gen {
 	class Assembler : public asmjit::x86::Builder {
 		asmjit::CodeHolder holder;
 		asmjit::CBNode* front;
+		size_t allocated_stack = 0;
 
 		public:
 			inline Assembler() noexcept : asmjit::x86::Builder{ nullptr }, front{ cursor() } {
@@ -43,7 +44,7 @@ namespace spero::compiler::gen {
 				info._stdCallConv = asmjit::CallConv::kIdHostStdCall;
 				info._fastCallConv = asmjit::CallConv::kIdHostFastCall;
 				holder.init(std::move(info));
-				//holder.init(asmjit::CodeInfo{ asmjit::ArchInfo::kIdX64 });
+
 				holder.attach(this);
 			}
 			Assembler(Assembler&& o) noexcept;
@@ -59,6 +60,8 @@ namespace spero::compiler::gen {
 			// Setup the assembler for interpretation
 			// Basically turns the produced assembly into a `int()` function
 			void makeIFunction();
+
+			void setAllocatedStack(size_t size);
 
 			using Function = int(*)();
 	};

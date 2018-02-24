@@ -259,7 +259,6 @@
     <None Include="_test\var_ops.spr" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="docs\rust_integration_list.txt" />
     <Text Include="docs\_dev_plan.txt" />
     <Text Include="docs\_plan.txt" />
     <Text Include="docs\_todo.txt" />

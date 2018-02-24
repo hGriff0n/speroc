@@ -7,6 +7,7 @@ namespace spero::compiler::gen {
 	AsmGenerator::AsmGenerator(compiler::CompilationState& state) : emit{}, state{ state } {}
 
 	Assembler AsmGenerator::get() {
+		emit.setAllocatedStack(globals.getCount() * 4);
 		return std::move(emit);
 	}
 

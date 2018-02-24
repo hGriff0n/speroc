@@ -2,7 +2,7 @@
 
 namespace spero::compiler::gen {
 
-	Assembler::Assembler(Assembler&& o) noexcept : asmjit::x86::Builder{ std::move(o) }, front{ o.front }, holder{ std::move(o.holder) } {
+	Assembler::Assembler(Assembler&& o) noexcept : asmjit::x86::Builder{ std::move(o) }, front{ o.front }, holder{ std::move(o.holder) }, allocated_stack{ o.allocated_stack } {
 		_code = &holder;
 
 		if (auto idx = holder._emitters.indexOf(&o); idx != asmjit::Globals::kNotFound) {
@@ -38,16 +38,19 @@ namespace spero::compiler::gen {
 
 		asmjit::FuncFrame ffi;
 		ffi.init(func);
-		//ffi.setAllDirty();
+		ffi.setAllDirty();
 		emitProlog(ffi);
+		mov(asmjit::x86::ebp, asmjit::x86::esp);
 
 		// Tear-down the function
 		setCursor(cursor);
-		//popWords(1);
-		// TODO: Clean up whatever stack allocations I used
+		popBytes(allocated_stack);
 		emitEpilog(ffi);
 
-		// NOTE: The assembly error happens in here
 		finalize();
+	}
+
+	void Assembler::setAllocatedStack(size_t size) {
+		allocated_stack = size;
 	}
 }
