@@ -183,7 +183,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 	using compiler::ID;
 
 	std::string input;
-	std::unordered_map<std::string, bool> flags{ { "compile", true } };
+	std::unordered_map<std::string, bool> flags{ { "compile", true }, { "interpret", true } };
 
 	while (std::cout << "> " && getMultiline(std::cin, input)) {
 		try {

@@ -216,6 +216,7 @@
     <ClCompile Include="dep\asmjit\src\asmjit\x86\x86ssetoavx.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\AsmGenerator.cpp" />
+    <ClCompile Include="src\asmjit.cpp" />
     <ClCompile Include="src\ast.cpp" />
     <ClCompile Include="src\cmd_line.cpp" />
     <ClCompile Include="src\CompilationState.cpp" />

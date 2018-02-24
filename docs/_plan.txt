@@ -22,7 +22,16 @@ Current Project Plan
 	    ```
 	  Add move constructor fixes to wip AsmJit
 	Add a new interpreter stand-in (same semantics)
-	  Get "3+4" and "let a=3" working
+	  Figure out a way to keep track of "unmatched" stack allocations (for local variables)
+	    I need to insert `pop`s of these in order to make the interpreter work
+		  This doesn't fix "3+4" and "let a=3; a" ???
+		  "3 + 4" was me not setting up the codeinfo struct appropriately (it was thinking it was a different architecture)
+		    Why do I clean up the stack usage for this? When did I add it
+		  "let a = 3; a" requires me to add code to pop off all the local variables I create
+		    Might want to abstract this a little (variables will be "globals" in the final implementation)
+			  Should pop off local variables though
+		Fix the interpretation of "let a = 3; a" (gives `1`, should give `3`)
+		Stress test the interpreter a bit more
 	  Completely remove the rust dependencies
 	Figure out how to add my AsmJit additions into the readme production
 	  Also need to add in references to all dependencies in README

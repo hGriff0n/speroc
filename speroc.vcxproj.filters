@@ -280,6 +280,9 @@
     <ClCompile Include="dep\asmjit\src\asmjit\arm\armrapass.cpp">
       <Filter>Dependencies\asmjit\arm</Filter>
     </ClCompile>
+    <ClCompile Include="src\asmjit.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">

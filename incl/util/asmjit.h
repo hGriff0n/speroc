@@ -34,8 +34,19 @@ namespace spero::compiler::gen {
 		asmjit::CBNode* front;
 
 		public:
-			inline Assembler() noexcept;
-			inline Assembler(Assembler&& o) noexcept;
+			inline Assembler() noexcept : asmjit::x86::Builder{ nullptr }, front{ cursor() } {
+				// TODO: Customize the code info for the architecture I'm producing code for (but then I kinda need to get away from x86)
+				asmjit::CodeInfo info;
+				info._archInfo = asmjit::CpuInfo::host().archInfo();
+				info._stackAlignment = uint8_t(16);
+				info._cdeclCallConv = asmjit::CallConv::kIdHostCDecl;
+				info._stdCallConv = asmjit::CallConv::kIdHostStdCall;
+				info._fastCallConv = asmjit::CallConv::kIdHostFastCall;
+				holder.init(std::move(info));
+				//holder.init(asmjit::CodeInfo{ asmjit::ArchInfo::kIdX64 });
+				holder.attach(this);
+			}
+			Assembler(Assembler&& o) noexcept;
 			virtual ~Assembler() noexcept;
 
 			// Helper functions for common use cases

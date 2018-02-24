@@ -2,11 +2,6 @@
 
 namespace spero::compiler::gen {
 
-	Assembler::Assembler() noexcept : asmjit::x86::Builder{ nullptr }, front{ cursor() } {
-		holder.init(asmjit::CodeInfo{ asmjit::ArchInfo::kIdX64 });
-		holder.attach(this);
-	}
-
 	Assembler::Assembler(Assembler&& o) noexcept : asmjit::x86::Builder{ std::move(o) }, front{ o.front }, holder{ std::move(o.holder) } {
 		_code = &holder;
 
@@ -43,13 +38,16 @@ namespace spero::compiler::gen {
 
 		asmjit::FuncFrame ffi;
 		ffi.init(func);
-		ffi.setAllDirty();
+		//ffi.setAllDirty();
 		emitProlog(ffi);
 
 		// Tear-down the function
 		setCursor(cursor);
+		//popWords(1);
+		// TODO: Clean up whatever stack allocations I used
 		emitEpilog(ffi);
 
+		// NOTE: The assembly error happens in here
 		finalize();
 	}
 }
