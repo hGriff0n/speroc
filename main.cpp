@@ -170,13 +170,6 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
 }
 
 
-// Exported interpreter functions (implemented in Rust)
-extern "C" {
-	void interpret_file(const char*);
-	void interpret_string(const char*);
-}
-
-
 void run_interpreter(spero::compiler::CompilationState& state, int& argc, char** argv) {
 	using namespace spero;
 	using namespace spero::parser;
@@ -252,7 +245,6 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 						asmjit::StringBuilder sb;
 						asmCode.dump(sb);
 						std::cout << sb.data() << '\n';
-						// compiler::codegen(asmCode, "interactive", std::cout, state, false);
 
 						if (flags["output"]) {
 							compiler::codegen(asmCode, "interactive", "out.s", state, false);

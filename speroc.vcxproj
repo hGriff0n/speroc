@@ -74,7 +74,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\Interpreter;C:\Users\ghoop\Documents\GitHub\speroc\dep\asmjit\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
     <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\asmtk\src\asmtk;C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
-    <LibraryPath>C:\Users\ghoop\Documents\GitHub\speroc\dep\_x86_inter\target\debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -106,7 +106,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>x86_interpreter.lib;Ws2_32.lib;userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
