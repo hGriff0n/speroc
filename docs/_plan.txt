@@ -23,12 +23,10 @@ Current Project Plan
 	  Add move constructor fixes to wip AsmJit
 	    Look at changing codeinfo default constructor to assume host architecture as default
 	  "3 + 4" was me not setting up the codeinfo struct appropriately (it was thinking it was a different architecture)
-	Tidy up readme in regards to dependency usage
-	  Add a little blurb about how it's being used
-	  Make sure that my usage, etc. satisfies the licensing
-	  Update status report
-	  Maybe add some usage and contribution "help"
 	Convert assembly compilation to use clang instead of gcc
+	  Run clang in -masm=intel mode to see what assembly it produces
+	  Ensure I produce the appropriate linker directives
+	  Run the test framework and ensure integration tests pass
 	Improve build system and performance
 	  Tweak settings to get better compilation speeds, etc.
   Basic Mutability Tracking
@@ -78,11 +76,6 @@ Current Project Plan
   Convert to using a tri-code IR (ie. max two operands to any instruction)
 	Backend stage would take this IR and optimize it to produce the final assembly
 	The current 'assembly' stage would be replaced with an IR-generation stage
-
-  Work on integrating the rust x86 interpreter
-    Work on improving the rust code
-	  Expand the available memory to work with
-      TODO: Need to add in some offsetting to accomodate assumed stack values (like variables currently assume that esp is pushed on the stack, which isn't the case for initial runs)
 
   Code Quality Improvements
     Const-correct codebase where possible

@@ -13,6 +13,13 @@ File.open("./README.md", "w") do |readme|
     # Semantic versioning (TODO: Determine how to autoupdate)
     readme.puts "speroc ver #{ver['major']}.#{ver['minor']}.#{ver['patch']} - The reference compiler for the spero language"
 
+    # Move over the custom readme information into the public readme
+    readme.puts ""
+    File.open("./docs/_readme.md", "r") do |file|
+        file.each_line do |line|
+            readme.puts line
+        end
+    end
 
     # Collect information about files in the project (TODO: See if I can add in more stats)
     stats = SourceStats.new(["incl", "src", "tools", "main.cpp"])
@@ -34,13 +41,7 @@ File.open("./README.md", "w") do |readme|
     readme.puts "\n\n"
 
 
-    # TODO: Other stuff that I can possibly add in 
+    # TODO: Other stuff that I can possibly add in
 
 
-    # Move over the custom readme information into the public readme
-    File.open("./docs/_readme.md", "r") do |file|
-        file.each_line do |line|
-            readme.puts line
-        end
-    end
 end
