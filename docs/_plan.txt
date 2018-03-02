@@ -22,11 +22,8 @@ Current Project Plan
 	    ```
 	  Add move constructor fixes to wip AsmJit
 	    Look at changing codeinfo default constructor to assume host architecture as default
-	  "3 + 4" was me not setting up the codeinfo struct appropriately (it was thinking it was a different architecture)
-	Convert assembly compilation to use clang instead of gcc
-	  Run clang in -masm=intel mode to see what assembly it produces
-	  Ensure I produce the appropriate linker directives
-	  Run the test framework and ensure integration tests pass
+	Get the interpreter running again
+	  Changes to the labels broke "3+4" and "let a=3;a"
 	Improve build system and performance
 	  Tweak settings to get better compilation speeds, etc.
   Basic Mutability Tracking
@@ -47,6 +44,11 @@ Current Project Plan
   Adapt new interpreter to have the capability to have "re-entrant evaluation"
 	NOTE: The better part of this step would be in compiler variable tracking
 	Convert global variable storage to use a custom "pool" instead of being stack-based
+  Get functions working properly
+    I think the current "abort" errors are due to introducing multiple 'main' labels?
+	  That wouldn't quite explain the interpreter though
+	  Add some special interpreter checks, restrictions and handling
+	    Don't allow definition or calling of "main"
   Language Logic Checking
 	Look into allowing "def Foo = Foo[Int]" type syntax
 	  Reconsider a lot of the grammar for types definition, particularly for specializing generics

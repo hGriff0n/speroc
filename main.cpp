@@ -9,10 +9,7 @@
 #include "interface/cmd_line.h"
 #include "util/strings.h"
 
-// TODO: Convert to llvm
-#define CLANG_COMMAND "clang -masm=intel"
-#define GCC_COMMAND "g++ -masm=intel"
-#define ASM_COMPILER GCC_COMMAND
+#define ASM_COMPILER "clang -masm=intel"
 
 
 /*
@@ -72,9 +69,6 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 
 	/*
 	 * Send the boundary ir off to the final compilation phase
-	 *
-	 * NOTE: Currently speroc uses `g++` for final compilation
-	 *   I will be moving over to LLVM (and LLVM IR) in the future
 	 */
 	if (!state.failed() && state.produceExe()) {
 		state.logTime();

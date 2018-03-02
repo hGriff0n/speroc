@@ -63,12 +63,17 @@ namespace spero::compiler {
 
 		// Output file header information
 		if (output_header) {
-			o << "\t.file \"" << in << "\"\n.text\n\t.p2align 4, 0x90\n";
+			o << ".text\n.intel_syntax noprefix\n.file \"" << in << "\"\n";
 		}
 
 		asmjit::StringBuilder sb;
 		emit.dump(sb);
 		o << sb.data() << '\n';
+
+		// Output file footer information
+		if (output_header) {
+			//o << ".ident \"speroc\"\n";
+		}
 	}
 
 }
