@@ -22,8 +22,8 @@ namespace spero::compiler::gen {
 
 	void Assembler::popWords(size_t nWords) {
 		// Quick and dirty hack to get compilation working
-		// I know this technically isn't a word, but a qword
-		popBytes(nWords * 8);
+		// I know this technically isn't a word, but a dword
+		popBytes(nWords * 4);
 	}
 
 	asmjit::CodeHolder* Assembler::get() {

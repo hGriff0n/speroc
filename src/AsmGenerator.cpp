@@ -18,11 +18,11 @@ namespace spero::compiler::gen {
 			int off = -4 * (current->getCount() + 1);
 			current->insert(var, off, loc);
 
-			emit.push(x86::rax);
+			emit.push(x86::eax);
 
 		} else if (variable) {
-			auto dst = x86::ptr(x86::rbp, variable.value());
-			emit.mov(dst, x86::rax);
+			auto dst = x86::ptr(x86::ebp, variable.value());
+			emit.mov(dst, x86::eax);
 		}
 	}
 
@@ -36,16 +36,16 @@ namespace spero::compiler::gen {
 	// Literals
 	//
 	void AsmGenerator::visitBool(ast::Bool& b) {
-		emit.mov(x86::rax, b.val);
+		emit.mov(x86::eax, b.val);
 
 		// NOTE: clang emits `xor rax, rax` for false
 	}
 
 	void AsmGenerator::visitByte(ast::Byte& b) {
-		emit.xor_(x86::rax, x86::rax);
+		emit.xor_(x86::eax, x86::eax);
 
 		// TODO: Fix this difficulty
-		emit.mov(x86::rax, (unsigned int)b.val);
+		emit.mov(x86::eax, (unsigned int)b.val);
 	}
 
 	void AsmGenerator::visitFloat(ast::Float& f) {
@@ -53,7 +53,7 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::visitInt(ast::Int& i) {
-		emit.mov(x86::rax, i.val);
+		emit.mov(x86::eax, i.val);
 	}
 
 	void AsmGenerator::visitChar(ast::Char& c) {
@@ -96,7 +96,7 @@ namespace spero::compiler::gen {
 			return;
 		}
 
-		emit.mov(x86::rax, x86::ptr(x86::rbp, loc.value()));
+		emit.mov(x86::eax, x86::ptr(x86::ebp, loc.value()));
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
@@ -128,15 +128,15 @@ namespace spero::compiler::gen {
 		// TODO: Type checking will definitely require additional stages
 		if (util::is_type<ast::Function>(v.expr)) {
 			// Print out function datace
-			emit.write(".def main");
+			emit.write(".def _main");		// main is 64-bit entrypoint
 			emit.writef(".scl %d", 2);
 			emit.writef(".type %d", 32);
 			emit.write(".endef");
-			emit.write(".globl main");
+			emit.write(".globl _main");
 			emit.writef(".p2align %d, %x", 4, 0x90);
 			//emit.write(".type _main, @function");
 
-			emit.bind(emit.newNamedLabel("main"));
+			emit.bind(emit.newNamedLabel("_main"));
 
 			v.expr->accept(*this);
 
@@ -169,8 +169,8 @@ namespace spero::compiler::gen {
 		// Print function enter code
 		// This is getting the 'main' label instead
 		emit.bind(emit.newNamedLabel("LFB0"));
-		emit.push(x86::rbp);
-		emit.mov(x86::rbp, x86::rsp);
+		emit.push(x86::ebp);
+		emit.mov(x86::ebp, x86::esp);
 
 		// Print the body
 		f.body->accept(*this);
@@ -199,36 +199,36 @@ namespace spero::compiler::gen {
 		} else {
 			// Evaluate the left side and store it on the stack
 			b.lhs->accept(*this);
-			emit.push(x86::rax);
+			emit.push(x86::eax);
 
 			// Evaluate the right side
 			b.rhs->accept(*this);
 
 			// Perform the operator call
 			if (b.op == "+") {
-				emit.add(x86::rax, x86::ptr(x86::rsp));
+				emit.add(x86::eax, x86::ptr(x86::esp));
 				emit.popWords(1);
 
 			} else if (b.op == "-") {
-				emit.sub(x86::ptr(x86::rsp), x86::rax);
-				emit.pop(x86::rax);
+				emit.sub(x86::ptr(x86::esp), x86::eax);
+				emit.pop(x86::eax);
 
 			} else if (b.op == "*") {
-				emit.imul(x86::rax, x86::ptr(x86::rsp));
+				emit.imul(x86::eax, x86::ptr(x86::esp));
 				emit.popWords(1);
 
 			} else if (b.op == "/") {
 				emit.cdq();
-				emit.idiv(x86::ptr(x86::rsp));
+				emit.idiv(x86::ptr(x86::esp));
 				emit.popWords(1);
 
 			} else if (b.op == "==") {
-				emit.cmp(x86::ptr(x86::rsp), x86::rax);
+				emit.cmp(x86::ptr(x86::esp), x86::eax);
 				emit.setz(x86::al);
 				emit.popWords(1);
 
 			} else if (b.op == "!=") {
-				emit.cmp(x86::ptr(x86::rsp), x86::rax);
+				emit.cmp(x86::ptr(x86::esp), x86::eax);
 				emit.setnz(x86::al);
 				emit.popWords(1);
 
@@ -246,9 +246,9 @@ namespace spero::compiler::gen {
 
 			} else if (b.op == "%") {
 				emit.cdq();
-				emit.idiv(x86::ptr(x86::rsp));
+				emit.idiv(x86::ptr(x86::esp));
 
-				emit.mov(x86::rdx, x86::rax);
+				emit.mov(x86::edx, x86::eax);
 				emit.popWords(1);
 			}
 		}
@@ -262,13 +262,13 @@ namespace spero::compiler::gen {
 		// TODO: Perform type-based function lookup
 		auto& op = u.op->name;
 		if (op == "-") {
-			emit.neg(x86::rax);
+			emit.neg(x86::eax);
 
 		} else if (op == "!") {
 			// Emit a 'test' if the 'zero flag' isn't set
 			// TODO: See if I can optimize this out if the 0 flag already set
-			emit.test(x86::rax, x86::rax);
-			emit.setz(x86::rax);
+			emit.test(x86::eax, x86::eax);
+			emit.setz(x86::eax);
 		}
 	}
 

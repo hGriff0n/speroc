@@ -22,8 +22,6 @@ Current Project Plan
 	    ```
 	  Add move constructor fixes to wip AsmJit
 	    Look at changing codeinfo default constructor to assume host architecture as default
-	Get the interpreter running again
-	  Changes to the labels broke "3+4" and "let a=3;a"
 	Improve build system and performance
 	  Tweak settings to get better compilation speeds, etc.
   Basic Mutability Tracking

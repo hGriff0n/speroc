@@ -9,7 +9,8 @@
 #include "interface/cmd_line.h"
 #include "util/strings.h"
 
-#define ASM_COMPILER "clang -masm=intel"
+// Need to compile in 32-bit mode because of AsmJit
+#define ASM_COMPILER "clang -masm=intel -m32"
 
 
 /*
