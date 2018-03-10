@@ -15,20 +15,11 @@ Current Project Plan
   Convert all x86 touching code over to using AsmJit
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
-	  Figure out how labels interact with assembly generation
-	    ```
-	    Label loop = emit.newLabel();
-	    emit.jz(loop)
-	    ```
 	  Add move constructor fixes to wip AsmJit
-	    Look at changing codeinfo default constructor to assume host architecture as default
-	Improve build system and performance
-	  Tweak settings to get better compilation speeds, etc.
   Basic Mutability Tracking
     Ensure operator compilation proceeds correctly
-	  The comparison operators don't work
-	    Either because I put the values in the wrong spots or my interpreter is wrong
-	  Basically fix emitted code to handle realizations about how assembly performs
+	  Fix division and modulus
+	    I think it might be due to the `cdq` instruction
 	Add in code to handle reassignment and compound assignment
 	  Didn't I remove compound assignment from the language ???
     Modify 'SymTable' to track the mutability of the variable

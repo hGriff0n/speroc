@@ -163,6 +163,12 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
 	return s << '\n';
 }
 
+void printAssembly(spero::compiler::gen::Assembler& asmCode) {
+	asmjit::StringBuilder sb;
+	asmCode.dump(sb);
+	std::cout << sb.data() << '\n';
+}
+
 
 void run_interpreter(spero::compiler::CompilationState& state, int& argc, char** argv) {
 	using namespace spero;
@@ -236,9 +242,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 
 					// Print out the generated assembly
 					if (!state.failed()) {
-						asmjit::StringBuilder sb;
-						asmCode.dump(sb);
-						std::cout << sb.data() << '\n';
+						printAssembly(asmCode);
 
 						if (flags["output"]) {
 							compiler::codegen(asmCode, "interactive", "out.s", state, false);
@@ -275,6 +279,9 @@ void spero::compiler::interpret(gen::Assembler& asmCode) {
 	// Prepare the assembly code for interpretation
 	// I don't think this is quite accurate enough just yet (not sure what though)
 	asmCode.makeIFunction();
+
+	// Print the interpreted code
+	printAssembly(asmCode);
 
 	// Register the assembly code as an `int()` function
 	gen::Assembler::Function fn;

@@ -207,50 +207,66 @@ namespace spero::compiler::gen {
 			// Perform the operator call
 			if (b.op == "+") {
 				emit.add(x86::eax, x86::ptr(x86::esp));
-				emit.popWords(1);
 
 			} else if (b.op == "-") {
 				emit.sub(x86::ptr(x86::esp), x86::eax);
-				emit.pop(x86::eax);
+				emit.mov(x86::eax, x86::ptr(x86::esp));
 
 			} else if (b.op == "*") {
 				emit.imul(x86::eax, x86::ptr(x86::esp));
-				emit.popWords(1);
 
 			} else if (b.op == "/") {
 				emit.cdq();
 				emit.idiv(x86::ptr(x86::esp));
-				emit.popWords(1);
 
 			} else if (b.op == "==") {
 				emit.cmp(x86::ptr(x86::esp), x86::eax);
+				emit.mov(x86::eax, 0);
 				emit.setz(x86::al);
-				emit.popWords(1);
 
 			} else if (b.op == "!=") {
 				emit.cmp(x86::ptr(x86::esp), x86::eax);
+				emit.mov(x86::eax, 0);
 				emit.setnz(x86::al);
-				emit.popWords(1);
 
 			} else if (b.op == "<") {
-				// TODO: Implement
+				emit.cmp(x86::ptr(x86::esp), x86::eax);
+				emit.mov(x86::eax, 0);
+				emit.setc(x86::al);
 
 			} else if (b.op == "<=") {
-				// TODO: Implement
+				emit.cmp(x86::eax, x86::ptr(x86::esp));
+				emit.mov(x86::eax, 0);
+				emit.setc(x86::al);
+				emit.xor_(x86::eax, 1);
 
 			} else if (b.op == ">") {
-				// TODO: Implement
+				emit.cmp(x86::eax, x86::ptr(x86::esp));
+				emit.mov(x86::eax, 0);
+				emit.setc(x86::al);
 
 			} else if (b.op == ">=") {
-				// TODO: Implement
+				emit.cmp(x86::ptr(x86::esp), x86::eax);
+				emit.mov(x86::eax, 0);
+				emit.setc(x86::al);
+				emit.xor_(x86::eax, 1);
 
 			} else if (b.op == "%") {
 				emit.cdq();
 				emit.idiv(x86::ptr(x86::esp));
-
 				emit.mov(x86::edx, x86::eax);
-				emit.popWords(1);
+
+			} else if (b.op == "&&") {
+				emit.and_(x86::eax, x86::ptr(x86::esp));
+				// TODO: Implement lazy evaluation (needed at this stage?)
+
+			} else if (b.op == "||") {
+				emit.or_(x86::eax, x86::ptr(x86::esp));
+				// TODO: Implement lazy evaluation (needed at this stage?)
+
 			}
+
+			emit.popWords(1);
 		}
 	}
 

@@ -14,8 +14,9 @@ Take a look at the full Spero documentation [here](https://github.com/hGriff0n/S
 If you have Visual Studio, this repository includes a solution file for (hopefully) easy setup and running. If not, I would greatly appreciate any pull-requests that include a custom makefile.
 I just haven't been able to find the time to create it myself (I don't gain that much myself tbh).
 
-Currently, this project forwards all created assembly files to g++ for final compilation and linking. It is planned to convert over to using clang (and the entire llvm framework) for these
-stages sometime in the future. It is also planned to instead produce llvm ir, and not assembly, as the final step of this compiler (though this is farther away atm).
+On it's own, speroc only serves to transform Spero code into assembly files. These files are then forwarded on to clang in order to produce the final executable. A version of clang must be
+installed and reachable through the command line in order for speroc compilation (not project) to work. It is planned, though far in the future, to eventually convert speroc to producing
+LLVM IR instead, and having that be forwarded on to the clang tool for improved optimization performance.
 
 ## Contribution
 
@@ -30,5 +31,4 @@ Be sure to comment in the issue if you have any questions.
 	spdlog: Logging and error reporting
     asmjit: Assembly interaction framework (codegen)
 	  NOTE: Using a custom fork that adds move semantics
-    gcc: Current compilation and linking
-    clang: Future compilation and linking stages
+    clang: Executable production and linking
