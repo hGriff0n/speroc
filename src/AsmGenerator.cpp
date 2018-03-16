@@ -201,6 +201,8 @@ namespace spero::compiler::gen {
 			b.lhs->accept(*this);
 			emit.push(x86::eax);
 
+			auto numPushedWords = 1;
+
 			// Evaluate the right side
 			b.rhs->accept(*this);
 
@@ -216,8 +218,12 @@ namespace spero::compiler::gen {
 				emit.imul(x86::eax, x86::ptr(x86::esp));
 
 			} else if (b.op == "/") {
+				emit.xchg(x86::ptr(x86::esp), x86::eax);
+				emit.pop(x86::ecx);
 				emit.cdq();
-				emit.idiv(x86::ptr(x86::esp));
+				emit.idiv(x86::ecx);
+
+				numPushedWords = 0;
 
 			} else if (b.op == "==") {
 				emit.cmp(x86::ptr(x86::esp), x86::eax);
@@ -252,9 +258,13 @@ namespace spero::compiler::gen {
 				emit.xor_(x86::eax, 1);
 
 			} else if (b.op == "%") {
+				emit.xchg(x86::ptr(x86::esp), x86::eax);
+				emit.pop(x86::ecx);
 				emit.cdq();
-				emit.idiv(x86::ptr(x86::esp));
-				emit.mov(x86::edx, x86::eax);
+				emit.idiv(x86::ecx);
+				emit.mov(x86::eax, x86::edx);
+
+				numPushedWords = 0;
 
 			} else if (b.op == "&&") {
 				emit.and_(x86::eax, x86::ptr(x86::esp));
@@ -266,7 +276,7 @@ namespace spero::compiler::gen {
 
 			}
 
-			emit.popWords(1);
+			emit.popWords(numPushedWords);
 		}
 	}
 

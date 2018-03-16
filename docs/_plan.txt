@@ -16,12 +16,9 @@ Current Project Plan
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
 	  Add move constructor fixes to wip AsmJit
-  Basic Mutability Tracking
-    Ensure operator compilation proceeds correctly
-	  Fix division and modulus
-	    I think it might be due to the `cdq` instruction
 	Add in code to handle reassignment and compound assignment
 	  Didn't I remove compound assignment from the language ???
+	    Can't find any references to it
     Modify 'SymTable' to track the mutability of the variable
 	  Need to improve the whole abstraction really
 	  Look into abstracting this out into a "collection" pass
@@ -136,6 +133,14 @@ Current Project Plan
     Improve the handling of "flags" within the interpreter
   ...
   Converting Operators into function calls [ <- Needs mutability checking and references
+
+  Tester Improvements
+    Move to utilizing a directory based test system
+	  Test "collections" will be determined by the folder they are in
+	    Inside these folders is the yaml specifying expected behavior
+		Individual tests may be able to run (ie. only run tests associated with collection.file)
+    Have tester produce an output file specifying how many tests have passed
+    Integrate this project with Jenkins CI
 
 
 # Note: Can take template+static_assert, or protected+public approaches to restrict allowable combinations

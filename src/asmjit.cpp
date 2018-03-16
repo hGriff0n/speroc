@@ -17,7 +17,9 @@ namespace spero::compiler::gen {
 	}
 
 	void Assembler::popBytes(size_t nBytes) {
-		add(asmjit::x86::esp, nBytes);
+		if (nBytes != 0) {
+			add(asmjit::x86::esp, nBytes);
+		}
 	}
 
 	void Assembler::popWords(size_t nWords) {

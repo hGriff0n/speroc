@@ -37,6 +37,6 @@ Be sure to comment in the issue if you have any questions.
 
 Project Info:
 
-    size: 3635 sloc
+    size: 3644 sloc
     files: 9 .cpp, 15 .h, 3 .rb
 

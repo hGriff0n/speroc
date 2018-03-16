@@ -23,17 +23,11 @@ literals:
       tests:
         - return: 7
     - desc: ""
-      exec: 'sub.exe'
-      compile:
-        files: [ 'sub.spr' ]
-      tests:
-        - return: 1
-    - desc: ""
       exec: 'orderOfOperations.exe'
       compile:
         files: [ 'orderOfOperations.spr' ]
       tests:
-        - return: 19
+        - return: 15
     - desc: ""
       exec: 'variables.exe'
       compile:
