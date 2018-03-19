@@ -342,9 +342,6 @@
     <None Include="_test\orderOfOperations.spr">
       <Filter>Resource Files\test runner\default\files</Filter>
     </None>
-    <None Include="_test\sub.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
     <None Include="_test\var_ops.spr">
       <Filter>Resource Files\test runner\default\files</Filter>
     </None>

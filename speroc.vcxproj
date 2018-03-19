@@ -264,7 +264,6 @@
     <None Include="_test\mut_fail.spr" />
     <None Include="_test\mut_succ.spr" />
     <None Include="_test\orderOfOperations.spr" />
-    <None Include="_test\sub.spr" />
     <None Include="_test\tests.yaml" />
     <None Include="_test\variables.spr" />
     <None Include="_test\var_ops.spr" />

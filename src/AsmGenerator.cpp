@@ -7,22 +7,21 @@ namespace spero::compiler::gen {
 	AsmGenerator::AsmGenerator(compiler::CompilationState& state) : emit{}, state{ state } {}
 
 	Assembler AsmGenerator::get() {
-		emit.setAllocatedStack(globals.getCount() * 4);
+		emit.setAllocatedStack(globals.numVariables() * 4);
 		return std::move(emit);
 	}
 
 	void AsmGenerator::assign(std::string& var, bool force_curr, Location loc) {
-		auto variable = current->getVar(var, force_curr);
-
-		if (force_curr && !variable) {
-			int off = -4 * (current->getCount() + 1);
-			current->insert(var, off, loc);
-
+		auto exists = current->exists(var);
+		auto& variable = std::get<analysis::VarData>((*current)[var]);
+		
+		if (!exists) {
+			int off = -4 * current->numVariables() + current->ebp_offset;
+			variable = analysis::VarData{ off, loc, false };
 			emit.push(x86::eax);
 
-		} else if (variable) {
-			auto dst = x86::ptr(x86::ebp, variable.value());
-			emit.mov(dst, x86::eax);
+		} else {
+			emit.mov(x86::ptr(x86::ebp, variable.off), x86::eax);
 		}
 	}
 
@@ -66,8 +65,7 @@ namespace spero::compiler::gen {
 	//
 	void AsmGenerator::visitBlock(ast::Block& b) {
 		// Reserve stack space for local variables
-		//_Register rsp{ "rsp" };
-		//emit.add(4 * b.locals.getCount(), rsp);
+		//emit.add(4 * b.locals.getCount(), x86::rsp);
 
 		// Initialize current
 		b.locals.setParent(current, true);
@@ -79,7 +77,7 @@ namespace spero::compiler::gen {
 		}
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
-		emit.popWords(current->getCount());				// pop n bytes 
+		emit.popWords(current->numVariables());				// pop n bytes 
 		current = current->getParent();
 	}
 
@@ -89,14 +87,15 @@ namespace spero::compiler::gen {
 	//
 	void AsmGenerator::visitVariable(ast::Variable& v) {
 		auto var = v.name->elems.back()->name;
-		auto loc = current->getVar(var);
+		auto loc = current->get(var);
 
 		if (!loc) {
 			state.log(ID::err, "Attempt to use variable `{}` before it was declared <at {}>", var, v.loc);
 			return;
 		}
 
-		emit.mov(x86::eax, x86::ptr(x86::ebp, loc.value()));
+		auto& variable = std::get<analysis::VarData>(loc.value());
+		emit.mov(x86::eax, x86::ptr(x86::ebp, variable.off));
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
@@ -161,7 +160,7 @@ namespace spero::compiler::gen {
 		in.expr->accept(*this);
 
 		// Pop off the symbol table
-		emit.popWords(current->getCount());
+		emit.popWords(current->numVariables());
 		current = current->getParent();
 	}
 
@@ -184,17 +183,23 @@ namespace spero::compiler::gen {
 	void AsmGenerator::visitBinOpCall(ast::BinOpCall& b) {
 		// TODO: Abstract to enable '*=' behavior and fallback if possible (analysis?)
 		if (b.op == "=") {
-			auto _lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
+			auto lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
 
 			// Ensure that the left-hand side is a variable node
-			if (!_lhs) {
+			if (!lhs) {
 				state.log(ID::err, "Attempt to reassign a non-variable value");
+				return;
+			}
+
+			// TODO: This won't actually work (the variable isn't linked to it's declaration)
+			if (!lhs->is_mut) {
+				state.log(ID::err, "Attempt to reassign a non-mutable variable");
 				return;
 			}
 
 			// Evaluate the value and perform the assignment
 			b.rhs->accept(*this);
-			assign(_lhs->name->elems.back()->name, false, b.loc);
+			assign(lhs->name->elems.back()->name, false, b.loc);
 
 		} else {
 			// Evaluate the left side and store it on the stack

@@ -1,44 +1,57 @@
 #include "analysis/SymTable.h"
 
+#include <numeric>
+
 namespace spero::compiler::analysis {
 
-	impl::Data::Data() : loc{}, src{} {}
-	impl::Data::Data(int loc, Location src) : loc{ loc }, src{ src } {}
+	SymTable::DataType& SymTable::operator[](std::string key) {
+		// Option 3: Scan through imported tables for definition
+			// Create in calling symtable if not found
+		/*for (auto* table : imported) {
+			if (table->exists(key)) {
+				return table->vars[key];
+			}
+		}*/
 
-	SymTable::SymTable() {}
-
-	SymTable::~SymTable() {}
-
-	int SymTable::insert(std::string name, int off, Location src) {
-		// TODO: Add in check against "shadowing" ???
-		impl::Data sym{ off - ebp_offset, src };
-
-		var_data.insert({ name, sym });
-		return sym.loc;
+		return vars[key];
 	}
 
-	std::optional<int> SymTable::getVar(std::string name, bool force_curr_scope) {
-		if (var_data.count(name)) {
-			return var_data[name].loc;
+	bool SymTable::exists(std::string key) {
+		return vars.count(key) != 0;
+	}
+
+	// TODO: Make sure modifications of ret type work
+	std::optional<SymTable::DataType> SymTable::get(std::string key) {
+		if (exists(key)) {
+			return operator[](key);
 		}
 
-		if (parent && !force_curr_scope) {
-			return parent->getVar(name);
+		if (parent) {
+			return parent->get(key);
 		}
 
 		return {};
 	}
 
-	size_t SymTable::getCount() {
-		return var_data.size();
+	void SymTable::insert(std::string key, DataType value) {
+		operator[](key) = value;
+	}
+
+	size_t SymTable::size() {
+		return vars.size();
+	}
+	size_t SymTable::numVariables() {
+		return std::accumulate(vars.begin(), vars.end(), 0,
+			[](int acc, auto& var) { return acc + std::holds_alternative<VarData>(var.second); });
 	}
 
 	void SymTable::setParent(SymTable* p, bool offset_ebp) {
 		parent = p;
-		ebp_offset = offset_ebp * (p->ebp_offset + (p->getCount() * 4));
+		ebp_offset = offset_ebp * (p->ebp_offset + (p->numVariables() * 4));
 	}
 
 	SymTable* SymTable::getParent() {
 		return parent;
 	}
+
 }

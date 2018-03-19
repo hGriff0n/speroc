@@ -1,9 +1,8 @@
 Current Project State
   mutability => mutable-by-default [off-spec]
   types =>
-    impl: hardcoded
-	availability: standard-only
-	generics: no
+	custom: unimplemented
+	generics: unimplemented
 	inheritance: undetermined (not sure how inheritance will be handled, between Rust 'impl', C++ 'inheritance' or some mix)
     recognized => Int, Bool (literals and comparison operators)
 	...
@@ -16,17 +15,26 @@ Current Project Plan
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
 	  Add move constructor fixes to wip AsmJit
-	Add in code to handle reassignment and compound assignment
+  Basic Mutability Tracking
+    Modify 'SymTable' to track the mutability of the variable
+	  Improve the process for using and accessing the SymTable, especially inside the AsmGenerator
+	    Ensure that the interface typing allows for modifications through optional
+	  Add in helper functions and interfaces to improve usability
+	Modify reassignment code to throw out an error when the variable is immutable
+	  Abstract the sym table collection into a separate compiler pass
+	    This would probably be the start of a generic "variable" finding pass (ie. type inference, etc)
+		Work on the solidifying and simplifying the process for creating compiler passes
+    Intern strings inside the compiler state structure
+	  Add a step in parsing to automatically register any var strings
+		Might need to find a better place to locate this (the structure)
+	  Try to make this resource allocation generic (abstractable across more resource types)
+	Improve the code for accessing scoped variables
+	  I get the feeling it either doesn't work or is very tenuous
+	Add in code to handle compound assignment
+	  Decide whether I want compound assignment within the language
+	    It is possible to implement it using operators (in which case this will be an extension of that project)
 	  Didn't I remove compound assignment from the language ???
 	    Can't find any references to it
-    Modify 'SymTable' to track the mutability of the variable
-	  Need to improve the whole abstraction really
-	  Look into abstracting this out into a "collection" pass
-	    This would probably be the start of a generic "variable" finding pass (ie. type inference, etc)
-	Modify reassignment code to throw out an error when the variable is immutable
-	  Look into abstracting this out to an analysis pass
-	    We could do this within the current framework, if necessary
-	Create some test code to test the mutability checking (might be done)
   Adapt new interpreter to have the capability to have "re-entrant evaluation"
 	NOTE: The better part of this step would be in compiler variable tracking
 	Convert global variable storage to use a custom "pool" instead of being stack-based
@@ -133,6 +141,7 @@ Current Project Plan
     Improve the handling of "flags" within the interpreter
   ...
   Converting Operators into function calls [ <- Needs mutability checking and references
+  Allow for unicode variable names
 
   Tester Improvements
     Move to utilizing a directory based test system
