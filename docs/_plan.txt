@@ -16,14 +16,16 @@ Current Project Plan
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
 	  Add move constructor fixes to wip AsmJit
   Basic Mutability Tracking
-    Modify 'SymTable' to track the mutability of the variable
-	  Improve the process for using and accessing the SymTable, especially inside the AsmGenerator
-	    Ensure that the interface typing allows for modifications through optional
-	  Add in helper functions and interfaces to improve usability
 	Modify reassignment code to throw out an error when the variable is immutable
-	  Abstract the sym table collection into a separate compiler pass
+      Add in mutability collection at declaration in the current framework
+        Then insert the mutability check at reassignment
+	  Abstract the mutability collection into a separate compiler pass
 	    This would probably be the start of a generic "variable" finding pass (ie. type inference, etc)
 		Work on the solidifying and simplifying the process for creating compiler passes
+	  Add an SSA name transform pass to handle variable "in-scope" shadowing
+	    At every declaration, append the # of times the identifier's been seen so far to the identifier
+            NOTE: May be able to "merge" with the symtable collection pass (for now)
+		TODO: Also need to keep track of future references and replace those appropriately as well
     Intern strings inside the compiler state structure
 	  Add a step in parsing to automatically register any var strings
 		Might need to find a better place to locate this (the structure)

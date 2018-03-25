@@ -32,5 +32,5 @@ namespace spero::util {
 
 template <typename... lambda_ts>
 auto compose(lambda_ts&&... lambdas) {
-	return spero::util::composer_t<std::decay_t<lambda_ts>...>{std::forward<lambda_ts>(lambdas)...};
+	return spero::util::composer_t<std::decay_t<lambda_ts>...>{ std::forward<lambda_ts>(lambdas)... };
 }

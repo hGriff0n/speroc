@@ -4,7 +4,7 @@
 
 namespace spero::compiler::analysis {
 
-	SymTable::DataType& SymTable::operator[](std::string key) {
+	ref_t<DataType> SymTable::operator[](std::string key) {
 		// Option 3: Scan through imported tables for definition
 			// Create in calling symtable if not found
 		/*for (auto* table : imported) {
@@ -20,21 +20,60 @@ namespace spero::compiler::analysis {
 		return vars.count(key) != 0;
 	}
 
-	// TODO: Make sure modifications of ret type work
-	std::optional<SymTable::DataType> SymTable::get(std::string key) {
+	std::optional<ref_t<DataType>> SymTable::get(std::string key) {
 		if (exists(key)) {
 			return operator[](key);
-		}
-
-		if (parent) {
-			return parent->get(key);
 		}
 
 		return {};
 	}
 
-	void SymTable::insert(std::string key, DataType value) {
-		operator[](key) = value;
+	std::optional<ref_t<VarData>> SymTable::getVar(std::string key) {
+		if (exists(key)) {
+			auto& var = operator[](key);
+
+			if (std::holds_alternative<VarData>(var.get())) {
+				return std::get<VarData>(var.get());
+			}
+		}
+
+		return {};
+	}
+
+	std::optional<ref_t<SymTable>> SymTable::getScope(std::string key) {
+		if (exists(key)) {
+			auto& var = operator[](key);
+
+			if (std::holds_alternative<SymTable>(var.get())) {
+				return std::get<SymTable>(var.get());
+			}
+		}
+
+		return {};
+	}
+
+	std::optional<ref_t<OverloadSet>> SymTable::getFunc(std::string key) {
+		if (exists(key)) {
+			auto& var = operator[](key);
+
+			if (std::holds_alternative<OverloadSet>(var.get())) {
+				return std::get<OverloadSet>(var.get());
+			}
+		}
+
+		return {};
+	}
+
+	ref_t<DataType> SymTable::insert(std::string key, DataType value) {
+		return operator[](key).get() = value;
+	}
+
+	std::optional<ref_t<DataType>> SymTable::insertIfNew(std::string key, DataType value) {
+		if (exists(key)) {
+			return insert(key, value);
+		}
+
+		return {};
 	}
 
 	size_t SymTable::size() {

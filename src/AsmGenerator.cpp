@@ -13,14 +13,14 @@ namespace spero::compiler::gen {
 
 	void AsmGenerator::assign(std::string& var, bool force_curr, Location loc) {
 		auto exists = current->exists(var);
-		auto& variable = std::get<analysis::VarData>((*current)[var]);
 		
 		if (!exists) {
-			int off = -4 * current->numVariables() + current->ebp_offset;
-			variable = analysis::VarData{ off, loc, false };
+			int off = -4 * (current->numVariables() + 1) + current->ebp_offset;
+			current->insert(var, analysis::VarData{ off, loc, false });
 			emit.push(x86::eax);
 
 		} else {
+			auto& variable = current->getVar(var)->get();
 			emit.mov(x86::ptr(x86::ebp, variable.off), x86::eax);
 		}
 	}
@@ -87,15 +87,14 @@ namespace spero::compiler::gen {
 	//
 	void AsmGenerator::visitVariable(ast::Variable& v) {
 		auto var = v.name->elems.back()->name;
-		auto loc = current->get(var);
+		auto loc = current->getVar(var);
 
 		if (!loc) {
 			state.log(ID::err, "Attempt to use variable `{}` before it was declared <at {}>", var, v.loc);
 			return;
 		}
 
-		auto& variable = std::get<analysis::VarData>(loc.value());
-		emit.mov(x86::eax, x86::ptr(x86::ebp, variable.off));
+		emit.mov(x86::eax, x86::ptr(x86::ebp, loc->get().off));
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
