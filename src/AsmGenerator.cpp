@@ -11,17 +11,19 @@ namespace spero::compiler::gen {
 		return std::move(emit);
 	}
 
-	void AsmGenerator::assign(std::string& var, bool force_curr, Location loc) {
-		auto exists = current->exists(var);
+	void AsmGenerator::assign(std::string& var, bool is_mut, Location loc) {
+		auto variable = current->getVar(var);
 		
-		if (!exists) {
-			int off = -4 * (current->numVariables() + 1) + current->ebp_offset;
-			current->insert(var, analysis::VarData{ off, loc, false });
+		if (!variable) {
+			int off = -4 * (current->numVariables() + 1) - current->ebp_offset;
+			current->insert(var, analysis::VarData{ off, loc, is_mut });
 			emit.push(x86::eax);
 
+		} else if (variable->get().is_mut) {
+			emit.mov(x86::ptr(x86::ebp, variable->get().off), x86::eax);
+
 		} else {
-			auto& variable = current->getVar(var)->get();
-			emit.mov(x86::ptr(x86::ebp, variable.off), x86::eax);
+			state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", var, loc);
 		}
 	}
 
@@ -85,12 +87,27 @@ namespace spero::compiler::gen {
 	//
 	// Names
 	//
+	// TODO: Generalize
+	std::optional<ref_t<analysis::VarData>> AsmGenerator::scopedAccess(ast::Path& var) {
+		auto* scope = current;
+		auto name = var.elems.back()->name;
+
+		while (scope) {
+			if (scope->exists(name)) {
+				return scope->getVar(name);
+			}
+
+			scope = scope->getParent();
+		}
+
+		return {};
+	}
+
 	void AsmGenerator::visitVariable(ast::Variable& v) {
-		auto var = v.name->elems.back()->name;
-		auto loc = current->getVar(var);
+		auto loc = scopedAccess(*v.name);
 
 		if (!loc) {
-			state.log(ID::err, "Attempt to use variable `{}` before it was declared <at {}>", var, v.loc);
+			state.log(ID::err, "Attempt to use variable `{}` before it was declared <at {}>", v.name->elems.back()->name, v.loc);
 			return;
 		}
 
@@ -98,7 +115,7 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
-		assign(n.var->name, true, n.loc);
+		assign(n.var->name, n.is_mut, n.loc);
 	}
 
 
@@ -139,7 +156,9 @@ namespace spero::compiler::gen {
 			v.expr->accept(*this);
 
 		} else {
+			// TODO: Figure out a way to pass the mutability of the expression on to the 'name'
 			v.expr->accept(*this);					// Push the expression value onto the stack
+			v.name->is_mut = v.expr->is_mut;
 			v.name->accept(*this);
 		}
 	}
@@ -186,19 +205,21 @@ namespace spero::compiler::gen {
 
 			// Ensure that the left-hand side is a variable node
 			if (!lhs) {
-				state.log(ID::err, "Attempt to reassign a non-variable value");
+				state.log(ID::err, "Attempt to reassign a non-variable value <at {}>", lhs->loc);
 				return;
 			}
 
-			// TODO: This won't actually work (the variable isn't linked to it's declaration)
-			if (!lhs->is_mut) {
-				state.log(ID::err, "Attempt to reassign a non-mutable variable");
+			// TODO: Replace with a better system for detecting this case (will handle in assignment/access rewrite)
+			if (!current->exists(lhs->name->elems.back()->name)) {
+				state.log(ID::err, "Attempt to reassign a non-declared variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
 				return;
 			}
 
 			// Evaluate the value and perform the assignment
 			b.rhs->accept(*this);
-			assign(lhs->name->elems.back()->name, false, b.loc);
+			// TODO: Add in mutability checks
+				// NOTE: These ones have to be mutable (in order to pass)
+			assign(lhs->name->elems.back()->name, true, b.loc);
 
 		} else {
 			// Evaluate the left side and store it on the stack

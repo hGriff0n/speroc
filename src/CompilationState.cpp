@@ -44,4 +44,8 @@ namespace spero::compiler {
 	size_t CompilationState::failed() {
 		return nerrs;
 	}
+
+	void CompilationState::reset() {
+		nerrs = 0;
+	}
 }

@@ -12,6 +12,7 @@ namespace spero::compiler::gen {
 	 * TODO: Split off some data into analysis phases
 	 * TODO: Rewrite to utilize different IR structure
 	 */
+	// class AsmGenerator : public ast::Visitor<Assembler> {
 	class AsmGenerator : public ast::Visitor {
 		Assembler emit;
 		compiler::CompilationState& state;
@@ -20,8 +21,10 @@ namespace spero::compiler::gen {
 		analysis::SymTable* current = &globals;
 
 		void assign(std::string&, bool, Location);
+		std::optional<ref_t<analysis::VarData>> scopedAccess(ast::Path&);
 
 		public:
+			// The constructor should except the data from the last pass (template parameter?)
 			AsmGenerator(compiler::CompilationState&);
 			Assembler get();
 

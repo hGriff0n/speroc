@@ -1,4 +1,4 @@
-speroc ver 0.3.7 - The reference compiler for the spero language
+speroc ver 0.4.0 - The reference compiler for the spero language
 
 # Current Project Status
 
@@ -37,6 +37,6 @@ Be sure to comment in the issue if you have any questions.
 
 Project Info:
 
-    size: 3644 sloc
+    size: 3718 sloc
     files: 9 .cpp, 15 .h, 3 .rb
 

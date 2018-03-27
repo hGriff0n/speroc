@@ -63,6 +63,7 @@ namespace spero::compiler {
 			}
 
 			size_t failed();
+			void reset();
 
 			// Compilation Stage Control
 			virtual bool produceExe() abstract;

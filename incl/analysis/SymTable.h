@@ -60,6 +60,8 @@ namespace spero::compiler::analysis {
 			// Search for a value at the current scoping level
 			// NOTE: Accessing through '[]' will not search in parent scopes
 			ref_t<DataType> operator[](std::string key);
+			
+			// NOTE: This is kinda unnecessary as all the accessor methods return `std::optional`
 			bool exists(std::string key);
 
 			ref_t<DataType> insert(std::string key, DataType value);

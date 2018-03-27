@@ -17,10 +17,14 @@ Current Project Plan
 	  Add move constructor fixes to wip AsmJit
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
-      Add in mutability collection at declaration in the current framework
-        Then insert the mutability check at reassignment
+	  Improve the code for interacting with scopes when assigning/accessing variables
+	    Rewrite the `scopedAccess` function to take full advantage of "paths" and the SymTable structure
+		Move the 'reassign to undeclared variable' check into the reassignment code logic
+	      NOTE: Reassignment has slightly different semantics than assignment (current situation is due to an inadequate combination of the two)
+	    "let a = mut 3 { a = 2 }" should not throw up an error (reassignment finds the "parent" a)
 	  Abstract the mutability collection into a separate compiler pass
 	    This would probably be the start of a generic "variable" finding pass (ie. type inference, etc)
+		  See below for other notes in regard to this phase
 		Work on the solidifying and simplifying the process for creating compiler passes
 	  Add an SSA name transform pass to handle variable "in-scope" shadowing
 	    At every declaration, append the # of times the identifier's been seen so far to the identifier
@@ -30,16 +34,13 @@ Current Project Plan
 	  Add a step in parsing to automatically register any var strings
 		Might need to find a better place to locate this (the structure)
 	  Try to make this resource allocation generic (abstractable across more resource types)
-	Improve the code for accessing scoped variables
-	  I get the feeling it either doesn't work or is very tenuous
-	Add in code to handle compound assignment
-	  Decide whether I want compound assignment within the language
-	    It is possible to implement it using operators (in which case this will be an extension of that project)
-	  Didn't I remove compound assignment from the language ???
-	    Can't find any references to it
+	Write in the documentation that compound assignment is not an in-built part of the language
+	  At any rate, if the semantics are desirable, the operator overloading system can nominally handle it
+	    There are still some issues with typing and binding direction
   Adapt new interpreter to have the capability to have "re-entrant evaluation"
 	NOTE: The better part of this step would be in compiler variable tracking
 	Convert global variable storage to use a custom "pool" instead of being stack-based
+  Fix code base and other issues (see below)
   Get functions working properly
     I think the current "abort" errors are due to introducing multiple 'main' labels?
 	  That wouldn't quite explain the interpreter though
@@ -77,20 +78,22 @@ Current Project Plan
 
   Code Quality Improvements
     Const-correct codebase where possible
+	Change function declarations to require arguments to specify their names
 	Update to utilize VS 15.5 features where possible (not I'm on 15.4 currently)
 	  Switch some std::string applications to use std::string_view
 	Simplify the commands available within the repl
 	  Also simplify the control path if possible
+	  Might want to switch commands to '::' syntax (as ':' may end up being the global scope accessor)
+
   Convert to clang/llvm backend
-    Adapt interpreter to accept the clang output format
-    Switch over to compiling the assembly files with clang
-	  Some instructions are different (clang appears to be in 64-bit mode)
-	  Adapt AsmGenerator to output the expected clang syntax
 	Integrate in the llvm compiler library
+
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
 	Move 'compiler' exceptions from log-level to error-level
 	  Add in 'error indices' and automatic message population capbilities
+    Add a better interaction between the ast classes and the logging system
+      Improve the logging system while I'm at it
   Improve "help" support
     Look into adding "code of conduct"
 
@@ -101,6 +104,7 @@ Current Project Plan
       Ensure these explicit annotations throw up errors on unrecognized types
     Add in unsigned integers, boolean, and float types
 	  Extend assembly interpreter with floating point instructions
+
   Abstract variables collection, etc. into a separate analysis phase
     Rework the visitor system to allow for modification of sub-nodes
 	Have new system change VarAssign to Reassign nodes (after collecting relevant information)
@@ -117,6 +121,7 @@ Current Project Plan
 	Rearrange codegen (or modify interpreter) to prevent these systems from interferring with each other (for post-facto variables)
 	Look into adding in language for recognizing compound operators
 	  A compound operator would map to a reassign<var, operator<var, val>>
+
   Basic Function Definition
     Update x86_interpreter/codegen to be able to specify start instruction
 	Ensure compiler recognition of function defs and calls works correctly
@@ -134,6 +139,7 @@ Current Project Plan
 	    For all functions, unless a scope is linked by a following block, assume the scope is 'current'
 	  TODO: Need to modify 'ebp_offset' setting of the symtable (particularly when accessing "global"/"parent" variables)
         This is accounting for the effects of changing the stack pointers
+
   Type Inference
     explicit annotations within the ast
   Basic Function Calling

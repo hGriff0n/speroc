@@ -263,6 +263,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 			}
 
 			printAST(std::cout << '\n', res);
+			state.reset();
 
 		} catch (std::exception& e) {
 			std::cout << e.what() << '\n';
