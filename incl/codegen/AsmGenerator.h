@@ -12,6 +12,7 @@ namespace spero::compiler::gen {
 	 * TODO: Split off some data into analysis phases
 	 * TODO: Rewrite to utilize different IR structure
 	 */
+	// This is an idea to formalize the conception that Visitors "produce" an analysis result
 	// class AsmGenerator : public ast::Visitor<Assembler> {
 	class AsmGenerator : public ast::Visitor {
 		Assembler emit;
@@ -20,8 +21,8 @@ namespace spero::compiler::gen {
 		analysis::SymTable globals;
 		analysis::SymTable* current = &globals;
 
-		void assign(std::string&, bool, Location);
-		std::optional<ref_t<analysis::VarData>> scopedAccess(ast::Path&);
+		// If lookup succeeds, then the returned iterator is equal to `std::end(var_path.elems)`
+		std::tuple<std::optional<ref_t<analysis::DataType>>, ast::Path::iterator> lookup(ast::Path& var_path);
 
 		public:
 			// The constructor should except the data from the last pass (template parameter?)

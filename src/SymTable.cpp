@@ -4,6 +4,10 @@
 
 namespace spero::compiler::analysis {
 
+	SymTable::SymTable() {
+		insert("self", *this);
+	}
+
 	ref_t<DataType> SymTable::operator[](std::string key) {
 		// Option 3: Scan through imported tables for definition
 			// Create in calling symtable if not found
@@ -44,8 +48,8 @@ namespace spero::compiler::analysis {
 		if (exists(key)) {
 			auto& var = operator[](key);
 
-			if (std::holds_alternative<SymTable>(var.get())) {
-				return std::get<SymTable>(var.get());
+			if (std::holds_alternative<ref_t<SymTable>>(var.get())) {
+				return std::get<ref_t<SymTable>>(var.get());
 			}
 		}
 
@@ -62,6 +66,16 @@ namespace spero::compiler::analysis {
 		}
 
 		return {};
+	}
+
+	SymTable* SymTable::mostRecentDef(std::string key) {
+		auto* scope = this;
+
+		while (scope && !scope->exists(key)) {
+			scope = scope->parent;
+		}
+
+		return scope;
 	}
 
 	ref_t<DataType> SymTable::insert(std::string key, DataType value) {
@@ -86,11 +100,8 @@ namespace spero::compiler::analysis {
 
 	void SymTable::setParent(SymTable* p, bool offset_ebp) {
 		parent = p;
+		insert("super", *p);
 		ebp_offset = offset_ebp * (p->ebp_offset + (p->numVariables() * 4));
-	}
-
-	SymTable* SymTable::getParent() {
-		return parent;
 	}
 
 }

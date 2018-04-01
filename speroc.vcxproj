@@ -396,6 +396,7 @@
     <ClInclude Include="incl\parser\visitor.h" />
     <ClInclude Include="incl\util\asmjit.h" />
     <ClInclude Include="incl\util\parser.h" />
+    <ClInclude Include="incl\util\ranges.h" />
     <ClInclude Include="incl\util\strings.h" />
     <ClInclude Include="incl\util\utils.h" />
   </ItemGroup>

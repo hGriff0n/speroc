@@ -150,6 +150,8 @@ namespace spero::compiler::ast {
 	struct Sequence : Inher {
 		std::deque<ptr<T>> elems;
 
+		using iterator = typename std::deque<ptr<T>>::iterator;
+
 		Sequence(std::deque<ptr<T>> e, Location loc) : Inher{ loc }, elems{ std::move(e) } {}
 
 		virtual void accept(Visitor&) =0;

@@ -775,5 +775,8 @@
     <ClInclude Include="dep\spdlog\include\spdlog\sinks\wincolor_sink.h">
       <Filter>Dependencies\spdlog\sinks</Filter>
     </ClInclude>
+    <ClInclude Include="incl\util\ranges.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

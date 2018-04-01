@@ -17,11 +17,13 @@ Current Project Plan
 	  Add move constructor fixes to wip AsmJit
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
-	  Improve the code for interacting with scopes when assigning/accessing variables
-	    Rewrite the `scopedAccess` function to take full advantage of "paths" and the SymTable structure
-		Move the 'reassign to undeclared variable' check into the reassignment code logic
-	      NOTE: Reassignment has slightly different semantics than assignment (current situation is due to an inadequate combination of the two)
-	    "let a = mut 3 { a = 2 }" should not throw up an error (reassignment finds the "parent" a)
+	  Change VS Studio options to appropriately format scoped binding
+	  Improve the code for interacting with scopes when assigning/accessing variables\
+	    Try to remove usage of `SymTable::getParent()` (so I can remove it entirely)
+		  Currently used in `visitBlock` and `visitInAssign` as a means of restoring the previous scope
+		    InAssign can be done by changing the approach (see comments at function)
+		Check if ':<var>' is (and should be) a legal typing (especially for declaration)
+		  Adjust the interpreter accordingly (':XX' are commands)
 	  Abstract the mutability collection into a separate compiler pass
 	    This would probably be the start of a generic "variable" finding pass (ie. type inference, etc)
 		  See below for other notes in regard to this phase
@@ -34,6 +36,9 @@ Current Project Plan
 	  Add a step in parsing to automatically register any var strings
 		Might need to find a better place to locate this (the structure)
 	  Try to make this resource allocation generic (abstractable across more resource types)
+	Improve 'debuggability' of the 'ast::Path' structure
+	  Need to be able to write out the entire string, not just the last symbol
+	  Rewrite all path log statements to use the new debug string
 	Write in the documentation that compound assignment is not an in-built part of the language
 	  At any rate, if the semantics are desirable, the operator overloading system can nominally handle it
 	    There are still some issues with typing and binding direction
@@ -47,6 +52,7 @@ Current Project Plan
 	  Add some special interpreter checks, restrictions and handling
 	    Don't allow definition or calling of "main"
   Language Logic Checking
+    Add in checks to prevent assignments to 'super' and 'self'
 	Look into allowing "def Foo = Foo[Int]" type syntax
 	  Reconsider a lot of the grammar for types definition, particularly for specializing generics
     Determine how "Array[Int, a]" would be resolved if a is a global constant

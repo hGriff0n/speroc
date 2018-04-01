@@ -1,5 +1,6 @@
 #include "codegen/AsmGenerator.h"
 #include "util/parser.h"
+#include "util/ranges.h"
 
 using namespace asmjit;
 
@@ -11,20 +12,73 @@ namespace spero::compiler::gen {
 		return std::move(emit);
 	}
 
-	void AsmGenerator::assign(std::string& var, bool is_mut, Location loc) {
-		auto variable = current->getVar(var);
-		
-		if (!variable) {
-			int off = -4 * (current->numVariables() + 1) - current->ebp_offset;
-			current->insert(var, analysis::VarData{ off, loc, is_mut });
-			emit.push(x86::eax);
+	// TODO: Need an interface for communicating why the analysis "failed"
+		// Could that be better served in the calling context (is it derivable from the returned DataType/iterator pair ???)
+	using AccessType = std::optional<ref_t<analysis::DataType>>;
+	std::tuple<AccessType, ast::Path::iterator> AsmGenerator::lookup(ast::Path& var_path) {
+		auto [front, end] = util::range(var_path.elems);
+		AccessType value = globals["self"];
+		bool has_next = true;
 
-		} else if (variable->get().is_mut) {
-			emit.mov(x86::ptr(x86::ebp, variable->get().off), x86::eax);
+		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
+		if (!(**front).name.empty()) {
+			auto* next = current->mostRecentDef((**front).name);
+			value = (*(next ? next : current))["self"];
+			has_next = next != nullptr;
 
 		} else {
-			state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", var, loc);
+			++front;
 		}
+
+		while (front != end && has_next) {
+			auto next = std::visit([&](auto&& var) -> AccessType {
+				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymTable>>) {
+					return var.get().get((**front).name);
+				}
+
+				return AccessType{};
+			}, value->get());
+
+			if (has_next = next.has_value()) {
+				value = next;
+				++front;
+			}
+		}
+
+		// Perform optional "global scope" indexing (ie. ':a') (NOTE: Not yet decided whether this is legal
+		// Otherwise, returns lexical scoping lookup for the first symbol in the path
+		// TODO: Solve this typing issue (it's actually a somewhat sticky situation)
+		// I'm a bit confused as this should type out (and lifetimes should work)
+		/*AccessType value = (**front).name.empty() ? globals
+		: *current->mostRecentDef((**front).name);*/
+		// This types, but it doesn't work in the long run (makes a copy, lifetime goes out of scope)
+		// I can avoid the SymTable copy with the added 'ref_t' variant, but the lifetime dependency still exists
+		/*analysis::DataType table = ref_t<analysis::SymTable>{ (**front).name.empty() ? globals
+			: *current->mostRecentDef((**front).name) };
+		AccessType value = table;
+
+
+		auto has_next = true;
+		++front;
+
+		while (front != end && has_next) {
+			auto next = std::visit([&](auto&& var) -> AccessType {
+				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, analysis::SymTable>) {
+					return var.get((**front).name);
+				}
+
+				return AccessType{};
+			}, value->get());
+
+			if (has_next = next.has_value()) {
+				value = next;
+				++front;
+			}
+		}
+*/
+		// Return the last accessed value and the last attempted symbol if lookup fails
+		// This should simplify the process of assigning new variables, etc.
+		return { value, front };
 	}
 
 	//
@@ -87,35 +141,32 @@ namespace spero::compiler::gen {
 	//
 	// Names
 	//
-	// TODO: Generalize
-	std::optional<ref_t<analysis::VarData>> AsmGenerator::scopedAccess(ast::Path& var) {
-		auto* scope = current;
-		auto name = var.elems.back()->name;
-
-		while (scope) {
-			if (scope->exists(name)) {
-				return scope->getVar(name);
-			}
-
-			scope = scope->getParent();
-		}
-
-		return {};
-	}
-
 	void AsmGenerator::visitVariable(ast::Variable& v) {
-		auto loc = scopedAccess(*v.name);
-
-		if (!loc) {
-			state.log(ID::err, "Attempt to use variable `{}` before it was declared <at {}>", v.name->elems.back()->name, v.loc);
+		auto [nvar, iter] = lookup(*v.name);
+		if (iter != std::end(v.name->elems)) {
+			state.log(ID::err, "Attempt to use undeclared variable `{}` <at {}>", v.name->elems.back()->name, v.loc);
 			return;
 		}
 
-		emit.mov(x86::eax, x86::ptr(x86::ebp, loc->get().off));
+		std::visit([&](auto&& var) {
+			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, analysis::VarData>) {
+				emit.mov(x86::eax, x86::ptr(x86::ebp, var.off));
+
+			} else {
+				state.log(ID::err, "Attempt to use non-variable symbol `{}` as a variable <at {}>", v.name->elems.back()->name, v.loc);
+			}
+		}, nvar->get());
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
-		assign(n.var->name, n.is_mut, n.loc);
+		if (!current->exists(n.var->name)) {
+			int off = -4 * (current->numVariables() + 1) - current->ebp_offset;
+			current->insert(n.var->name, analysis::VarData{ off, n.loc, n.is_mut });
+			emit.push(x86::eax);
+
+		} else {
+			state.log(ID::err, "Attempt to declare previously declared variable `{}` <at {}>", n.var->name, n.loc);
+		}
 	}
 
 
@@ -169,6 +220,7 @@ namespace spero::compiler::gen {
 	//
 	void AsmGenerator::visitInAssign(ast::InAssign& in) {
 		// Setup the symbol table to prevent the context from leaking
+			// TODO: Could probably get a more efficient method by just adding a temporary key in the current table
 		analysis::SymTable tmp{};
 		tmp.setParent(current, true);
 		current = &tmp;
@@ -199,27 +251,31 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::visitBinOpCall(ast::BinOpCall& b) {
-		// TODO: Abstract to enable '*=' behavior and fallback if possible (analysis?)
 		if (b.op == "=") {
-			auto lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
+			// Evaluate the value into the appropriate registers
+			b.rhs->accept(*this);
 
 			// Ensure that the left-hand side is a variable node
+			auto lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
 			if (!lhs) {
 				state.log(ID::err, "Attempt to reassign a non-variable value <at {}>", lhs->loc);
 				return;
 			}
+			
+			// Perform all the necessary checks for reassignment
+			auto [variable, iter] = lookup(*lhs->name);
+			if (iter != std::end(lhs->name->elems)) {
+				state.log(ID::err, "Attempt to reassign undeclared variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
 
-			// TODO: Replace with a better system for detecting this case (will handle in assignment/access rewrite)
-			if (!current->exists(lhs->name->elems.back()->name)) {
-				state.log(ID::err, "Attempt to reassign a non-declared variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
-				return;
+			} else if (!std::holds_alternative<analysis::VarData>(variable->get())) {
+				state.log(ID::err, "Attempt to reassign non-variable symbol `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
+
+			} else if (auto& var = std::get<analysis::VarData>(variable->get()); !var.is_mut) {
+				state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
+				
+			} else {
+				emit.mov(x86::ptr(x86::ebp, var.off), x86::eax);
 			}
-
-			// Evaluate the value and perform the assignment
-			b.rhs->accept(*this);
-			// TODO: Add in mutability checks
-				// NOTE: These ones have to be mutable (in order to pass)
-			assign(lhs->name->elems.back()->name, true, b.loc);
 
 		} else {
 			// Evaluate the left side and store it on the stack
