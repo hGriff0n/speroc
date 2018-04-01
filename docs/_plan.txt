@@ -17,11 +17,8 @@ Current Project Plan
 	  Add move constructor fixes to wip AsmJit
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
-	  Change VS Studio options to appropriately format scoped binding
-	  Improve the code for interacting with scopes when assigning/accessing variables\
-	    Try to remove usage of `SymTable::getParent()` (so I can remove it entirely)
-		  Currently used in `visitBlock` and `visitInAssign` as a means of restoring the previous scope
-		    InAssign can be done by changing the approach (see comments at function)
+	  Improve the code for interacting with scopes when assigning/accessing variables
+		Rewrite 'visitInAssign' so that it will work when variable collection pass is decoupled from codegen
 		Check if ':<var>' is (and should be) a legal typing (especially for declaration)
 		  Adjust the interpreter accordingly (':XX' are commands)
 	  Abstract the mutability collection into a separate compiler pass

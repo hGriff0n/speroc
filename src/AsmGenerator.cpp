@@ -124,6 +124,7 @@ namespace spero::compiler::gen {
 		//emit.add(4 * b.locals.getCount(), x86::rsp);
 
 		// Initialize current
+		auto* parent_scope = current;
 		b.locals.setParent(current, true);
 		current = &b.locals;
 
@@ -134,7 +135,7 @@ namespace spero::compiler::gen {
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
 		emit.popWords(current->numVariables());				// pop n bytes 
-		current = current->getParent();
+		current = parent_scope;
 	}
 
 
@@ -219,8 +220,11 @@ namespace spero::compiler::gen {
 	// Expressions
 	//
 	void AsmGenerator::visitInAssign(ast::InAssign& in) {
+		auto* parent_scope = current;
+
 		// Setup the symbol table to prevent the context from leaking
 			// TODO: Could probably get a more efficient method by just adding a temporary key in the current table
+			// TODO: Need to rewrite before 'variable pass' decoupling as this won't work in that framework
 		analysis::SymTable tmp{};
 		tmp.setParent(current, true);
 		current = &tmp;
@@ -231,7 +235,7 @@ namespace spero::compiler::gen {
 
 		// Pop off the symbol table
 		emit.popWords(current->numVariables());
-		current = current->getParent();
+		current = parent_scope;
 	}
 
 	void AsmGenerator::visitFunction(ast::Function& f) {

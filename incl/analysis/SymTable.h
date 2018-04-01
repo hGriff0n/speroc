@@ -75,7 +75,6 @@ namespace spero::compiler::analysis {
 
 			// Hierarchy setup
 			void setParent(SymTable* p, bool offset_ebp = false);
-			/* [[ deprecated ]] */ SymTable* getParent() { return parent; }
 
 			// Information querying
 			size_t size();
