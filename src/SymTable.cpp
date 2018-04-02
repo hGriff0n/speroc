@@ -98,6 +98,10 @@ namespace spero::compiler::analysis {
 			[](int acc, auto& var) { return acc + std::holds_alternative<VarData>(var.second); });
 	}
 
+	size_t SymTable::count(std::string key) {
+		return vars.count(key);
+	}
+
 	void SymTable::setParent(SymTable* p, bool offset_ebp) {
 		parent = p;
 		insert("super", *p);

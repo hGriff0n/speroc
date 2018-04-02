@@ -17,22 +17,41 @@ Current Project Plan
 	  Add move constructor fixes to wip AsmJit
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
-	  Improve the code for interacting with scopes when assigning/accessing variables
-		Rewrite 'visitInAssign' so that it will work when variable collection pass is decoupled from codegen
-		Check if ':<var>' is (and should be) a legal typing (especially for declaration)
-		  Adjust the interpreter accordingly (':XX' are commands)
-	  Abstract the mutability collection into a separate compiler pass
-	    This would probably be the start of a generic "variable" finding pass (ie. type inference, etc)
-		  See below for other notes in regard to this phase
-		Work on the solidifying and simplifying the process for creating compiler passes
-	  Add an SSA name transform pass to handle variable "in-scope" shadowing
-	    At every declaration, append the # of times the identifier's been seen so far to the identifier
-            NOTE: May be able to "merge" with the symtable collection pass (for now)
+	  Better generalize the process of creating and defining compiler "passes"
+		Possibly move 'Visitor' interface to a more "system" location
+		Rename current 'Visitor' interface to 'AstVisitor'
+	  Create a "Variable analysis" pass to collect all variable information
+	    Move mutability collection into this pass
+		  Possibly move mutability error reporting into this pass as well
+		Convert 'VarAssign' nodes to 'Reassign' nodes
+		  NOTE: Do I still have 'Reassign' ast nodes?
+		Change local variable allocation to be a batch stack "push" (or add/sub)
+		  Current approach is to push as variable appears, but if we collect beforehand, we know how many variables to allocate
+		Generalize the method for accessing variables to work on global/static values
+		  Add in the capability for the spero compiler to produce global variables when needed
+		  Look at getting interpreter to support global variables in a separately allocated memory section
+		Figure out how to track 'ebp'/etc in order to support the usage of local functions (may be too much for the moment)
+		Figure out how to get the system to handle declaring global variables "post-facto"
+		  Problem is having the check off in 'type' and 'static' contexts but on in 'local' contexts
+	      Might be good to adopt a two-pass system
+		    The first pass records all variable declarations and their location
+		    The second pass records all variable usages and flags unused/forward-used/created variables
+		Minimize the overhead for supporting InAssign (allocating an entire SymTable is too much)
+	  Modify variable analysis pass to add in SSA name transformations
+	    Using 'SSA' name transformation should enable trivial support for 'in-scope' variable shadowing
+		  Look at places where these shadowings should be an error and add in reporting code
+	    At every declaration, append the # of times the identifier's been seen so far to the identifier (in the current scope)
+          NOTE: May be able to "merge" with the symtable collection pass (for now)
 		TODO: Also need to keep track of future references and replace those appropriately as well
+	  Improve the code for interacting with scopes when assigning/accessing variables
+		Check if ':<var>' is (and should be) a legal typing (I don't think so)
+		  Adjust the interpreter accordingly (':XX' are commands)
     Intern strings inside the compiler state structure
 	  Add a step in parsing to automatically register any var strings
 		Might need to find a better place to locate this (the structure)
 	  Try to make this resource allocation generic (abstractable across more resource types)
+	  https://github.com/RipcordSoftware/libstringintern
+	  https://github.com/foonathan/string_id
 	Improve 'debuggability' of the 'ast::Path' structure
 	  Need to be able to write out the entire string, not just the last symbol
 	  Rewrite all path log statements to use the new debug string
@@ -78,12 +97,13 @@ Current Project Plan
   Convert to using a tri-code IR (ie. max two operands to any instruction)
 	Backend stage would take this IR and optimize it to produce the final assembly
 	The current 'assembly' stage would be replaced with an IR-generation stage
+	  Basically current stage is "AST -> Assembly", we would change to "AST -> IR" + "IR -> Assembly"
 
   Code Quality Improvements
     Const-correct codebase where possible
 	Change function declarations to require arguments to specify their names
-	Update to utilize VS 15.5 features where possible (not I'm on 15.4 currently)
-	  Switch some std::string applications to use std::string_view
+	Switch some std::string applications to use std::string_view
+	  Improve usage of 'std::string' in SymTable
 	Simplify the commands available within the repl
 	  Also simplify the control path if possible
 	  Might want to switch commands to '::' syntax (as ':' may end up being the global scope accessor)
@@ -97,6 +117,7 @@ Current Project Plan
 	  Add in 'error indices' and automatic message population capbilities
     Add a better interaction between the ast classes and the logging system
       Improve the logging system while I'm at it
+	Add in phase timing support using a 'PhaseTimer' style interface (see `compile` for usage)
   Improve "help" support
     Look into adding "code of conduct"
 
@@ -107,23 +128,6 @@ Current Project Plan
       Ensure these explicit annotations throw up errors on unrecognized types
     Add in unsigned integers, boolean, and float types
 	  Extend assembly interpreter with floating point instructions
-
-  Abstract variables collection, etc. into a separate analysis phase
-    Rework the visitor system to allow for modification of sub-nodes
-	Have new system change VarAssign to Reassign nodes (after collecting relevant information)
-	  Ensure this new change interacts correctly with the mutability checking (including with shadowing)
-    Change variables from being an entirely push/pop phenomenon (base of off ebp, preallocate stack space)
-	  Split out storage of global/static values
-	  Also be sure to "track" ebp offsets in a stack based fashion (for supporting local functions)
-	Ensure this new system can handle "global" vars being defined post-facto
-	  Ensure that we can also force variables to be defined "ahead of time"
-	  Adapt 'use before declaration' errors to not be errors in the 'static' & 'type' contexts
-	    Might be good to adopt a two-pass system
-		  The first pass records all variable declarations and their location
-		  The second pass records all variable usages and flags unused/forward-used/created variables
-	Rearrange codegen (or modify interpreter) to prevent these systems from interferring with each other (for post-facto variables)
-	Look into adding in language for recognizing compound operators
-	  A compound operator would map to a reassign<var, operator<var, val>>
 
   Basic Function Definition
     Update x86_interpreter/codegen to be able to specify start instruction

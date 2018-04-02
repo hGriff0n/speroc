@@ -2,174 +2,14 @@
 
 #include <iostream>
 #include <unordered_map>
-//#include <asmtk/asmtk.h>
 
 #include "compilation.h"
 #include "parser/base.h"
 #include "interface/cmd_line.h"
 #include "util/strings.h"
 
-// Need to compile in 32-bit mode because of AsmJit
-#define ASM_COMPILER "clang -masm=intel -m32"
-
-
-/*
- * Implementation of compilation function
- * Defined in 'main.cpp' for reasons
- *
- * TODO: Move this definition to 'compiler.cpp'
- */
-bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack) {
-	using namespace spero;
-
-	// TODO: Initialize timing and other compilation logging structures
-
-
-	/*
-	 * Perform parsing and initial AST assembly
-	 */
-	state.logTime();
-	stack = compiler::parseFile(state.files()[0], state);
-	state.logTime();
-
-
-	/*
-	 * Run through the analysis stages
-	 *
-	 * Don't mark this as a separate "phase" for timing purposes
-	 * The sub-phases perform their own timing passes
-	 */
-	auto ir = (!state.failed())
-		? compiler::analyze(std::move(stack), state)
-		: spero::compiler::MIR_t{};
-
-
-	/*
-	 * Run through the backend optimizations
-	 *
-	 * Don't mark this as a separate "phase" for timing purposes
-	 * The sub-phases perform their own timing passes
-	 */
-	auto asmCode = (!state.failed())
-		? compiler::backend(ir, state)
-		: spero::compiler::gen::Assembler{};
-
-	/*
-	 * Generate the boundary ir for the external tools
-	 *
-	 * speroc does not handle the generation of executables
-	 * and other binary files, prefering to pass those stages
-	 * off to some system tool that is guaranteed to work
-	 */
-	if (!state.failed()) {
-		state.logTime();
-		compiler::codegen(asmCode, state.files()[0], "out.s", state);
-		state.logTime();
-	}
-
-
-	/*
-	 * Send the boundary ir off to the final compilation phase
-	 */
-	if (!state.failed() && state.produceExe()) {
-		state.logTime();
-		if (system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
-			state.log(compiler::ID::err, "Compilation of `{}` failed", state.output());
-		}
-		state.logTime();
-
-
-		// Delete the temporary file
-		if (state.deleteTemporaryFiles()) {
-			std::remove("out.s");
-		}
-	}
-
-	return state.failed();
-}
-
 
 // Helper function to run the interactive mode
-void run_interpreter(spero::compiler::CompilationState&, int&, char**);
-
-
-/*
- * Run the compiler and it's command-line interface
- *
- * Currently doubles as an interactive parse-tree searcher if
- *   no args or a '-i' flag is passed to evaluation
- */
-int main(int argc, char* argv[]) {
-	using namespace spero;
-
-	// Parse the command line arguments
-	auto state = cmd::parse(argc, argv);
-
-	// Compiler run
-	if (!state.opts["interactive"].as<bool>()) {
-		parser::Stack res;
-		try {
-			compile(state, res);
-
-		} catch (std::exception& e) {
-			state.log(compiler::ID::info, e.what());
-		}
-
-		return state.failed();
-
-	// Interactive mode
-	} else {
-		return run_interpreter(state, argc, argv), 0;
-	}
-}
-
-
-
-/*
- * Implementation of basic repl loop, or a Spero interpreter
- *
- * TODO: It may be beneficial to move this to a separate file
- */
-// Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
-template <class Stream>
-Stream& getMultiline(Stream& in, std::string& s) {
-	std::getline(in, s);
-	if (s == ":q") {
-		return in;
-	}
-
-	std::string tmp;
-	while (std::getline(in, tmp)) {
-		if (tmp == "") {
-			return in;
-		}
-
-		s += "\n" + tmp;
-	}
-
-	return in;
-}
-
-// Helper function to print out the ast structure
-std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
-	for (const auto& node : stack) {
-		if (node) {
-			node->prettyPrint(s, 0) << '\n';
-		} else {
-			s << "nullptr\n";
-		}
-	}
-
-	return s << '\n';
-}
-
-void printAssembly(spero::compiler::gen::Assembler& asmCode) {
-	asmjit::StringBuilder sb;
-	asmCode.dump(sb);
-	std::cout << sb.data() << '\n';
-}
-
-
 void run_interpreter(spero::compiler::CompilationState& state, int& argc, char** argv) {
 	using namespace spero;
 	using namespace spero::parser;
@@ -269,6 +109,83 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 			std::cout << e.what() << '\n';
 		}
 	}
+}
+
+
+/*
+ * Run the compiler and it's command-line interface
+ *
+ * Currently doubles as an interactive parse-tree searcher if
+ *   no args or a '-i' flag is passed to evaluation
+ */
+int main(int argc, char* argv[]) {
+	using namespace spero;
+
+	// Parse the command line arguments
+	auto state = cmd::parse(argc, argv);
+
+	// Compiler run
+	if (!state.opts["interactive"].as<bool>()) {
+		parser::Stack res;
+		try {
+			compile(state, res);
+
+		} catch (std::exception& e) {
+			state.log(compiler::ID::info, e.what());
+		}
+
+		return state.failed();
+
+	// Interactive mode
+	} else {
+		return run_interpreter(state, argc, argv), 0;
+	}
+}
+
+
+
+/*
+ * Implementation of basic repl loop, or a Spero interpreter
+ *
+ * TODO: It may be beneficial to move this to a separate file
+ */
+// Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
+template <class Stream>
+Stream& getMultiline(Stream& in, std::string& s) {
+	std::getline(in, s);
+	if (s == ":q") {
+		return in;
+	}
+
+	std::string tmp;
+	while (std::getline(in, tmp)) {
+		if (tmp == "") {
+			return in;
+		}
+
+		s += "\n" + tmp;
+	}
+
+	return in;
+}
+
+// Helper function to print out the ast structure
+std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
+	for (const auto& node : stack) {
+		if (node) {
+			node->prettyPrint(s, 0) << '\n';
+		} else {
+			s << "nullptr\n";
+		}
+	}
+
+	return s << '\n';
+}
+
+void printAssembly(spero::compiler::gen::Assembler& asmCode) {
+	asmjit::StringBuilder sb;
+	asmCode.dump(sb);
+	std::cout << sb.data() << '\n';
 }
 
 

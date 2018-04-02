@@ -75,5 +75,83 @@ namespace spero::compiler {
 			//o << ".ident \"speroc\"\n";
 		}
 	}
-
 }
+
+
+// Because AsmJit somehow decides my computers architecture is 32-bit (x86) and I've currently hardcoded assembl generation,
+// Since my installation of clang is 64-bit (x86-64), we have to force compilation under 32-bit mode
+#define ASM_COMPILER "clang -masm=intel -m32"
+
+
+// Full compilation implementation
+bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack) {
+	using namespace spero;
+
+	// TODO: Initialize timing and other compilation logging structures
+	// auto timer = state.getPhaseTimer();
+
+	/*
+	* Perform parsing and initial AST assembly
+	*/
+	// timer.start("Parsing");
+	state.logTime();
+	stack = compiler::parseFile(state.files()[0], state);
+	state.logTime();
+	// timer.end("Parsing");
+
+
+	/*
+	* Run through the analysis stages
+	*
+	* Don't mark this as a separate "phase" for timing purposes
+	* The sub-phases perform their own timing passes
+	*/
+	auto ir = (!state.failed())
+		? compiler::analyze(std::move(stack), state)
+		: spero::compiler::MIR_t{};
+
+
+	/*
+	* Run through the backend optimizations
+	*
+	* Don't mark this as a separate "phase" for timing purposes
+	* The sub-phases perform their own timing passes
+	*/
+	auto asmCode = (!state.failed())
+		? compiler::backend(ir, state)
+		: spero::compiler::gen::Assembler{};
+
+	/*
+	* Generate the boundary ir for the external tools
+	*
+	* speroc does not handle the generation of executables
+	* and other binary files, prefering to pass those stages
+	* off to some system tool that is guaranteed to work
+	*/
+	if (!state.failed()) {
+		state.logTime();
+		compiler::codegen(asmCode, state.files()[0], "out.s", state);
+		state.logTime();
+	}
+
+
+	/*
+	* Send the boundary ir off to the final compilation phase
+	*/
+	if (!state.failed() && state.produceExe()) {
+		state.logTime();
+		if (system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
+			state.log(compiler::ID::err, "Compilation of `{}` failed", state.output());
+		}
+		state.logTime();
+
+
+		// Delete the temporary file
+		if (state.deleteTemporaryFiles()) {
+			std::remove("out.s");
+		}
+	}
+
+	return state.failed();
+}
+

@@ -79,6 +79,7 @@ namespace spero::compiler::analysis {
 			// Information querying
 			size_t size();
 			size_t numVariables();
+			size_t count(std::string key);
 	};
 
 }
