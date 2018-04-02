@@ -220,14 +220,12 @@ namespace spero::compiler::gen {
 	// Expressions
 	//
 	void AsmGenerator::visitInAssign(ast::InAssign& in) {
-		auto* parent_scope = current;
-
 		// Setup the symbol table to prevent the context from leaking
 			// TODO: Could probably get a more efficient method by just adding a temporary key in the current table
 			// TODO: Need to rewrite before 'variable pass' decoupling as this won't work in that framework
-		analysis::SymTable tmp{};
-		tmp.setParent(current, true);
-		current = &tmp;
+		in.binding.setParent(current, true);
+		auto* parent_scope = current;
+		current = &in.binding;
 
 		// Run through the assignment and expression
 		in.bind->accept(*this);

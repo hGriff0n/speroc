@@ -1176,6 +1176,7 @@ namespace spero::compiler::ast {
 	struct InAssign : ValExpr {
 		ptr<VarAssign> bind;
 		ptr<ValExpr> expr;
+		analysis::SymTable binding;
 
 		InAssign(ptr<VarAssign>, ptr<ValExpr>, Location);
 
