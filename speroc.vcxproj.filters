@@ -406,9 +406,6 @@
     <ClInclude Include="incl\parser\ast.h">
       <Filter>Header Files\parser</Filter>
     </ClInclude>
-    <ClInclude Include="incl\parser\visitor.h">
-      <Filter>Header Files\parser</Filter>
-    </ClInclude>
     <ClInclude Include="incl\codegen\AsmGenerator.h">
       <Filter>Header Files\codegen</Filter>
     </ClInclude>
@@ -777,6 +774,9 @@
     </ClInclude>
     <ClInclude Include="incl\util\ranges.h">
       <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\AstVisitor.h">
+      <Filter>Header Files\parser</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

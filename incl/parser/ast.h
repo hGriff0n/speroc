@@ -63,7 +63,7 @@ namespace spero::compiler::ast {
 		template<class T, class = std::enable_if_t<can_hold_v<T, token_type>>>
 		Token(T val, Location loc) : Ast{ loc }, value{ val } {}
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 
 		template<class T, class=std::enable_if_t<can_hold_v<T, token_type>>>
@@ -90,7 +90,7 @@ namespace spero::compiler::ast {
 		bool is_mut = false;
 
 		Type(Location);
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 	};
 
 
@@ -108,7 +108,7 @@ namespace spero::compiler::ast {
 
 		Statement(Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -132,7 +132,7 @@ namespace spero::compiler::ast {
 
 		ValExpr(Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -154,7 +154,7 @@ namespace spero::compiler::ast {
 
 		Sequence(std::deque<ptr<T>> e, Location loc) : Inher{ loc }, elems{ std::move(e) } {}
 
-		virtual void accept(Visitor&) =0;
+		virtual void accept(AstVisitor&) =0;
 	};
 
 
@@ -173,7 +173,7 @@ namespace spero::compiler::ast {
 		bool val;
 		Bool(bool, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -181,7 +181,7 @@ namespace spero::compiler::ast {
 		unsigned long val;
 		Byte(std::string, int, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -189,7 +189,7 @@ namespace spero::compiler::ast {
 		double val;
 		Float(std::string, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -197,7 +197,7 @@ namespace spero::compiler::ast {
 		long val;
 		Int(std::string, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -205,7 +205,7 @@ namespace spero::compiler::ast {
 		char val;
 		Char(char, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -213,7 +213,7 @@ namespace spero::compiler::ast {
 		std::string val;
 		String(std::string, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -231,7 +231,7 @@ namespace spero::compiler::ast {
 
 		Future(bool, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -243,7 +243,7 @@ namespace spero::compiler::ast {
 	struct Tuple : Sequence<ValExpr> {
 		Tuple(std::deque<ptr<ValExpr>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -255,7 +255,7 @@ namespace spero::compiler::ast {
 	struct Array : Sequence<ValExpr> {
 		Array(std::deque<ptr<ValExpr>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -274,7 +274,7 @@ namespace spero::compiler::ast {
 
 		Block(std::deque<ptr<Statement>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -296,7 +296,7 @@ namespace spero::compiler::ast {
 
 		Function(ptr<Tuple>, ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -325,7 +325,7 @@ namespace spero::compiler::ast {
 
 		BasicBinding(std::string, BindingType, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 
 		std::string toString();
@@ -348,7 +348,7 @@ namespace spero::compiler::ast {
 
 		PathPart(std::string, BindingType, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -364,7 +364,7 @@ namespace spero::compiler::ast {
 	struct Path : Sequence<PathPart, Ast> {
 		Path(ptr<PathPart>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -382,7 +382,7 @@ namespace spero::compiler::ast {
 
 		Pattern(Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -397,7 +397,7 @@ namespace spero::compiler::ast {
 	struct TuplePattern : Sequence<Pattern> {
 		TuplePattern(std::deque<ptr<Pattern>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -414,7 +414,7 @@ namespace spero::compiler::ast {
 
 		VarPattern(ptr<Path>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -432,7 +432,7 @@ namespace spero::compiler::ast {
 
 		AdtPattern(ptr<Path>, ptr<TuplePattern>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -449,7 +449,7 @@ namespace spero::compiler::ast {
 
 		ValPattern(ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -468,7 +468,7 @@ namespace spero::compiler::ast {
 		// TODO: Remove this quick hack for passing mutability to declaration site
 		bool is_mut = false;
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -485,7 +485,7 @@ namespace spero::compiler::ast {
 
 		AssignName(ptr<BasicBinding>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -500,7 +500,7 @@ namespace spero::compiler::ast {
 	struct AssignTuple : Sequence<AssignPattern> {
 		AssignTuple(std::deque<ptr<AssignPattern>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -526,7 +526,7 @@ namespace spero::compiler::ast {
 
 		SourceType(ptr<Path>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -543,7 +543,7 @@ namespace spero::compiler::ast {
 
 		GenericType(ptr<Path>, ptr<Array>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -558,7 +558,7 @@ namespace spero::compiler::ast {
 	struct TupleType : Sequence<Type> {
 		TupleType(std::deque<ptr<Type>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -577,7 +577,7 @@ namespace spero::compiler::ast {
 
 		FunctionType(ptr<TupleType>, ptr<Type>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -592,7 +592,7 @@ namespace spero::compiler::ast {
 	struct AndType : Sequence<Type> {
 		AndType(ptr<Type>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -607,7 +607,7 @@ namespace spero::compiler::ast {
 	struct OrType : Sequence<Type> {
 		OrType(ptr<Type>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -634,7 +634,7 @@ namespace spero::compiler::ast {
 
 		Annotation(ptr<BasicBinding>, ptr<Tuple>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -646,7 +646,7 @@ namespace spero::compiler::ast {
 	struct LocalAnnotation : Annotation {
 		LocalAnnotation(ptr<BasicBinding>, ptr<Tuple>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -667,7 +667,7 @@ namespace spero::compiler::ast {
 		RelationType rel;
 
 		GenericPart(ptr<BasicBinding>, ptr<Type>, RelationType, Location);
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 	};
 
 	/*
@@ -688,7 +688,7 @@ namespace spero::compiler::ast {
 		TypeGeneric(ptr<BasicBinding>, ptr<Type>, Location);
 		TypeGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, VarianceType, bool, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -706,7 +706,7 @@ namespace spero::compiler::ast {
 		ValueGeneric(ptr<BasicBinding>, ptr<ValExpr>, Location);
 		ValueGeneric(ptr<BasicBinding>, ptr<Type>, RelationType, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -723,7 +723,7 @@ namespace spero::compiler::ast {
 
 		LitGeneric(ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -735,7 +735,7 @@ namespace spero::compiler::ast {
 	struct GenericArray : Sequence<GenericPart, Ast> {
 		GenericArray(std::deque<ptr<GenericPart>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -748,7 +748,7 @@ namespace spero::compiler::ast {
 	struct Constructor : Ast {
 		Constructor(Location);
 
-		virtual void accept(Visitor&) = 0;
+		virtual void accept(AstVisitor&) = 0;
 	};
 
 	/*
@@ -766,7 +766,7 @@ namespace spero::compiler::ast {
 
 		Adt(ptr<BasicBinding>, ptr<TupleType>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -785,7 +785,7 @@ namespace spero::compiler::ast {
 
 		Argument(ptr<BasicBinding>, ptr<Type>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -797,7 +797,7 @@ namespace spero::compiler::ast {
 	struct ArgTuple : Sequence<Argument, Constructor> {
 		ArgTuple(std::deque<ptr<Argument>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -816,7 +816,7 @@ namespace spero::compiler::ast {
 	struct Branch : ValExpr {
 		Branch(Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 	};
 
 	/*
@@ -832,7 +832,7 @@ namespace spero::compiler::ast {
 
 		Loop(ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -851,7 +851,7 @@ namespace spero::compiler::ast {
 
 		While(ptr<ValExpr>, ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -871,7 +871,7 @@ namespace spero::compiler::ast {
 
 		For(ptr<Pattern>, ptr<ValExpr>, ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&) final;
+		virtual void accept(AstVisitor&) final;
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -891,7 +891,7 @@ namespace spero::compiler::ast {
 
 		IfBranch(ptr<ValExpr>, ptr<ValExpr>, bool, Location);
 
-		virtual void accept(Visitor&) final;
+		virtual void accept(AstVisitor&) final;
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -908,7 +908,7 @@ namespace spero::compiler::ast {
 
 		IfElse(std::deque<ptr<IfBranch>>, ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -929,7 +929,7 @@ namespace spero::compiler::ast {
 
 		Case(ptr<TuplePattern>, ptr<ValExpr>, ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -948,7 +948,7 @@ namespace spero::compiler::ast {
 
 		Match(ptr<ValExpr>, std::deque<ptr<Case>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -965,7 +965,7 @@ namespace spero::compiler::ast {
 		ptr<ValExpr> expr;
 
 		Jump(KeywordType, ptr<ValExpr>, Location);
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -989,7 +989,7 @@ namespace spero::compiler::ast {
 
 		ModDec(ptr<Path>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1011,7 +1011,7 @@ namespace spero::compiler::ast {
 
 		ImplExpr(ptr<SourceType>, ptr<SourceType>, ptr<Block>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1026,7 +1026,7 @@ namespace spero::compiler::ast {
 		ModRebindImport(Location);
 		ModRebindImport(ptr<Path>, Location);
 
-		virtual void accept(Visitor&) = 0;
+		virtual void accept(AstVisitor&) = 0;
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -1038,7 +1038,7 @@ namespace spero::compiler::ast {
 	struct SingleImport : ModRebindImport {
 		SingleImport(ptr<Path>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1050,7 +1050,7 @@ namespace spero::compiler::ast {
 	struct MultipleImport : Sequence<PathPart, ModRebindImport> {
 		MultipleImport(ptr<Path>, std::deque<ptr<PathPart>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1067,7 +1067,7 @@ namespace spero::compiler::ast {
 
 		Rebind(ptr<Path>, ptr<Path>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1091,7 +1091,7 @@ namespace spero::compiler::ast {
 
 		Interface(VisibilityType, ptr<AssignPattern>, ptr<GenericArray>, ptr<Type>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");
 	};
 
@@ -1113,7 +1113,7 @@ namespace spero::compiler::ast {
 
 		TypeAssign(VisibilityType, ptr<AssignPattern>, ptr<GenericArray>, bool, ConsList, ptr<Block>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1131,7 +1131,7 @@ namespace spero::compiler::ast {
 
 		VarAssign(VisibilityType, ptr<AssignPattern>, ptr<GenericArray>, ptr<Type>, ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1152,7 +1152,7 @@ namespace spero::compiler::ast {
 
 		TypeExtension(ptr<Path>, ptr<Tuple>, ptr<Block>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1180,7 +1180,7 @@ namespace spero::compiler::ast {
 
 		InAssign(ptr<VarAssign>, ptr<ValExpr>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1197,7 +1197,7 @@ namespace spero::compiler::ast {
 
 		Variable(ptr<Path>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1218,7 +1218,7 @@ namespace spero::compiler::ast {
 		//UnOpCall(ptr<ValExpr>, std::string, Location);
 		UnOpCall(ptr<ValExpr>, ptr<BasicBinding>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1239,7 +1239,7 @@ namespace spero::compiler::ast {
 
 		BinOpCall(ptr<ValExpr>, ptr<ValExpr>, std::string, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1251,7 +1251,7 @@ namespace spero::compiler::ast {
 	struct Index : Sequence<ValExpr> {
 		Index(std::deque<ptr<ValExpr>>, Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 
@@ -1272,7 +1272,7 @@ namespace spero::compiler::ast {
 		FnCall(ptr<ValExpr>, ptr<Tuple>, Location);
 
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 

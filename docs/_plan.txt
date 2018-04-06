@@ -12,21 +12,30 @@ Current Project State
 
 Current Project Plan
   Convert all x86 touching code over to using AsmJit
+    Port move constructor fixes/additons to AsmJit main repo
+	  Create new branch/fork of main project
+	    Fix move constructors in all classes (where it is implemented)
+	    Add move constructor to all classes
+	  Make push request to main project
+	  Rebase `MyChanges` branch on top of the new 'wip' (after pull accepted)
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
-	  Add move constructor fixes to wip AsmJit
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
-	  Better generalize the process of creating and defining compiler "passes"
-		Possibly move 'Visitor' interface to a more "system" location
-		Rename current 'Visitor' interface to 'AstVisitor'
 	  Create a "Variable analysis" pass to collect all variable information
-	    Move mutability collection into this pass
-		  Possibly move mutability error reporting into this pass as well
-		Convert 'VarAssign' nodes to 'Reassign' nodes
-		  NOTE: Do I still have 'Reassign' ast nodes?
-		Change local variable allocation to be a batch stack "push" (or add/sub)
-		  Current approach is to push as variable appears, but if we collect beforehand, we know how many variables to allocate
+	    Figure out a way to automatically implement visitor so that I don't need to define the visiting for all nodes
+		  Implement definitions for their visitor functions in VarDeclPass
+		  Figure out how the 'MultipleImport' ast node is implemented
+		    Fix the visitMultipleImport method to reflect the inheritance, etc.
+		Move variable collection into VarDeclPass
+		  Complete implementation of VarDeclPass
+		    Make 'AsmGenerator::lookup' into a free function
+		  Insert creation and run call into compilation pathway
+		  Adapt AsmGenerator to require the products of VarDeclPass
+		    Replace code to assume 'VarDeclPass' has handled any errors
+		  Move mutability collection into this pass
+		  Change local variable allocation to be a batch stack "push" (or add/sub at beginning)
+		    Since we now collect beforehand, we know how many variables will be created
 		Generalize the method for accessing variables to work on global/static values
 		  Add in the capability for the spero compiler to produce global variables when needed
 		  Look at getting interpreter to support global variables in a separately allocated memory section
@@ -46,6 +55,7 @@ Current Project Plan
 	  Improve the code for interacting with scopes when assigning/accessing variables
 		Check if ':<var>' is (and should be) a legal typing (I don't think so)
 		  Adjust the interpreter accordingly (':XX' are commands)
+	  Figure out why FunctionType/AndType/ImplExpr/... can have nullable fields and prevent those from happening (yet OrType doesn't)
     Intern strings inside the compiler state structure
 	  Add a step in parsing to automatically register any var strings
 		Might need to find a better place to locate this (the structure)

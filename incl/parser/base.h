@@ -12,7 +12,7 @@ namespace spero::compiler::ast {
 	/*
 	 * Forward Declarations and Other types
 	 */
-	struct Visitor;
+	struct AstVisitor;
 
 	/*
 	 * Base class for all ast nodes
@@ -28,7 +28,7 @@ namespace spero::compiler::ast {
 
 		Ast(Location);
 
-		virtual void accept(Visitor&);
+		virtual void accept(AstVisitor&);
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");				// TODO: string_view
 	};
 }

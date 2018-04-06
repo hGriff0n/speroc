@@ -7,7 +7,7 @@ using namespace asmjit;
 namespace spero::compiler::gen {
 	AsmGenerator::AsmGenerator(compiler::CompilationState& state) : emit{}, state{ state } {}
 
-	Assembler AsmGenerator::get() {
+	Assembler AsmGenerator::finalize() {
 		emit.setAllocatedStack(globals.numVariables() * 4);
 		return std::move(emit);
 	}
@@ -80,11 +80,6 @@ namespace spero::compiler::gen {
 		// This should simplify the process of assigning new variables, etc.
 		return { value, front };
 	}
-
-	//
-	// Base Nodes
-	//
-	void AsmGenerator::visit(ast::Ast&) {}
 
 
 	//
@@ -381,4 +376,9 @@ namespace spero::compiler::gen {
 		}
 	}
 
+}
+
+namespace spero::compiler::ast {
+	// NOTE: Even though this method is marked `abstract`, we have to give a definition because it's a constructor
+	AstVisitor::~AstVisitor() {}
 }

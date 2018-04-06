@@ -393,7 +393,7 @@
     <ClInclude Include="incl\parser\base.h" />
     <ClInclude Include="incl\parser\grammar.h" />
     <ClInclude Include="incl\parser\location.h" />
-    <ClInclude Include="incl\parser\visitor.h" />
+    <ClInclude Include="incl\parser\AstVisitor.h" />
     <ClInclude Include="incl\util\asmjit.h" />
     <ClInclude Include="incl\util\parser.h" />
     <ClInclude Include="incl\util\ranges.h" />

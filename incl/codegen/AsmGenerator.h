@@ -1,20 +1,20 @@
 #pragma once
 
-#include "parser/visitor.h"
+#include "parser/AstVisitor.h"
 #include "interface/CompilationState.h"
 #include "util/asmjit.h"
 
 namespace spero::compiler::gen {
 
 	/*
-	 * Visitor class to control basic emission of assembly code
+	 * AstVisitor class to control basic emission of assembly code
 	 *
 	 * TODO: Split off some data into analysis phases
 	 * TODO: Rewrite to utilize different IR structure
 	 */
 	// This is an idea to formalize the conception that Visitors "produce" an analysis result
-	// class AsmGenerator : public ast::Visitor<Assembler> {
-	class AsmGenerator : public ast::Visitor {
+	// class AsmGenerator : public ast::AstVisitor<Assembler> {
+	class AsmGenerator : public ast::AstVisitor {
 		Assembler emit;
 		compiler::CompilationState& state;
 
@@ -27,10 +27,7 @@ namespace spero::compiler::gen {
 		public:
 			// The constructor should except the data from the last pass (template parameter?)
 			AsmGenerator(compiler::CompilationState&);
-			Assembler get();
-
-			// Base Nodes
-			virtual void visit(ast::Ast&) final;
+			Assembler finalize();
 
 			// Literals
 			virtual void visitBool(ast::Bool&) final;

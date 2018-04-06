@@ -53,7 +53,7 @@ namespace spero::compiler {
 			node->accept(visitor);
 		}
 
-		return visitor.get();
+		return visitor.finalize();
 	}
 
 	// Perform the final compilation stages (produces direct assembly code)
