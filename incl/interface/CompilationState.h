@@ -97,3 +97,5 @@ namespace spero::compiler {
 		}
 	};
 }
+
+#undef abstract

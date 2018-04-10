@@ -14,10 +14,8 @@ Current Project Plan
   Convert all x86 touching code over to using AsmJit
     Port move constructor fixes/additons to AsmJit main repo
 	  Create new branch/fork of main project
-	    Fix move constructors in all classes (where it is implemented)
 	    Add move constructor to all classes
 	  Make push request to main project
-	  Rebase `MyChanges` branch on top of the new 'wip' (after pull accepted)
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
