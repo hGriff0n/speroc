@@ -346,6 +346,8 @@ namespace spero::compiler::ast {
 			visitModRebindImport(t);
 		}
 		DEF_VISIT(MultipleImport) {
+			visitModRebindImport(t);
+
 			for (auto&& elem : t.elems) {
 				elem->accept(*this);
 			}

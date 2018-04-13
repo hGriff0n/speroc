@@ -234,6 +234,7 @@
     <ClCompile Include="src\compilation.cpp" />
     <ClCompile Include="src\strings.cpp" />
     <ClCompile Include="src\SymTable.cpp" />
+    <ClCompile Include="src\VarDeclPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dep\asmjit\src\asmjit\core\builder.h~RFb4bd2609.TMP" />
@@ -384,6 +385,7 @@
     <ClInclude Include="dep\spdlog\include\spdlog\spdlog.h" />
     <ClInclude Include="dep\spdlog\include\spdlog\tweakme.h" />
     <ClInclude Include="incl\analysis\SymTable.h" />
+    <ClInclude Include="incl\analysis\VarDeclPass.h" />
     <ClInclude Include="incl\codegen\AsmGenerator.h" />
     <ClInclude Include="incl\compilation.h" />
     <ClInclude Include="incl\interface\cmd_line.h" />

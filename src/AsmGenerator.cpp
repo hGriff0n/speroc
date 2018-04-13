@@ -17,7 +17,7 @@ namespace spero::compiler::gen {
 	using AccessType = std::optional<ref_t<analysis::DataType>>;
 	std::tuple<AccessType, ast::Path::iterator> AsmGenerator::lookup(ast::Path& var_path) {
 		auto [front, end] = util::range(var_path.elems);
-		AccessType value = globals["self"];
+		AccessType value = std::nullopt;
 		bool has_next = true;
 
 		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
@@ -27,6 +27,8 @@ namespace spero::compiler::gen {
 			has_next = next != nullptr;
 
 		} else {
+			value = globals["self"];
+
 			++front;
 		}
 
@@ -45,37 +47,6 @@ namespace spero::compiler::gen {
 			}
 		}
 
-		// Perform optional "global scope" indexing (ie. ':a') (NOTE: Not yet decided whether this is legal
-		// Otherwise, returns lexical scoping lookup for the first symbol in the path
-		// TODO: Solve this typing issue (it's actually a somewhat sticky situation)
-		// I'm a bit confused as this should type out (and lifetimes should work)
-		/*AccessType value = (**front).name.empty() ? globals
-		: *current->mostRecentDef((**front).name);*/
-		// This types, but it doesn't work in the long run (makes a copy, lifetime goes out of scope)
-		// I can avoid the SymTable copy with the added 'ref_t' variant, but the lifetime dependency still exists
-		/*analysis::DataType table = ref_t<analysis::SymTable>{ (**front).name.empty() ? globals
-			: *current->mostRecentDef((**front).name) };
-		AccessType value = table;
-
-
-		auto has_next = true;
-		++front;
-
-		while (front != end && has_next) {
-			auto next = std::visit([&](auto&& var) -> AccessType {
-				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, analysis::SymTable>) {
-					return var.get((**front).name);
-				}
-
-				return AccessType{};
-			}, value->get());
-
-			if (has_next = next.has_value()) {
-				value = next;
-				++front;
-			}
-		}
-*/
 		// Return the last accessed value and the last attempted symbol if lookup fails
 		// This should simplify the process of assigning new variables, etc.
 		return { value, front };

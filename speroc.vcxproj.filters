@@ -295,6 +295,9 @@
     <ClCompile Include="src\asmjit.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\VarDeclPass.cpp">
+      <Filter>Source Files\analysis</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
@@ -777,6 +780,9 @@
     </ClInclude>
     <ClInclude Include="incl\parser\AstVisitor.h">
       <Filter>Header Files\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\analysis\VarDeclPass.h">
+      <Filter>Header Files\analysis</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

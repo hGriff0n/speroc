@@ -13,25 +13,16 @@ Current Project State
 Current Project Plan
   Convert all x86 touching code over to using AsmJit
     Port move constructor fixes/additons to AsmJit main repo
-	  Create new branch/fork of main project
-	    Add move constructor to all classes
-	  Make push request to main project
+	  Fix issues that arise with the pull request
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
 	  Create a "Variable analysis" pass to collect all variable information
-	    Figure out a way to automatically implement visitor so that I don't need to define the visiting for all nodes
-		  Implement definitions for their visitor functions in VarDeclPass
-		  Figure out how the 'MultipleImport' ast node is implemented
-		    Fix the visitMultipleImport method to reflect the inheritance, etc.
 		Move variable collection into VarDeclPass
-		  Complete implementation of VarDeclPass
-		    Make 'AsmGenerator::lookup' into a free function
 		  Insert creation and run call into compilation pathway
-		  Adapt AsmGenerator to require the products of VarDeclPass
-		    Replace code to assume 'VarDeclPass' has handled any errors
-		  Move mutability collection into this pass
+		    Adapt AsmGenerator to require the products of VarDeclPass
+		      Replace code to assume 'VarDeclPass' has handled any errors
 		  Change local variable allocation to be a batch stack "push" (or add/sub at beginning)
 		    Since we now collect beforehand, we know how many variables will be created
 		Generalize the method for accessing variables to work on global/static values
