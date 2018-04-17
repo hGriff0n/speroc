@@ -5,53 +5,18 @@
 using namespace asmjit;
 
 namespace spero::compiler::gen {
-	AsmGenerator::AsmGenerator(compiler::CompilationState& state) : emit{}, state{ state } {}
+	AsmGenerator::AsmGenerator(compiler::CompilationState& state) : globals{ std::make_unique<analysis::SymTable>() }, state { state } {
+		current = globals.get();
+	}
+
+	AsmGenerator::AsmGenerator(std::unique_ptr<analysis::SymTable> globals, compiler::CompilationState& state) : globals{ std::move(globals) }, state{ state } {
+		current = this->globals.get();
+	}
 
 	Assembler AsmGenerator::finalize() {
-		emit.setAllocatedStack(globals.numVariables() * 4);
+		emit.setAllocatedStack(globals->numVariables() * 4);
 		return std::move(emit);
 	}
-
-	// TODO: Need an interface for communicating why the analysis "failed"
-		// Could that be better served in the calling context (is it derivable from the returned DataType/iterator pair ???)
-	using AccessType = std::optional<ref_t<analysis::DataType>>;
-	std::tuple<AccessType, ast::Path::iterator> AsmGenerator::lookup(ast::Path& var_path) {
-		auto [front, end] = util::range(var_path.elems);
-		AccessType value = std::nullopt;
-		bool has_next = true;
-
-		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
-		if (!(**front).name.empty()) {
-			auto* next = current->mostRecentDef((**front).name);
-			value = (*(next ? next : current))["self"];
-			has_next = next != nullptr;
-
-		} else {
-			value = globals["self"];
-
-			++front;
-		}
-
-		while (front != end && has_next) {
-			auto next = std::visit([&](auto&& var) -> AccessType {
-				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymTable>>) {
-					return var.get().get((**front).name);
-				}
-
-				return AccessType{};
-			}, value->get());
-
-			if (has_next = next.has_value()) {
-				value = next;
-				++front;
-			}
-		}
-
-		// Return the last accessed value and the last attempted symbol if lookup fails
-		// This should simplify the process of assigning new variables, etc.
-		return { value, front };
-	}
-
 
 	//
 	// Literals
@@ -91,13 +56,11 @@ namespace spero::compiler::gen {
 
 		// Initialize current
 		auto* parent_scope = current;
-		b.locals.setParent(current, true);
 		current = &b.locals;
+		// TODO: Add in batch stack allocation
 
 		// Emit the code for the function body
-		for (auto& stmt : b.elems) {
-			stmt->accept(*this);
-		}
+		AstVisitor::visitBlock(b);
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
 		emit.popWords(current->numVariables());				// pop n bytes 
@@ -109,30 +72,24 @@ namespace spero::compiler::gen {
 	// Names
 	//
 	void AsmGenerator::visitVariable(ast::Variable& v) {
-		auto [nvar, iter] = lookup(*v.name);
-		if (iter != std::end(v.name->elems)) {
-			state.log(ID::err, "Attempt to use undeclared variable `{}` <at {}>", v.name->elems.back()->name, v.loc);
-			return;
-		}
+		auto [nvar, _] = analysis::lookup(*globals, current, *v.name);
+		(void)_;
 
+		// Not sure about whether this is handled (probably still need to perform though)
 		std::visit([&](auto&& var) {
 			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, analysis::VarData>) {
 				emit.mov(x86::eax, x86::ptr(x86::ebp, var.off));
-
-			} else {
-				state.log(ID::err, "Attempt to use non-variable symbol `{}` as a variable <at {}>", v.name->elems.back()->name, v.loc);
 			}
 		}, nvar->get());
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
-		if (!current->exists(n.var->name)) {
-			int off = -4 * (current->numVariables() + 1) - current->ebp_offset;
-			current->insert(n.var->name, analysis::VarData{ off, n.loc, n.is_mut });
-			emit.push(x86::eax);
+		// This needs to be completely reworked
+		auto var = current->getVar(n.var->name);
+		if (var) {
+			//auto& variable = var->get();
 
-		} else {
-			state.log(ID::err, "Attempt to declare previously declared variable `{}` <at {}>", n.var->name, n.loc);
+			emit.push(x86::eax);
 		}
 	}
 
@@ -189,7 +146,6 @@ namespace spero::compiler::gen {
 		// Setup the symbol table to prevent the context from leaking
 			// TODO: Could probably get a more efficient method by just adding a temporary key in the current table
 			// TODO: Need to rewrite before 'variable pass' decoupling as this won't work in that framework
-		in.binding.setParent(current, true);
 		auto* parent_scope = current;
 		current = &in.binding;
 
@@ -223,27 +179,12 @@ namespace spero::compiler::gen {
 			// Evaluate the value into the appropriate registers
 			b.rhs->accept(*this);
 
-			// Ensure that the left-hand side is a variable node
-			auto lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
-			if (!lhs) {
-				state.log(ID::err, "Attempt to reassign a non-variable value <at {}>", lhs->loc);
-				return;
-			}
-			
-			// Perform all the necessary checks for reassignment
-			auto [variable, iter] = lookup(*lhs->name);
-			if (iter != std::end(lhs->name->elems)) {
-				state.log(ID::err, "Attempt to reassign undeclared variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
+			auto* lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
+			auto [variable, _] = analysis::lookup(*globals, current, *lhs->name);
+			auto& var = std::get<analysis::VarData>(variable->get());
 
-			} else if (!std::holds_alternative<analysis::VarData>(variable->get())) {
-				state.log(ID::err, "Attempt to reassign non-variable symbol `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
-
-			} else if (auto& var = std::get<analysis::VarData>(variable->get()); !var.is_mut) {
-				state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
-				
-			} else {
-				emit.mov(x86::ptr(x86::ebp, var.off), x86::eax);
-			}
+			emit.mov(x86::ptr(x86::ebp, var.off), x86::eax);
+			(void)_;
 
 		} else {
 			// Evaluate the left side and store it on the stack

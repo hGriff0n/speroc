@@ -436,6 +436,13 @@ namespace spero::compiler::ast {
 		//DEF_VISITOR(Error);
 	};
 
+	template <class T>
+	void visit(AstVisitor& visitor, T&& ast_stack) {
+		for (auto&& node : ast_stack) {
+			node->accept(visitor);
+		}
+	}
+
 #undef DEF_VISIT
 #undef abstract
 

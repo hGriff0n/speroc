@@ -1,4 +1,5 @@
 #include "parser/AstVisitor.h"
+#include "util/ranges.h"
 
 namespace spero::compiler::ast {
 	// Only defined as `std::deque` has no `initializer_list` constructor
@@ -1007,6 +1008,47 @@ namespace spero::compiler::ast {
 	ScopeError::ScopeError(Location loc) : Block{ {}, loc } {}
 	DEF_PRINTER(ScopeError) {
 		return s << std::string(buf, ' ') << context << "ast.Error";
+	}
+
+}
+
+namespace spero::compiler::analysis {
+
+	using LookupType = std::optional<ref_t<analysis::DataType>>;
+	std::tuple<std::optional<ref_t<analysis::DataType>>, ast::Path::iterator> lookup(analysis::SymTable& globals, analysis::SymTable* current, ast::Path& var_path) {
+		auto[front, end] = util::range(var_path.elems);
+		LookupType value = std::nullopt;
+		bool has_next = true;
+
+		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
+		if (!(**front).name.empty()) {
+			auto* next = current->mostRecentDef((**front).name);
+			value = (*(next ? next : current))["self"];
+			has_next = next != nullptr;
+
+		} else {
+			value = globals["self"];
+			++front;
+		}
+
+		while (front != end && has_next) {
+			auto next = std::visit([&](auto&& var) -> LookupType {
+				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymTable>>) {
+					return var.get().get((**front).name);
+				}
+
+				return LookupType{};
+				}, value->get());
+
+			if (has_next = next.has_value()) {
+				value = next;
+				++front;
+			}
+		}
+
+		// Return the last accessed value and the last attempted symbol if lookup fails
+		// This should simplify the process of assigning new variables, etc.
+		return { value, front };
 	}
 
 }

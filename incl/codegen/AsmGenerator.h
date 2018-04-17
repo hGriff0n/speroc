@@ -18,15 +18,13 @@ namespace spero::compiler::gen {
 		Assembler emit;
 		compiler::CompilationState& state;
 
-		analysis::SymTable globals;
-		analysis::SymTable* current = &globals;
-
-		// If lookup succeeds, then the returned iterator is equal to `std::end(var_path.elems)`
-		std::tuple<std::optional<ref_t<analysis::DataType>>, ast::Path::iterator> lookup(ast::Path& var_path);
+		std::unique_ptr<analysis::SymTable> globals;
+		analysis::SymTable* current = nullptr;
 
 		public:
 			// The constructor should except the data from the last pass (template parameter?)
 			AsmGenerator(compiler::CompilationState&);
+			AsmGenerator(std::unique_ptr<analysis::SymTable> globals, compiler::CompilationState& state);
 			Assembler finalize();
 
 			// Literals

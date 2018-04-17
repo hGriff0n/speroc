@@ -1,11 +1,12 @@
 #include "analysis/VarDeclPass.h"
-#include "util/ranges.h"
 
 namespace spero::compiler::analysis {
 
-	VarDeclPass::VarDeclPass(compiler::CompilationState& state) : state{ state } {}
+	VarDeclPass::VarDeclPass(compiler::CompilationState& state) : globals{ std::make_unique<analysis::SymTable>() }, state{ state } {
+		current = globals.get();
+	}
 
-	SymTable VarDeclPass::finalize() {
+	std::unique_ptr<analysis::SymTable> VarDeclPass::finalize() {
 		return std::move(globals);
 	}
 
@@ -95,7 +96,7 @@ namespace spero::compiler::analysis {
 	// Expressions
 	void VarDeclPass::visitVariable(ast::Variable& v) {
 		// Perform some simple variable usage checks
-		auto[nvar, iter] = lookup(globals, current, *v.name);
+		auto[nvar, iter] = lookup(*globals, current, *v.name);
 
 		if (iter != std::end(v.name->elems)) {
 			state.log(ID::err, "Attempt to use undeclared variable `{}` <at {}>", v.name->elems.back()->name, v.loc);
@@ -104,6 +105,32 @@ namespace spero::compiler::analysis {
 
 		if (!std::holds_alternative<analysis::VarData>(nvar->get())) {
 			state.log(ID::err, "Attempt to use non-variable symbol `{}` as a variable <at {}>", v.name->elems.back()->name, v.loc);
+		}
+	}
+
+	void VarDeclPass::visitBinOpCall(ast::BinOpCall& b) {
+		AstVisitor::visitBinOpCall(b);
+
+		if (b.op == "=") {
+			auto* lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
+			if (!lhs) {
+				state.log(ID::err, "Attempt to reassign a non-variable value <at {}>", lhs->loc);
+				return;
+			}
+
+			// Perform all the necessary checks for reassignment
+			auto [variable, iter] = analysis::lookup(*globals, current, *lhs->name);
+
+			// I think some of these will be handled
+			if (iter != std::end(lhs->name->elems)) {
+				state.log(ID::err, "Attempt to reassign undeclared variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
+
+			} else if (!std::holds_alternative<analysis::VarData>(variable->get())) {
+				state.log(ID::err, "Attempt to reassign non-variable symbol `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
+
+			} else if (auto& var = std::get<analysis::VarData>(variable->get()); !var.is_mut) {
+				state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
+			}
 		}
 	}
 
@@ -154,45 +181,6 @@ namespace spero::compiler::analysis {
 
 	void VarDeclPass::visitTypeExtension(ast::TypeExtension& t) {
 		AstVisitor::visitTypeExtension(t);
-	}
-
-
-
-	using LookupType = std::optional<ref_t<analysis::DataType>>;
-	std::tuple<std::optional<ref_t<analysis::DataType>>, ast::Path::iterator> lookup(analysis::SymTable& globals, analysis::SymTable* current, ast::Path& var_path) {
-		auto[front, end] = util::range(var_path.elems);
-		LookupType value = std::nullopt;
-		bool has_next = true;
-
-		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
-		if (!(**front).name.empty()) {
-			auto* next = current->mostRecentDef((**front).name);
-			value = (*(next ? next : current))["self"];
-			has_next = next != nullptr;
-
-		} else {
-			value = globals["self"];
-			++front;
-		}
-
-		while (front != end && has_next) {
-			auto next = std::visit([&](auto&& var) -> AccessType {
-				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymTable>>) {
-					return var.get().get((**front).name);
-				}
-
-				return AccessType{};
-				}, value->get());
-
-			if (has_next = next.has_value()) {
-				value = next;
-				++front;
-			}
-		}
-
-		// Return the last accessed value and the last attempted symbol if lookup fails
-		// This should simplify the process of assigning new variables, etc.
-		return { value, front };
 	}
 
 }

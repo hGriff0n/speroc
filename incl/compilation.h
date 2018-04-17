@@ -13,11 +13,11 @@ namespace spero::compiler {
 	parser::Stack parseFile(std::string, CompilationState&);
 
 	// Perform all steps related to analysis and secondary IR creation (may abstract IR to a different function)
-	using MIR_t = parser::Stack;
-	MIR_t analyze(parser::Stack, CompilationState&);
+	using MIR_t = std::unique_ptr<analysis::SymTable>;
+	MIR_t analyze(parser::Stack&, CompilationState&);
 	
 	// Perform all steps related to backend production
-	gen::Assembler backend(MIR_t&, CompilationState&);
+	gen::Assembler backend(MIR_t, parser::Stack&, CompilationState&);
 
 	// Perform all steps related to final codegen stages (produces assembly code)
 	void codegen(gen::Assembler&, const std::string&, const std::string&, CompilationState&, bool=true);

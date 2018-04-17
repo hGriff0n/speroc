@@ -47,10 +47,6 @@ namespace spero::compiler {
 			void logTime();
 			std::pair<TimePoint, TimePoint> getCycle(size_t);
 
-			// Basic state querying
-			virtual bool deleteTemporaryFiles() abstract;
-			virtual bool showLogs() abstract;
-
 			// Error reporting/collection
 			// TODO: Add in more complex logger manipulations (particularly change formatting)
 			// TODO: Add in rough ability to "craft" messages from component parts (instead of expecting me to do it)
@@ -65,7 +61,10 @@ namespace spero::compiler {
 			size_t failed();
 			void reset();
 
-			// Compilation Stage Control
+
+			// State Querying
+			virtual bool deleteTemporaryFiles() abstract;
+			virtual bool showLogs() abstract;
 			virtual bool produceExe() abstract;
 	};
 

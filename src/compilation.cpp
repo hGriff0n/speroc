@@ -1,5 +1,7 @@
 #include "compilation.h"
 #include "parser/actions.h"
+
+#include "analysis/VarDeclPass.h"
 #include "codegen/AsmGenerator.h"
 
 std::string spero::util::escape(std::string s) {
@@ -42,17 +44,17 @@ namespace spero::compiler {
 
 
 	// Perform the various analysis stages
-	MIR_t analyze(spero::parser::Stack s, CompilationState& state) {
-		return std::move(s);
+	MIR_t analyze(parser::Stack& s, CompilationState& state) {
+		analysis::VarDeclPass visitor{ state };
+		ast::visit(visitor, s);
+		auto table = visitor.finalize();
+
+		return std::move(table);
 	}
 
-	gen::Assembler backend(MIR_t& s, CompilationState& state) {
-		gen::AsmGenerator visitor{ state };
-
-		for (const auto& node : s) {
-			node->accept(visitor);
-		}
-
+	gen::Assembler backend(MIR_t globals, parser::Stack& s, CompilationState& state) {
+		gen::AsmGenerator visitor{ std::move(globals), state };
+		ast::visit(visitor, s);
 		return visitor.finalize();
 	}
 
@@ -78,7 +80,7 @@ namespace spero::compiler {
 }
 
 
-// Because AsmJit somehow decides my computers architecture is 32-bit (x86) and I've currently hardcoded assembl generation,
+// Because AsmJit somehow decides my computers architecture is 32-bit (x86) and I've currently hardcoded assembly generation,
 // Since my installation of clang is 64-bit (x86-64), we have to force compilation under 32-bit mode
 #define ASM_COMPILER "clang -masm=intel -m32"
 
@@ -106,9 +108,9 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	* Don't mark this as a separate "phase" for timing purposes
 	* The sub-phases perform their own timing passes
 	*/
-	auto ir = (!state.failed())
-		? compiler::analyze(std::move(stack), state)
-		: spero::compiler::MIR_t{};
+	auto table = (!state.failed())
+		? compiler::analyze(stack, state)
+		: nullptr;
 
 
 	/*
@@ -118,7 +120,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	* The sub-phases perform their own timing passes
 	*/
 	auto asmCode = (!state.failed())
-		? compiler::backend(ir, state)
+		? compiler::backend(std::move(table), stack, state)
 		: spero::compiler::gen::Assembler{};
 
 	/*

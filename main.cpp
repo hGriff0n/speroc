@@ -80,8 +80,8 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 				// Stop early if parsing failed
 				if (!state.failed() && flags["compile"]) {
 					// Analyze and compile the code
-					auto ir = compiler::analyze(std::move(res), state);
-					auto asmCode = compiler::backend(ir, state);
+					auto table = compiler::analyze(res, state);
+					auto asmCode = compiler::backend(std::move(table), res, state);
 
 
 					// Print out the generated assembly
@@ -100,9 +100,6 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 
 						std::remove("out.s");
 					}
-
-					// Reset `res` for future usage
-					res = std::move(ir);
 				}
 			}
 

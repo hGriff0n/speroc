@@ -5,10 +5,6 @@
 
 namespace spero::compiler::analysis {
 
-	// If lookup succeeds, then the returned iterator is equal to `std::end(var_path.elems)`
-	std::tuple<std::optional<ref_t<analysis::DataType>>, ast::Path::iterator> lookup(analysis::SymTable& globals, analysis::SymTable* current, ast::Path& var_path);
-
-
 	/*
 	 * Ast pass that collects and stores information for all variables
 	 *
@@ -20,12 +16,17 @@ namespace spero::compiler::analysis {
 	class VarDeclPass : public ast::AstVisitor {
 		compiler::CompilationState& state;
 
-		analysis::SymTable globals;
-		analysis::SymTable* current = &globals;
+		analysis::SymTable* current = nullptr;
+		
+		// Since SymTables can contain references to other symtables, the addresses need to stay relatively set
+		// For the moment, the global table is the only one that is not currently mapped to an ast node
+		// To enforce invariant addressing, this is currently implemented as a std::unique_ptr
+		// This may change once I have to integrate modules and types into this framework
+		std::unique_ptr<analysis::SymTable> globals;
 
 		public:
 			VarDeclPass(compiler::CompilationState&);
-			analysis::SymTable finalize();
+			std::unique_ptr<analysis::SymTable> finalize();
 
 			// Decorations
 			virtual void visitAnnotation(ast::Annotation&) final;
@@ -55,6 +56,7 @@ namespace spero::compiler::analysis {
 
 			// Expressions
 			virtual void visitVariable(ast::Variable&) final;
+			virtual void visitBinOpCall(ast::BinOpCall&) final;
 
 			// Statements
 			virtual void visitInAssign(ast::InAssign&) final;

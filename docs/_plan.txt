@@ -20,15 +20,15 @@ Current Project Plan
 	Modify reassignment code to throw out an error when the variable is immutable
 	  Create a "Variable analysis" pass to collect all variable information
 		Move variable collection into VarDeclPass
-		  Insert creation and run call into compilation pathway
-		    Adapt AsmGenerator to require the products of VarDeclPass
-		      Replace code to assume 'VarDeclPass' has handled any errors
 		  Change local variable allocation to be a batch stack "push" (or add/sub at beginning)
 		    Since we now collect beforehand, we know how many variables will be created
 		Generalize the method for accessing variables to work on global/static values
 		  Add in the capability for the spero compiler to produce global variables when needed
 		  Look at getting interpreter to support global variables in a separately allocated memory section
 		Figure out how to track 'ebp'/etc in order to support the usage of local functions (may be too much for the moment)
+		Improve the compilation granularity, etc.
+		  The system for producing the symbol table doesn't work out too well
+		    I mean the symbol tables will be an ast only thing
 		Figure out how to get the system to handle declaring global variables "post-facto"
 		  Problem is having the check off in 'type' and 'static' contexts but on in 'local' contexts
 	      Might be good to adopt a two-pass system

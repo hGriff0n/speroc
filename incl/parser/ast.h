@@ -1339,3 +1339,10 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "") final;
 	};
 }
+
+namespace spero::compiler::analysis {
+
+	// If lookup succeeds, then the returned iterator is equal to `std::end(var_path.elems)`
+	std::tuple<std::optional<ref_t<analysis::DataType>>, ast::Path::iterator> lookup(analysis::SymTable& globals, analysis::SymTable* current, ast::Path& var_path);
+
+}
