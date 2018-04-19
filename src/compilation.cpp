@@ -44,28 +44,28 @@ namespace spero::compiler {
 
 
 	// Perform the various analysis stages
-	MIR_t analyze(parser::Stack& s, CompilationState& state) {
+	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state) {
 		analysis::VarDeclPass visitor{ state };
-		ast::visit(visitor, s);
+		ast::visit(visitor, ast_stack);
 		auto table = visitor.finalize();
 
 		return std::move(table);
 	}
 
-	gen::Assembler backend(MIR_t globals, parser::Stack& s, CompilationState& state) {
+	gen::Assembler backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state) {
 		gen::AsmGenerator visitor{ std::move(globals), state };
-		ast::visit(visitor, s);
+		ast::visit(visitor, ast_stack);
 		return visitor.finalize();
 	}
 
 	// Perform the final compilation stages (produces direct assembly code)
-	void codegen(gen::Assembler& emit, const std::string& in, const std::string& out, CompilationState& state, bool output_header) {
+	void codegen(gen::Assembler& emit, const std::string& input_file, const std::string& output_file, CompilationState& state, bool output_header) {
 		// Open the output file
-		std::ofstream o{ out };
+		std::ofstream o{ output_file };
 
 		// Output file header information
 		if (output_header) {
-			o << ".text\n.intel_syntax noprefix\n.file \"" << in << "\"\n";
+			o << ".text\n.intel_syntax noprefix\n.file \"" << input_file << "\"\n";
 		}
 
 		asmjit::StringBuilder sb;
@@ -86,7 +86,7 @@ namespace spero::compiler {
 
 
 // Full compilation implementation
-bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& stack) {
+bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& ast_stack) {
 	using namespace spero;
 
 	// TODO: Initialize timing and other compilation logging structures
@@ -97,7 +97,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	*/
 	// timer.start("Parsing");
 	state.logTime();
-	stack = compiler::parseFile(state.files()[0], state);
+	ast_stack = compiler::parseFile(state.files()[0], state);
 	state.logTime();
 	// timer.end("Parsing");
 
@@ -109,7 +109,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	* The sub-phases perform their own timing passes
 	*/
 	auto table = (!state.failed())
-		? compiler::analyze(stack, state)
+		? compiler::analyze(ast_stack, state)
 		: nullptr;
 
 
@@ -120,7 +120,7 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	* The sub-phases perform their own timing passes
 	*/
 	auto asmCode = (!state.failed())
-		? compiler::backend(std::move(table), stack, state)
+		? compiler::backend(std::move(table), ast_stack, state)
 		: spero::compiler::gen::Assembler{};
 
 	/*

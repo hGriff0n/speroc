@@ -81,20 +81,19 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 				if (!state.failed() && flags["compile"]) {
 					// Analyze and compile the code
 					auto table = compiler::analyze(res, state);
-					auto asmCode = compiler::backend(std::move(table), res, state);
+					auto asm_code = compiler::backend(std::move(table), res, state);
 
 
 					// Print out the generated assembly
 					if (!state.failed()) {
-						printAssembly(asmCode);
+						printAssembly(asm_code);
 
 						if (flags["output"]) {
-							compiler::codegen(asmCode, "interactive", "out.s", state, false);
+							compiler::codegen(asm_code, "interactive", "out.s", state, false);
 						}
 
-						// TODO: Allow interpretation without requiring compilation displaying
 						if (flags["interpret"]) {
-							compiler::interpret(asmCode);
+							compiler::interpret(asm_code);
 							std::cout << std::endl;
 						}
 
@@ -103,7 +102,10 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 				}
 			}
 
-			printAST(std::cout << '\n', res);
+			if (!flags["ast"]) {
+				printAST(std::cout << '\n', res);
+			}
+
 			state.reset();
 
 		} catch (std::exception& e) {
@@ -152,9 +154,9 @@ int main(int argc, char* argv[]) {
  */
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
 template <class Stream>
-Stream& getMultiline(Stream& in, std::string& s) {
-	std::getline(in, s);
-	if (s == ":q") {
+Stream& getMultiline(Stream& in, std::string& out_str) {
+	std::getline(in, out_str);
+	if (out_str == ":q") {
 		return in;
 	}
 
@@ -164,15 +166,15 @@ Stream& getMultiline(Stream& in, std::string& s) {
 			return in;
 		}
 
-		s += "\n" + tmp;
+		out_str += "\n" + tmp;
 	}
 
 	return in;
 }
 
 // Helper function to print out the ast structure
-std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
-	for (const auto& node : stack) {
+std::ostream& printAST(std::ostream& s, const spero::parser::Stack& ast_stack) {
+	for (const auto& node : ast_stack) {
 		if (node) {
 			node->prettyPrint(s, 0) << '\n';
 		} else {
@@ -183,28 +185,28 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack) {
 	return s << '\n';
 }
 
-void printAssembly(spero::compiler::gen::Assembler& asmCode) {
+void printAssembly(spero::compiler::gen::Assembler& asm_code) {
 	asmjit::StringBuilder sb;
-	asmCode.dump(sb);
+	asm_code.dump(sb);
 	std::cout << sb.data() << '\n';
 }
 
 
 // Interpret the produced assembly code (this doesn't produce any code. "CodeHolder" is apparently completely empty
-void spero::compiler::interpret(gen::Assembler& asmCode) {
+void spero::compiler::interpret(gen::Assembler& asm_code) {
 	// Setup the runtime environment
 	static asmjit::JitRuntime jt;
 
 	// Prepare the assembly code for interpretation
 	// I don't think this is quite accurate enough just yet (not sure what though)
-	asmCode.makeIFunction();
+	asm_code.makeIFunction();
 
 	// Print the interpreted code
-	printAssembly(asmCode);
+	printAssembly(asm_code);
 
 	// Register the assembly code as an `int()` function
 	gen::Assembler::Function fn;
-	asmjit::Error err = jt.add(&fn, asmCode.get());
+	asmjit::Error err = jt.add(&fn, asm_code.get());
 
 	if (err) {
 		std::cout << err << ':' << asmjit::kErrorNoCodeGenerated << '\n';

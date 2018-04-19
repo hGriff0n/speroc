@@ -85,7 +85,7 @@ namespace spero::compiler::ast {
 
 	Literal::Literal(Location loc) : ValExpr{ loc } {}
 
-	Bool::Bool(bool b, Location loc) : Literal{ loc }, val{ b } {}
+	Bool::Bool(bool val, Location loc) : Literal{ loc }, val{ val } {}
 	void Bool::accept(AstVisitor& v) {
 		v.visitBool(*this);
 	}
@@ -95,7 +95,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	Byte::Byte(std::string num, int base, Location loc) : Literal{ loc }, val{ std::stoul(num, nullptr, base) } {}
+	Byte::Byte(std::string val, int base, Location loc) : Literal{ loc }, val{ std::stoul(val, nullptr, base) } {}
 	void Byte::accept(AstVisitor& v) {
 		v.visitByte(*this);
 	}
@@ -135,7 +135,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	String::String(std::string v, Location loc) : ValExpr{ loc }, val{ v } {}
+	String::String(std::string str, Location loc) : ValExpr{ loc }, val{ str } {}
 	void String::accept(AstVisitor& v) {
 		v.visitString(*this);
 	}
@@ -145,7 +145,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	Future::Future(bool f, Location loc) : ValExpr{ loc }, generated{ f } {}
+	Future::Future(bool is_comp_generated, Location loc) : ValExpr{ loc }, generated{ is_comp_generated } {}
 	void Future::accept(AstVisitor& v) {
 		v.visitFuture(*this);
 	}
@@ -221,8 +221,8 @@ namespace spero::compiler::ast {
 	// NAMES, BINDINGS, PATTERNS
 	//
 
-	BasicBinding::BasicBinding(std::string n, BindingType t, Location loc)
-		: Ast{ loc }, name{ n }, type{ t } {}
+	BasicBinding::BasicBinding(std::string str, BindingType type, Location loc)
+		: Ast{ loc }, name{ str }, type{ type } {}
 	void BasicBinding::accept(AstVisitor& v) {
 		v.visitBasicBinding(*this);
 	}
@@ -234,8 +234,8 @@ namespace spero::compiler::ast {
 	}
 
 
-	PathPart::PathPart(std::string n, BindingType t, Location loc)
-		: Ast{ loc }, name{ n }, type{ t } {}
+	PathPart::PathPart(std::string str, BindingType type, Location loc)
+		: Ast{ loc }, name{ str }, type{ type } {}
 	void PathPart::accept(AstVisitor& v) {
 		//v.visitBasicBinding(*this);
 	}
@@ -246,7 +246,7 @@ namespace spero::compiler::ast {
 		//return s << std::string(buf, ' ') << context << "ast.PathPart (var=" << name << ", type=" << type._to_string() << ")";
 	}
 
-	Path::Path(ptr<PathPart> b, Location loc) : Sequence{ MK_DEQUE(std::move(b)), loc } {}
+	Path::Path(ptr<PathPart> fst, Location loc) : Sequence{ MK_DEQUE(std::move(fst)), loc } {}
 	void Path::accept(AstVisitor& v) {
 		//v.visitQualifiedBinding(*this);
 	}
@@ -268,8 +268,8 @@ namespace spero::compiler::ast {
 		return s << std::string(buf, ' ') << context << "ast.AnyPattern (_)";
 	}
 
-	TuplePattern::TuplePattern(std::deque<ptr<Pattern>> ps, Location loc)
-		: Sequence{ std::move(ps), loc } {}
+	TuplePattern::TuplePattern(std::deque<ptr<Pattern>> parts, Location loc)
+		: Sequence{ std::move(parts), loc } {}
 	void TuplePattern::accept(AstVisitor& v) {
 		v.visitTuplePattern(*this);
 	}
@@ -281,7 +281,7 @@ namespace spero::compiler::ast {
 		return s << std::string(buf, ' ') << ')';
 	}
 
-	VarPattern::VarPattern(ptr<Path> n, Location loc) : Pattern{ loc }, name{ std::move(n) } {}
+	VarPattern::VarPattern(ptr<Path> var, Location loc) : Pattern{ loc }, name{ std::move(var) } {}
 	void VarPattern::accept(AstVisitor& v) {
 		v.visitVarPattern(*this);
 	}
@@ -295,8 +295,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	AdtPattern::AdtPattern(ptr<Path> n, ptr<TuplePattern> pat, Location loc)
-		: VarPattern{ std::move(n), loc }, args{ std::move(pat) } {}
+	AdtPattern::AdtPattern(ptr<Path> adt_name, ptr<TuplePattern> extract_pattern, Location loc)
+		: VarPattern{ std::move(adt_name), loc }, args{ std::move(extract_pattern) } {}
 	void AdtPattern::accept(AstVisitor& v) {
 		v.visitAdtPattern(*this);
 	}
@@ -309,7 +309,7 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	ValPattern::ValPattern(ptr<ValExpr> v, Location loc) : Pattern{ loc }, val{ std::move(v) } {}
+	ValPattern::ValPattern(ptr<ValExpr> value, Location loc) : Pattern{ loc }, val{ std::move(value) } {}
 	void ValPattern::accept(AstVisitor& v) {
 		v.visitValPattern(*this);
 	}
@@ -326,7 +326,7 @@ namespace spero::compiler::ast {
 		return s << std::string(buf, ' ') << context << "ast.AnyPattern (_)";
 	}
 
-	AssignName::AssignName(ptr<BasicBinding> n, Location loc) : AssignPattern{ loc }, var{ std::move(n) } {}
+	AssignName::AssignName(ptr<BasicBinding> name, Location loc) : AssignPattern{ loc }, var{ std::move(name) } {}
 	void AssignName::accept(AstVisitor& v) {
 		v.visitAssignName(*this);
 	}
@@ -334,7 +334,7 @@ namespace spero::compiler::ast {
 		return var->prettyPrint(s, buf, context);
 	}
 
-	AssignTuple::AssignTuple(std::deque<ptr<AssignPattern>> vs, Location loc) : Sequence{ std::move(vs), loc } {}
+	AssignTuple::AssignTuple(std::deque<ptr<AssignPattern>> patterns, Location loc) : Sequence{ std::move(patterns), loc } {}
 	void AssignTuple::accept(AstVisitor& v) {
 		v.visitAssignTuple(*this);
 	}
@@ -350,8 +350,8 @@ namespace spero::compiler::ast {
 	//
 	// TYPES
 	//
-	SourceType::SourceType(ptr<Path> b, Location loc)
-		: Type{ loc }, name{ std::move(b) }, _ptr{ PtrStyling::NA } {}
+	SourceType::SourceType(ptr<Path> binding, Location loc)
+		: Type{ loc }, name{ std::move(binding) }, _ptr{ PtrStyling::NA } {}
 	void SourceType::accept(AstVisitor& v) {
 		//v.visitSourceType(*this);
 	}
@@ -360,8 +360,8 @@ namespace spero::compiler::ast {
 		return name->prettyPrint(s, 0) << "\" (ptr=" << _ptr._to_string() << ")";
 	}
 
-	GenericType::GenericType(ptr<Path> b, ptr<Array> a, Location loc)
-		: SourceType{ std::move(b), loc }, inst{ std::move(a) } {}
+	GenericType::GenericType(ptr<Path> binding, ptr<Array> gen_args, Location loc)
+		: SourceType{ std::move(binding), loc }, inst{ std::move(gen_args) } {}
 	void GenericType::accept(AstVisitor& v) {
 		v.visitGenericType(*this);
 	}
@@ -380,7 +380,7 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	TupleType::TupleType(std::deque<ptr<Type>> ts, Location loc) : Sequence{ std::move(ts), loc } {}
+	TupleType::TupleType(std::deque<ptr<Type>> types, Location loc) : Sequence{ std::move(types), loc } {}
 	void TupleType::accept(AstVisitor& v) {
 		v.visitTupleType(*this);
 	}
@@ -394,8 +394,8 @@ namespace spero::compiler::ast {
 		return s << '\n' << std::string(buf, ' ') << ')';
 	}
 
-	FunctionType::FunctionType(ptr<TupleType> as, ptr<Type> ret, Location loc)
-		: Type{ loc }, args{ std::move(as) }, ret{ std::move(ret) } {}
+	FunctionType::FunctionType(ptr<TupleType> arg_types, ptr<Type> ret_type, Location loc)
+		: Type{ loc }, args{ std::move(arg_types) }, ret{ std::move(ret_type) } {}
 	void FunctionType::accept(AstVisitor& v) {
 		v.visitFunctionType(*this);
 	}
@@ -440,7 +440,11 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.OrType";
 
 		for (auto&& t : elems) {
-			t->prettyPrint(s << '\n', buf + 2);
+			if (t) {
+				t->prettyPrint(s << '\n', buf + 2);
+			} else {
+				s << '\n' << std::string(buf + 2, ' ') << "<error: missing>";
+			}
 		}
 
 		return s;
@@ -451,8 +455,8 @@ namespace spero::compiler::ast {
 	// DECORATIONS, ANNOTATION, GENERIC
 	//
 
-	Annotation::Annotation(ptr<BasicBinding> n, ptr<Tuple> t, Location loc)
-		: Ast{ loc }, name{ std::move(n) }, args{ std::move(t) } {}
+	Annotation::Annotation(ptr<BasicBinding> annot_name, ptr<Tuple> args, Location loc)
+		: Ast{ loc }, name{ std::move(annot_name) }, args{ std::move(args) } {}
 	void Annotation::accept(AstVisitor& v) {
 		v.visitAnnotation(*this);
 	}
@@ -466,8 +470,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	LocalAnnotation::LocalAnnotation(ptr<BasicBinding> n, ptr<Tuple> t, Location loc)
-		: Annotation{ std::move(n), std::move(t), loc } {}
+	LocalAnnotation::LocalAnnotation(ptr<BasicBinding> annot_name, ptr<Tuple> args, Location loc)
+		: Annotation{ std::move(annot_name), std::move(args), loc } {}
 	void LocalAnnotation::accept(AstVisitor& v) {
 		v.visitLocalAnnotation(*this);
 	}
@@ -481,16 +485,16 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	GenericPart::GenericPart(ptr<BasicBinding> n, ptr<Type> typ, RelationType rel, Location loc)
-		: Ast{ loc }, type{ std::move(typ) }, name{ std::move(n) }, rel{ rel } {}
+	GenericPart::GenericPart(ptr<BasicBinding> binding, ptr<Type> typ, RelationType relation, Location loc)
+		: Ast{ loc }, type{ std::move(typ) }, name{ std::move(binding) }, rel{ relation } {}
 	void GenericPart::accept(AstVisitor& v) {
 		v.visitGenericPart(*this);
 	}
 
-	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> def, Location loc)
-		: TypeGeneric{ std::move(b), nullptr, RelationType::NA, VarianceType::INVARIANT, false, loc } { default_type = std::move(def); }
-	TypeGeneric::TypeGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, VarianceType var1, bool var2, Location loc)
-		: GenericPart{ std::move(b), std::move(t), rel, loc }, variadic{ var2 }, variance{ var1 }, default_type{ nullptr } {}
+	TypeGeneric::TypeGeneric(ptr<BasicBinding> symbol, ptr<Type> def, Location loc)
+		: TypeGeneric{ std::move(symbol), nullptr, RelationType::NA, VarianceType::INVARIANT, false, loc } { default_type = std::move(def); }
+	TypeGeneric::TypeGeneric(ptr<BasicBinding> symbol, ptr<Type> typ, RelationType relation, VarianceType variance_kind, bool is_variadic, Location loc)
+		: GenericPart{ std::move(symbol), std::move(typ), relation, loc }, variadic{ is_variadic }, variance{ variance_kind }, default_type{ nullptr } {}
 	void TypeGeneric::accept(AstVisitor& v) {
 		v.visitTypeGeneric(*this);
 	}
@@ -507,10 +511,10 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	ValueGeneric::ValueGeneric(ptr<BasicBinding> b, ptr<ValExpr> v, Location loc)
-		: GenericPart{ std::move(b), nullptr, RelationType::NA, loc }, default_val{ std::move(v) } {}
-	ValueGeneric::ValueGeneric(ptr<BasicBinding> b, ptr<Type> t, RelationType rel, Location loc)
-		: GenericPart{ std::move(b), std::move(t), rel, loc }, default_val{ nullptr } {}
+	ValueGeneric::ValueGeneric(ptr<BasicBinding> symbol, ptr<ValExpr> def, Location loc)
+		: GenericPart{ std::move(symbol), nullptr, RelationType::NA, loc }, default_val{ std::move(def) } {}
+	ValueGeneric::ValueGeneric(ptr<BasicBinding> symbol, ptr<Type> typ, RelationType relation, Location loc)
+		: GenericPart{ std::move(symbol), std::move(typ), relation, loc }, default_val{ nullptr } {}
 	void ValueGeneric::accept(AstVisitor& v) {
 		v.visitValueGeneric(*this);
 	}
@@ -526,8 +530,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	LitGeneric::LitGeneric(ptr<ValExpr> r, Location loc)
-		: GenericPart{ nullptr, nullptr, RelationType::NA, loc }, value{ std::move(r) } {}
+	LitGeneric::LitGeneric(ptr<ValExpr> val, Location loc)
+		: GenericPart{ nullptr, nullptr, RelationType::NA, loc }, value{ std::move(val) } {}
 	void LitGeneric::accept(AstVisitor& v) {
 		v.visitLitGeneric(*this);
 	}
@@ -553,8 +557,8 @@ namespace spero::compiler::ast {
 
 	Constructor::Constructor(Location loc) : Ast{ loc } {}
 
-	Adt::Adt(ptr<BasicBinding> n, ptr<TupleType> t, Location loc)
-		: Constructor{ loc }, name{ std::move(n) }, args{ std::move(t) } {}
+	Adt::Adt(ptr<BasicBinding> type_name, ptr<TupleType> args, Location loc)
+		: Constructor{ loc }, name{ std::move(type_name) }, args{ std::move(args) } {}
 	void Adt::accept(AstVisitor& v) {
 		v.visitAdt(*this);
 	}
@@ -568,8 +572,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	Argument::Argument(ptr<BasicBinding> b, ptr<Type> t, Location loc)
-		: Ast{ loc }, name{ std::move(b) }, typ{ std::move(t) } {}
+	Argument::Argument(ptr<BasicBinding> binding, ptr<Type> type, Location loc)
+		: Ast{ loc }, name{ std::move(binding) }, typ{ std::move(type) } {}
 	void Argument::accept(AstVisitor& v) {
 		v.visitArgument(*this);
 	}
@@ -605,7 +609,7 @@ namespace spero::compiler::ast {
 		v.visitBranch(*this);
 	}
 
-	Loop::Loop(ptr<ValExpr> b, Location loc) : Branch{ loc }, body{ std::move(b) } {}
+	Loop::Loop(ptr<ValExpr> body, Location loc) : Branch{ loc }, body{ std::move(body) } {}
 	void Loop::accept(AstVisitor& v) {
 		v.visitLoop(*this);
 	}
@@ -627,8 +631,8 @@ namespace spero::compiler::ast {
 		return body->prettyPrint(s << '\n', buf + 2, "body=");
 	}
 
-	For::For(ptr<Pattern> p, ptr<ValExpr> g, ptr<ValExpr> b, Location loc)
-		: Loop{ std::move(b), loc }, pattern{ std::move(p) }, generator{ std::move(g) } {}
+	For::For(ptr<Pattern> pat, ptr<ValExpr> gen, ptr<ValExpr> body, Location loc)
+		: Loop{ std::move(body), loc }, pattern{ std::move(pat) }, generator{ std::move(gen) } {}
 	void For::accept(AstVisitor& v) {
 		v.visitFor(*this);
 	}
@@ -641,8 +645,8 @@ namespace spero::compiler::ast {
 		return body->prettyPrint(s << '\n', buf + 2, "body=");
 	}
 
-	IfBranch::IfBranch(ptr<ValExpr> test, ptr<ValExpr> body, bool eif, Location loc)
-		: Branch{ loc }, test{ std::move(test) }, body{ std::move(body) }, elsif{ eif } {}
+	IfBranch::IfBranch(ptr<ValExpr> test, ptr<ValExpr> body, bool is_elsif, Location loc)
+		: Branch{ loc }, test{ std::move(test) }, body{ std::move(body) }, elsif{ is_elsif } {}
 	void IfBranch::accept(AstVisitor& v) {
 		v.visitIfBranch(*this);
 	}
@@ -674,8 +678,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	Case::Case(ptr<TuplePattern> vs, ptr<ValExpr> if_g, ptr<ValExpr> e, Location loc)
-		: ValExpr{ loc }, vars{ std::move(vs) }, expr{ std::move(e) }, if_guard{ std::move(if_g) } {}
+	Case::Case(ptr<TuplePattern> extraction_vars, ptr<ValExpr> guard, ptr<ValExpr> expr, Location loc)
+		: ValExpr{ loc }, vars{ std::move(extraction_vars) }, expr{ std::move(expr) }, if_guard{ std::move(guard) } {}
 	void Case::accept(AstVisitor& v) {
 		v.visitCase(*this);
 	}
@@ -688,8 +692,8 @@ namespace spero::compiler::ast {
 		return expr->prettyPrint(s << '\n', buf + 2, "expr=");
 	}
 
-	Match::Match(ptr<ValExpr> s, std::deque<ptr<Case>> cs, Location loc)
-		: Branch{ loc }, switch_expr{ std::move(s) }, cases{ std::move(cs) } {}
+	Match::Match(ptr<ValExpr> test, std::deque<ptr<Case>> cases, Location loc)
+		: Branch{ loc }, switch_expr{ std::move(test) }, cases{ std::move(cases) } {}
 	void Match::accept(AstVisitor& v) {
 		v.visitMatch(*this);
 	}
@@ -706,8 +710,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	Jump::Jump(KeywordType t, ptr<ValExpr> e, Location loc)
-		: Branch{ loc }, type{ t }, expr{ std::move(e) } {}
+	Jump::Jump(KeywordType kind, ptr<ValExpr> expr, Location loc)
+		: Branch{ loc }, type{ kind }, expr{ std::move(expr) } {}
 	void Jump::accept(AstVisitor& v) {
 		v.visitJump(*this);
 	}
@@ -726,7 +730,7 @@ namespace spero::compiler::ast {
 	// STMTS
 	//
 
-	ModDec::ModDec(ptr<Path> v, Location loc) : Statement{ loc }, _module{ std::move(v) } {}
+	ModDec::ModDec(ptr<Path> path, Location loc) : Statement{ loc }, _module{ std::move(path) } {}
 	void ModDec::accept(AstVisitor& v) {
 		v.visitModDec(*this);
 	}
@@ -736,8 +740,8 @@ namespace spero::compiler::ast {
 		return Statement::prettyPrint(s, buf + 2);
 	}
 
-	ImplExpr::ImplExpr(ptr<SourceType> t, ptr<SourceType> inter, ptr<Block> b, Location loc)
-		: Statement{ loc }, type{ std::move(t) }, _interface{ std::move(inter) }, impls{ std::move(b) } {}
+	ImplExpr::ImplExpr(ptr<SourceType> import_type, ptr<SourceType> impl_type, ptr<Block> impls_body, Location loc)
+		: Statement{ loc }, type{ std::move(import_type) }, _interface{ std::move(impl_type) }, impls{ std::move(impls_body) } {}
 	void ImplExpr::accept(AstVisitor& v) {
 		v.visitImplExpr(*this);
 	}
@@ -794,8 +798,8 @@ namespace spero::compiler::ast {
 		return s << '}';
 	}
 
-	Rebind::Rebind(ptr<Path> mod, ptr<Path> bind, Location loc)
-		: ModRebindImport{ std::move(mod), loc }, new_name{ std::move(bind) } {}
+	Rebind::Rebind(ptr<Path> mod, ptr<Path> new_binding, Location loc)
+		: ModRebindImport{ std::move(mod), loc }, new_name{ std::move(new_binding) } {}
 	void Rebind::accept(AstVisitor& v) {
 		v.visitRebind(*this);
 	}
@@ -809,8 +813,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	Interface::Interface(VisibilityType vis, ptr<AssignPattern> n, ptr<GenericArray> gs, ptr<Type> t, Location loc)
-		: Statement{ loc }, vis{ vis }, name{ std::move(n) }, gen{ std::move(gs) }, type{ std::move(t) } {}
+	Interface::Interface(VisibilityType vis, ptr<AssignPattern> binding, ptr<GenericArray> gen_pattern, ptr<Type> type_bound, Location loc)
+		: Statement{ loc }, vis{ vis }, name{ std::move(binding) }, gen{ std::move(gen_pattern) }, type{ std::move(type_bound) } {}
 	void Interface::accept(AstVisitor& v) {
 		v.visitInterface(*this);
 	}
@@ -828,8 +832,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	TypeAssign::TypeAssign(VisibilityType vis, ptr<AssignPattern> n, ptr<GenericArray> gs, bool m, ConsList cs, ptr<Block> b, Location loc)
-		: Interface{ vis, std::move(n), std::move(gs), nullptr, loc }, cons{ std::move(cs) }, body{ std::move(b) }, mutable_only{ m } {}
+	TypeAssign::TypeAssign(VisibilityType vis, ptr<AssignPattern> binding, ptr<GenericArray> gen_pattern, bool mut_only, ConsList constructors, ptr<Block> def, Location loc)
+		: Interface{ vis, std::move(binding), std::move(gen_pattern), nullptr, loc }, cons{ std::move(constructors) }, body{ std::move(def) }, mutable_only{ mut_only } {}
 	void TypeAssign::accept(AstVisitor& v) {
 		v.visitTypeAssign(*this);
 	}
@@ -857,8 +861,8 @@ namespace spero::compiler::ast {
 		return body->prettyPrint(s << '\n', buf + 2, "body=");
 	}
 
-	VarAssign::VarAssign(VisibilityType vis, ptr<AssignPattern> n, ptr<GenericArray> gs, ptr<Type> t, ptr<ValExpr> v, Location loc)
-		: Interface{ vis, std::move(n), std::move(gs), std::move(t), loc }, expr{ std::move(v) } {}
+	VarAssign::VarAssign(VisibilityType vis, ptr<AssignPattern> binding, ptr<GenericArray> gen_pattern, ptr<Type> type_bound, ptr<ValExpr> value, Location loc)
+		: Interface{ vis, std::move(binding), std::move(gen_pattern), std::move(type_bound), loc }, expr{ std::move(value) } {}
 	void VarAssign::accept(AstVisitor& v) {
 		v.visitVarAssign(*this);
 	}
@@ -876,8 +880,8 @@ namespace spero::compiler::ast {
 		return expr->prettyPrint(s << '\n', buf + 2, "value=");
 	}
 
-	TypeExtension::TypeExtension(ptr<Path> t, ptr<Tuple> a, ptr<Block> e, Location loc)
-		: ValExpr{ loc }, typ_name{ std::move(t) }, args{ std::move(a) }, ext{ std::move(e) } {}
+	TypeExtension::TypeExtension(ptr<Path> base_type, ptr<Tuple> base_args, ptr<Block> ext_def, Location loc)
+		: ValExpr{ loc }, typ_name{ std::move(base_type) }, args{ std::move(base_args) }, ext{ std::move(ext_def) } {}
 	void TypeExtension::accept(AstVisitor& v) {
 		v.visitTypeExtension(*this);
 	}
@@ -896,8 +900,20 @@ namespace spero::compiler::ast {
 	//
 	// EXPRESSIONS
 	//
-	Variable::Variable(ptr<Path> n, Location loc)
-		: ValExpr{ loc }, name{ std::move(n) } {}
+
+	InAssign::InAssign(ptr<VarAssign> binding, ptr<ValExpr> expr, Location loc)
+		: ValExpr{ loc }, bind{ std::move(binding) }, expr{ std::move(expr) } {}
+	void InAssign::accept(AstVisitor& v) {
+		v.visitInAssign(*this);
+	}
+	DEF_PRINTER(InAssign) {
+		s << std::string(buf, ' ') << context << "ast.ScopedBinding\n";
+		bind->prettyPrint(s, buf + 2, "bind=") << '\n';
+		return expr->prettyPrint(s, buf + 2, "in=");
+	}
+
+	Variable::Variable(ptr<Path> symbol, Location loc)
+		: ValExpr{ loc }, name{ std::move(symbol) } {}
 	void Variable::accept(AstVisitor& v) {
 		v.visitVariable(*this);
 	}
@@ -909,8 +925,8 @@ namespace spero::compiler::ast {
 
 	/*UnOpCall::UnOpCall(ptr<ValExpr> e, std::string op, Location loc)
 		: ValExpr{ loc }, expr{ std::move(e) }, rhs{ std::move(rhs) }, op{ op } {}*/
-	UnOpCall::UnOpCall(ptr<ValExpr> e, ptr<BasicBinding> op, Location loc)
-		: ValExpr{ loc }, expr{ std::move(e) }, op{ std::move(op) } {}
+	UnOpCall::UnOpCall(ptr<ValExpr> expr, ptr<BasicBinding> op, Location loc)
+		: ValExpr{ loc }, expr{ std::move(expr) }, op{ std::move(op) } {}
 	void UnOpCall::accept(AstVisitor& v) {
 		v.visitUnOpCall(*this);
 	}
@@ -937,19 +953,8 @@ namespace spero::compiler::ast {
 		return rhs->prettyPrint(s << '\n', buf + 2, "rhs=");
 	}
 
-	InAssign::InAssign(ptr<VarAssign> v, ptr<ValExpr> e, Location loc)
-		: ValExpr{ loc }, bind{ std::move(v) }, expr{ std::move(e) } {}
-	void InAssign::accept(AstVisitor& v) {
-		v.visitInAssign(*this);
-	}
-	DEF_PRINTER(InAssign) {
-		s << std::string(buf, ' ') << context << "ast.ScopedBinding\n";
-		bind->prettyPrint(s, buf + 2, "bind=") << '\n';
-		return expr->prettyPrint(s, buf + 2, "in=");
-	}
-
-	Index::Index(std::deque<ptr<ValExpr>> els, Location loc)
-		: Sequence{ std::move(els), loc } {}
+	Index::Index(std::deque<ptr<ValExpr>> indices, Location loc)
+		: Sequence{ std::move(indices), loc } {}
 	void Index::accept(AstVisitor& v) {
 		v.visitIndex(*this);
 	}
@@ -964,8 +969,8 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
-	FnCall::FnCall(ptr<ValExpr> c, ptr<Tuple> a, Location loc)
-		: ValExpr{ loc }, callee{ std::move(c) }, arguments{ std::move(a) } {}
+	FnCall::FnCall(ptr<ValExpr> calling_fn, ptr<Tuple> fn_args, Location loc)
+		: ValExpr{ loc }, callee{ std::move(calling_fn) }, arguments{ std::move(fn_args) } {}
 	void FnCall::accept(AstVisitor& v) {
 		v.visitFnCall(*this);
 	}

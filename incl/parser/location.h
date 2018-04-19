@@ -12,7 +12,7 @@ namespace spero::compiler {
 		std::string source;
 
 		template<class T>
-		Location(const tao::pegtl::internal::iterator& in_iter, T&& in_source)
+		inline Location(const tao::pegtl::internal::iterator& in_iter, T&& in_source)
 		    : byte{ in_iter.byte_in_line },
 		      line_num{ in_iter.line },
 		      data{ in_iter.data },

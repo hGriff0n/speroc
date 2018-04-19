@@ -5,9 +5,6 @@
 using namespace asmjit;
 
 namespace spero::compiler::gen {
-	AsmGenerator::AsmGenerator(compiler::CompilationState& state) : globals{ std::make_unique<analysis::SymTable>() }, state { state } {
-		current = globals.get();
-	}
 
 	AsmGenerator::AsmGenerator(std::unique_ptr<analysis::SymTable> globals, compiler::CompilationState& state) : globals{ std::move(globals) }, state{ state } {
 		current = this->globals.get();
@@ -75,7 +72,6 @@ namespace spero::compiler::gen {
 		auto [nvar, _] = analysis::lookup(*globals, current, *v.name);
 		(void)_;
 
-		// Not sure about whether this is handled (probably still need to perform though)
 		std::visit([&](auto&& var) {
 			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, analysis::VarData>) {
 				emit.mov(x86::eax, x86::ptr(x86::ebp, var.off));

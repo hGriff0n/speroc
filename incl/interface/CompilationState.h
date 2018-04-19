@@ -36,7 +36,7 @@ namespace spero::compiler {
 		spdlog::logger& getLogger(ID msg_id);
 
 		public:
-			CompilationState(char**, char**);
+			CompilationState(char** fst, char** snd);
 
 			// Input/Output files
 			std::deque<std::string>& files();
@@ -45,7 +45,7 @@ namespace spero::compiler {
 			// Time loggers (Unused)
 			// TODO: Improve internal 'benchmarking' interface
 			void logTime();
-			std::pair<TimePoint, TimePoint> getCycle(size_t);
+			std::pair<TimePoint, TimePoint> getCycle(size_t cycle);
 
 			// Error reporting/collection
 			// TODO: Add in more complex logger manipulations (particularly change formatting)

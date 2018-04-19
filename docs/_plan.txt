@@ -12,14 +12,15 @@ Current Project State
 
 Current Project Plan
   Convert all x86 touching code over to using AsmJit
-    Port move constructor fixes/additons to AsmJit main repo
-	  Fix issues that arise with the pull request
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
 	  Create a "Variable analysis" pass to collect all variable information
 		Move variable collection into VarDeclPass
+		  See if I can remove the 'is_mut' flag from AssignPattern
+		    Should be doable by changing the ordering of 'mut' assignment in visitVarAssign
+			  Put it after the inheritance visiting
 		  Change local variable allocation to be a batch stack "push" (or add/sub at beginning)
 		    Since we now collect beforehand, we know how many variables will be created
 		Generalize the method for accessing variables to work on global/static values

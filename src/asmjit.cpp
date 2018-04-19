@@ -16,16 +16,28 @@ namespace spero::compiler::gen {
 		holder.detach(this);
 	}
 
-	void Assembler::popBytes(size_t nBytes) {
-		if (nBytes != 0) {
-			add(asmjit::x86::esp, nBytes);
+	void Assembler::popBytes(size_t num_bytes) {
+		if (num_bytes != 0) {
+			add(asmjit::x86::esp, num_bytes);
 		}
 	}
 
-	void Assembler::popWords(size_t nWords) {
+	void Assembler::popWords(size_t num_words) {
 		// Quick and dirty hack to get compilation working
 		// I know this technically isn't a word, but a dword
-		popBytes(nWords * 4);
+		popBytes(num_words * 4);
+	}
+
+	void Assembler::pushBytes(size_t num_bytes) {
+		if (num_bytes != 0) {
+			sub(asmjit::x86::esp, num_bytes);
+		}
+	}
+
+	void Assembler::popWords(size_t num_words) {
+		// Quick and dirty hack to get compilation working
+		// I know this technically isn't a word, but a dword
+		pushBytes(num_words * 4);
 	}
 
 	asmjit::CodeHolder* Assembler::get() {

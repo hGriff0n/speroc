@@ -15,8 +15,8 @@ namespace spero::compiler {
 	void CompilationState::logTime() {
 		timing.emplace_back(std::chrono::system_clock::now());
 	}
-	std::pair<TimePoint, TimePoint> CompilationState::getCycle(size_t i) {
-		return std::make_pair(timing.at(i), timing.at(i + 1));
+	std::pair<TimePoint, TimePoint> CompilationState::getCycle(size_t cycle) {
+		return std::make_pair(timing.at(cycle), timing.at(cycle + 1));
 	}
 
 

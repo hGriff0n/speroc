@@ -51,8 +51,10 @@ namespace spero::compiler::gen {
 			virtual ~Assembler() noexcept;
 
 			// Helper functions for common use cases
-			void popBytes(size_t nBytes);
-			void popWords(size_t nWords);
+			void popBytes(size_t num_bytes);
+			void popWords(size_t num_words);
+			void pushBytes(size_t num_bytes);
+			void pushWords(size_t num_words);
 
 			// Retrieve the code holder for interpretation
 			asmjit::CodeHolder* get();

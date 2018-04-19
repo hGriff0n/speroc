@@ -26,9 +26,9 @@ namespace spero::compiler::ast {
 	struct Ast {
 		Location loc;
 
-		Ast(Location);
+		Ast(Location loc);
 
-		virtual void accept(AstVisitor&);
-		virtual std::ostream& prettyPrint(std::ostream&, size_t, std::string = "");				// TODO: string_view
+		virtual void accept(AstVisitor& v);
+		virtual std::ostream& prettyPrint(std::ostream& s, size_t buf, std::string context = "");				// TODO: string_view
 	};
 }

@@ -9,8 +9,8 @@ namespace spero::compiler::gen {
 	/*
 	 * AstVisitor class to control basic emission of assembly code
 	 *
-	 * TODO: Split off some data into analysis phases
 	 * TODO: Rewrite to utilize different IR structure
+	 *   The final assembly production will be based off of an MIR representation, not the AST
 	 */
 	// This is an idea to formalize the conception that Visitors "produce" an analysis result
 	// class AsmGenerator : public ast::AstVisitor<Assembler> {
@@ -22,8 +22,7 @@ namespace spero::compiler::gen {
 		analysis::SymTable* current = nullptr;
 
 		public:
-			// The constructor should except the data from the last pass (template parameter?)
-			AsmGenerator(compiler::CompilationState&);
+			// The constructor should expect the data from the last pass (template parameter?)
 			AsmGenerator(std::unique_ptr<analysis::SymTable> globals, compiler::CompilationState& state);
 			Assembler finalize();
 
