@@ -8,6 +8,11 @@ namespace spero::compiler::gen {
 
 	AsmGenerator::AsmGenerator(std::unique_ptr<analysis::SymTable> globals, compiler::CompilationState& state) : globals{ std::move(globals) }, state{ state } {
 		current = this->globals.get();
+		
+		// TODO: Quick hack to enable 'batched' pushing of variables
+		// Because the global scope isn't a table, the batch push didn't occur
+		// NOTE: Will be fixed when I move to a static/global allocation scheme
+		emit.pushWords(current->numVariables());
 	}
 
 	Assembler AsmGenerator::finalize() {
@@ -48,13 +53,11 @@ namespace spero::compiler::gen {
 	// Atoms
 	//
 	void AsmGenerator::visitBlock(ast::Block& b) {
-		// Reserve stack space for local variables
-		//emit.add(4 * b.locals.getCount(), x86::rsp);
-
-		// Initialize current
+		// Initialize scope entry code
 		auto* parent_scope = current;
 		current = &b.locals;
-		// TODO: Add in batch stack allocation
+		emit.pushWords(current->numVariables());
+		// TODO: Zero initialize the allocated stack space?
 
 		// Emit the code for the function body
 		AstVisitor::visitBlock(b);
@@ -80,12 +83,8 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
-		// This needs to be completely reworked
-		auto var = current->getVar(n.var->name);
-		if (var) {
-			//auto& variable = var->get();
-
-			emit.push(x86::eax);
+		if (auto var = current->getVar(n.var->name); var) {
+			emit.mov(x86::ptr(x86::ebp, var->get().off), x86::eax);
 		}
 	}
 

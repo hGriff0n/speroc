@@ -465,7 +465,6 @@ namespace spero::compiler::ast {
 	struct AssignPattern : Ast {
 		AssignPattern(Location loc);
 
-		// TODO: Remove this quick hack for passing mutability to declaration site
 		bool is_mut = false;
 
 		virtual void accept(AstVisitor& v);

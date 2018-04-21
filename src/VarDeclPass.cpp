@@ -174,6 +174,8 @@ namespace spero::compiler::analysis {
 	}
 
 	void VarDeclPass::visitVarAssign(ast::VarAssign& v) {
+		// Because tuples can appear on the left hand side of the assignment
+		// It's somewhat better for the 'mut' to be carried through the 'AssignPattern'
 		v.name->is_mut = v.expr->is_mut;
 
 		AstVisitor::visitVarAssign(v);

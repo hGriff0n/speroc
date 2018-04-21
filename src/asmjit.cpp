@@ -34,7 +34,7 @@ namespace spero::compiler::gen {
 		}
 	}
 
-	void Assembler::popWords(size_t num_words) {
+	void Assembler::pushWords(size_t num_words) {
 		// Quick and dirty hack to get compilation working
 		// I know this technically isn't a word, but a dword
 		pushBytes(num_words * 4);

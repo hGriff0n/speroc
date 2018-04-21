@@ -1,5 +1,5 @@
 Current Project State
-  mutability => mutable-by-default [off-spec]
+  mutability => immutable-by-default
   types =>
 	custom: unimplemented
 	generics: unimplemented
@@ -17,12 +17,6 @@ Current Project Plan
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
 	  Create a "Variable analysis" pass to collect all variable information
-		Move variable collection into VarDeclPass
-		  See if I can remove the 'is_mut' flag from AssignPattern
-		    Should be doable by changing the ordering of 'mut' assignment in visitVarAssign
-			  Put it after the inheritance visiting
-		  Change local variable allocation to be a batch stack "push" (or add/sub at beginning)
-		    Since we now collect beforehand, we know how many variables will be created
 		Generalize the method for accessing variables to work on global/static values
 		  Add in the capability for the spero compiler to produce global variables when needed
 		  Look at getting interpreter to support global variables in a separately allocated memory section
@@ -165,6 +159,3 @@ Current Project Plan
 		Individual tests may be able to run (ie. only run tests associated with collection.file)
     Have tester produce an output file specifying how many tests have passed
     Integrate this project with Jenkins CI
-
-
-# Note: Can take template+static_assert, or protected+public approaches to restrict allowable combinations
