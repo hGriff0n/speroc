@@ -59,15 +59,12 @@ namespace spero::compiler::analysis {
 
 	// Names
 	void VarDeclPass::visitAssignName(ast::AssignName& n) {
-		// Register the variable in the current scope
-		if (!current->exists(n.var->name)) {
-			int off = -4 * (current->numVariables() + 1) - current->ebp_offset;
-			current->insert(n.var->name, analysis::VarData{ off, n.loc, n.is_mut });
+		// Perform 'SSA' style renaming to support variable shadowing
+		n.var->name = current->allocateName(n.var->name);
 
-		} else {
-			// TODO: Change to SSA style renaming to accomodate shadowing
-			state.log(ID::err, "Attempt to declare previously declared variable `{}` <at {}>", n.var->name, n.loc);
-		}
+		// Register the variable in the current scope
+		int off = -4 * (current->numVariables() + 1) - current->ebp_offset;
+		current->insert(n.var->name, analysis::VarData{ n.loc, off, current == globals.get(), n.is_mut });
 	}
 
 	void VarDeclPass::visitAssignTuple(ast::AssignTuple& a) {

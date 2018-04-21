@@ -1,6 +1,7 @@
 #include "analysis/SymTable.h"
 
 #include <numeric>
+#include <string>
 
 namespace spero::compiler::analysis {
 
@@ -22,6 +23,10 @@ namespace spero::compiler::analysis {
 
 	bool SymTable::exists(std::string key) {
 		return vars.count(key) != 0;
+	}
+
+	bool SymTable::hasSSA(std::string key) {
+		return ssa_map.count(key) != 0;
 	}
 
 	std::optional<ref_t<DataType>> SymTable::get(std::string key) {
@@ -71,7 +76,7 @@ namespace spero::compiler::analysis {
 	SymTable* SymTable::mostRecentDef(std::string key) {
 		auto* scope = this;
 
-		while (scope && !scope->exists(key)) {
+		while (scope && !scope->exists(key) && !scope->hasSSA(key)) {
 			scope = scope->parent;
 		}
 
@@ -85,6 +90,19 @@ namespace spero::compiler::analysis {
 	std::optional<ref_t<DataType>> SymTable::insertIfNew(std::string key, DataType value) {
 		if (exists(key)) {
 			return insert(key, value);
+		}
+
+		return {};
+	}
+
+	std::string SymTable::allocateName(std::string key) {
+		auto& ssa = ssa_map[key];
+		return (ssa.first = key + '$' + std::to_string(ssa.second++));
+	}
+
+	std::optional<std::string> SymTable::getSSA(std::string key) {
+		if (ssa_map.count(key) != 0) {
+			return ssa_map[key].first;
 		}
 
 		return {};

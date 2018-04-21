@@ -1039,11 +1039,18 @@ namespace spero::compiler::analysis {
 		while (front != end && has_next) {
 			auto next = std::visit([&](auto&& var) -> LookupType {
 				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymTable>>) {
-					return var.get().get((**front).name);
+					auto& key = (**front).name;
+					auto& table = var.get();
+
+					if (auto ssa = table.getSSA(key); ssa) {
+						key = *ssa;
+					}
+
+					return table.get(key);
 				}
 
 				return LookupType{};
-				}, value->get());
+			}, value->get());
 
 			if (has_next = next.has_value()) {
 				value = next;

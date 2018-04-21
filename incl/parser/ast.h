@@ -465,6 +465,8 @@ namespace spero::compiler::ast {
 	struct AssignPattern : Ast {
 		AssignPattern(Location loc);
 
+		// TODO: Look at replacing this with a 'VarData' structure
+		// That or come up with a better way to pass data at assignment
 		bool is_mut = false;
 
 		virtual void accept(AstVisitor& v);

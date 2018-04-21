@@ -16,26 +16,18 @@ Current Project Plan
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
-	  Create a "Variable analysis" pass to collect all variable information
-		Generalize the method for accessing variables to work on global/static values
-		  Add in the capability for the spero compiler to produce global variables when needed
-		  Look at getting interpreter to support global variables in a separately allocated memory section
-		Figure out how to track 'ebp'/etc in order to support the usage of local functions (may be too much for the moment)
-		Improve the compilation granularity, etc.
-		  The system for producing the symbol table doesn't work out too well
-		    I mean the symbol tables will be an ast only thing
-		Figure out how to get the system to handle declaring global variables "post-facto"
-		  Problem is having the check off in 'type' and 'static' contexts but on in 'local' contexts
-	      Might be good to adopt a two-pass system
-		    The first pass records all variable declarations and their location
-		    The second pass records all variable usages and flags unused/forward-used/created variables
-		Minimize the overhead for supporting InAssign (allocating an entire SymTable is too much)
-	  Modify variable analysis pass to add in SSA name transformations
-	    Using 'SSA' name transformation should enable trivial support for 'in-scope' variable shadowing
-		  Look at places where these shadowings should be an error and add in reporting code
-	    At every declaration, append the # of times the identifier's been seen so far to the identifier (in the current scope)
-          NOTE: May be able to "merge" with the symtable collection pass (for now)
-		TODO: Also need to keep track of future references and replace those appropriately as well
+	  Figure out how to get the system to handle declaring global variables "post-facto"
+		Problem is having the check off in 'type' and 'static' contexts but on in 'local' contexts
+	    Might be good to adopt a two-pass system
+		  The first pass records all variable declarations and their location
+		    Would also have to perform SSA renaming (but that gets very difficult when you have multiple declarations)
+			If we follow this approach, then we don't require the "context" flags (and possibly cleans up some of the recognition)
+		  The second pass records all variable usages and flags unused/forward-used/created variables
+      Minimize the overhead for supporting InAssign (allocating an entire SymTable is too much)
+		If I can allocate a single sym table to a chain of InAssign's that would be a good improvement
+		  Alternately, I could take advantage of the ssa transformation
+		  Or I could just prepend the "variables" name with a '$$' (or some other combination)
+		Add in a special check for shadowing a variable in an in-assign statement, and then attempting to use the original variable thereafter (this has to be a bug)
 	  Improve the code for interacting with scopes when assigning/accessing variables
 		Check if ':<var>' is (and should be) a legal typing (I don't think so)
 		  Adjust the interpreter accordingly (':XX' are commands)
@@ -46,21 +38,32 @@ Current Project Plan
 	  Try to make this resource allocation generic (abstractable across more resource types)
 	  https://github.com/RipcordSoftware/libstringintern
 	  https://github.com/foonathan/string_id
+	  Improve the process for producing ssa names
+	    With an interned string, an ssa form is just a `(int, int)` pair
+		  Be sure to modify the VarData/etc. structures to maintain a reference to the original string (for error reporting)
+		    NOTE: The actual location doesn't matter, just that the original name is somehow easily accessible
+		We can also merge the ssa_map and vars structures to where the ssa.1 indexes into ssa.0
 	Improve 'debuggability' of the 'ast::Path' structure
 	  Need to be able to write out the entire string, not just the last symbol
 	  Rewrite all path log statements to use the new debug string
+	Generalize the tracking of variable location
+	  Modify the VarData structure to maintain a location of where the symbol is stored
+	    Should have "stack", "heap", "static", "offset" (for members), and "global" variants
+		Current structure has a "is_global" boolean field
+	  Look at getting interpreter to support global variables in a separately allocated memory section
+	    Problem is how to I get the AsmGenerator to "allocate" them to the correct location ???
+	  Adapt the interpreter to support "re-entrant" evaluation
 	Write in the documentation that compound assignment is not an in-built part of the language
 	  At any rate, if the semantics are desirable, the operator overloading system can nominally handle it
 	    There are still some issues with typing and binding direction
-  Adapt new interpreter to have the capability to have "re-entrant evaluation"
-	NOTE: The better part of this step would be in compiler variable tracking
-	Convert global variable storage to use a custom "pool" instead of being stack-based
   Fix code base and other issues (see below)
   Get functions working properly
     I think the current "abort" errors are due to introducing multiple 'main' labels?
 	  That wouldn't quite explain the interpreter though
 	  Add some special interpreter checks, restrictions and handling
 	    Don't allow definition or calling of "main"
+    Figure out how to track 'ebp'/etc in order to support the usage of local functions (may be too much for the moment)
+
   Language Logic Checking
     Add in checks to prevent assignments to 'super' and 'self'
 	Look into allowing "def Foo = Foo[Int]" type syntax

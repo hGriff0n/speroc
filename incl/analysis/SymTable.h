@@ -25,8 +25,11 @@ namespace spero::compiler::analysis {
 			// You also have to make using an imported variable indistinct from using a declared variable
 
 	struct VarData {
-		int off;
 		std::optional<Location> src;
+
+		int off;
+		bool is_global = false;
+
 		bool is_mut = false;
 	};
 
@@ -46,6 +49,7 @@ namespace spero::compiler::analysis {
 	class SymTable {
 		SymTable* parent = nullptr;
 		std::unordered_map<std::string, DataType> vars;
+		std::unordered_map<std::string, std::pair<std::string, size_t>> ssa_map;
 		//std::vector<SymTable*> imported = { this };
 
 		public:
@@ -56,6 +60,7 @@ namespace spero::compiler::analysis {
 			// Search for a value at the current scoping level
 			ref_t<DataType> operator[](std::string key);
 			bool exists(std::string key);
+			bool hasSSA(std::string key);
 
 			// Accessor wrappers for accessing at the current scoping level
 			std::optional<ref_t<DataType>> get(std::string key);
@@ -75,6 +80,10 @@ namespace spero::compiler::analysis {
 
 			// Hierarchy setup
 			void setParent(SymTable* p, bool offset_ebp = false);
+
+			// SSA interface
+			std::string allocateName(std::string key);
+			std::optional<std::string> getSSA(std::string key);
 
 			// Information querying
 			size_t size();

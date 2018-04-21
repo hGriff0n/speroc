@@ -13,6 +13,7 @@ namespace spero::compiler {
 	parser::Stack parseFile(std::string file, CompilationState& state);
 
 	// Perform all steps related to analysis and secondary IR creation (may abstract IR to a different function)
+	// NOTE: I don't have a second IR at the moment, so this stage just serves to prepare everything for the backend
 	using MIR_t = std::unique_ptr<analysis::SymTable>;
 	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state);
 	
