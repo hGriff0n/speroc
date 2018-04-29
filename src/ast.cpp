@@ -1064,4 +1064,52 @@ namespace spero::compiler::analysis {
 		return { value, front };
 	}
 
+	using _LookupType = opt<_SymTable::DataType>;
+	std::tuple<_LookupType, ast::Path::iterator> _lookup(_SymTable& globals, _SymTable* current, ast::Path& var_path) {
+		auto[front, end] = util::range(var_path.elems);
+		_LookupType value = std::nullopt;
+		bool has_next = true;
+
+		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
+		if (!(**front).name.empty()) {
+			auto* next = current->mostRecentDef((**front).name);
+			value = std::get<ref<_SymTable>>((*(next ? next : current))["self"].get());
+			has_next = next != nullptr;
+
+		} else {
+			value = std::get<ref<_SymTable>>(globals["self"].get());
+			++front;
+		}
+
+		// Follow the symbol path to it's end
+		while (front != end && has_next) {
+			auto next = std::visit([&](auto&& var) -> _LookupType {
+				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, SymTable>) {
+					return var.ssaIndex((**front).name, (**front).ssa_id, var_path.loc);
+				}
+
+				return std::nullopt;
+			}, *value);
+
+			if (has_next = next.has_value()) {
+				value.swap(next);
+				++front;
+			}
+		}
+
+		// Return the last accessed value and the last attempted symbol if lookup fails
+		// This should simplify the process of assigning new variables, etc.
+		return { value, front };
+	}
+
+	// If Ssa lookup fails, then the key exists but the ssa_id was never set
+	bool testSsaLookupFailure(_LookupType& lookup_result, ast::Path::iterator& iter) {
+		if (lookup_result) {
+			if (auto* table = std::get_if<ref<_SymTable>>(&*lookup_result)) {
+				return table->get().exists((**iter).name) && !(**iter).ssa_id;
+			}
+		}
+
+		return true;
+	}
 }

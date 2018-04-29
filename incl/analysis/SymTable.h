@@ -5,6 +5,7 @@
 #include <variant>
 
 #include "parser/location.h"
+#include "util/analysis.h"
 
 template<class T>
 using ref_t = std::reference_wrapper<T>;
@@ -44,6 +45,87 @@ namespace spero::compiler::analysis {
 	struct OverloadSet {
 		//std::vector<std::string> mangled_names;
 		std::vector<ref_t<DataType>> mangled_fns;
+	};
+
+	/*
+     * Specifies the data relevant for analysis of Spero variables
+	 */
+	struct _VarData {
+		Location src;
+		bool is_mut;
+
+		analysis::memory::Locations storage;
+
+		// TODO: Not sure about these (using too many pointers)
+		//ast::Ast* definition = nullptr;
+		//std::vector<ast::Ast*> usages;
+
+		_VarData(Location s, bool mut) : _VarData{ s, mut, analysis::memory::Stack{} } {}
+		_VarData(Location s, bool mut, analysis::memory::Locations loc) : src{ s }, is_mut{ mut }, storage{ loc } {}
+	};
+
+	/*
+	 * Collect all definitions for a single symbol name under a unified group for some analysis steps
+	 *   This structure performs the dual roles of ssa name resolution function overloading
+	 */
+	struct SsaVector : std::vector<_VarData> {
+		bool is_overload_set;
+	};
+
+	template<class T>
+	using opt = std::optional<T>;
+	template<class T>
+	using ref = std::reference_wrapper<T>;
+
+	/*
+	 * Stores the mapping between symbol names and the needed information for analysis resolution
+	 *   Aside from `mostRecentDef`, all interfaces only interact with the internal "level" of resolution
+	 *   The interfaces do not try to search for a definition within a parent SymTable
+	 *
+	 * TODO: See how well this works with type specialization and function overloading
+	 */
+	class _SymTable {
+		public:
+			using StorageType = std::variant<SsaVector, ref<_SymTable>>;
+			using DataType = std::variant<ref<_VarData>, ref<_SymTable>>;
+
+		private:
+			_SymTable* parent = nullptr;
+
+			std::unordered_map<std::string, StorageType> vars;
+			ScopingContext rules = ScopingContext::SCOPE;
+
+		public:
+			int curr_ebp_offset = 0;
+			_SymTable();
+			
+			// Basic accessors and queries
+			ref<StorageType> operator[](std::string key);
+			bool exists(std::string key) const;
+
+			// Accessor interfaces
+			opt<ref<StorageType>> get(std::string key);
+			opt<ref<_SymTable>> getScope(std::string key);
+			opt<ref<SsaVector>> getOverloadSet(std::string key);
+			opt<ref<_VarData>> getVariable(std::string key, size_t ssa_id);
+			opt<DataType> ssaIndex(std::string key, opt<size_t>& index, const Location& loc);
+
+			// Mutation interfaces
+			bool insert(std::string key, _VarData value);
+			// TODO: There's an extra failure case of a symtable already existing
+			bool insert(std::string key, ref<_SymTable> value);
+
+			// Analysis interfaces
+			void setParent(_SymTable* p, bool offset_ebp = false);
+			_SymTable* mostRecentDef(std::string key);
+			void setContextRules(ScopingContext rule);
+			ScopingContext getContextRules() const;
+
+			// Counting interfaces
+			size_t size() const;
+			// TODO: Need to rewrite to account for ssa (and drop scopes)
+			size_t numVariables();
+			size_t count(std::string key) const;
 	};
 
 	//class SymTable : public std::unordered_map<std::string, DataType> {
