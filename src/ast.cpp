@@ -1020,8 +1020,8 @@ namespace spero::compiler::ast {
 
 namespace spero::compiler::analysis {
 
-	using LookupType = std::optional<ref_t<analysis::DataType>>;
-	std::tuple<std::optional<ref_t<analysis::DataType>>, ast::Path::iterator> lookup(analysis::SymTable& globals, analysis::SymTable* current, ast::Path& var_path) {
+	using LookupType = std::optional<ref_t<DataType>>;
+	std::tuple<std::optional<ref_t<DataType>>, ast::Path::iterator> lookup(_SymTable& globals, _SymTable* current, ast::Path& var_path) {
 		auto[front, end] = util::range(var_path.elems);
 		LookupType value = std::nullopt;
 		bool has_next = true;
@@ -1039,7 +1039,7 @@ namespace spero::compiler::analysis {
 
 		while (front != end && has_next) {
 			auto next = std::visit([&](auto&& var) -> LookupType {
-				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymTable>>) {
+				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<_SymTable>>) {
 					auto& key = (**front).name;
 					auto& table = var.get();
 
@@ -1064,8 +1064,8 @@ namespace spero::compiler::analysis {
 		return { value, front };
 	}
 
-	using _LookupType = opt<_SymTable::DataType>;
-	std::tuple<_LookupType, ast::Path::iterator> _lookup(_SymTable& globals, _SymTable* current, ast::Path& var_path) {
+	using _LookupType = opt<SymTable::DataType>;
+	std::tuple<_LookupType, ast::Path::iterator> _lookup(SymTable& globals, SymTable* current, ast::Path& var_path) {
 		auto[front, end] = util::range(var_path.elems);
 		_LookupType value = std::nullopt;
 		bool has_next = true;
@@ -1073,11 +1073,11 @@ namespace spero::compiler::analysis {
 		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
 		if (!(**front).name.empty()) {
 			auto* next = current->mostRecentDef((**front).name);
-			value = std::get<ref<_SymTable>>((*(next ? next : current))["self"].get());
+			value = std::get<ref<SymTable>>((*(next ? next : current))["self"].get());
 			has_next = next != nullptr;
 
 		} else {
-			value = std::get<ref<_SymTable>>(globals["self"].get());
+			value = std::get<ref<SymTable>>(globals["self"].get());
 			++front;
 		}
 
@@ -1105,7 +1105,7 @@ namespace spero::compiler::analysis {
 	// If Ssa lookup fails, then the key exists but the ssa_id was never set
 	bool testSsaLookupFailure(_LookupType& lookup_result, ast::Path::iterator& iter) {
 		if (lookup_result) {
-			if (auto* table = std::get_if<ref<_SymTable>>(&*lookup_result)) {
+			if (auto* table = std::get_if<ref<SymTable>>(&*lookup_result)) {
 				return table->get().exists((**iter).name) && !(**iter).ssa_id;
 			}
 		}

@@ -72,19 +72,29 @@ namespace spero::compiler::gen {
 	// Names
 	//
 	void AsmGenerator::visitVariable(ast::Variable& v) {
-		auto [nvar, _] = analysis::lookup(*globals, current, *v.name);
+		auto [nvar, _] = analysis::_lookup(*globals, current, *v.name);
 		(void)_;
 
 		std::visit([&](auto&& var) {
-			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, analysis::VarData>) {
-				emit.mov(x86::eax, x86::ptr(x86::ebp, var.off));
+			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::_VarData>>) {
+				auto loc = std::get<analysis::memory::Stack>(var.get().storage);
+				emit.mov(x86::eax, x86::ptr(x86::ebp, loc.ebp_offset));
+			//if constexpr (std::is_same_v<std::decay_t<decltype(var)>, analysis::VarData>) {
+				//emit.mov(x86::eax, x86::ptr(x86::ebp, var.off));
 			}
-		}, nvar->get());
+		}, *nvar);
+		//}, nvar->get());
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
-		if (auto var = current->getVar(n.var->name)) {
-			emit.mov(x86::ptr(x86::ebp, var->get().off), x86::eax);
+		std::optional<size_t> ssa_id;
+		 if (auto var = current->ssaIndex(n.var->name, ssa_id, n.var->loc)) {
+			 if (auto* v = std::get_if<ref_t<analysis::_VarData>>(&*var)) {
+				 auto loc = std::get<analysis::memory::Stack>(v->get().storage);
+				 emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
+			 }
+		//if (auto var = current->getVar(n.var->name)) {
+			//emit.mov(x86::ptr(x86::ebp, var->get().off), x86::eax);
 		}
 	}
 
@@ -175,10 +185,13 @@ namespace spero::compiler::gen {
 			b.rhs->accept(*this);
 
 			auto* lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
-			auto [variable, _] = analysis::lookup(*globals, current, *lhs->name);
-			auto& var = std::get<analysis::VarData>(variable->get());
+			auto [variable, _] = analysis::_lookup(*globals, current, *lhs->name);
+			auto& var = std::get<ref_t<analysis::_VarData>>(*variable).get();
+			auto loc = std::get<analysis::memory::Stack>(var.storage);
+			//auto& var = std::get<analysis::VarData>(variable->get());
 
-			emit.mov(x86::ptr(x86::ebp, var.off), x86::eax);
+			//emit.mov(x86::ptr(x86::ebp, var.off), x86::eax);
+			emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
 			(void)_;
 
 		} else {

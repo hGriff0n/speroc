@@ -13,8 +13,8 @@ namespace spero::compiler::analysis {
 	class VarRefPass : public ast::AstVisitor {
 		compiler::CompilationState& state;
 
-		SymTable* current = nullptr;
 		std::unique_ptr<SymTable> globals;
+		SymTable* current = nullptr;
 
 		// Track the current scoping context to be able to tailor analysis
 		ScopingContext context = ScopingContext::GLOBAL;

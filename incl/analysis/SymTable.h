@@ -13,10 +13,10 @@ using ref_t = std::reference_wrapper<T>;
 namespace spero::compiler::analysis {
 	struct VarData;
 	struct OverloadSet;
-	class SymTable;
+	class _SymTable;
 
 	// NOTE: All symbol tables are referenced from an external source (particularly necessary for 'self')
-	using DataType = std::variant<VarData, OverloadSet, ref_t<SymTable>>;
+	using DataType = std::variant<VarData, OverloadSet, ref_t<_SymTable>>;
 
 
 	// TODO: How should importing a module be handled in regards to all of its information (leave until I implement modules)
@@ -84,20 +84,20 @@ namespace spero::compiler::analysis {
 	 *
 	 * TODO: See how well this works with type specialization and function overloading
 	 */
-	class _SymTable {
+	class SymTable {
 		public:
-			using StorageType = std::variant<SsaVector, ref<_SymTable>>;
-			using DataType = std::variant<ref<_VarData>, ref<_SymTable>>;
+			using StorageType = std::variant<SsaVector, ref<SymTable>>;
+			using DataType = std::variant<ref<_VarData>, ref<SymTable>>;
 
 		private:
-			_SymTable* parent = nullptr;
+			SymTable * parent = nullptr;
 
 			std::unordered_map<std::string, StorageType> vars;
 			ScopingContext rules = ScopingContext::SCOPE;
 
 		public:
 			int curr_ebp_offset = 0;
-			_SymTable();
+			SymTable();
 			
 			// Basic accessors and queries
 			ref<StorageType> operator[](std::string key);
@@ -105,7 +105,7 @@ namespace spero::compiler::analysis {
 
 			// Accessor interfaces
 			opt<ref<StorageType>> get(std::string key);
-			opt<ref<_SymTable>> getScope(std::string key);
+			opt<ref<SymTable>> getScope(std::string key);
 			opt<ref<SsaVector>> getOverloadSet(std::string key);
 			opt<ref<_VarData>> getVariable(std::string key, size_t ssa_id);
 			opt<DataType> ssaIndex(std::string key, opt<size_t>& index, const Location& loc);
@@ -113,11 +113,11 @@ namespace spero::compiler::analysis {
 			// Mutation interfaces
 			bool insert(std::string key, _VarData value);
 			// TODO: There's an extra failure case of a symtable already existing
-			bool insert(std::string key, ref<_SymTable> value);
+			bool insert(std::string key, ref<SymTable> value);
 
 			// Analysis interfaces
-			void setParent(_SymTable* p, bool offset_ebp = false);
-			_SymTable* mostRecentDef(std::string key);
+			void setParent(SymTable* p, bool offset_ebp = false);
+			SymTable* mostRecentDef(std::string key);
 			void setContextRules(ScopingContext rule);
 			ScopingContext getContextRules() const;
 
@@ -129,8 +129,8 @@ namespace spero::compiler::analysis {
 	};
 
 	//class SymTable : public std::unordered_map<std::string, DataType> {
-	class SymTable {
-		SymTable* parent = nullptr;
+	class _SymTable {
+		_SymTable* parent = nullptr;
 		std::unordered_map<std::string, DataType> vars;
 		std::unordered_map<std::string, std::pair<std::string, size_t>> ssa_map;
 		//std::vector<SymTable*> imported = { this };
@@ -138,7 +138,7 @@ namespace spero::compiler::analysis {
 		public:
 			int ebp_offset = 0;
 
-			SymTable();
+			_SymTable();
 
 			// Search for a value at the current scoping level
 			ref_t<DataType> operator[](std::string key);
@@ -148,21 +148,22 @@ namespace spero::compiler::analysis {
 			// Accessor wrappers for accessing at the current scoping level
 			std::optional<ref_t<DataType>> get(std::string key);
 			std::optional<ref_t<VarData>> getVar(std::string key);
-			std::optional<ref_t<SymTable>> getScope(std::string key);
+			std::optional<ref_t<_SymTable>> getScope(std::string key);
 			std::optional<ref_t<OverloadSet>> getFunc(std::string key);
 
 			// Slightly simpler insertion interface (don't need to dereference `ref_t`)
 			ref_t<DataType> insert(std::string key, DataType value);
 			std::optional<ref_t<DataType>> insertIfNew(std::string key, DataType value);
+			std::optional<DataType> remove(std::string key);
 
 			// Returns the most recent `SymTable` which has a definition for the passed key
-			SymTable* mostRecentDef(std::string key);
+			_SymTable* mostRecentDef(std::string key);
 
 			// TODO: Import interface
 			//void importScope(SymTable* scope);
 
 			// Hierarchy setup
-			void setParent(SymTable* p, bool offset_ebp = false);
+			void setParent(_SymTable* p, bool offset_ebp = false);
 
 			// SSA interface
 			std::string allocateName(std::string key);

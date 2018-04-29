@@ -17,8 +17,6 @@ Current Project Plan
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
 	  Figure out how to get the system to handle declaring global variables "post-facto"
-	    Tighten up the 'alt_SymTable' interface (make sure it works)
-		  Work on the naming of the methods
 		Change the implementations of the two passes to reflect the SymTable rework
 		  Switch out SymTable with 'alt_SymTable'
 		  Ensure "SSA" renaming still works under the new system
@@ -49,9 +47,6 @@ Current Project Plan
 	  Need to be able to write out the entire string, not just the last symbol
 	  Rewrite all path log statements to use the new debug string
 	Generalize the tracking of variable location
-	  Modify the VarData structure to maintain a location of where the symbol is stored
-	    Should have "stack", "heap", "static", "offset" (for members), and "global" variants
-		Current structure has a "is_global" boolean field
 	  Look at getting interpreter to support global variables in a separately allocated memory section
 	    Problem is how to I get the AsmGenerator to "allocate" them to the correct location ???
 	  Adapt the interpreter to support "re-entrant" evaluation
