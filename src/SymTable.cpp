@@ -41,8 +41,8 @@ namespace spero::compiler::analysis {
 		if (exists(key)) {
 			auto& var = operator[](key);
 
-			if (std::holds_alternative<VarData>(var.get())) {
-				return std::get<VarData>(var.get());
+			if (auto* data = std::get_if<VarData>(&var.get())) {
+				return *data;
 			}
 		}
 
@@ -53,8 +53,8 @@ namespace spero::compiler::analysis {
 		if (exists(key)) {
 			auto& var = operator[](key);
 
-			if (std::holds_alternative<ref_t<SymTable>>(var.get())) {
-				return std::get<ref_t<SymTable>>(var.get());
+			if (auto* data = std::get_if<ref_t<SymTable>>(&var.get())) {
+				return *data;
 			}
 		}
 
@@ -65,8 +65,8 @@ namespace spero::compiler::analysis {
 		if (exists(key)) {
 			auto& var = operator[](key);
 
-			if (std::holds_alternative<OverloadSet>(var.get())) {
-				return std::get<OverloadSet>(var.get());
+			if (auto* data = std::get_if<OverloadSet>(&var.get())) {
+				return *data;
 			}
 		}
 
@@ -121,8 +121,7 @@ namespace spero::compiler::analysis {
 	}
 
 	void SymTable::setParent(SymTable* p, bool offset_ebp) {
-		parent = p;
-		insert("super", *p);
+		insert("super", *(parent = p));
 		ebp_offset = offset_ebp * (p->ebp_offset + (p->numVariables() * 4));
 	}
 

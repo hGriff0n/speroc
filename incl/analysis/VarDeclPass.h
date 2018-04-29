@@ -2,11 +2,12 @@
 
 #include "parser/AstVisitor.h"
 #include "interface/CompilationState.h"
+#include "util/analysis.h"
 
 namespace spero::compiler::analysis {
 
 	/*
-	 * Ast pass that collects and stores information for all variables
+	 * Ast pass that collects all symbol declarations and introductions (where is it defined)
 	 *
 	 * TODO: How will this pass handle 'after-use' declarations
 	 *   If needed, maintain a vector of all "before-declaration" usages
@@ -16,17 +17,17 @@ namespace spero::compiler::analysis {
 	class VarDeclPass : public ast::AstVisitor {
 		compiler::CompilationState& state;
 
-		analysis::SymTable* current = nullptr;
+		SymTable* current = nullptr;
 		
 		// Since SymTables can contain references to other symtables, the addresses need to stay relatively set
 		// For the moment, the global table is the only one that is not currently mapped to an ast node
 		// To enforce invariant addressing, this is currently implemented as a std::unique_ptr
 		// This may change once I have to integrate modules and types into this framework
-		std::unique_ptr<analysis::SymTable> globals;
+		std::unique_ptr<SymTable> globals;
 
 		public:
 			VarDeclPass(compiler::CompilationState&);
-			std::unique_ptr<analysis::SymTable> finalize();
+			std::unique_ptr<SymTable> finalize();
 
 			// Decorations
 			virtual void visitAnnotation(ast::Annotation&) final;

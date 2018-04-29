@@ -784,5 +784,8 @@
     <ClInclude Include="incl\analysis\VarDeclPass.h">
       <Filter>Header Files\analysis</Filter>
     </ClInclude>
+    <ClInclude Include="incl\util\analysis.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1042,7 +1042,7 @@ namespace spero::compiler::analysis {
 					auto& key = (**front).name;
 					auto& table = var.get();
 
-					if (auto ssa = table.getSSA(key); ssa) {
+					if (auto ssa = table.getSSA(key)) {
 						key = *ssa;
 					}
 

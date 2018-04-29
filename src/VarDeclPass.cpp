@@ -2,11 +2,11 @@
 
 namespace spero::compiler::analysis {
 
-	VarDeclPass::VarDeclPass(compiler::CompilationState& state) : globals{ std::make_unique<analysis::SymTable>() }, state{ state } {
+	VarDeclPass::VarDeclPass(compiler::CompilationState& state) : globals{ std::make_unique<SymTable>() }, state{ state } {
 		current = globals.get();
 	}
 
-	std::unique_ptr<analysis::SymTable> VarDeclPass::finalize() {
+	std::unique_ptr<SymTable> VarDeclPass::finalize() {
 		return std::move(globals);
 	}
 

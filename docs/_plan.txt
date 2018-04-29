@@ -17,22 +17,23 @@ Current Project Plan
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
 	  Figure out how to get the system to handle declaring global variables "post-facto"
-		Problem is having the check off in 'type' and 'static' contexts but on in 'local' contexts
-	    Might be good to adopt a two-pass system
-		  The first pass records all variable declarations and their location
-		    Would also have to perform SSA renaming (but that gets very difficult when you have multiple declarations)
-			If we follow this approach, then we don't require the "context" flags (and possibly cleans up some of the recognition)
-		  The second pass records all variable usages and flags unused/forward-used/created variables
+	    Tighten up the 'alt_SymTable' interface (make sure it works)
+		  Work on the naming of the methods
+		Change the implementations of the two passes to reflect the SymTable rework
+		  Switch out SymTable with 'alt_SymTable'
+		  Ensure "SSA" renaming still works under the new system
       Minimize the overhead for supporting InAssign (allocating an entire SymTable is too much)
-		If I can allocate a single sym table to a chain of InAssign's that would be a good improvement
-		  Alternately, I could take advantage of the ssa transformation
-		  Or I could just prepend the "variables" name with a '$$' (or some other combination)
+	    Look into solution of transforming 'InAssign' into a FnCall/FnDef combo
+		  See how many other locations this benefit could extend to
+		  NOTE: Do not implement until I get local functions working (would rely on inlining to achieve current codegen)
+		    I could still have this transform if functions themselves are working, but it's not that necessary
 		Add in a special check for shadowing a variable in an in-assign statement, and then attempting to use the original variable thereafter (this has to be a bug)
 	  Improve the code for interacting with scopes when assigning/accessing variables
 		Check if ':<var>' is (and should be) a legal typing (I don't think so)
 		  Adjust the interpreter accordingly (':XX' are commands)
 	  Figure out why FunctionType/AndType/ImplExpr/... can have nullable fields and prevent those from happening (yet OrType doesn't)
-    Intern strings inside the compiler state structure
+	Fix 'mut' propogation for AssignTuple (I currently don't assign to sub-states)
+    Intern strings inside the compiler state structure (or some other location)
 	  Add a step in parsing to automatically register any var strings
 		Might need to find a better place to locate this (the structure)
 	  Try to make this resource allocation generic (abstractable across more resource types)
@@ -43,6 +44,7 @@ Current Project Plan
 		  Be sure to modify the VarData/etc. structures to maintain a reference to the original string (for error reporting)
 		    NOTE: The actual location doesn't matter, just that the original name is somehow easily accessible
 		We can also merge the ssa_map and vars structures to where the ssa.1 indexes into ssa.0
+		  If I do this, we may also just merge the 'VarData' and 'OverloadSet' types
 	Improve 'debuggability' of the 'ast::Path' structure
 	  Need to be able to write out the entire string, not just the last symbol
 	  Rewrite all path log statements to use the new debug string
@@ -57,6 +59,8 @@ Current Project Plan
 	  At any rate, if the semantics are desirable, the operator overloading system can nominally handle it
 	    There are still some issues with typing and binding direction
   Fix code base and other issues (see below)
+    Look at shortening the 'spero::compiler::analysis' namespace to 'spero::analysis'
+	Look at moving the 'ScopingContext' decisions/tracking to 'AstVisitor'
   Get functions working properly
     I think the current "abort" errors are due to introducing multiple 'main' labels?
 	  That wouldn't quite explain the interpreter though

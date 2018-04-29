@@ -1101,6 +1101,7 @@ namespace spero::parser::actions {
 			auto typ = POP(Type);
 			auto gen = POP(GenericArray);
 			auto pat = POP(AssignPattern);
+
 			PUSH(VarAssign,
 				POP(Token)->get<ast::VisibilityType>(),
 				std::move(pat), std::move(gen),

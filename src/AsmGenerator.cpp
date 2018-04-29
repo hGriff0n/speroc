@@ -83,7 +83,7 @@ namespace spero::compiler::gen {
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
-		if (auto var = current->getVar(n.var->name); var) {
+		if (auto var = current->getVar(n.var->name)) {
 			emit.mov(x86::ptr(x86::ebp, var->get().off), x86::eax);
 		}
 	}
@@ -128,7 +128,6 @@ namespace spero::compiler::gen {
 		} else {
 			// TODO: Figure out a way to pass the mutability of the expression on to the 'name'
 			v.expr->accept(*this);					// Push the expression value onto the stack
-			v.name->is_mut = v.expr->is_mut;
 			v.name->accept(*this);
 		}
 	}
@@ -143,6 +142,7 @@ namespace spero::compiler::gen {
 			// TODO: Need to rewrite before 'variable pass' decoupling as this won't work in that framework
 		auto* parent_scope = current;
 		current = &in.binding;
+		emit.pushWords(current->numVariables());
 
 		// Run through the assignment and expression
 		in.bind->accept(*this);
@@ -271,8 +271,7 @@ namespace spero::compiler::gen {
 
 		// Perform the operator call
 		// TODO: Perform type-based function lookup
-		auto& op = u.op->name;
-		if (op == "-") {
+		if (auto& op = u.op->name; op == "-") {
 			emit.neg(x86::eax);
 
 		} else if (op == "!") {
