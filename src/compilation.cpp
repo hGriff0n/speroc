@@ -2,6 +2,7 @@
 #include "parser/actions.h"
 
 #include "analysis/VarDeclPass.h"
+#include "analysis/VarRefPass.h"
 #include "codegen/AsmGenerator.h"
 
 std::string spero::util::escape(std::string s) {
@@ -45,9 +46,13 @@ namespace spero::compiler {
 
 	// Perform the various analysis stages
 	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state) {
-		analysis::VarDeclPass visitor{ state };
-		ast::visit(visitor, ast_stack);
-		auto table = visitor.finalize();
+		analysis::VarDeclPass decl_check{ state };
+		ast::visit(decl_check, ast_stack);
+
+		analysis::VarRefPass usage_check{ state, decl_check.finalize() };
+		ast::visit(usage_check, ast_stack);
+
+		auto table = usage_check.finalize();
 
 		return std::move(table);
 	}
