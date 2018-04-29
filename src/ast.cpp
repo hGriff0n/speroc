@@ -241,6 +241,7 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(PathPart) {
 		s << name;
+		if (ssa_id) s << '$' << *ssa_id;
 		if (gens) s << "[_]";
 		return s;
 		//return s << std::string(buf, ' ') << context << "ast.PathPart (var=" << name << ", type=" << type._to_string() << ")";
@@ -1019,8 +1020,8 @@ namespace spero::compiler::ast {
 
 namespace spero::compiler::analysis {
 
-	using LookupType = std::optional<ref_t<analysis::DataType>>;
-	std::tuple<std::optional<ref_t<analysis::DataType>>, ast::Path::iterator> lookup(analysis::SymTable& globals, analysis::SymTable* current, ast::Path& var_path) {
+	using LookupType = opt_t<SymTable::DataType>;
+	std::tuple<LookupType, ast::Path::iterator> lookup(SymTable& globals, SymTable* current, ast::Path& var_path) {
 		auto[front, end] = util::range(var_path.elems);
 		LookupType value = std::nullopt;
 		bool has_next = true;
@@ -1028,32 +1029,26 @@ namespace spero::compiler::analysis {
 		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
 		if (!(**front).name.empty()) {
 			auto* next = current->mostRecentDef((**front).name);
-			value = (*(next ? next : current))["self"];
+			value = std::get<ref_t<SymTable>>((*(next ? next : current))["self"].get());
 			has_next = next != nullptr;
 
 		} else {
-			value = globals["self"];
+			value = std::get<ref_t<SymTable>>(globals["self"].get());
 			++front;
 		}
 
+		// Follow the symbol path to it's end
 		while (front != end && has_next) {
 			auto next = std::visit([&](auto&& var) -> LookupType {
-				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymTable>>) {
-					auto& key = (**front).name;
-					auto& table = var.get();
-
-					if (auto ssa = table.getSSA(key)) {
-						key = *ssa;
-					}
-
-					return table.get(key);
+				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<SymTable>>) {
+					return var.get().ssaIndex((**front).name, (**front).ssa_id, var_path.loc);
 				}
 
-				return LookupType{};
-			}, value->get());
+				return std::nullopt;
+			}, *value);
 
 			if (has_next = next.has_value()) {
-				value = next;
+				value.swap(next);
 				++front;
 			}
 		}
@@ -1063,4 +1058,14 @@ namespace spero::compiler::analysis {
 		return { value, front };
 	}
 
+	// If Ssa lookup fails, then the key exists but the ssa_id was never set
+	bool testSsaLookupFailure(LookupType& lookup_result, ast::Path::iterator& iter) {
+		if (lookup_result) {
+			if (auto* table = std::get_if<ref_t<SymTable>>(&*lookup_result)) {
+				return table->get().exists((**iter).name) && !(**iter).ssa_id;
+			}
+		}
+
+		return true;
+	}
 }

@@ -17,59 +17,57 @@ namespace spero::compiler::analysis {
 	class VarDeclPass : public ast::AstVisitor {
 		compiler::CompilationState& state;
 
-		SymTable* current = nullptr;
-		
 		// Since SymTables can contain references to other symtables, the addresses need to stay relatively set
 		// For the moment, the global table is the only one that is not currently mapped to an ast node
 		// To enforce invariant addressing, this is currently implemented as a std::unique_ptr
 		// This may change once I have to integrate modules and types into this framework
 		std::unique_ptr<SymTable> globals;
+		SymTable* current = nullptr;
+
+		// Track the current scoping context to be able to tailor analysis
+		ScopingContext context = ScopingContext::GLOBAL;
 
 		public:
 			VarDeclPass(compiler::CompilationState&);
 			std::unique_ptr<SymTable> finalize();
 
 			// Decorations
-			virtual void visitAnnotation(ast::Annotation&) final;
-			virtual void visitAdt(ast::Adt&) final;
-			virtual void visitArgument(ast::Argument&) final;
-			virtual void visitGenericPart(ast::GenericPart&) final;
-			virtual void visitTypeGeneric(ast::TypeGeneric&) final;
-			virtual void visitValueGeneric(ast::ValueGeneric&) final;
+			//virtual void visitAnnotation(ast::Annotation&) final;
+			//virtual void visitAdt(ast::Adt&) final;
+			//virtual void visitArgument(ast::Argument&) final;
+			//virtual void visitGenericPart(ast::GenericPart&) final;
+			//virtual void visitTypeGeneric(ast::TypeGeneric&) final;
+			//virtual void visitValueGeneric(ast::ValueGeneric&) final;
 
 			// Types
-			virtual void visitSourceType(ast::SourceType&) final;
+			//virtual void visitSourceType(ast::SourceType&) final;
 
 			// Atoms
 			virtual void visitBlock(ast::Block&) final;
-			virtual void visitFunction(ast::Function&) final;
+			//virtual void visitFunction(ast::Function&) final;
 
 			// Names
 			virtual void visitAssignName(ast::AssignName&) final;
-			virtual void visitAssignTuple(ast::AssignTuple&) final;
-			virtual void visitTuplePattern(ast::TuplePattern&) final;
-			virtual void visitVarPattern(ast::VarPattern&) final;
-			virtual void visitAdtPattern(ast::AdtPattern&) final;
+			//virtual void visitAssignTuple(ast::AssignTuple&) final;
+			//virtual void visitTuplePattern(ast::TuplePattern&) final;
+			//virtual void visitVarPattern(ast::VarPattern&) final;
+			//virtual void visitAdtPattern(ast::AdtPattern&) final;
 
 			// Control
 			// NOTE: Solution to Case::expr lack of SymTable is probably generalizable to InAssign
-			virtual void visitCase(ast::Case&) final;
-
-			// Expressions
-			virtual void visitVariable(ast::Variable&) final;
-			virtual void visitBinOpCall(ast::BinOpCall&) final;
+			//virtual void visitCase(ast::Case&) final;
 
 			// Statements
 			virtual void visitInAssign(ast::InAssign&) final;
-			virtual void visitModDec(ast::ModDec&) final;
-			virtual void visitModRebindImport(ast::ModRebindImport&) final;
-			virtual void visitSingleImport(ast::SingleImport&) final;
-			virtual void visitMultipleImport(ast::MultipleImport&) final;
-			virtual void visitRebind(ast::Rebind&) final;
-			virtual void visitInterface(ast::Interface&) final;
-			virtual void visitTypeAssign(ast::TypeAssign&) final;
+			//virtual void visitModDec(ast::ModDec&) final;
+			//virtual void visitModRebindImport(ast::ModRebindImport&) final;
+			//virtual void visitSingleImport(ast::SingleImport&) final;
+			//virtual void visitMultipleImport(ast::MultipleImport&) final;
+			//virtual void visitRebind(ast::Rebind&) final;
+			//virtual void visitInterface(ast::Interface&) final;
+			//virtual void visitTypeAssign(ast::TypeAssign&) final;
 			virtual void visitVarAssign(ast::VarAssign&) final;
-			virtual void visitTypeExtension(ast::TypeExtension&) final;
+			//virtual void visitTypeExtension(ast::TypeExtension&) final;
 	};
 
 }

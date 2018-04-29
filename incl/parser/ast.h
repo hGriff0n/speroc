@@ -343,6 +343,7 @@ namespace spero::compiler::ast {
 	 */
 	struct PathPart : Ast {
 		std::string name;
+		std::optional<size_t> ssa_id = std::nullopt;
 		BindingType type;
 		ptr<Array> gens;
 
@@ -1344,6 +1345,7 @@ namespace spero::compiler::ast {
 namespace spero::compiler::analysis {
 
 	// If lookup succeeds, then the returned iterator is equal to `std::end(var_path.elems)`
-	std::tuple<std::optional<ref_t<analysis::DataType>>, ast::Path::iterator> lookup(analysis::SymTable& globals, analysis::SymTable* current, ast::Path& var_path);
+	std::tuple<opt_t<SymTable::DataType>, ast::Path::iterator> lookup(SymTable& globals, SymTable* current, ast::Path& var_path);
+	bool testSsaLookupFailure(opt_t<SymTable::DataType>& lookup_result, ast::Path::iterator& iter);
 
 }

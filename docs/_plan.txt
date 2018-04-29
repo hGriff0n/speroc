@@ -16,12 +16,6 @@ Current Project Plan
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
-	  Figure out how to get the system to handle declaring global variables "post-facto"
-	    Tighten up the 'alt_SymTable' interface (make sure it works)
-		  Work on the naming of the methods
-		Change the implementations of the two passes to reflect the SymTable rework
-		  Switch out SymTable with 'alt_SymTable'
-		  Ensure "SSA" renaming still works under the new system
       Minimize the overhead for supporting InAssign (allocating an entire SymTable is too much)
 	    Look into solution of transforming 'InAssign' into a FnCall/FnDef combo
 		  See how many other locations this benefit could extend to
@@ -33,6 +27,7 @@ Current Project Plan
 		  Adjust the interpreter accordingly (':XX' are commands)
 	  Figure out why FunctionType/AndType/ImplExpr/... can have nullable fields and prevent those from happening (yet OrType doesn't)
 	Fix 'mut' propogation for AssignTuple (I currently don't assign to sub-states)
+	  Find a way to get AssignXX nodes to use the same lookup system for creating the variables (I kinda can't)
     Intern strings inside the compiler state structure (or some other location)
 	  Add a step in parsing to automatically register any var strings
 		Might need to find a better place to locate this (the structure)
@@ -49,9 +44,6 @@ Current Project Plan
 	  Need to be able to write out the entire string, not just the last symbol
 	  Rewrite all path log statements to use the new debug string
 	Generalize the tracking of variable location
-	  Modify the VarData structure to maintain a location of where the symbol is stored
-	    Should have "stack", "heap", "static", "offset" (for members), and "global" variants
-		Current structure has a "is_global" boolean field
 	  Look at getting interpreter to support global variables in a separately allocated memory section
 	    Problem is how to I get the AsmGenerator to "allocate" them to the correct location ???
 	  Adapt the interpreter to support "re-entrant" evaluation

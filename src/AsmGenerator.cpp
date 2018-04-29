@@ -76,15 +76,20 @@ namespace spero::compiler::gen {
 		(void)_;
 
 		std::visit([&](auto&& var) {
-			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, analysis::VarData>) {
-				emit.mov(x86::eax, x86::ptr(x86::ebp, var.off));
+			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::VarData>>) {
+				auto loc = std::get<analysis::memory::Stack>(var.get().storage);
+				emit.mov(x86::eax, x86::ptr(x86::ebp, loc.ebp_offset));
 			}
-		}, nvar->get());
+		}, *nvar);
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
-		if (auto var = current->getVar(n.var->name)) {
-			emit.mov(x86::ptr(x86::ebp, var->get().off), x86::eax);
+		std::optional<size_t> ssa_id;
+		 if (auto var = current->ssaIndex(n.var->name, ssa_id, n.var->loc)) {
+			 if (auto* v = std::get_if<ref_t<analysis::VarData>>(&*var)) {
+				 auto loc = std::get<analysis::memory::Stack>(v->get().storage);
+				 emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
+			 }
 		}
 	}
 
@@ -176,9 +181,10 @@ namespace spero::compiler::gen {
 
 			auto* lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
 			auto [variable, _] = analysis::lookup(*globals, current, *lhs->name);
-			auto& var = std::get<analysis::VarData>(variable->get());
+			auto& var = std::get<ref_t<analysis::VarData>>(*variable).get();
+			auto& loc = std::get<analysis::memory::Stack>(var.storage);
 
-			emit.mov(x86::ptr(x86::ebp, var.off), x86::eax);
+			emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
 			(void)_;
 
 		} else {
