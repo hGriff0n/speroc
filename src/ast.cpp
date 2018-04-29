@@ -1084,8 +1084,8 @@ namespace spero::compiler::analysis {
 		// Follow the symbol path to it's end
 		while (front != end && has_next) {
 			auto next = std::visit([&](auto&& var) -> _LookupType {
-				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, SymTable>) {
-					return var.ssaIndex((**front).name, (**front).ssa_id, var_path.loc);
+				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref<SymTable>>) {
+					return var.get().ssaIndex((**front).name, (**front).ssa_id, var_path.loc);
 				}
 
 				return std::nullopt;
