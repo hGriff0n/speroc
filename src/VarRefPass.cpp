@@ -23,22 +23,7 @@ namespace spero::compiler::analysis {
 	// Expressions
 	void VarRefPass::visitVariable(ast::Variable& v) {
 		// Perform some simple variable usage checks
-		//auto[nvar, iter] = lookup(*globals, current, *v.name);
-
-		//// TODO: Handle looking for the correct definition based on the src location
-
-		//if (iter != std::end(v.name->elems)) {
-		//	state.log(ID::err, "Attempt to use undeclared variable `{}` <at {}>", v.name->elems.back()->name, v.loc);
-		//	return;
-		//}
-
-		//if (!std::holds_alternative<VarData>(nvar->get())) {
-		//	state.log(ID::err, "Attempt to use non-variable symbol `{}` as a variable <at {}>", v.name->elems.back()->name, v.loc);
-		//}
-
-
-		
-		auto [nvar, iter] = _lookup(*globals, current, *v.name);
+		auto [nvar, iter] = lookup(*globals, current, *v.name);
 
 		if (iter != std::end(v.name->elems)) {
 			if (testSsaLookupFailure(nvar, iter)) {
@@ -50,11 +35,9 @@ namespace spero::compiler::analysis {
 			return;
 		}
 
-		if (!std::holds_alternative<ref_t<_VarData>>(*nvar)) {
+		if (!std::holds_alternative<ref_t<VarData>>(*nvar)) {
 			state.log(ID::err, "Attempt to use non-variable symbol `{}` as a variable <at {}>", v.name->elems.back()->name, v.loc);
 		}
-		
-		\
 	}
 
 	void VarRefPass::visitBinOpCall(ast::BinOpCall& b) {
@@ -68,18 +51,13 @@ namespace spero::compiler::analysis {
 			}
 
 			// Perform all the necessary checks for reassignment
-			auto[variable, iter] = _lookup(*globals, current, *lhs->name);
+			auto[variable, iter] = lookup(*globals, current, *lhs->name);
 
 			// NOTE: Do we need to check whether the variable exists here ???
-				// The error is already reported in an earlier stage so by this point, it is guaranteed to be valid
-			/*if (iter == std::end(lhs->name->elems)) {
-				if (auto* var = std::get_if<VarData>(&variable->get()); !var->is_mut) {
-					state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
-				}
-			}*/
-			
+				// The error is already reported in `visitVariable` so by this point, it is guaranteed to be valid
+				// We do need to perform this check, because it is done in the same pass as `visitVariable` (we can't determine whether it succeeded)
 			if (iter == std::end(lhs->name->elems)) {
-				if (auto* var = std::get_if<ref_t<_VarData>>(&*variable); !var->get().is_mut) {
+				if (auto* var = std::get_if<ref_t<VarData>>(&*variable); !var->get().is_mut) {
 					state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
 				}
 			}

@@ -16,10 +16,6 @@ Current Project Plan
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
-	  Figure out how to get the system to handle declaring global variables "post-facto"
-		Change the implementations of the two passes to reflect the SymTable rework
-		  Switch out SymTable with 'alt_SymTable'
-		  Ensure "SSA" renaming still works under the new system
       Minimize the overhead for supporting InAssign (allocating an entire SymTable is too much)
 	    Look into solution of transforming 'InAssign' into a FnCall/FnDef combo
 		  See how many other locations this benefit could extend to
@@ -31,6 +27,7 @@ Current Project Plan
 		  Adjust the interpreter accordingly (':XX' are commands)
 	  Figure out why FunctionType/AndType/ImplExpr/... can have nullable fields and prevent those from happening (yet OrType doesn't)
 	Fix 'mut' propogation for AssignTuple (I currently don't assign to sub-states)
+	  Find a way to get AssignXX nodes to use the same lookup system for creating the variables (I kinda can't)
     Intern strings inside the compiler state structure (or some other location)
 	  Add a step in parsing to automatically register any var strings
 		Might need to find a better place to locate this (the structure)

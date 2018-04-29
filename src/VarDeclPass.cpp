@@ -24,15 +24,11 @@ namespace spero::compiler::analysis {
 
 	// Names
 	void VarDeclPass::visitAssignName(ast::AssignName& n) {
-		// Perform 'SSA' style renaming to support variable shadowing
-		//n.var->name = current->allocateName(n.var->name);
-		// TODO: Remove in conversion
+		// if (current == globals.get()) {
 
 		// Register the variable in the current scope
 		int off = -4 * (current->numVariables() + 1) - current->curr_ebp_offset;
-		//current->insert(n.var->name, analysis::_VarData{ n.loc, off, current == globals.get(), n.is_mut });
-		// if (current == globals.get()) {
-		current->insert(n.var->name, _VarData{ n.loc, n.is_mut, memory::Stack{ off } });
+		current->insert(n.var->name, VarData{ n.loc, n.is_mut, memory::Stack{ off } });
 	}
 
 
