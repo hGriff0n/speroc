@@ -10,37 +10,6 @@ namespace spero::compiler::analysis {
 		return std::move(globals);
 	}
 
-	// Decorations
-	void VarDeclPass::visitAnnotation(ast::Annotation& a) {
-		AstVisitor::visitAnnotation(a);
-	}
-
-	void VarDeclPass::visitAdt(ast::Adt& a) {
-		AstVisitor::visitAdt(a);
-	}
-
-	void VarDeclPass::visitArgument(ast::Argument& a) {
-		AstVisitor::visitArgument(a);
-	}
-
-	void VarDeclPass::visitGenericPart(ast::GenericPart& g) {
-		AstVisitor::visitGenericPart(g);
-	}
-
-	void VarDeclPass::visitTypeGeneric(ast::TypeGeneric& t) {
-		AstVisitor::visitTypeGeneric(t);
-	}
-
-	void VarDeclPass::visitValueGeneric(ast::ValueGeneric& v) {
-		AstVisitor::visitValueGeneric(v);
-	}
-
-
-	// Types
-	void VarDeclPass::visitSourceType(ast::SourceType& s) {
-		AstVisitor::visitSourceType(s);
-	}
-
 
 	// Atoms
 	void VarDeclPass::visitBlock(ast::Block& b) {
