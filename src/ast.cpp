@@ -241,6 +241,7 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(PathPart) {
 		s << name;
+		if (ssa_id) s << '$' << *ssa_id;
 		if (gens) s << "[_]";
 		return s;
 		//return s << std::string(buf, ' ') << context << "ast.PathPart (var=" << name << ", type=" << type._to_string() << ")";

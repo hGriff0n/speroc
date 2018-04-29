@@ -26,6 +26,7 @@ namespace spero::compiler::analysis {
 
 	struct VarData {
 		std::optional<Location> src;
+		// std::variant<Stack, Heap, Offset, Global, Static> storage;
 
 		int off;
 		bool is_global = false;

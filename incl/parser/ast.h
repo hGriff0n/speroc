@@ -343,6 +343,7 @@ namespace spero::compiler::ast {
 	 */
 	struct PathPart : Ast {
 		std::string name;
+		std::optional<size_t> ssa_id = std::nullopt;
 		BindingType type;
 		ptr<Array> gens;
 
