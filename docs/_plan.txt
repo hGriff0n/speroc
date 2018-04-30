@@ -16,16 +16,9 @@ Current Project Plan
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
 	Modify reassignment code to throw out an error when the variable is immutable
-      Minimize the overhead for supporting InAssign (allocating an entire SymTable is too much)
-	    Look into solution of transforming 'InAssign' into a FnCall/FnDef combo
-		  See how many other locations this benefit could extend to
-		  NOTE: Do not implement until I get local functions working (would rely on inlining to achieve current codegen)
-		    I could still have this transform if functions themselves are working, but it's not that necessary
-		Add in a special check for shadowing a variable in an in-assign statement, and then attempting to use the original variable thereafter (this has to be a bug)
 	  Improve the code for interacting with scopes when assigning/accessing variables
 		Check if ':<var>' is (and should be) a legal typing (I don't think so)
 		  Adjust the interpreter accordingly (':XX' are commands)
-	  Figure out why FunctionType/AndType/ImplExpr/... can have nullable fields and prevent those from happening (yet OrType doesn't)
 	Fix 'mut' propogation for AssignTuple (I currently don't assign to sub-states)
 	  Find a way to get AssignXX nodes to use the same lookup system for creating the variables (I kinda can't)
     Intern strings inside the compiler state structure (or some other location)
@@ -77,8 +70,7 @@ Current Project Plan
       Thinking is whether I can find a way to cast 'mut' as a monad/HKT parameter
         The guess is you'd then be able to 'map' over it or something like that
 	Figure out if ".3" should be an error or be an forwarded function
-	Figure out a way to apply annotations to tuples
-	  Possibly consider not attaching annotations directly at parse time (would allow for "@<var>!" syntax)
+	Look at adding in a check for when an InAssign statement shadows a variable
 	Improve documentation, make sure it's up-to-date
 	  Add "accepted change" to require pointer styling to be connected to type name (grammar currently adds a 'ig_s' after)
 	  Write down how function forwarding is going to be determined in lambdas

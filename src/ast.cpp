@@ -402,15 +402,8 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(FunctionType) {
 		s << std::string(buf, ' ') << context << "ast.FunctionType";
-
 		args->prettyPrint(s << '\n', buf + 2, "args=");
-		if (ret) {
-			ret->prettyPrint(s << '\n', buf + 2, "ret=");
-		} else {
-			s << '\n' << std::string(buf + 2, ' ') << "ret=<error: missing>";
-		}
-		
-		return s;
+		return ret->prettyPrint(s << '\n', buf + 2, "ret=");
 	}
 
 	AndType::AndType(ptr<Type> typs, Location loc)

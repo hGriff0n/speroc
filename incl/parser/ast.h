@@ -1169,6 +1169,10 @@ namespace spero::compiler::ast {
 	 * Represents a scoped binding assignment, where a variable is declared for use in
 	 *   a single expression and is only visible within that context
 	 *
+	 * TODO: Implement a pass that transforms this node into a function call/def combo
+	 *   Can't completely replace due to construction of `asgn_val` rule
+	 *   Don't replace until functions (particularly local functions) are stable
+	 *
 	 * Extends: ValExpr
 	 *
 	 * Exports:

@@ -416,7 +416,13 @@ namespace spero::parser::actions {
 		// Error handling
 		if (!ret) {
 			s.pop_back();
+			ret = MAKE_NODE(Type);
 			state.log(compiler::ID::err, "Missing required return type information <fn_type at {}>", LOCATION);
+		}
+
+		if (!util::at_node<ast::TupleType>(s)) {
+			PUSH_NODE(TupleType)
+			state.log(compiler::ID::err, "Missing required argument type information <fn_type at {}>", LOCATION);
 		}
 
 		PUSH(FunctionType, POP(TupleType), std::move(ret));
