@@ -1,7 +1,7 @@
 #pragma once
 #pragma warning(disable : 4503)
 
-#include "pegtl.hpp"
+#include <pegtl.hpp>
 
 namespace spero::parser::grammar {
 	using namespace tao::pegtl;

@@ -9,7 +9,7 @@
 #include "util/strings.h"
 
 template <class Stream>
-Stream& getMultiline(Stream& in, std::string& s);
+Stream& getMultiline(Stream& in, spero::string::backing_type& s);
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
 void printAssembly(spero::compiler::gen::Assembler& asm_code);
 
@@ -18,9 +18,9 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 	using namespace spero;
 	using namespace spero::parser;
 	using compiler::ID;
-
-	std::string input;
-	std::unordered_map<std::string, bool> flags{ { "compile", true }, { "interpret", true } };
+	
+	string::backing_type input;
+	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", true } };
 
 	while (std::cout << "> " && getMultiline(std::cin, input)) {
 		try {
@@ -154,13 +154,13 @@ int main(int argc, char* argv[]) {
  */
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
 template <class Stream>
-Stream& getMultiline(Stream& in, std::string& out_str) {
+Stream& getMultiline(Stream& in, spero::string::backing_type& out_str) {
 	std::getline(in, out_str);
 	if (out_str == ":q") {
 		return in;
 	}
 
-	std::string tmp;
+	spero::string::backing_type tmp;
 	while (std::getline(in, tmp)) {
 		if (tmp == "") {
 			return in;

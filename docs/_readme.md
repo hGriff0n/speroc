@@ -30,5 +30,7 @@ Be sure to comment in the issue if you have any questions.
     cxxopts: Cmd-line parsing
 	spdlog: Logging and error reporting
     asmjit: Assembly interaction framework (codegen)
-	  NOTE: Using a custom fork that adds move semantics
+	  NOTE: Currently using a custom fork that adds move semantics
     clang: Executable production and linking
+    boost:
+      flyweight - string interning engine

@@ -67,9 +67,6 @@
     <Filter Include="Dependencies\cxxopts">
       <UniqueIdentifier>{32f86b4a-ea03-4b88-b654-b003fefccf5b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\signals">
-      <UniqueIdentifier>{6750b123-f465-4778-894c-d399422414a8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\description">
       <UniqueIdentifier>{778811aa-8bdd-4bf4-b295-03031f242a15}</UniqueIdentifier>
     </Filter>
@@ -105,6 +102,12 @@
     </Filter>
     <Filter Include="Dependencies\spdlog\fmt\bundled">
       <UniqueIdentifier>{b5c3c9cf-532e-402a-82ac-0ec6f0bdddb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\boost">
+      <UniqueIdentifier>{14060fd4-29ed-4141-9819-058f682fdea0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\boost\flyweight">
+      <UniqueIdentifier>{83447d2d-afbd-40f6-ba42-a380dcf413db}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -792,6 +795,27 @@
     </ClInclude>
     <ClInclude Include="incl\util\analysis.h">
       <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\boost\flyweight.hpp">
+      <Filter>Dependencies\boost</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\boost\flyweight\flyweight.hpp">
+      <Filter>Dependencies\boost\flyweight</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\boost\flyweight\hashed_factory.hpp">
+      <Filter>Dependencies\boost\flyweight</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\boost\flyweight\refcounted.hpp">
+      <Filter>Dependencies\boost\flyweight</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\boost\flyweight\simple_locking.hpp">
+      <Filter>Dependencies\boost\flyweight</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\boost\flyweight\static_holder.hpp">
+      <Filter>Dependencies\boost\flyweight</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\spero_string.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

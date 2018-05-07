@@ -1,6 +1,8 @@
 #pragma once
 
-#include "pegtl/internal/iterator.hpp"
+#include <pegtl/internal/iterator.hpp>
+
+#include "spero_string.h"
 
 namespace spero::compiler {
 

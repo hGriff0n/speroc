@@ -15,24 +15,12 @@ Current Project Plan
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
-	Modify reassignment code to throw out an error when the variable is immutable
-	  Improve the code for interacting with scopes when assigning/accessing variables
-		Check if ':<var>' is (and should be) a legal typing (I don't think so)
-		  Adjust the interpreter accordingly (':XX' are commands)
-	Fix 'mut' propogation for AssignTuple (I currently don't assign to sub-states)
-	  Find a way to get AssignXX nodes to use the same lookup system for creating the variables (I kinda can't)
     Intern strings inside the compiler state structure (or some other location)
-	  Add a step in parsing to automatically register any var strings
-		Might need to find a better place to locate this (the structure)
-	  Try to make this resource allocation generic (abstractable across more resource types)
-	  https://github.com/RipcordSoftware/libstringintern
-	  https://github.com/foonathan/string_id
-	  Improve the process for producing ssa names
-	    With an interned string, an ssa form is just a `(int, int)` pair
-		  Be sure to modify the VarData/etc. structures to maintain a reference to the original string (for error reporting)
-		    NOTE: The actual location doesn't matter, just that the original name is somehow easily accessible
-		We can also merge the ssa_map and vars structures to where the ssa.1 indexes into ssa.0
-		  If I do this, we may also just merge the 'VarData' and 'OverloadSet' types
+	  Download and install boost libraries
+	    Pair down the boost install to what I absolutely need
+	  Work on integrating the changes into the rest of the project
+	    Look into replacing some usages with std::string_view/std::string (particularly arguments)
+		  It's a question of permanence/temporality and generalization
 	Improve 'debuggability' of the 'ast::Path' structure
 	  Need to be able to write out the entire string, not just the last symbol
 	  Rewrite all path log statements to use the new debug string
@@ -46,6 +34,9 @@ Current Project Plan
   Fix code base and other issues (see below)
     Look at shortening the 'spero::compiler::analysis' namespace to 'spero::analysis'
 	Look at moving the 'ScopingContext' decisions/tracking to 'AstVisitor'
+	Upgrade dependencies
+	  Look at using AST functionality in pegtl (https://github.com/taocpp/PEGTL/blob/master/doc/Parse-Tree.md)
+	  Change dependency includes to utilize system paths
   Get functions working properly
     I think the current "abort" errors are due to introducing multiple 'main' labels?
 	  That wouldn't quite explain the interpreter though
@@ -54,6 +45,8 @@ Current Project Plan
     Figure out how to track 'ebp'/etc in order to support the usage of local functions (may be too much for the moment)
 
   Language Logic Checking
+    Check if ':<var>' is (and should be) a legal typing (I don't think so)
+	  Adjust the interpreter accordingly (':XX' are commands)
     Add in checks to prevent assignments to 'super' and 'self'
 	Look into allowing "def Foo = Foo[Int]" type syntax
 	  Reconsider a lot of the grammar for types definition, particularly for specializing generics

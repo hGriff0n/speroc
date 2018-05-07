@@ -72,8 +72,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\Interpreter;C:\Users\ghoop\Documents\GitHub\speroc\dep\asmjit\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
-    <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\asmtk\src\asmtk;C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
+    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\asmjit\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;C:\Users\ghoop\Documents\GitHub\speroc\dep;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\src;$(SourcePath)</SourcePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -84,8 +84,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>C:\Users\ghoop\Documents\GitHub\speroc\dep\_x86_inter\target\release;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\ghoop\Documents\GitHub\speroc\dep\cxxopts\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\asmjit\src;C:\Users\ghoop\Documents\GitHub\speroc\dep\signals\wink;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include;C:\Users\ghoop\Documents\GitHub\speroc\dep\spdlog\include\spdlog;C:\Users\ghoop\Documents\GitHub\speroc\dep\pegtl\include\tao;C:\Users\ghoop\Documents\GitHub\speroc\dep\better-enums;C:\Users\ghoop\Documents\GitHub\speroc\incl;C:\Users\ghoop\Documents\GitHub\speroc\dep;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <SourcePath>C:\Users\ghoop\Documents\GitHub\speroc\src;$(VC_SourcePath);</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -109,6 +109,7 @@
       <FloatingPointExceptions>true</FloatingPointExceptions>
       <EnableModules>true</EnableModules>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,6 +146,8 @@
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <EnableModules>true</EnableModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>C:\Users\ghoop\Documents\GitHub\speroc\dep;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -349,6 +352,12 @@
     <ClInclude Include="dep\asmjit\src\asmjit\x86\x86rapass_p.h" />
     <ClInclude Include="dep\asmjit\src\asmjit\x86\x86ssetoavx_p.h" />
     <ClInclude Include="dep\better-enums\enum.h" />
+    <ClInclude Include="dep\boost\flyweight.hpp" />
+    <ClInclude Include="dep\boost\flyweight\flyweight.hpp" />
+    <ClInclude Include="dep\boost\flyweight\hashed_factory.hpp" />
+    <ClInclude Include="dep\boost\flyweight\refcounted.hpp" />
+    <ClInclude Include="dep\boost\flyweight\simple_locking.hpp" />
+    <ClInclude Include="dep\boost\flyweight\static_holder.hpp" />
     <ClInclude Include="dep\cxxopts\include\cxxopts.hpp" />
     <ClInclude Include="dep\spdlog\include\spdlog\async_logger.h" />
     <ClInclude Include="dep\spdlog\include\spdlog\common.h" />
@@ -398,6 +407,7 @@
     <ClInclude Include="incl\parser\grammar.h" />
     <ClInclude Include="incl\parser\location.h" />
     <ClInclude Include="incl\parser\AstVisitor.h" />
+    <ClInclude Include="incl\spero_string.h" />
     <ClInclude Include="incl\util\analysis.h" />
     <ClInclude Include="incl\util\asmjit.h" />
     <ClInclude Include="incl\util\parser.h" />

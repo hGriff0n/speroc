@@ -1,10 +1,11 @@
 #pragma once
 
+#include <algorithm>
+
 #include "grammar.h"
 #include "interface/CompilationState.h"
 #include "util/parser.h"
-
-#include <algorithm>
+#include "util/strings.h"
 
 /*
  * Simplify rule definition

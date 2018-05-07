@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+
 #include "analysis/SymTable.h"
 
 namespace spero::compiler {

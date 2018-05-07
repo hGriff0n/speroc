@@ -5,10 +5,6 @@
 #include "analysis/VarRefPass.h"
 #include "codegen/AsmGenerator.h"
 
-std::string spero::util::escape(std::string s) {
-	return s;
-}
-
 namespace spero::compiler {
 	using namespace parser;
 

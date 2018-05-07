@@ -2,9 +2,9 @@
 
 #include <variant>
 #include <deque>
-#include <string>
 
-#include "enum.h"
+#include <enum.h>
+
 #include "base.h"
 
 namespace spero::compiler {

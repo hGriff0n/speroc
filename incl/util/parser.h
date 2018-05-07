@@ -1,12 +1,9 @@
 #pragma once
 
-#include <string>
 #include <memory>
 #include <algorithm>
 
 namespace spero::util {
-	std::string escape(std::string);
-
 	template<class Base, class Derived, class T = void>
 	using enable_if_base = std::enable_if_t<std::is_base_of_v<Base, Derived>, T>;
 
