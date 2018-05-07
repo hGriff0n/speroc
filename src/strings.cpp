@@ -1,19 +1,20 @@
 
 #include "util/strings.h"
 
+#include <algorithm>
 #include <cctype>
 #include <deque>
 #include <sstream>
 
 namespace spero::util {
 
-	std::deque<string::backing_type> split(String str, char ch) {
-		std::basic_stringstream<string::char_type> iss(str);
-		std::deque<string::backing_type> ret;
-		string::backing_type in;
+	std::deque<std::string> split(std::string str, char newline_ch) {
+		std::basic_stringstream<std::string::traits_type::char_type> iss(str);
+		std::deque<std::string> ret;
+		std::string in;
 
-		while (std::getline(iss, in, ch)) {
-			// Determine the chunk of the string that isn't space
+		// Determine the chunk of the string that isn't space
+		while (std::getline(iss, in, newline_ch)) {
 			auto front = std::find_if(in.begin(), in.end(), [](int ch) { return !std::isspace(ch); });
 			auto back = std::find_if(front, in.end(), [](int ch) { return std::isspace(ch); });
 
@@ -23,7 +24,7 @@ namespace spero::util {
 		return std::move(ret);
 	}
 
-	String escape(String str) {
+	std::string escape(std::string str) {
 		return str;
 	}
 

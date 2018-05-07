@@ -16,11 +16,7 @@ Current Project Plan
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
     Intern strings inside the compiler state structure (or some other location)
-	  Download and install boost libraries
-	    Pair down the boost install to what I absolutely need
-	  Work on integrating the changes into the rest of the project
-	    Look into replacing some usages with std::string_view/std::string (particularly arguments)
-		  It's a question of permanence/temporality and generalization
+	  Pair down the boost install to what I absolutely need
 	Improve 'debuggability' of the 'ast::Path' structure
 	  Need to be able to write out the entire string, not just the last symbol
 	  Rewrite all path log statements to use the new debug string

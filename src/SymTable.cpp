@@ -11,22 +11,22 @@ namespace spero::compiler::analysis {
 	}
 
 	// Basic accessors and queries
-	ref_t<SymTable::StorageType> SymTable::operator[](std::string key) {
+	ref_t<SymTable::StorageType> SymTable::operator[](const String& key) {
 		return vars[key];
 	}
-	bool SymTable::exists(std::string key) const {
+	bool SymTable::exists(const String& key) const {
 		return vars.count(key) != 0;
 	}
 
 	// Accessor interfaces
-	opt_t<ref_t<SymTable::StorageType>> SymTable::get(std::string key) {
+	opt_t<ref_t<SymTable::StorageType>> SymTable::get(const String& key) {
 		if (exists(key)) {
 			return operator[](key);
 		}
 
 		return std::nullopt;
 	}
-	opt_t<ref_t<SymTable>> SymTable::getScope(std::string key) {
+	opt_t<ref_t<SymTable>> SymTable::getScope(const String& key) {
 		if (auto data = get(key)) {
 			if (auto* table = std::get_if<ref_t<SymTable>>(&data->get())) {
 				return table->get();
@@ -35,7 +35,7 @@ namespace spero::compiler::analysis {
 
 		return std::nullopt;
 	}
-	opt_t<ref_t<SsaVector>> SymTable::getOverloadSet(std::string key) {
+	opt_t<ref_t<SsaVector>> SymTable::getOverloadSet(const String& key) {
 		if (auto data = get(key)) {
 			if (auto* vec = std::get_if<SsaVector>(&data->get())) {
 				return *vec;
@@ -44,14 +44,14 @@ namespace spero::compiler::analysis {
 
 		return std::nullopt;
 	}
-	opt_t<ref_t<VarData>> SymTable::getVariable(std::string key, size_t ssa_id) {
+	opt_t<ref_t<VarData>> SymTable::getVariable(const String& key, size_t ssa_id) {
 		if (auto ssa = getOverloadSet(key); ssa->get().size() > ssa_id) {
 			return ssa->get()[ssa_id];
 		}
 
 		return std::nullopt;
 	}
-	opt_t<SymTable::DataType> SymTable::ssaIndex(std::string key, opt_t<size_t>& index, const Location& loc) {
+	opt_t<SymTable::DataType> SymTable::ssaIndex(const String& key, opt_t<size_t>& index, const Location& loc) {
 		if (auto data = get(key)) {
 			if (auto* vec = std::get_if<SsaVector>(&data->get())) {
 				if (!index) {
@@ -84,7 +84,7 @@ namespace spero::compiler::analysis {
 	}
 
 	// Mutation interfaces
-	bool SymTable::insert(std::string key, VarData value) {
+	bool SymTable::insert(const String& key, VarData value) {
 		if (!exists(key)) {
 			vars[key] = SsaVector{};
 		}
@@ -96,7 +96,7 @@ namespace spero::compiler::analysis {
 
 		return false;
 	}
-	bool SymTable::insert(std::string key, ref_t<SymTable> value) {
+	bool SymTable::insert(const String& key, ref_t<SymTable> value) {
 		if (!exists(key)) {
 			vars[key] = value.get();
 			return true;
@@ -110,7 +110,7 @@ namespace spero::compiler::analysis {
 		insert("super", *(parent = p));
 		curr_ebp_offset = offset_ebp * (p->curr_ebp_offset + (p->numVariables() * 4));
 	}
-	SymTable* SymTable::mostRecentDef(std::string key) {
+	SymTable* SymTable::mostRecentDef(const String& key) {
 		auto* scope = this;
 
 		while (scope && !scope->exists(key)) {
@@ -138,7 +138,7 @@ namespace spero::compiler::analysis {
 			return acc;
 		});
 	}
-	size_t SymTable::count(std::string key) const {
+	size_t SymTable::count(const String& key) const {
 		return vars.count(key);
 	}
 

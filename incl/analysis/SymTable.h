@@ -53,7 +53,7 @@ namespace spero::compiler::analysis {
 		private:
 			SymTable* parent = nullptr;
 
-			std::unordered_map<std::string, StorageType> vars;
+			std::unordered_map<String, StorageType> vars;
 			ScopingContext rules = ScopingContext::SCOPE;
 
 		public:
@@ -61,24 +61,24 @@ namespace spero::compiler::analysis {
 			SymTable();
 			
 			// Basic accessors and queries
-			ref_t<StorageType> operator[](std::string key);
-			bool exists(std::string key) const;
+			ref_t<StorageType> operator[](const String& key);
+			bool exists(const String& key) const;
 
 			// Accessor interfaces
-			opt_t<ref_t<StorageType>> get(std::string key);
-			opt_t<ref_t<SymTable>> getScope(std::string key);
-			opt_t<ref_t<SsaVector>> getOverloadSet(std::string key);
-			opt_t<ref_t<VarData>> getVariable(std::string key, size_t ssa_id);
-			opt_t<DataType> ssaIndex(std::string key, opt_t<size_t>& index, const Location& loc);
+			opt_t<ref_t<StorageType>> get(const String& key);
+			opt_t<ref_t<SymTable>> getScope(const String& key);
+			opt_t<ref_t<SsaVector>> getOverloadSet(const String& key);
+			opt_t<ref_t<VarData>> getVariable(const String& key, size_t ssa_id);
+			opt_t<DataType> ssaIndex(const String& key, opt_t<size_t>& index, const Location& loc);
 
 			// Mutation interfaces
-			bool insert(std::string key, VarData value);
+			bool insert(const String& key, VarData value);
 			// TODO: There's an extra failure case of a symtable already existing
-			bool insert(std::string key, ref_t<SymTable> value);
+			bool insert(const String& key, ref_t<SymTable> value);
 
 			// Analysis interfaces
 			void setParent(SymTable* p, bool offset_ebp = false);
-			SymTable* mostRecentDef(std::string key);
+			SymTable* mostRecentDef(const String& key);
 			void setContextRules(ScopingContext rule);
 			ScopingContext getContextRules() const;
 
@@ -86,7 +86,7 @@ namespace spero::compiler::analysis {
 			size_t size() const;
 			// TODO: Need to rewrite to account for ssa (and drop scopes)
 			size_t numVariables();
-			size_t count(std::string key) const;
+			size_t count(const String& key) const;
 	};
 
 }

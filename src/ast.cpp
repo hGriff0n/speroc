@@ -9,7 +9,7 @@ namespace spero::compiler::ast {
 	std::deque<ptr<T>> MK_DEQUE(ptr<T> e1, ptr<T> e2) { std::deque<ptr<T>> ret; ret.emplace_back(std::move(e1)); ret.emplace_back(std::move(e2)); return std::move(ret); }
 
 	// Helper define to reduce typing
-#define DEF_PRINTER(typ) std::ostream& typ::prettyPrint(std::ostream& s, size_t buf, std::string context)
+#define DEF_PRINTER(typ) std::ostream& typ::prettyPrint(std::ostream& s, size_t buf, std::string_view context)
 
 
 	//
@@ -95,7 +95,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	Byte::Byte(std::string val, int base, Location loc) : Literal{ loc }, val{ std::stoul(val, nullptr, base) } {}
+	Byte::Byte(const std::string& val, int base, Location loc) : Literal{ loc }, val{ std::stoul(val, nullptr, base) } {}
 	void Byte::accept(AstVisitor& v) {
 		v.visitByte(*this);
 	}
@@ -105,7 +105,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	Float::Float(std::string num, Location loc) : Literal{ loc }, val{ std::stof(num) } {}
+	Float::Float(const std::string& num, Location loc) : Literal{ loc }, val{ std::stof(num) } {}
 	void Float::accept(AstVisitor& v) {
 		v.visitFloat(*this);
 	}
@@ -115,7 +115,7 @@ namespace spero::compiler::ast {
 		return ValExpr::prettyPrint(s, buf);
 	}
 
-	Int::Int(std::string num, Location loc) : Literal{ loc }, val{ std::stol(num) } {}
+	Int::Int(const std::string& num, Location loc) : Literal{ loc }, val{ std::stol(num) } {}
 	void Int::accept(AstVisitor& v) {
 		v.visitInt(*this);
 	}
@@ -221,7 +221,7 @@ namespace spero::compiler::ast {
 	// NAMES, BINDINGS, PATTERNS
 	//
 
-	BasicBinding::BasicBinding(std::string str, BindingType type, Location loc)
+	BasicBinding::BasicBinding(spero::String str, BindingType type, Location loc)
 		: Ast{ loc }, name{ str }, type{ type } {}
 	void BasicBinding::accept(AstVisitor& v) {
 		v.visitBasicBinding(*this);
@@ -229,12 +229,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(BasicBinding) {
 		return s << std::string(buf, ' ') << context << "ast.BasicBinding (var=" << name << ", type=" << type._to_string() << ")";
 	}
-	std::string BasicBinding::toString() {
-		return name;
-	}
 
 
-	PathPart::PathPart(std::string str, BindingType type, Location loc)
+	PathPart::PathPart(spero::String str, BindingType type, Location loc)
 		: Ast{ loc }, name{ str }, type{ type } {}
 	void PathPart::accept(AstVisitor& v) {
 		//v.visitBasicBinding(*this);
@@ -932,7 +929,7 @@ namespace spero::compiler::ast {
 		return expr->prettyPrint(s << '\n', buf + 2, "lhs=");
 	}
 
-	BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, std::string op, Location loc)
+	BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, spero::String op, Location loc)
 	: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ op } {}
 	/*BinOpCall::BinOpCall(ptr<ValExpr> lhs, ptr<ValExpr> rhs, ptr<BasicBinding> op, Location loc)
 		: ValExpr{ loc }, lhs{ std::move(lhs) }, rhs{ std::move(rhs) }, op{ std::move(op) } {}*/
@@ -1020,7 +1017,7 @@ namespace spero::compiler::analysis {
 		bool has_next = true;
 
 		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
-		if (!(**front).name.empty()) {
+		if (!(**front).name.get().empty()) {
 			auto* next = current->mostRecentDef((**front).name);
 			value = std::get<ref_t<SymTable>>((*(next ? next : current))["self"].get());
 			has_next = next != nullptr;

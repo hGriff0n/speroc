@@ -1,12 +1,11 @@
 #pragma once
 
 #include <deque>
-
-#include "spero_string.h"
+#include <string>
 
 namespace spero::util {
 
-	std::deque<string::backing_type> split(String str, char ch);
-	String escape(String);
+	std::deque<std::string> split(std::string str, char newline_ch);
+	std::string escape(std::string str);
 	
 }
