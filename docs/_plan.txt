@@ -18,7 +18,6 @@ Current Project Plan
     Intern strings inside the compiler state structure (or some other location)
 	  Pair down the boost install to what I absolutely need
 	Improve 'debuggability' of the 'ast::Path' structure
-	  Need to be able to write out the entire string, not just the last symbol
 	  Rewrite all path log statements to use the new debug string
 	Generalize the tracking of variable location
 	  Look at getting interpreter to support global variables in a separately allocated memory section

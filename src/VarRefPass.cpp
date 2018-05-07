@@ -29,7 +29,7 @@ namespace spero::compiler::analysis {
 			if (testSsaLookupFailure(nvar, iter)) {
 				state.log(ID::err, "Attempt to use variable `{}` before declaration in local scope context <at {}>", v.name->elems.back()->name, v.loc);
 			} else {
-				state.log(ID::err, "Attempt to use undeclared variable `{}` <at {}>", v.name->elems.back()->name, v.loc);
+				state.log(ID::err, "Attempt to use undeclared variable `{}` <at {}>", *v.name, v.loc);
 			}
 
 			return;

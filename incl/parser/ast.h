@@ -352,6 +352,12 @@ namespace spero::compiler::ast {
 		virtual std::ostream& prettyPrint(std::ostream& s, size_t buf, std::string_view context = "");
 	};
 
+	template<class Stream>
+	inline Stream& operator<<(Stream& s, const PathPart& part) {
+		s << part.name;
+		return s;
+	}
+
 	/*
 	 * A fully qualified spero binding. This solution encapsulates the following cases
 	 *   1) Basic bindings (ie. "foo" or "Bar")
@@ -367,6 +373,15 @@ namespace spero::compiler::ast {
 		virtual void accept(AstVisitor& v);
 		virtual std::ostream& prettyPrint(std::ostream& s, size_t buf, std::string_view context = "") final;
 	};
+
+	template<class Stream>
+	inline Stream& operator<<(Stream& s, const Path& loc) {
+		s << *loc.elems.front();
+		for (auto p = std::begin(loc.elems) + 1; p != std::end(loc.elems); ++p) {
+			s << ':' << **p;
+		}
+		return s;
+	}
 
 	/*
 	 * Base class for representing pattern matching expressions
