@@ -17,8 +17,7 @@ Current Project Plan
   Basic Mutability Tracking
     Intern strings inside the compiler state structure (or some other location)
 	  Pair down the boost install to what I absolutely need
-	Improve 'debuggability' of the 'ast::Path' structure
-	  Rewrite all path log statements to use the new debug string
+	  Figure out how to "track" boost in github
 	Generalize the tracking of variable location
 	  Look at getting interpreter to support global variables in a separately allocated memory section
 	    Problem is how to I get the AsmGenerator to "allocate" them to the correct location ???
@@ -32,6 +31,11 @@ Current Project Plan
 	Upgrade dependencies
 	  Look at using AST functionality in pegtl (https://github.com/taocpp/PEGTL/blob/master/doc/Parse-Tree.md)
 	  Change dependency includes to utilize system paths
+	Run through "Language Logic Checking"
+	Run through "Code Quality Improvements"
+	Run through "Improve error/exception handling and reporting"
+  Figure out what to prioritize next
+    I have stuff down below for types and for functions (github board says to prioritize types next)
   Get functions working properly
     I think the current "abort" errors are due to introducing multiple 'main' labels?
 	  That wouldn't quite explain the interpreter though
@@ -80,9 +84,6 @@ Current Project Plan
 	Simplify the commands available within the repl
 	  Also simplify the control path if possible
 	  Might want to switch commands to '::' syntax (as ':' may end up being the global scope accessor)
-
-  Convert to clang/llvm backend
-	Integrate in the llvm compiler library
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)

@@ -27,7 +27,7 @@ namespace spero::compiler::analysis {
 
 		if (iter != std::end(v.name->elems)) {
 			if (testSsaLookupFailure(nvar, iter)) {
-				state.log(ID::err, "Attempt to use variable `{}` before declaration in local scope context <at {}>", v.name->elems.back()->name, v.loc);
+				state.log(ID::err, "Attempt to use variable `{}` before declaration in local scope context <at {}>", *v.name, v.loc);
 			} else {
 				state.log(ID::err, "Attempt to use undeclared variable `{}` <at {}>", *v.name, v.loc);
 			}
@@ -36,7 +36,7 @@ namespace spero::compiler::analysis {
 		}
 
 		if (!std::holds_alternative<ref_t<VarData>>(*nvar)) {
-			state.log(ID::err, "Attempt to use non-variable symbol `{}` as a variable <at {}>", v.name->elems.back()->name, v.loc);
+			state.log(ID::err, "Attempt to use non-variable symbol `{}` as a variable <at {}>", *v.name, v.loc);
 		}
 	}
 
@@ -58,7 +58,7 @@ namespace spero::compiler::analysis {
 				// We do need to perform this check, because it is done in the same pass as `visitVariable` (we can't determine whether it succeeded)
 			if (iter == std::end(lhs->name->elems)) {
 				if (auto* var = std::get_if<ref_t<VarData>>(&*variable); !var->get().is_mut) {
-					state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", lhs->name->elems.back()->name, lhs->loc);
+					state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", *lhs->name, lhs->loc);
 				}
 			}
 		}

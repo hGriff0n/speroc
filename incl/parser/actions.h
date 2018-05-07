@@ -1060,9 +1060,7 @@ namespace spero::parser::actions {
 		POP(Token);
 		auto loc = util::view_as<ast::Path>(s.back())->loc;
 
-		// TODO: Provide better context (ie. why must I provide a new name?)
-			// Either because an "as" was used, or the imported name is (directly) generic instantiated
-		state.log(compiler::ID::err, "Rebind context must provide a new name <at {}>", loc);
+		state.log(compiler::ID::err, "Cannot rebind symbol as `{}` <at {}>", *util::view_as<ast::Path>(s.back()), loc);
 		PUSH(SingleImport, POP(Path));
 		// stack: Path
 	} END;
