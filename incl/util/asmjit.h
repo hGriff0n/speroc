@@ -3,6 +3,7 @@
 #define ASMJIT_DISABLE_COMPILER
 #undef ASMJIT_EMBED
 #define ASMJIT_BUILD_EMBED
+
 #include <asmjit\asmjit.h>
 
 // Provides a more uniform interface for usage of asmjit structures

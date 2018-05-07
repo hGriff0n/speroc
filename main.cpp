@@ -11,7 +11,7 @@
 template <class Stream>
 Stream& getMultiline(Stream& in, std::string& s);
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
-void printAssembly(spero::compiler::gen::Assembler& asmCode);
+void printAssembly(spero::compiler::gen::Assembler& asm_code);
 
 // Helper function to run the interactive mode
 void run_interpreter(spero::compiler::CompilationState& state, int& argc, char** argv) {

@@ -44,6 +44,7 @@ namespace spero::compiler::analysis {
 
 			// Atoms
 			virtual void visitBlock(ast::Block&) final;
+			// NOTE: Assign the body's symbol table before visiting the arguments (should automatically scope them)
 			//virtual void visitFunction(ast::Function&) final;
 
 			// Names

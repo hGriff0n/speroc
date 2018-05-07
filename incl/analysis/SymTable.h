@@ -51,7 +51,7 @@ namespace spero::compiler::analysis {
 			using DataType = std::variant<ref_t<VarData>, ref_t<SymTable>>;
 
 		private:
-			SymTable * parent = nullptr;
+			SymTable* parent = nullptr;
 
 			std::unordered_map<std::string, StorageType> vars;
 			ScopingContext rules = ScopingContext::SCOPE;

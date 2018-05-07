@@ -421,7 +421,7 @@ namespace spero::parser::actions {
 		}
 
 		if (!util::at_node<ast::TupleType>(s)) {
-			PUSH_NODE(TupleType)
+			PUSH(TupleType, std::deque<ptr<ast::Type>>{});
 			state.log(compiler::ID::err, "Missing required argument type information <fn_type at {}>", LOCATION);
 		}
 
