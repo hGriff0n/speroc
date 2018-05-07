@@ -26,8 +26,12 @@ namespace spero::compiler::analysis {
 			int location;
 			bool is_static;
 		};
+		// Primarily for reasoning about function arguments (which may be passed in register)
+		struct Register {
+			// TODO: Figure out a way to specify which register
+		};
 
-		using Locations = std::variant<Stack, Member, Global>;
+		using Locations = std::variant<Stack, Member, Global, Register>;
 	}
 
 }
