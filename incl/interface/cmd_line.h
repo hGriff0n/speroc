@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cxxopts.hpp"
+#include <cxxopts.hpp>
 #include <tuple>
 
 #include "CompilationState.h"
@@ -8,7 +8,8 @@
 namespace spero {
 	namespace cmd {
 		// Parse the entire command line into the default compilation state
-		compiler::OptionState<cxxopts::Options> parse(int& argc, char**& argv);
+		cxxopts::Options getOptions();
+		compiler::OptionState<cxxopts::ParseResult> parse(cxxopts::Options& opts, int& argc, char**& argv);
 
 		//TODO:
 		// Need object to represent compile state (the command args)

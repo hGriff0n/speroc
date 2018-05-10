@@ -18,7 +18,7 @@ namespace spero::analysis {
 	 */
 	struct VarData {
 		compiler::Location src;
-		bool is_mut;
+		bool is_mut = false;
 
 		memory::Locations storage;
 

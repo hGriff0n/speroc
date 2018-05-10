@@ -14,16 +14,8 @@ Current Project Plan
   Convert all x86 touching code over to using AsmJit
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
-  Basic Mutability Tracking
-	Generalize the tracking of variable location
-	  Look at getting interpreter to support global variables in a separately allocated memory section
-	    Problem is how to I get the AsmGenerator to "allocate" them to the correct location ???
-	  Adapt the interpreter to support "re-entrant" evaluation
   Fix code base and other issues (see below)
-	Look at moving the 'ScopingContext' decisions/tracking to 'AstVisitor'
-	Upgrade dependencies
-	  Look at using AST functionality in pegtl (https://github.com/taocpp/PEGTL/blob/master/doc/Parse-Tree.md)
-	  Change dependency includes to utilize system paths
+	Look at using AST functionality in pegtl (https://github.com/taocpp/PEGTL/blob/master/doc/Parse-Tree.md)
 	Run through "Language Logic Checking"
 	Run through "Code Quality Improvements"
 	Run through "Improve error/exception handling and reporting"
@@ -35,6 +27,18 @@ Current Project Plan
 	  Add some special interpreter checks, restrictions and handling
 	    Don't allow definition or calling of "main"
     Figure out how to track 'ebp'/etc in order to support the usage of local functions (may be too much for the moment)
+	Enable re-entrant evaluation within the interpreter
+	  Adapt the compiler data structures to track global definitions across "runs"
+	  Add in consideration of global storage location into variable allocations
+	    Modify jit-ing code to "reserve" a chunk of memory for storing global variables
+		Pass a pointer to this location into the 'AsmGenerator' structure
+		  May want to look at generalizing this a bit more (not sure of how well this interacts with compiled binaries)
+		Adapt AsmGenerator code to differentiate between global and local variables
+	  Modify the general compilation case to enable global variables
+	    Figure out how this is done in assembly files
+	  Improve the process for "storing" functions across runs
+	    We can write the used functions every run, or we can write them once to the global pool (both work)
+		  However both have their drawbacks that indicate we probably want to handle functions slightly differently
 
   Language Logic Checking
     Check if ':<var>' is (and should be) a legal typing (I don't think so)

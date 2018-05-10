@@ -1,4 +1,5 @@
 #include "interface/cmd_line.h"
+
 #include <vector>
 
 namespace spero::cmd {
@@ -23,10 +24,11 @@ namespace spero::cmd {
 			("target", "Set the compilation target", value<std::string>()->default_value("win10"))
 			("o,out", "Specify output file", value<std::string>()->default_value("out.exe"));
 
+
 		return std::move(opts);
 	}
 
-	compiler::OptionState<cxxopts::Options> parse(int& argc, char**& argv) {
+	compiler::OptionState<cxxopts::ParseResult> parse(cxxopts::Options& opts, int& argc, char**& argv) {
 		// Automatically add in "interactive" and "nodel" flags for debug running
 		if (argc == 1) {
 			argc = 3;
@@ -34,11 +36,10 @@ namespace spero::cmd {
 		}
 
 		// Use the cxxopts library to parse out basic interfaces
-		auto opts = getOptions();
-		opts.parse(argc, argv);
+		auto res = opts.parse(argc, argv);
 
 		// Construct the compilation state
-		compiler::OptionState<cxxopts::Options> state{ argv + 1, argv + argc, std::move(opts) };
+		compiler::OptionState<decltype(res)> state{ argv + 1, argv + argc, std::move(res) };
 		argc = 1;
 
 		// init state

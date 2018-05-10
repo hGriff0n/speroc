@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+
 namespace spero::util {
 
 	template<class T>

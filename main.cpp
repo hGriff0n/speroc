@@ -14,7 +14,7 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
 void printAssembly(spero::compiler::gen::Assembler& asm_code);
 
 // Helper function to run the interactive mode
-void run_interpreter(spero::compiler::CompilationState& state, int& argc, char** argv) {
+void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& state, int& argc, char** argv) {
 	using namespace spero;
 	using namespace spero::parser;
 	using compiler::ID;
@@ -59,7 +59,7 @@ void run_interpreter(spero::compiler::CompilationState& state, int& argc, char**
 					argv[argc++] = const_cast<char*>(arg.c_str());
 				}
 
-				state = cmd::parse(argc, argv);
+				state = cmd::parse(opts, argc, argv);
 
 			// Set an interactive flag
 			} else if (command == ":s") {
@@ -125,7 +125,8 @@ int main(int argc, char* argv[]) {
 	using namespace spero;
 
 	// Parse the command line arguments
-	auto state = cmd::parse(argc, argv);
+	auto opts = cmd::getOptions();
+	auto state = cmd::parse(opts, argc, argv);
 
 	// Compiler run
 	if (!state.opts["interactive"].as<bool>()) {
@@ -141,7 +142,7 @@ int main(int argc, char* argv[]) {
 
 	// Interactive mode
 	} else {
-		return run_interpreter(state, argc, argv), 0;
+		return run_interpreter(opts, state, argc, argv), 0;
 	}
 }
 
