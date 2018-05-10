@@ -12,22 +12,22 @@ using opt_t = std::optional<T>;
 template<class T>
 using ref_t = std::reference_wrapper<T>;
 
-namespace spero::compiler::analysis {
+namespace spero::analysis {
 	/*
      * Specifies the data relevant for analysis of Spero variables
 	 */
 	struct VarData {
-		Location src;
+		compiler::Location src;
 		bool is_mut;
 
-		analysis::memory::Locations storage;
+		memory::Locations storage;
 
 		// TODO: Not sure about these (using too many pointers)
 		//ast::Ast* definition = nullptr;
 		//std::vector<ast::Ast*> usages;
 
-		VarData(Location s, bool mut) : VarData{ s, mut, analysis::memory::Stack{} } {}
-		VarData(Location s, bool mut, analysis::memory::Locations loc) : src{ s }, is_mut{ mut }, storage{ loc } {}
+		VarData(compiler::Location s, bool mut) : VarData{ s, mut, analysis::memory::Stack{} } {}
+		VarData(compiler::Location s, bool mut, memory::Locations loc) : src{ s }, is_mut{ mut }, storage{ loc } {}
 	};
 
 	/*
@@ -69,7 +69,7 @@ namespace spero::compiler::analysis {
 			opt_t<ref_t<SymTable>> getScope(const String& key);
 			opt_t<ref_t<SsaVector>> getOverloadSet(const String& key);
 			opt_t<ref_t<VarData>> getVariable(const String& key, size_t ssa_id);
-			opt_t<DataType> ssaIndex(const String& key, opt_t<size_t>& index, const Location& loc);
+			opt_t<DataType> ssaIndex(const String& key, opt_t<size_t>& index, const compiler::Location& loc);
 
 			// Mutation interfaces
 			bool insert(const String& key, VarData value);

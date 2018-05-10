@@ -1,8 +1,10 @@
 #include "analysis/VarRefPass.h"
 
-namespace spero::compiler::analysis {
+namespace spero::analysis {
 
-	VarRefPass::VarRefPass(compiler::CompilationState& state, std::unique_ptr<SymTable> table) : globals{ std::move(table) }, state{ state } {
+	using namespace compiler;
+
+	VarRefPass::VarRefPass(CompilationState& state, std::unique_ptr<SymTable> table) : globals{ std::move(table) }, state{ state } {
 		current = globals.get();
 	}
 

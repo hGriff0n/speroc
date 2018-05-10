@@ -1360,10 +1360,10 @@ namespace spero::compiler::ast {
 	};
 }
 
-namespace spero::compiler::analysis {
+namespace spero::analysis {
 
 	// If lookup succeeds, then the returned iterator is equal to `std::end(var_path.elems)`
-	std::tuple<opt_t<SymTable::DataType>, ast::Path::iterator> lookup(SymTable& globals, SymTable* current, ast::Path& var_path);
-	bool testSsaLookupFailure(opt_t<SymTable::DataType>& lookup_result, ast::Path::iterator& iter);
+	std::tuple<opt_t<SymTable::DataType>, compiler::ast::Path::iterator> lookup(SymTable& globals, SymTable* current, compiler::ast::Path& var_path);
+	bool testSsaLookupFailure(opt_t<SymTable::DataType>& lookup_result, compiler::ast::Path::iterator& iter);
 
 }

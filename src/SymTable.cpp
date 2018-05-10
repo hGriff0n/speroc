@@ -4,7 +4,7 @@
 #include <numeric>
 #include <string>
 
-namespace spero::compiler::analysis {
+namespace spero::analysis {
 
 	SymTable::SymTable() {
 		insert("self", *this);
@@ -51,7 +51,7 @@ namespace spero::compiler::analysis {
 
 		return std::nullopt;
 	}
-	opt_t<SymTable::DataType> SymTable::ssaIndex(const String& key, opt_t<size_t>& index, const Location& loc) {
+	opt_t<SymTable::DataType> SymTable::ssaIndex(const String& key, opt_t<size_t>& index, const compiler::Location& loc) {
 		if (auto data = get(key)) {
 			if (auto* vec = std::get_if<SsaVector>(&data->get())) {
 				if (!index) {

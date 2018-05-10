@@ -2,7 +2,7 @@
 
 #include "enum.h"
 
-namespace spero::compiler::analysis {
+namespace spero::analysis {
 	
 	/*
 	 * Enum class for specifying the scoping context of the current analysis focus

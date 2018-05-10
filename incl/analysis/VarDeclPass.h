@@ -4,7 +4,7 @@
 #include "interface/CompilationState.h"
 #include "util/analysis.h"
 
-namespace spero::compiler::analysis {
+namespace spero::analysis {
 
 	/*
 	 * Ast pass that collects all symbol declarations and introductions (where is it defined)
@@ -14,7 +14,7 @@ namespace spero::compiler::analysis {
 	 *   Cross check that vector against all declarations before quitting the block/etc.
 	 *   May need a bit of work to handle 'SSA' renaming (but all such cases should be the first instance, so just add '0' to the name)
 	 */
-	class VarDeclPass : public ast::AstVisitor {
+	class VarDeclPass : public compiler::ast::AstVisitor {
 		compiler::CompilationState& state;
 
 		// Since SymTables can contain references to other symtables, the addresses need to stay relatively set
@@ -43,12 +43,12 @@ namespace spero::compiler::analysis {
 			//virtual void visitSourceType(ast::SourceType&) final;
 
 			// Atoms
-			virtual void visitBlock(ast::Block&) final;
+			virtual void visitBlock(compiler::ast::Block&) final;
 			// NOTE: Assign the body's symbol table before visiting the arguments (should automatically scope them)
 			//virtual void visitFunction(ast::Function&) final;
 
 			// Names
-			virtual void visitAssignName(ast::AssignName&) final;
+			virtual void visitAssignName(compiler::ast::AssignName&) final;
 			//virtual void visitAssignTuple(ast::AssignTuple&) final;
 			//virtual void visitTuplePattern(ast::TuplePattern&) final;
 			//virtual void visitVarPattern(ast::VarPattern&) final;
@@ -59,7 +59,7 @@ namespace spero::compiler::analysis {
 			//virtual void visitCase(ast::Case&) final;
 
 			// Statements
-			virtual void visitInAssign(ast::InAssign&) final;
+			virtual void visitInAssign(compiler::ast::InAssign&) final;
 			//virtual void visitModDec(ast::ModDec&) final;
 			//virtual void visitModRebindImport(ast::ModRebindImport&) final;
 			//virtual void visitSingleImport(ast::SingleImport&) final;
@@ -67,7 +67,7 @@ namespace spero::compiler::analysis {
 			//virtual void visitRebind(ast::Rebind&) final;
 			//virtual void visitInterface(ast::Interface&) final;
 			//virtual void visitTypeAssign(ast::TypeAssign&) final;
-			virtual void visitVarAssign(ast::VarAssign&) final;
+			virtual void visitVarAssign(compiler::ast::VarAssign&) final;
 			//virtual void visitTypeExtension(ast::TypeExtension&) final;
 	};
 

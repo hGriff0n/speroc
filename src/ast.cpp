@@ -1008,10 +1008,10 @@ namespace spero::compiler::ast {
 
 }
 
-namespace spero::compiler::analysis {
+namespace spero::analysis {
 
 	using LookupType = opt_t<SymTable::DataType>;
-	std::tuple<LookupType, ast::Path::iterator> lookup(SymTable& globals, SymTable* current, ast::Path& var_path) {
+	std::tuple<LookupType, compiler::ast::Path::iterator> lookup(SymTable& globals, SymTable* current, compiler::ast::Path& var_path) {
 		auto[front, end] = util::range(var_path.elems);
 		LookupType value = std::nullopt;
 		bool has_next = true;
@@ -1049,7 +1049,7 @@ namespace spero::compiler::analysis {
 	}
 
 	// If Ssa lookup fails, then the key exists but the ssa_id was never set
-	bool testSsaLookupFailure(LookupType& lookup_result, ast::Path::iterator& iter) {
+	bool testSsaLookupFailure(LookupType& lookup_result, compiler::ast::Path::iterator& iter) {
 		if (lookup_result) {
 			if (auto* table = std::get_if<ref_t<SymTable>>(&*lookup_result)) {
 				return table->get().exists((**iter).name) && !(**iter).ssa_id;

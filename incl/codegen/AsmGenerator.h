@@ -16,14 +16,14 @@ namespace spero::compiler::gen {
 	// class AsmGenerator : public ast::AstVisitor<Assembler> {
 	class AsmGenerator : public ast::AstVisitor {
 		Assembler emit;
-		compiler::CompilationState& state;
+		CompilationState& state;
 
 		std::unique_ptr<analysis::SymTable> globals;
 		analysis::SymTable* current = nullptr;
 
 		public:
 			// The constructor should expect the data from the last pass (template parameter?)
-			AsmGenerator(std::unique_ptr<analysis::SymTable> globals, compiler::CompilationState& state);
+			AsmGenerator(std::unique_ptr<analysis::SymTable> globals, CompilationState& state);
 			Assembler finalize();
 
 			// Literals

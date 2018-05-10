@@ -15,18 +15,11 @@ Current Project Plan
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Basic Mutability Tracking
-    Intern strings inside the compiler state structure (or some other location)
-	  Pair down the boost install to what I absolutely need
-	  Figure out how to "track" boost in github
 	Generalize the tracking of variable location
 	  Look at getting interpreter to support global variables in a separately allocated memory section
 	    Problem is how to I get the AsmGenerator to "allocate" them to the correct location ???
 	  Adapt the interpreter to support "re-entrant" evaluation
-	Write in the documentation that compound assignment is not an in-built part of the language
-	  At any rate, if the semantics are desirable, the operator overloading system can nominally handle it
-	    There are still some issues with typing and binding direction
   Fix code base and other issues (see below)
-    Look at shortening the 'spero::compiler::analysis' namespace to 'spero::analysis'
 	Look at moving the 'ScopingContext' decisions/tracking to 'AstVisitor'
 	Upgrade dependencies
 	  Look at using AST functionality in pegtl (https://github.com/taocpp/PEGTL/blob/master/doc/Parse-Tree.md)
@@ -84,6 +77,11 @@ Current Project Plan
 	Simplify the commands available within the repl
 	  Also simplify the control path if possible
 	  Might want to switch commands to '::' syntax (as ':' may end up being the global scope accessor)
+	Pair down the boost install to what I absolutely need
+	Look at changing style to "auto ->" return types
+	  Eric Niebler has a neat style I could copy (the return type goes on the next line, then the next line is the open brace)
+	Update codebase to use Visual 15.7 features where possible
+	  Modules, template<auto>, template deduction for classes
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)

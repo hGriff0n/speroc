@@ -1,8 +1,10 @@
 #include "analysis/VarDeclPass.h"
 
-namespace spero::compiler::analysis {
+namespace spero::analysis {
 
-	VarDeclPass::VarDeclPass(compiler::CompilationState& state) : globals{ std::make_unique<SymTable>() }, state{ state } {
+	using namespace compiler;
+
+	VarDeclPass::VarDeclPass(CompilationState& state) : globals{ std::make_unique<SymTable>() }, state{ state } {
 		current = globals.get();
 	}
 
