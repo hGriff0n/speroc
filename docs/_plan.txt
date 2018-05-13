@@ -15,12 +15,18 @@ Current Project Plan
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Fix code base and other issues (see below)
-	Look at using AST functionality in pegtl (https://github.com/taocpp/PEGTL/blob/master/doc/Parse-Tree.md)
 	Run through "Language Logic Checking"
 	Run through "Code Quality Improvements"
 	Run through "Improve error/exception handling and reporting"
-  Figure out what to prioritize next
-    I have stuff down below for types and for functions (github board says to prioritize types next)
+  Get basic type system support up and running
+	Doing some basic work with types will be good
+	  Type checking, type representation (both in the compiler and in memory), value type-inference (infer type from assignment only)
+	    Explicit annotations, internal state for representing expression types, make '.3' produce an error
+	  (Maybe) tuples, floats, booleans
+	  (Probably not) complete type inference (too complicated), strings (would require library support, unsure of design)
+  Fix grammar and ast properties
+    Require directly affixing pointers and references to types
+    Allow anon_type to be attached after 'var_val/atom' rules)
   Get functions working properly
     I think the current "abort" errors are due to introducing multiple 'main' labels?
 	  That wouldn't quite explain the interpreter though
@@ -41,9 +47,9 @@ Current Project Plan
 		  However both have their drawbacks that indicate we probably want to handle functions slightly differently
 
   Language Logic Checking
-    Check if ':<var>' is (and should be) a legal typing (I don't think so)
+    Check if ':<var>' is (and should be) a legal typing
+	  Another option is to reserve a keyword (such as "__global__")
 	  Adjust the interpreter accordingly (':XX' are commands)
-    Add in checks to prevent assignments to 'super' and 'self'
 	Look into allowing "def Foo = Foo[Int]" type syntax
 	  Reconsider a lot of the grammar for types definition, particularly for specializing generics
     Determine how "Array[Int, a]" would be resolved if a is a global constant
@@ -58,16 +64,12 @@ Current Project Plan
       Find a way to make indexing really trivial (ie. reduce the number of rewrites)
       Thinking is whether I can find a way to cast 'mut' as a monad/HKT parameter
         The guess is you'd then be able to 'map' over it or something like that
-	Figure out if ".3" should be an error or be an forwarded function
 	Look at adding in a check for when an InAssign statement shadows a variable
 	Improve documentation, make sure it's up-to-date
-	  Add "accepted change" to require pointer styling to be connected to type name (grammar currently adds a 'ig_s' after)
 	  Write down how function forwarding is going to be determined in lambdas
 	    Utilize the same analysis pass that converts `plambda` to function declaration
-    Add "accepted change" to modify the grammar to allow for 'anon_type' to be attached to `var_val`/`atom` calls (for metaprogramming)
-	    Basically remove the requirement to have "Foo() :: {}", instead allow "Foo :: {}"
-		NOTE: This should enable easy type creation syntax (look out for possible interactions here too)
 	Work on language tutorial/introduction
+
   Convert to using a tri-code IR (ie. max two operands to any instruction)
 	Backend stage would take this IR and optimize it to produce the final assembly
 	The current 'assembly' stage would be replaced with an IR-generation stage
@@ -85,7 +87,8 @@ Current Project Plan
 	Look at changing style to "auto ->" return types
 	  Eric Niebler has a neat style I could copy (the return type goes on the next line, then the next line is the open brace)
 	Update codebase to use Visual 15.7 features where possible
-	  Modules, template<auto>, template deduction for classes
+	  template<auto>, template deduction for classes
+	  https://docs.microsoft.com/en-us/visualstudio/releasenotes/vs2017-relnotes#15.7
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
@@ -94,16 +97,10 @@ Current Project Plan
     Add a better interaction between the ast classes and the logging system
       Improve the logging system while I'm at it
 	Add in phase timing support using a 'PhaseTimer' style interface (see `compile` for usage)
+	Modify the grammar to support unicode
+
   Improve "help" support
     Look into adding "code of conduct"
-
-  Basic Types
-    Add in tracking of variable/value types within the AST
-	  Ensure that 'malformed' expressions can throw up type errors
-	Add in handling of explicit annotations for automatically setting the types 
-      Ensure these explicit annotations throw up errors on unrecognized types
-    Add in unsigned integers, boolean, and float types
-	  Extend assembly interpreter with floating point instructions
 
   Basic Function Definition
     Update x86_interpreter/codegen to be able to specify start instruction

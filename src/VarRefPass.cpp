@@ -52,6 +52,12 @@ namespace spero::analysis {
 				return;
 			}
 
+			auto& most_qualified_part = lhs->name->elems.back()->name;
+			if (most_qualified_part == "self" || most_qualified_part == "super") {
+				state.log(ID::err, "Attempt to reassign `{}` keyword <at {}>", most_qualified_part, lhs->loc);
+				return;
+			}
+
 			// Perform all the necessary checks for reassignment
 			auto[variable, iter] = lookup(*globals, current, *lhs->name);
 
