@@ -1,4 +1,4 @@
-speroc ver 0.4.1 - The reference compiler for the spero language
+speroc v0.4.2 - The reference compiler for the spero language
 
 # Current Project Status
 
@@ -32,11 +32,13 @@ Be sure to comment in the issue if you have any questions.
     cxxopts: Cmd-line parsing
 	spdlog: Logging and error reporting
     asmjit: Assembly interaction framework (codegen)
-	  NOTE: Using a custom fork that adds move semantics
+	  NOTE: Currently using a custom fork that adds move semantics
     clang: Executable production and linking
+    boost:
+      flyweight - string interning engine
 
 Project Info:
 
-    size: 4259 sloc
-    files: 11 .cpp, 19 .h, 3 .rb
+    size: 4309 sloc
+    files: 11 .cpp, 20 .h, 3 .rb
 

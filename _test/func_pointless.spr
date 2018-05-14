@@ -1,5 +1,5 @@
 
 
-def add = (Int, Int) -> +
-# def add = () -> +
+def add = (Int, Int) -> .+()
+# def add = +
 def main = () -> add(3, 4)

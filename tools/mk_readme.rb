@@ -11,7 +11,7 @@ yaml_file = "./docs/version.yaml"
 ver = YAML.load_file(yaml_file)
 File.open("./README.md", "w") do |readme|
     # Semantic versioning (TODO: Determine how to autoupdate)
-    readme.puts "speroc ver #{ver['major']}.#{ver['minor']}.#{ver['patch']} - The reference compiler for the spero language"
+    readme.puts "speroc v#{ver['major']}.#{ver['minor']}.#{ver['patch']} - The reference compiler for the spero language"
 
     # Move over the custom readme information into the public readme
     readme.puts ""

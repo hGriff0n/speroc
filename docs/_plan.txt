@@ -15,7 +15,6 @@ Current Project Plan
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Fix code base and other issues (see below)
-	Run through "Language Logic Checking"
 	Run through "Code Quality Improvements"
 	Run through "Improve error/exception handling and reporting"
   Get basic type system support up and running
@@ -33,6 +32,7 @@ Current Project Plan
 	  Add some special interpreter checks, restrictions and handling
 	    Don't allow definition or calling of "main"
     Figure out how to track 'ebp'/etc in order to support the usage of local functions (may be too much for the moment)
+	  Fix the issues with 'stack allocation' due to `main` (see `SymTable::setParent`)
 	Enable re-entrant evaluation within the interpreter
 	  Adapt the compiler data structures to track global definitions across "runs"
 	  Add in consideration of global storage location into variable allocations
@@ -52,7 +52,7 @@ Current Project Plan
 	  Adjust the interpreter accordingly (':XX' are commands)
 	Look into allowing "def Foo = Foo[Int]" type syntax
 	  Reconsider a lot of the grammar for types definition, particularly for specializing generics
-    Determine how "Array[Int, a]" would be resolved if a is a global constant
+    Determine how "Array[Int, a]" would be resolved if a is a global constant (in the context of specialization)
 	Figure out contexts to interpret "a :: T" as a type-check and not an annotation
     Figure out what type system I want to support
 	  Ensure that it can be type-checked with the algebraic subtyping paper
@@ -64,7 +64,7 @@ Current Project Plan
       Find a way to make indexing really trivial (ie. reduce the number of rewrites)
       Thinking is whether I can find a way to cast 'mut' as a monad/HKT parameter
         The guess is you'd then be able to 'map' over it or something like that
-	Look at adding in a check for when an InAssign statement shadows a variable
+	  Find an interface that incourages slices (good range interop)
 	Improve documentation, make sure it's up-to-date
 	  Write down how function forwarding is going to be determined in lambdas
 	    Utilize the same analysis pass that converts `plambda` to function declaration
@@ -95,9 +95,10 @@ Current Project Plan
 	Move 'compiler' exceptions from log-level to error-level
 	  Add in 'error indices' and automatic message population capbilities
     Add a better interaction between the ast classes and the logging system
-      Improve the logging system while I'm at it
+      Improve the logging system while I'm at it (different log outputs, linked/combined loggers, etc.)
 	Add in phase timing support using a 'PhaseTimer' style interface (see `compile` for usage)
-	Modify the grammar to support unicode
+	Modify the grammar to support unicode in strings
+	  Look into allowing unicode in variable names
 
   Improve "help" support
     Look into adding "code of conduct"

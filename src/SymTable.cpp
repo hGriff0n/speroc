@@ -109,6 +109,12 @@ namespace spero::analysis {
 	void SymTable::setParent(SymTable* p, bool offset_ebp) {
 		insert("super", *(parent = p));
 		curr_ebp_offset = offset_ebp * (p->curr_ebp_offset + (p->numVariables() * 4));
+
+		// TODO: Hack to prevent stack allocation from considering "main" as a variable
+		// This causes variables to be incorrectly offset within assembly accesses
+		if (p->exists("main")) {
+			curr_ebp_offset -= 4;
+		}
 	}
 	SymTable* SymTable::mostRecentDef(const String& key) {
 		auto* scope = this;
