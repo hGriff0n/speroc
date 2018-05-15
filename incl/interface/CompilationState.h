@@ -53,8 +53,7 @@ namespace spero::compiler {
 			template<class... Args>
 			void log(ID msg_id, const char* fmt, Args&&... args) {
 				// Eventual Basic Code Flow for this function: logger(msg_id).log(level(msg_id), fmt, std::forward<Args>(args)...);
-				if (msg_id == ID::err) { ++nerrs; }
-
+				nerrs += (msg_id == ID::err);
 				getLogger(msg_id).log(msg_id, fmt, std::forward<Args>(args)...);
 			}
 

@@ -6,7 +6,8 @@
 
 namespace spero::compiler {
 	// Cut down on typing for unique_ptr
-	template<class T> using ptr = std::unique_ptr<T>;
+	template<class T>
+	using ptr = std::unique_ptr<T>;
 }
 
 namespace spero::compiler::ast {

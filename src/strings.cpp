@@ -9,7 +9,7 @@
 namespace spero::util {
 
 	std::deque<std::string> split(std::string str, char newline_ch) {
-		std::basic_stringstream<std::string::traits_type::char_type> iss(str);
+		std::basic_stringstream iss(str);
 		std::deque<std::string> ret;
 		std::string in;
 

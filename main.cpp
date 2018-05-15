@@ -8,10 +8,11 @@
 #include "interface/cmd_line.h"
 #include "util/strings.h"
 
-template <class Stream>
+template<class Stream>
 Stream& getMultiline(Stream& in, spero::string::backing_type& s);
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
 void printAssembly(spero::compiler::gen::Assembler& asm_code);
+
 
 // Helper function to run the interactive mode
 void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& state, int& argc, char** argv) {
@@ -28,7 +29,9 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 
 			// Compile a file
 			if (auto command = input.substr(0, 2); command == ":c") {
-				if (state.files().size() == 0) { state.files().push_back(""); }
+				if (state.files().size() == 0) {
+					state.files().push_back("");
+				}
 				state.files()[0] = input.substr(3);
 
 				compile(state, res);
@@ -43,7 +46,9 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 
 			// Load and parse a file
 			} else if (command == ":l") {
-				if (state.files().size() == 0) { state.files().push_back(""); }
+				if (state.files().size() == 0) {
+					state.files().push_back("");
+				}
 				state.files()[0] = input.substr(3);
 				res = compiler::parseFile(state.files()[0], state);
 
@@ -154,7 +159,7 @@ int main(int argc, char* argv[]) {
  * TODO: It may be beneficial to move this to a separate file
  */
 // Wrapper around std::getline that waits for [ENTER] to be hit twice before accepting input
-template <class Stream>
+template<class Stream>
 Stream& getMultiline(Stream& in, spero::string::backing_type& out_str) {
 	std::getline(in, out_str);
 	if (out_str == ":q") {

@@ -39,7 +39,7 @@ namespace spero::cmd {
 		auto res = opts.parse(argc, argv);
 
 		// Construct the compilation state
-		compiler::OptionState<decltype(res)> state{ argv + 1, argv + argc, std::move(res) };
+		compiler::OptionState state{ argv + 1, argv + argc, std::move(res) };
 		argc = 1;
 
 		// init state

@@ -9,7 +9,7 @@ namespace spero::util {
 		auto front = std::begin(collection);
 		auto end = std::end(collection);
 
-		return std::pair<decltype(front), decltype(end)>{ std::move(front), std::move(end) };
+		return std::pair{ std::move(front), std::move(end) };
 	}
 
 }

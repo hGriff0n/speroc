@@ -28,7 +28,7 @@ namespace spero::analysis {
 		ScopingContext context = ScopingContext::GLOBAL;
 
 		public:
-			VarDeclPass(compiler::CompilationState&);
+			VarDeclPass(compiler::CompilationState& state);
 			std::unique_ptr<SymTable> finalize();
 
 			// Decorations

@@ -26,8 +26,8 @@ namespace spero::analysis {
 		//ast::Ast* definition = nullptr;
 		//std::vector<ast::Ast*> usages;
 
-		VarData(compiler::Location s, bool mut) : VarData{ s, mut, analysis::memory::Stack{} } {}
-		VarData(compiler::Location s, bool mut, memory::Locations loc) : src{ s }, is_mut{ mut }, storage{ loc } {}
+		inline VarData(compiler::Location s, bool mut) : VarData{ s, mut, analysis::memory::Stack{} } {}
+		inline VarData(compiler::Location s, bool mut, memory::Locations loc) : src{ s }, is_mut{ mut }, storage{ loc } {}
 	};
 
 	/*
@@ -73,7 +73,7 @@ namespace spero::analysis {
 
 			// Mutation interfaces
 			bool insert(const String& key, VarData value);
-			// TODO: There's an extra failure case of a symtable already existing
+			// TODO: There's an extra failure case of a symtable already existing (though this isn't represented)
 			bool insert(const String& key, ref_t<SymTable> value);
 
 			// Analysis interfaces

@@ -15,8 +15,15 @@ Current Project Plan
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Fix code base and other issues (see below)
-	Run through "Code Quality Improvements"
 	Run through "Improve error/exception handling and reporting"
+      Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
+	  Move 'compiler' exceptions from log-level to error-level
+	    Add in 'error indices' and automatic message population capbilities
+      Add a better interaction between the ast classes and the logging system
+        Improve the logging system while I'm at it (different log outputs, linked/combined loggers, etc.)
+	  Add in phase timing support using a 'PhaseTimer' style interface (see `compile` for usage)
+	  Modify the grammar to support unicode in strings
+	    Look into allowing unicode in variable names
   Get basic type system support up and running
 	Doing some basic work with types will be good
 	  Type checking, type representation (both in the compiler and in memory), value type-inference (infer type from assignment only)
@@ -76,19 +83,6 @@ Current Project Plan
 	  Basically current stage is "AST -> Assembly", we would change to "AST -> IR" + "IR -> Assembly"
 
   Code Quality Improvements
-    Const-correct codebase where possible
-	Change function declarations to require arguments to specify their names
-	Switch some std::string applications to use std::string_view
-	  Improve usage of 'std::string' in SymTable
-	Simplify the commands available within the repl
-	  Also simplify the control path if possible
-	  Might want to switch commands to '::' syntax (as ':' may end up being the global scope accessor)
-	Pair down the boost install to what I absolutely need
-	Look at changing style to "auto ->" return types
-	  Eric Niebler has a neat style I could copy (the return type goes on the next line, then the next line is the open brace)
-	Update codebase to use Visual 15.7 features where possible
-	  template<auto>, template deduction for classes
-	  https://docs.microsoft.com/en-us/visualstudio/releasenotes/vs2017-relnotes#15.7
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
