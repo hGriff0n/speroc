@@ -12,12 +12,13 @@ namespace spero::compiler {
 
 
 	// Time loggers
-	void CompilationState::logTime() {
-		timing.emplace_back(std::chrono::system_clock::now());
+	util::Timer CompilationState::timer(std::string phase) {
+		return util::Timer{ timing.emplace_back(phase, TimeData{}).second };
 	}
-	std::pair<TimePoint, TimePoint> CompilationState::getCycle(size_t cycle) {
-		return std::make_pair(timing.at(cycle), timing.at(cycle + 1));
+	const std::deque<std::pair<std::string, util::TimeData>>& CompilationState::getTiming() {
+		return timing;
 	}
+
 
 
 	// Basic state querying

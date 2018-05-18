@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <memory>
 #include <deque>
 
@@ -9,6 +8,7 @@
 #include <fmt/ostr.h>
 
 #include "parser/base.h"
+#include "util/time.h"
 
 #define abstract =0;
 
@@ -19,7 +19,6 @@ namespace spero::parser {
 }
 
 namespace spero::compiler {
-	using TimePoint = std::chrono::system_clock::time_point;
 	using ID = spdlog::level::level_enum;
 
 	/*
@@ -28,7 +27,7 @@ namespace spero::compiler {
 	 */
 	class CompilationState {
 		std::deque<std::string> input_files;
-		std::deque<TimePoint> timing;
+		std::deque<std::pair<std::string, util::TimeData>> timing;
 		size_t nerrs = 0;
 
 		std::shared_ptr<spdlog::logger> logger;
@@ -42,10 +41,9 @@ namespace spero::compiler {
 			std::deque<std::string>& files();
 			virtual const std::string& output() abstract;
 
-			// Time loggers (Unused)
-			// TODO: Improve internal 'benchmarking' interface
-			void logTime();
-			std::pair<TimePoint, TimePoint> getCycle(size_t cycle);
+			// Time loggers
+			util::Timer timer(std::string phase);
+			const std::deque<std::pair<std::string, util::TimeData>>& getTiming();
 
 			// Error reporting/collection
 			// TODO: Add in more complex logger manipulations (particularly change formatting)

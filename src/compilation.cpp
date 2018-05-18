@@ -5,6 +5,8 @@
 #include "analysis/VarRefPass.h"
 #include "codegen/AsmGenerator.h"
 
+#define WITH(x) if (auto _ = (x); true)
+
 namespace spero::compiler {
 	using namespace parser;
 
@@ -26,9 +28,11 @@ namespace spero::compiler {
 	Stack parse(std::string input, CompilationState& state) {
 		using namespace spero::parser;
 
-		return parse_impl(state, [&input](Stack& ast, CompilationState& state) {
-			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::string_input<>{ input, "speroc:repl" }, ast, state);
-		});
+		WITH(state.timer("parsing")) {
+			return parse_impl(state, [&input](Stack& ast, CompilationState& state) {
+				return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::string_input<>{ input, "speroc:repl" }, ast, state);
+			});
+		}
 	}
 
 	Stack parseFile(std::string file, CompilationState& state) {
@@ -97,9 +101,9 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	* Perform parsing and initial AST assembly
 	*/
 	// timer.start("Parsing");
-	state.logTime();
-	ast_stack = compiler::parseFile(state.files()[0], state);
-	state.logTime();
+	WITH(state.timer("parsing")) {
+		ast_stack = compiler::parseFile(state.files()[0], state);
+	}
 	// timer.end("Parsing");
 
 
@@ -132,9 +136,8 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	* off to some system tool that is guaranteed to work
 	*/
 	if (!state.failed()) {
-		state.logTime();
+		auto _ = state.timer("codegen");
 		compiler::codegen(asmCode, state.files()[0], "out.s", state);
-		state.logTime();
 	}
 
 
@@ -142,12 +145,9 @@ bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Sta
 	* Send the boundary ir off to the final compilation phase
 	*/
 	if (!state.failed() && state.produceExe()) {
-		state.logTime();
-		if (system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
+		if (auto _ = state.timer("assembly"); system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
 			state.log(compiler::ID::err, "Compilation of `{}` failed", state.output());
 		}
-		state.logTime();
-
 
 		// Delete the temporary file
 		if (state.deleteTemporaryFiles()) {
