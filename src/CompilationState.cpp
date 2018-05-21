@@ -50,7 +50,7 @@ namespace spero::compiler {
 		nerrs = 0;
 	}
 
-	std::tuple<int, bool, bool, bool>& CompilationState::getPermissions() {
+	CompilationPermissions& CompilationState::getPermissions() {
 		return permissions;
 	}
 }

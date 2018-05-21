@@ -12,8 +12,6 @@
 // Since my installation of clang is 64-bit (x86-64), we have to force compilation under 32-bit mode
 #define ASM_COMPILER "clang -masm=intel -m32"
 
-#define GET_PERMISSIONS(x) auto& [parser_mode, do_compile, link, interpret] = (x).getPermissions()
-
 
 namespace spero::compiler {
 	// Structure for specifying what stages should be run
@@ -44,16 +42,17 @@ namespace spero {
 
 	// TODO: This will likely be subsumed once I get around to fixing the logging system
 	template<class Fn>
-	bool compile(compiler::CompilationState& state, parser::Stack& ast_stack, Fn&& irHook) {
+	bool compile(compiler::CompilationState& state, parser::Stack& ast_stack, Fn&& irHook) try {
 		using namespace spero;
+		using parser::ParsingMode;
 
 		const GET_PERMISSIONS(state);
 		WITH(state.timer("parsing")) {
 			switch (parser_mode) {
-				case 1:	// parsing file
+				case ParsingMode::FILE:
 					ast_stack = compiler::parseFile(state.files()[0], state);
 					break;
-				case 2: // parsing string (stored in file)
+				case ParsingMode::STRING:
 					ast_stack = compiler::parse(state.files()[0], state);
 					break;
 				default:
@@ -122,5 +121,9 @@ namespace spero {
 		}
 
 		return state.failed();
+
+	} catch (std::exception& e) {
+		state.log(compiler::ID::err, e.what());
+		return false;
 	}
 }

@@ -27,59 +27,57 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 	state.files().push_back("");
 
 	while (std::cout << "> " && getMultiline(std::cin, input)) {
-		try {
-			parser::Stack res;
+		parser::Stack res;
 
-			// compile file
-			if (auto command = input.substr(0, 2); command == ":c") {
-				state.files()[0] = input.substr(3);
+		// compile file
+		if (auto command = input.substr(0, 2); command == ":c") {
+			state.files()[0] = input.substr(3);
 
-				parser_mode = 1;	link = true;	do_compile = true;				interpret = false;
+			parser_mode = ParsingMode::FILE;	link = true;
+			do_compile = true;				interpret = false;
 
-			// load file
-			} else if (command == ":l") {
-				state.files()[0] = input.substr(3);
+		// load file
+		} else if (command == ":l") {
+			state.files()[0] = input.substr(3);
 
-				parser_mode = 1;	do_compile = false;
+			parser_mode = ParsingMode::FILE;
+			do_compile = false;
 
-			// set flag
-			} else if (command == ":s") {
-				for (auto flag : util::split(input.substr(3), ',')) {
-					flags[flag] = !flags[flag];
-				}
-
-				continue;
-
-			// quit
-			} else if (command == ":q") {
-				break;
-
-			// handle string input
-			} else {
-				state.files()[0] = input;
-
-				parser_mode = 2;	link = false;	do_compile = flags["compile"];	interpret = flags["interpret"];
+		// set flag
+		} else if (command == ":s") {
+			for (auto flag : util::split(input.substr(3), ',')) {
+				flags[flag] = !flags[flag];
 			}
 
+			continue;
 
-			// Run the input through the internal compilation loop (printing the ast and assembler)
-			compile(state, res, [&](auto&& ir) {
-				if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, parser::Stack>) {
-					if (flags["ast"]) {
-						printAST(std::cout, ir);
-					}
-				}
+		// quit
+		} else if (command == ":q") {
+			break;
 
-				if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, compiler::gen::Assembler>) {
-					if (flags["asm"]) {
-						printAssembly(std::cout, ir);
-					}
-				}
-			});
+		// handle string input
+		} else {
+			state.files()[0] = input;
 
-		} catch (std::exception& e) {
-			std::cout << e.what() << '\n';
+			parser_mode = ParsingMode::STRING;	link = false;
+			do_compile = flags["compile"];	interpret = flags["interpret"];
 		}
+
+
+		// Run the input through the internal compilation loop (printing the ast and assembler)
+		compile(state, res, [&](auto&& ir) {
+			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, parser::Stack>) {
+				if (flags["ast"]) {
+					printAST(std::cout, ir);
+				}
+			}
+
+			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, compiler::gen::Assembler>) {
+				if (flags["asm"]) {
+					printAssembly(std::cout, ir);
+				}
+			}
+		});
 
 		std::cout << std::endl;
 		state.reset();
@@ -102,22 +100,16 @@ int main(int argc, char* argv[]) {
 
 	// Compiler run
 	if (!state.opts["interactive"].as<bool>()) {
-		state.setPermissions(1, true, true, false);
+		state.setPermissions(parser::ParsingMode::FILE, true, true, false);
 
 		parser::Stack res;
-
-		try {
-			compile(state, res);
-
-		} catch (std::exception& e) {
-			state.log(compiler::ID::err, e.what());
-		}
+		compile(state, res);
 
 		return state.failed();
 
 	// Interactive mode
 	} else {
-		state.setPermissions(2, true, false, true);
+		state.setPermissions(parser::ParsingMode::STRING, true, false, true);
 		return run_interpreter(opts, state, argc, argv), 0;
 	}
 }

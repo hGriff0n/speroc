@@ -11,15 +11,24 @@
 #include "util/time.h"
 
 #define abstract =0;
+#define GET_PERMISSIONS(x) auto& [parser_mode, do_compile, link, interpret] = (x).getPermissions()
 
 
 // Forward Declarations
 namespace spero::parser {
 	using Stack = std::deque<compiler::ptr<compiler::ast::Ast>>;
+
+	enum class ParsingMode {
+		NONE,
+		FILE,
+		STRING
+	};
 }
+
 
 namespace spero::compiler {
 	using ID = spdlog::level::level_enum;
+	using CompilationPermissions = std::tuple<parser::ParsingMode, bool, bool, bool>;
 
 	/*
 	 * Base class to define the interaction point for querying the
@@ -31,7 +40,7 @@ namespace spero::compiler {
 		size_t nerrs = 0;
 
 		std::shared_ptr<spdlog::logger> logger;
-		std::tuple<int, bool, bool, bool> permissions;
+		CompilationPermissions permissions;
 
 		spdlog::logger& getLogger(ID msg_id);
 
@@ -69,10 +78,10 @@ namespace spero::compiler {
 			// Permission System
 			// This system is used to inform the compilation process about which steps should be taken
 			// With this, we are able to use the same compilation path for normal usage and for the repl
-			std::tuple<int, bool, bool, bool>& getPermissions();
+			CompilationPermissions& getPermissions();
 			template<class... Args>
 			void setPermissions(Args&&... args) {
-				permissions = std::tuple{ args... };
+				permissions = CompilationPermissions{ args... };
 			}
 	};
 
