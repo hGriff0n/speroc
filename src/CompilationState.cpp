@@ -13,9 +13,9 @@ namespace spero::compiler {
 
 	// Time loggers
 	util::Timer CompilationState::timer(std::string phase) {
-		return util::Timer{ timing.emplace_back(phase, TimeData{}).second };
+		return util::Timer{ timing.emplace_back(phase, util::TimeData{}).second };
 	}
-	const std::deque<std::pair<std::string, util::TimeData>>& CompilationState::getTiming() {
+	const std::deque<std::pair<std::string, util::TimeData>>& CompilationState::getTiming() const {
 		return timing;
 	}
 
@@ -42,11 +42,15 @@ namespace spero::compiler {
 		return *logger;
 	}
 
-	size_t CompilationState::failed() {
+	size_t CompilationState::failed() const {
 		return nerrs;
 	}
 
 	void CompilationState::reset() {
 		nerrs = 0;
+	}
+
+	std::tuple<int, bool, bool, bool>& CompilationState::getPermissions() {
+		return permissions;
 	}
 }

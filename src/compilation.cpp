@@ -5,8 +5,6 @@
 #include "analysis/VarRefPass.h"
 #include "codegen/AsmGenerator.h"
 
-#define WITH(x) if (auto _ = (x); true)
-
 namespace spero::compiler {
 	using namespace parser;
 
@@ -28,11 +26,9 @@ namespace spero::compiler {
 	Stack parse(std::string input, CompilationState& state) {
 		using namespace spero::parser;
 
-		WITH(state.timer("parsing")) {
-			return parse_impl(state, [&input](Stack& ast, CompilationState& state) {
-				return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::string_input<>{ input, "speroc:repl" }, ast, state);
-			});
-		}
+		return parse_impl(state, [&input](Stack& ast, CompilationState& state) {
+			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::string_input<>{ input, "speroc:repl" }, ast, state);
+		});
 	}
 
 	Stack parseFile(std::string file, CompilationState& state) {
@@ -85,76 +81,7 @@ namespace spero::compiler {
 }
 
 
-// Because AsmJit somehow decides my computers architecture is 32-bit (x86) and I've currently hardcoded assembly generation,
-// Since my installation of clang is 64-bit (x86-64), we have to force compilation under 32-bit mode
-#define ASM_COMPILER "clang -masm=intel -m32"
-
-
 // Full compilation implementation
 bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& ast_stack) {
-	using namespace spero;
-
-	// TODO: Initialize timing and other compilation logging structures
-	// auto timer = state.getPhaseTimer();
-
-	/*
-	* Perform parsing and initial AST assembly
-	*/
-	// timer.start("Parsing");
-	WITH(state.timer("parsing")) {
-		ast_stack = compiler::parseFile(state.files()[0], state);
-	}
-	// timer.end("Parsing");
-
-
-	/*
-	* Run through the analysis stages
-	*
-	* Don't mark this as a separate "phase" for timing purposes
-	* The sub-phases perform their own timing passes
-	*/
-	auto table = (!state.failed())
-		? compiler::analyze(ast_stack, state)
-		: nullptr;
-
-
-	/*
-	* Run through the backend optimizations
-	*
-	* Don't mark this as a separate "phase" for timing purposes
-	* The sub-phases perform their own timing passes
-	*/
-	auto asmCode = (!state.failed())
-		? compiler::backend(std::move(table), ast_stack, state)
-		: spero::compiler::gen::Assembler{};
-
-	/*
-	* Generate the boundary ir for the external tools
-	*
-	* speroc does not handle the generation of executables
-	* and other binary files, prefering to pass those stages
-	* off to some system tool that is guaranteed to work
-	*/
-	if (!state.failed()) {
-		auto _ = state.timer("codegen");
-		compiler::codegen(asmCode, state.files()[0], "out.s", state);
-	}
-
-
-	/*
-	* Send the boundary ir off to the final compilation phase
-	*/
-	if (!state.failed() && state.produceExe()) {
-		if (auto _ = state.timer("assembly"); system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
-			state.log(compiler::ID::err, "Compilation of `{}` failed", state.output());
-		}
-
-		// Delete the temporary file
-		if (state.deleteTemporaryFiles()) {
-			std::remove("out.s");
-		}
-	}
-
-	return state.failed();
+	return spero::compile(state, ast_stack, [](auto&&){});
 }
-

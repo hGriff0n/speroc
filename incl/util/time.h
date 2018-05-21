@@ -10,6 +10,8 @@ namespace spero::util {
 		std::chrono::duration<double> time;
 	};
 
+
+	// Simple RAII timer class (records how long it lived)
 	struct Timer {
 		TimeData& ref;
 

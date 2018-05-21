@@ -31,6 +31,7 @@ namespace spero::compiler {
 		size_t nerrs = 0;
 
 		std::shared_ptr<spdlog::logger> logger;
+		std::tuple<int, bool, bool, bool> permissions;
 
 		spdlog::logger& getLogger(ID msg_id);
 
@@ -41,9 +42,10 @@ namespace spero::compiler {
 			std::deque<std::string>& files();
 			virtual const std::string& output() abstract;
 
-			// Time loggers
+			// Timing interface
+			// NOTE: Improve this if you want to, my purposes are really simplistic
 			util::Timer timer(std::string phase);
-			const std::deque<std::pair<std::string, util::TimeData>>& getTiming();
+			const std::deque<std::pair<std::string, util::TimeData>>& getTiming() const;
 
 			// Error reporting/collection
 			// TODO: Add in more complex logger manipulations (particularly change formatting)
@@ -55,14 +57,23 @@ namespace spero::compiler {
 				getLogger(msg_id).log(msg_id, fmt, std::forward<Args>(args)...);
 			}
 
-			size_t failed();
-			void reset();
-
 
 			// State Querying
 			virtual bool deleteTemporaryFiles() abstract;
 			virtual bool showLogs() abstract;
 			virtual bool produceExe() abstract;
+			size_t failed() const;
+			void reset();
+
+
+			// Permission System
+			// This system is used to inform the compilation process about which steps should be taken
+			// With this, we are able to use the same compilation path for normal usage and for the repl
+			std::tuple<int, bool, bool, bool>& getPermissions();
+			template<class... Args>
+			void setPermissions(Args&&... args) {
+				permissions = std::tuple{ args... };
+			}
 	};
 
 	// Special subtype to allow for passing around the parsed

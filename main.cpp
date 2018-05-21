@@ -11,7 +11,7 @@
 template<class Stream>
 Stream& getMultiline(Stream& in, spero::string::backing_type& s);
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
-void printAssembly(spero::compiler::gen::Assembler& asm_code);
+void printAssembly(std::ostream&, spero::compiler::gen::Assembler& asm_code);
 
 
 // Helper function to run the interactive mode
@@ -21,52 +21,28 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 	using compiler::ID;
 	
 	string::backing_type input;
-	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", true } };
+	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", true }, { "ast", true }, { "asm", true } };
+
+	GET_PERMISSIONS(state);
+	state.files().push_back("");
 
 	while (std::cout << "> " && getMultiline(std::cin, input)) {
 		try {
 			parser::Stack res;
 
-			// Compile a file
+			// compile file
 			if (auto command = input.substr(0, 2); command == ":c") {
-				if (state.files().size() == 0) {
-					state.files().push_back("");
-				}
 				state.files()[0] = input.substr(3);
 
-				compile(state, res);
+				parser_mode = 1;	link = true;	do_compile = true;				interpret = false;
 
-				// Print out the generated assembly
-				if (!state.failed()) {
-					std::ifstream out{ "out.s" };
-					while (std::getline(out, input)) {
-						std::cout << input << '\n';
-					}
-				}
-
-			// Load and parse a file
+			// load file
 			} else if (command == ":l") {
-				if (state.files().size() == 0) {
-					state.files().push_back("");
-				}
 				state.files()[0] = input.substr(3);
-				res = compiler::parseFile(state.files()[0], state);
 
-			// Modify the command line arguments
-			} else if (command == ":a") {
-				auto args = util::split(input.substr(3), ' ');
-				argv = new char*[args.size() + 2];
-				argc = 0;
+				parser_mode = 1;	do_compile = false;
 
-				argv[argc++] = "speroc.exe";
-				argv[argc++] = "-i";
-				for (auto& arg : args) {
-					argv[argc++] = const_cast<char*>(arg.c_str());
-				}
-
-				state = cmd::parse(opts, argc, argv);
-
-			// Set an interactive flag
+			// set flag
 			} else if (command == ":s") {
 				for (auto flag : util::split(input.substr(3), ',')) {
 					flags[flag] = !flags[flag];
@@ -74,48 +50,39 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 
 				continue;
 
-			// Quit
+			// quit
 			} else if (command == ":q") {
 				break;
 
-			// Run the interactive mode
+			// handle string input
 			} else {
-				res = compiler::parse(input, state);
+				state.files()[0] = input;
 
-				// Stop early if parsing failed
-				if (!state.failed() && flags["compile"]) {
-					// Analyze and compile the code
-					auto table = compiler::analyze(res, state);
-					auto asm_code = compiler::backend(std::move(table), res, state);
+				parser_mode = 2;	link = false;	do_compile = flags["compile"];	interpret = flags["interpret"];
+			}
 
 
-					// Print out the generated assembly
-					if (!state.failed()) {
-						printAssembly(asm_code);
-
-						if (flags["output"]) {
-							compiler::codegen(asm_code, "interactive", "out.s", state, false);
-						}
-
-						if (flags["interpret"]) {
-							compiler::interpret(asm_code);
-							std::cout << std::endl;
-						}
-
-						std::remove("out.s");
+			// Run the input through the internal compilation loop (printing the ast and assembler)
+			compile(state, res, [&](auto&& ir) {
+				if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, parser::Stack>) {
+					if (flags["ast"]) {
+						printAST(std::cout, ir);
 					}
 				}
-			}
 
-			if (!flags["ast"]) {
-				printAST(std::cout << '\n', res);
-			}
-
-			state.reset();
+				if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, compiler::gen::Assembler>) {
+					if (flags["asm"]) {
+						printAssembly(std::cout, ir);
+					}
+				}
+			});
 
 		} catch (std::exception& e) {
 			std::cout << e.what() << '\n';
 		}
+
+		std::cout << std::endl;
+		state.reset();
 	}
 }
 
@@ -135,18 +102,22 @@ int main(int argc, char* argv[]) {
 
 	// Compiler run
 	if (!state.opts["interactive"].as<bool>()) {
+		state.setPermissions(1, true, true, false);
+
 		parser::Stack res;
+
 		try {
 			compile(state, res);
 
 		} catch (std::exception& e) {
-			state.log(compiler::ID::info, e.what());
+			state.log(compiler::ID::err, e.what());
 		}
 
 		return state.failed();
 
 	// Interactive mode
 	} else {
+		state.setPermissions(2, true, false, true);
 		return run_interpreter(opts, state, argc, argv), 0;
 	}
 }
@@ -191,10 +162,10 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& ast_stack) {
 	return s << '\n';
 }
 
-void printAssembly(spero::compiler::gen::Assembler& asm_code) {
+void printAssembly(std::ostream& s, spero::compiler::gen::Assembler& asm_code) {
 	asmjit::StringBuilder sb;
 	asm_code.dump(sb);
-	std::cout << sb.data() << '\n';
+	s << sb.data() << '\n';
 }
 
 
@@ -208,7 +179,7 @@ void spero::compiler::interpret(gen::Assembler& asm_code) {
 	asm_code.makeIFunction();
 
 	// Print the interpreted code
-	printAssembly(asm_code);
+	//printAssembly(std::cout, asm_code);
 
 	// Register the assembly code as an `int()` function
 	gen::Assembler::Function fn;

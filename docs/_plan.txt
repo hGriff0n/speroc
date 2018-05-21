@@ -15,11 +15,10 @@ Current Project Plan
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Fix code base and other issues (see below)
-	Run through "Improve error/exception handling and reporting"
-	  Unify the "compilation" structure to enable "selective" compilation
-	    Modify the main loops to utilize this code paths (particularly with the repl system)
-		  Need a way to "select" what paths are running (integrate with the CompilationState)
-		NOTE: This is to unify error/timing support
+	Unify the "compilation" structure to enable "selective" compilation
+	  Modify the main loops to utilize this code paths (particularly with the repl system)
+		Improve the typing of the permission system
+		  The "parser" permission needs to be an enum class
   Get basic type system support up and running
 	Doing some basic work with types will be good
 	  Type checking, type representation (both in the compiler and in memory), value type-inference (infer type from assignment only)

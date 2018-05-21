@@ -817,5 +817,8 @@
     <ClInclude Include="incl\spero_string.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="incl\util\time.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
