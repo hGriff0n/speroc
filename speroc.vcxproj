@@ -395,6 +395,7 @@
     <ClInclude Include="dep\spdlog\include\spdlog\spdlog.h" />
     <ClInclude Include="dep\spdlog\include\spdlog\tweakme.h" />
     <ClInclude Include="incl\analysis\SymTable.h" />
+    <ClInclude Include="incl\analysis\types.h" />
     <ClInclude Include="incl\analysis\VarDeclPass.h" />
     <ClInclude Include="incl\analysis\VarRefPass.h" />
     <ClInclude Include="incl\codegen\AsmGenerator.h" />
@@ -408,6 +409,7 @@
     <ClInclude Include="incl\parser\location.h" />
     <ClInclude Include="incl\parser\AstVisitor.h" />
     <ClInclude Include="incl\spero_string.h" />
+    <ClInclude Include="incl\type_rep_notes.h" />
     <ClInclude Include="incl\util\analysis.h" />
     <ClInclude Include="incl\util\asmjit.h" />
     <ClInclude Include="incl\util\parser.h" />

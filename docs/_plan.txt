@@ -16,13 +16,38 @@ Current Project Plan
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Get basic type system support up and running
 	Doing some basic work with types will be good
-	  Type checking, type representation (both in the compiler and in memory), value type-inference (infer type from assignment only)
-	    Explicit annotations, internal state for representing expression types, make '.3' produce an error
-	  (Maybe) tuples, floats, booleans
-	  (Probably not) complete type inference (too complicated), strings (would require library support, unsure of design)
+	  Compiler Type Representation
+	    Determine a way to represent types within the compiler structure (for easy comparison/movement)
+		  Add a "TypeAnnotation" ast node, to manually attach an ast type to a valexpr
+		    Remove the temporary "type" member of `ValExpr`
+		Implement type annotations to manually specify variable/value typing
+		  Add a temporary 'literal_type_pass' for this stage (will be removed with type checking/inference)
+		Add in a couple of regression tests for the typing specification
+	  Type Checking
+	    Implement an analysis pass to perform basic type checks against arithmetic operators
+		Start generalization work on the type check algorithm
+	  Type Inference
+	    Work on the algorithm for automatically infering a value's type from its usage in code
+		  NOTE: This algorithm doesn't have to be anywhere near complete now (a simple focus is alright)
+	  Memory Type Representation
+	    Perform experiments/research on how tuples/etc. should be represented in memory
+		  Determine whether strings should be unicode by default or not
+	    Perform experiments/research on how custom types should be represented in memory
+		  Decide on the OOP structure for the language
+	  Redo the internal structure to have a better integration with the new type system
+	    It feels way too haphazard at the moment, I'm attaching stuff with thumb-tacks
+		I'll probably make an 'AnalysisState' structure and put all of the stuff in there (for the moment)
+		Make sure there's a quick way of getting from a 'Variable' ast node to it's symbol table information
+	  Make ".3" produce an error in analysis
+	Intermediate Type Work (maybe)
+	  Add in assembly instructions specific for floats and booleans
+	    Look at generalizing the binopcall assembly generation to account for type differences
+	  Add in assembly steps for interacting with tuples
+	    Implement AssignTuple assignment rule
+		Implement indexing in the case that the indexed type is a tuple (and the index is an int literal)
   Fix grammar and ast properties
     Require directly affixing pointers and references to types
-    Allow anon_type to be attached after 'var_val/atom' rules)
+    Allow anon_type to be attached after 'var_val/atom' rules
   Get functions working properly
     I think the current "abort" errors are due to introducing multiple 'main' labels?
 	  That wouldn't quite explain the interpreter though

@@ -27,9 +27,9 @@ namespace spero::compiler::ast {
 		DEF_VISIT(ValExpr) {
 			visitStatement(t);
 
-			if (t.type) {
+			/*if (t.type) {
 				t.type->accept(*this);
-			}
+			}*/
 		}
 
 		// Literals

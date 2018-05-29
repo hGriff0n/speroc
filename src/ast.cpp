@@ -71,9 +71,9 @@ namespace spero::compiler::ast {
 	DEF_PRINTER(ValExpr) {
 		s << "mut=" << is_mut << ')';
 
-		if (type) {
+		/*if (type) {
 			type->prettyPrint(s << '\n', buf + 2, "type=");
-		}
+		}*/
 
 		return Statement::prettyPrint(s, buf);
 	}

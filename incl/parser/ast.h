@@ -6,6 +6,7 @@
 #include <enum.h>
 
 #include "base.h"
+#include "analysis/types.h"
 
 namespace spero::compiler {
 	/*
@@ -129,6 +130,7 @@ namespace spero::compiler::ast {
 	struct ValExpr : Statement {
 		bool is_mut = false;
 		ptr<Type> type;
+		std::shared_ptr<analysis::Type> typ = nullptr;
 
 		ValExpr(Location loc);
 

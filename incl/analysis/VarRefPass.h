@@ -12,6 +12,7 @@ namespace spero::analysis {
 	 */
 	class VarRefPass : public compiler::ast::AstVisitor {
 		compiler::CompilationState& state;
+		AllTypes& type_list;
 
 		std::unique_ptr<SymTable> globals;
 		SymTable* current = nullptr;
@@ -20,7 +21,7 @@ namespace spero::analysis {
 		ScopingContext context = ScopingContext::GLOBAL;
 
 		public:
-			VarRefPass(compiler::CompilationState& state, std::unique_ptr<SymTable> table);
+			VarRefPass(compiler::CompilationState& state, AllTypes& type_list, std::unique_ptr<SymTable> table);
 			std::unique_ptr<SymTable> finalize();
 
 			// Atoms

@@ -16,6 +16,7 @@ namespace spero::analysis {
 	 */
 	class VarDeclPass : public compiler::ast::AstVisitor {
 		compiler::CompilationState& state;
+		AllTypes& type_list;
 
 		// Since SymTables can contain references to other symtables, the addresses need to stay relatively set
 		// For the moment, the global table is the only one that is not currently mapped to an ast node
@@ -28,7 +29,7 @@ namespace spero::analysis {
 		ScopingContext context = ScopingContext::GLOBAL;
 
 		public:
-			VarDeclPass(compiler::CompilationState& state);
+			VarDeclPass(compiler::CompilationState& state, AllTypes& type_list);
 			std::unique_ptr<SymTable> finalize();
 
 			// Decorations

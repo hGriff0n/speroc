@@ -41,11 +41,11 @@ namespace spero::compiler {
 
 
 	// Perform the various analysis stages
-	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state) {
-		analysis::VarDeclPass decl_check{ state };
+	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state, analysis::AllTypes& type_list) {
+		analysis::VarDeclPass decl_check{ state, type_list };
 		ast::visit(decl_check, ast_stack);
 
-		analysis::VarRefPass usage_check{ state, decl_check.finalize() };
+		analysis::VarRefPass usage_check{ state, type_list, decl_check.finalize() };
 		ast::visit(usage_check, ast_stack);
 
 		auto table = usage_check.finalize();

@@ -13,6 +13,8 @@ template<class T>
 using ref_t = std::reference_wrapper<T>;
 
 namespace spero::analysis {
+	class Type;
+
 	/*
      * Specifies the data relevant for analysis of Spero variables
 	 */
@@ -21,6 +23,7 @@ namespace spero::analysis {
 		bool is_mut = false;
 
 		memory::Locations storage;
+		std::shared_ptr<Type> type = nullptr;
 
 		// TODO: Not sure about these (using too many pointers)
 		//ast::Ast* definition = nullptr;

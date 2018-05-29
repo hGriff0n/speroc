@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 
+#include "analysis/types.h"
 #include "interface/CompilationState.h"
 #include "util/asmjit.h"
 
@@ -24,7 +25,7 @@ namespace spero::compiler {
 	// Perform all steps related to analysis and secondary IR creation (may abstract IR to a different function)
 	// NOTE: I don't have a second IR at the moment, so this stage just serves to prepare everything for the backend
 	using MIR_t = std::unique_ptr<analysis::SymTable>;
-	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state);
+	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state, analysis::AllTypes&);
 	
 	// Perform all steps related to backend production
 	gen::Assembler backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state);
@@ -70,8 +71,9 @@ namespace spero {
 		 * Don't mark this as a separate "phase" for timing purposes
 		 * The sub-phases perform their own timing passes
 		 */
+		auto type_list = analysis::initTypeList();
 		auto table = (!state.failed())
-			? compiler::analyze(ast_stack, state)
+			? compiler::analyze(ast_stack, state, type_list)
 			: nullptr;
 
 		irHook(ast_stack);

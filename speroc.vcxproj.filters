@@ -109,6 +109,9 @@
     <Filter Include="Dependencies\boost\flyweight">
       <UniqueIdentifier>{83447d2d-afbd-40f6-ba42-a380dcf413db}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\analysis\types">
+      <UniqueIdentifier>{4add5039-5e28-4675-b362-4689c284d516}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -819,6 +822,10 @@
     </ClInclude>
     <ClInclude Include="incl\util\time.h">
       <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\type_rep_notes.h" />
+    <ClInclude Include="incl\analysis\types.h">
+      <Filter>Header Files\analysis\types</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
