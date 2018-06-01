@@ -563,6 +563,17 @@ namespace spero::compiler::ast {
 		return s;
 	}
 
+	TypeAnnotation::TypeAnnotation(ptr<ValExpr> var, ptr<Type> type, Location loc)
+		: ValExpr{ loc }, type{ std::move(type) }, expression{ std::move(var) } {}
+	void TypeAnnotation::accept(AstVisitor& v) {
+		v.visitTypeAnnotation(*this);
+	}
+	DEF_PRINTER(TypeAnnotation) {
+		s << std::string(buf, ' ') << context << "ast.TypeAnnotation\n";
+		expression->prettyPrint(s, buf + 2, "val=") << '\n';
+		return type->prettyPrint(s, buf + 2, "type=") << '\n';
+	}
+
 	Argument::Argument(ptr<BasicBinding> binding, ptr<Type> type, Location loc)
 		: Ast{ loc }, name{ std::move(binding) }, typ{ std::move(type) } {}
 	void Argument::accept(AstVisitor& v) {

@@ -129,8 +129,7 @@ namespace spero::compiler::ast {
 	 */
 	struct ValExpr : Statement {
 		bool is_mut = false;
-		ptr<Type> type;
-		std::shared_ptr<analysis::Type> typ = nullptr;
+		std::shared_ptr<analysis::Type> type = nullptr;
 
 		ValExpr(Location loc);
 
@@ -789,6 +788,24 @@ namespace spero::compiler::ast {
 	};
 
 	/*
+	 * Represents a statically added type annotation
+	 *
+	 * Extends: ValExpr
+	 *
+	 * Exports:
+	 *   type - static type annotation
+	 */
+	struct TypeAnnotation : ValExpr {
+		ptr<ValExpr> expression;
+		ptr<Type> type;
+
+		TypeAnnotation(ptr<ValExpr> val, ptr<Type> type, Location loc);
+
+		virtual void accept(AstVisitor& v);
+		virtual std::ostream& prettyPrint(std::ostream& s, size_t buf, std::string_view context = "") final;
+	};
+
+	/*
 	 * Represents a function/constructor named argument (with type information)
 	 *
 	 * Extends: Ast
@@ -800,6 +817,7 @@ namespace spero::compiler::ast {
 	struct Argument : Ast {
 		ptr<BasicBinding> name;
 		ptr<Type> typ;
+		ptr<TypeAnnotation> var;
 
 		Argument(ptr<BasicBinding> binding, ptr<Type> type, Location loc);
 

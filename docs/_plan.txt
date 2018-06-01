@@ -17,21 +17,19 @@ Current Project Plan
   Get basic type system support up and running
 	Doing some basic work with types will be good
 	  Compiler Type Representation
-	    Determine a way to represent types within the compiler structure (for easy comparison/movement)
-		  Add a "TypeAnnotation" ast node, to manually attach an ast type to a valexpr
-		    Remove the temporary "type" member of `ValExpr`
-		Implement type annotations to manually specify variable/value typing
-		  Add a temporary 'literal_type_pass' for this stage (will be removed with type checking/inference)
+		Add "Type marking" pass to fill in type information for literals/annotated variables
+		  This is just to figure out the interfaces for how everything should work
 		Add in a couple of regression tests for the typing specification
 	  Type Checking
-	    Implement an analysis pass to perform basic type checks against arithmetic operators
+	    Implement an analysis pass to perform basic type checks with arithmetic operators
+		  Work on the interfaces to make this process as straightforward as possible
 		Start generalization work on the type check algorithm
-	  Type Inference
-	    Work on the algorithm for automatically infering a value's type from its usage in code
-		  NOTE: This algorithm doesn't have to be anywhere near complete now (a simple focus is alright)
+		Implement path to throw up an error if a variable/values type is not known
+		  Because Type Inference won't be implemented, this will cause a lot of programs to fail
+		  That's alright for the moment, we'll add that step in later
 	  Memory Type Representation
 	    Perform experiments/research on how tuples/etc. should be represented in memory
-		  Determine whether strings should be unicode by default or not
+		Determine whether strings should be unicode by default or not
 	    Perform experiments/research on how custom types should be represented in memory
 		  Decide on the OOP structure for the language
 	  Redo the internal structure to have a better integration with the new type system

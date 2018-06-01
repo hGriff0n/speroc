@@ -238,6 +238,12 @@ namespace spero::compiler::ast {
 				t.args->accept(*this);
 			}
 		}
+		DEF_VISIT(TypeAnnotation) {
+			visitValExpr(t);
+
+			t.type->accept(*this);
+			t.expression->accept(*this);
+		}
 		DEF_VISIT(Argument) {
 			t.name->accept(*this);
 			if (t.typ) {

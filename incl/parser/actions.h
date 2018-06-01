@@ -1230,12 +1230,15 @@ namespace spero::parser::actions {
 		// stack: kmut? expr type?
 		auto inf = POP(Type);
 		auto expr = POP(ValExpr);
-		auto mut = POP(Token);
 
-		expr->type = std::move(inf);
-		expr->is_mut = (bool)mut;
-		s.emplace_back(std::move(expr));
-		// stack: expr
+		expr->is_mut = (bool)POP(Token);
+
+		if (inf) {
+			PUSH(TypeAnnotation, std::move(expr), std::move(inf));
+		} else {
+			s.emplace_back(std::move(expr));
+		}
+		// stack: expr | typeannot
 	} END;
 	RULE(missing_stmt) {
 		// stack:

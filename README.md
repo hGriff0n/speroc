@@ -39,6 +39,6 @@ Be sure to comment in the issue if you have any questions.
 
 Project Info:
 
-    size: 4312 sloc
-    files: 11 .cpp, 20 .h, 3 .rb
+    size: 4488 sloc
+    files: 11 .cpp, 23 .h, 3 .rb
 
