@@ -232,6 +232,7 @@
     <ClCompile Include="src\AsmGenerator.cpp" />
     <ClCompile Include="src\asmjit.cpp" />
     <ClCompile Include="src\ast.cpp" />
+    <ClCompile Include="src\BasicTypingPass.cpp" />
     <ClCompile Include="src\cmd_line.cpp" />
     <ClCompile Include="src\CompilationState.cpp" />
     <ClCompile Include="src\compilation.cpp" />
@@ -394,6 +395,7 @@
     <ClInclude Include="dep\spdlog\include\spdlog\sinks\wincolor_sink.h" />
     <ClInclude Include="dep\spdlog\include\spdlog\spdlog.h" />
     <ClInclude Include="dep\spdlog\include\spdlog\tweakme.h" />
+    <ClInclude Include="incl\analysis\BasicTypingPass.h" />
     <ClInclude Include="incl\analysis\SymTable.h" />
     <ClInclude Include="incl\analysis\types.h" />
     <ClInclude Include="incl\analysis\VarDeclPass.h" />

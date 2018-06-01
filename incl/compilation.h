@@ -118,7 +118,7 @@ namespace spero {
 			}
 		}
 
-		if (interpret) {
+		if (!state.failed() && interpret) {
 			compiler::interpret(asm_code);
 		}
 

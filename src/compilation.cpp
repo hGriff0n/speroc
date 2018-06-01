@@ -3,6 +3,8 @@
 
 #include "analysis/VarDeclPass.h"
 #include "analysis/VarRefPass.h"
+#include "analysis/BasicTypingPass.h"
+
 #include "codegen/AsmGenerator.h"
 
 namespace spero::compiler {
@@ -45,7 +47,10 @@ namespace spero::compiler {
 		analysis::VarDeclPass decl_check{ state, type_list };
 		ast::visit(decl_check, ast_stack);
 
-		analysis::VarRefPass usage_check{ state, type_list, decl_check.finalize() };
+		analysis::BasicTypingPass typing_check{ state, type_list, decl_check.finalize() };
+		ast::visit(typing_check, ast_stack);
+
+		analysis::VarRefPass usage_check{ state, type_list, typing_check.finalize() };
 		ast::visit(usage_check, ast_stack);
 
 		auto table = usage_check.finalize();

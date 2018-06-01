@@ -241,7 +241,7 @@ namespace spero::compiler::ast {
 		DEF_VISIT(TypeAnnotation) {
 			visitValExpr(t);
 
-			t.type->accept(*this);
+			t.typ->accept(*this);
 			t.expression->accept(*this);
 		}
 		DEF_VISIT(Argument) {

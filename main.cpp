@@ -68,7 +68,7 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 		compile(state, res, [&](auto&& ir) {
 			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, parser::Stack>) {
 				if (flags["ast"]) {
-					printAST(std::cout, ir);
+					printAST(std::cout << '\n', ir);
 				}
 			}
 

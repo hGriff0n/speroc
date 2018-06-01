@@ -307,6 +307,9 @@
     <ClCompile Include="src\VarRefPass.cpp">
       <Filter>Source Files\analysis</Filter>
     </ClCompile>
+    <ClCompile Include="src\BasicTypingPass.cpp">
+      <Filter>Source Files\analysis</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
@@ -825,6 +828,9 @@
     </ClInclude>
     <ClInclude Include="incl\type_rep_notes.h" />
     <ClInclude Include="incl\analysis\types.h">
+      <Filter>Header Files\analysis\types</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\analysis\BasicTypingPass.h">
       <Filter>Header Files\analysis\types</Filter>
     </ClInclude>
   </ItemGroup>

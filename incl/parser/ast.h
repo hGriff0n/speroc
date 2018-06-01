@@ -797,9 +797,9 @@ namespace spero::compiler::ast {
 	 */
 	struct TypeAnnotation : ValExpr {
 		ptr<ValExpr> expression;
-		ptr<Type> type;
+		ptr<Type> typ;
 
-		TypeAnnotation(ptr<ValExpr> val, ptr<Type> type, Location loc);
+		TypeAnnotation(ptr<ValExpr> val, ptr<Type> typ, Location loc);
 
 		virtual void accept(AstVisitor& v);
 		virtual std::ostream& prettyPrint(std::ostream& s, size_t buf, std::string_view context = "") final;
