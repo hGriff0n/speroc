@@ -11,11 +11,13 @@
  * Base class for internal type representation
  */
 class Type {
-    Type* cannonical_type;
-    bool is_mutable;
-    bool is_view;
-    bool is_reference;
-    bool is_pointer;
+	const Type* cannonical_type;
+	spero::String name;
+	
+	bool is_mutable;
+	bool is_view;
+	bool is_reference;
+	bool is_pointer;
 
     public:
         Type();

@@ -54,7 +54,7 @@ namespace spero::analysis {
 		auto* rhs_type = b.rhs->type.get();
 
 		if (lhs_type != rhs_type && lhs_type && rhs_type) {
-			state.log(ID::err, "No definition for operator `{}(LhsType, RhsType)` found <at {}>", b.op, b.loc);
+			state.log(ID::err, "Type: Operator `{}` is not defined for `{}, {}` <at {}>", b.op, *lhs_type, *rhs_type, b.loc);
 		}
 	}
 }

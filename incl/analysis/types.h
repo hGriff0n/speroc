@@ -15,23 +15,12 @@ namespace spero::analysis {
 	using AllTypes = std::unordered_map<String, std::shared_ptr<Type>>;
 
 	/*
-	 * Fill the standard set of spero types for compiler recognition
-	 *
-	 * TODO: This is eventually going to be handled through automatic module loading
-	 */
-	inline AllTypes initTypeList() {
-		return {
-			{ "Int", std::make_shared<Type>() },
-			{ "Bool", std::make_shared<Type>() }
-		};
-	}
-
-	/*
 	 * Base class for internal type representation
 	 */
 	class Type {
 		// I don't think I can gain much by making this a flyweight
 		const Type* cannonical_type = this;
+		String name;
 
 		bool is_mutable = false;
 		bool is_view = false;
@@ -39,8 +28,31 @@ namespace spero::analysis {
 		bool is_pointer = false;
 
 		public:
-			Type() {}
+			Type(String name) : name{ name } {}
 			virtual ~Type() {}
+
+			template<class S>
+			friend S& operator<<(S&, const Type&);
 	};
+
+	template<class S>
+	S& operator<<(S& stream, const Type& t) {
+		return stream << t.name;
+	}
+
+
+	/*
+	 * Fill the standard set of spero types for compiler recognition
+	 *
+	 * TODO: This is eventually going to be handled through automatic module loading
+	 */
+	inline AllTypes initTypeList() {
+		static AllTypes types {
+			{ "Int", std::make_shared<Type>("Int") },
+			{ "Bool", std::make_shared<Type>("Bool") }
+		};
+
+		return types;
+	}
 
 }

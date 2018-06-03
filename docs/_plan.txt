@@ -18,8 +18,6 @@ Current Project Plan
 	Doing some basic work with types will be good
 	  Compiler Type Representation
 	    Improve the basic typing pass a little bit more
-		  Improve error reporting with type names
-		    Need a way to go from `analysis::Type` to type name
 		  Connect types to symtable information (maybe preload standard types)
 		  Implement "working" type annotations
 		    Need a way to go from `ast::Type` to `analysis::Type`
