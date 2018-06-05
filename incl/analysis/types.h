@@ -5,9 +5,7 @@
 #include <unordered_map>
 
 #include "spero_string.h"
-//#include "analysis/SymTable.h"
-
-// TODO: Need a way of associating type names to their 'Type*' instance
+#include "analysis/SymTable.h"
 
 namespace spero::analysis {
 
@@ -18,8 +16,8 @@ namespace spero::analysis {
 	 * Base class for internal type representation
 	 */
 	class Type {
-		// I don't think I can gain much by making this a flyweight
 		const Type* cannonical_type = this;
+		const SymTable* def = nullptr;			// This may have to be moved to a subtype (is there a type that doesn't need this - it doesn't have to use it)
 		String name;
 
 		bool is_mutable = false;

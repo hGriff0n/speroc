@@ -12,6 +12,7 @@ namespace spero::analysis {
 	 *
 	 * NOTE: This is just a very basic pass to get an understanding of how analysis types work
 	 *   This will definitely be changed in the future, once I have functions and modules working
+	 *   The biggest issue is in defining how passes should be allocated / ordered
 	 */
 	class BasicTypingPass : public compiler::ast::AstVisitor {
 		compiler::CompilationState& state;

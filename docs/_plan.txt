@@ -17,18 +17,7 @@ Current Project Plan
   Get basic type system support up and running
 	Doing some basic work with types will be good
 	  Compiler Type Representation
-	    Improve the basic typing pass a little bit more
-		  Connect types to symtable information (maybe preload standard types)
-		  Implement "working" type annotations
-		    Need a way to go from `ast::Type` to `analysis::Type`
 		Add in a couple of regression tests for the typing specification
-	  Type Checking
-	    Implement an analysis pass to perform basic type checks with arithmetic operators
-		  Work on the interfaces to make this process as straightforward as possible
-		Start generalization work on the type check algorithm
-		Implement path to throw up an error if a variable/values type is not known
-		  Because Type Inference won't be implemented, this will cause a lot of programs to fail
-		  That's alright for the moment, we'll add that step in later
 	  Memory Type Representation
 	    Perform experiments/research on how tuples/etc. should be represented in memory
 		Determine whether strings should be unicode by default or not
@@ -67,6 +56,10 @@ Current Project Plan
 	  Improve the process for "storing" functions across runs
 	    We can write the used functions every run, or we can write them once to the global pool (both work)
 		  However both have their drawbacks that indicate we probably want to handle functions slightly differently
+  Type Inference and Type Checking
+    Read up on the MLsub type inference - see if I can figure out how to implement it
+	Figure out how to load type information into the symbol table
+  Modules and Imports
 
   Language Logic Checking
     Check if ':<var>' is (and should be) a legal typing
@@ -90,6 +83,8 @@ Current Project Plan
 	Improve documentation, make sure it's up-to-date
 	  Write down how function forwarding is going to be determined in lambdas
 	    Utilize the same analysis pass that converts `plambda` to function declaration
+	Junction typing syntax sometimes trips up common use cases (`3 :: Int + 4 :: Int` doesn't work)
+	Look at re-allowing paren-less functions
 	Work on language tutorial/introduction
 
   Convert to using a tri-code IR (ie. max two operands to any instruction)

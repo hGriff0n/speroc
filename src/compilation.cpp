@@ -46,16 +46,17 @@ namespace spero::compiler {
 	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state, analysis::AllTypes& type_list) {
 		analysis::VarDeclPass decl_check{ state, type_list };
 		ast::visit(decl_check, ast_stack);
+		auto sym_table = decl_check.finalize();
 
-		analysis::BasicTypingPass typing_check{ state, type_list, decl_check.finalize() };
+		analysis::BasicTypingPass typing_check{ state, type_list, std::move(sym_table) };
 		ast::visit(typing_check, ast_stack);
+		sym_table = typing_check.finalize();
 
-		analysis::VarRefPass usage_check{ state, type_list, typing_check.finalize() };
+		analysis::VarRefPass usage_check{ state, type_list, std::move(sym_table) };
 		ast::visit(usage_check, ast_stack);
+		sym_table = usage_check.finalize();
 
-		auto table = usage_check.finalize();
-
-		return std::move(table);
+		return std::move(sym_table);
 	}
 
 	gen::Assembler backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state) {
