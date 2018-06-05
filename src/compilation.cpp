@@ -48,9 +48,9 @@ namespace spero::compiler {
 		ast::visit(decl_check, ast_stack);
 		auto sym_table = decl_check.finalize();
 
-		analysis::BasicTypingPass typing_check{ state, type_list, std::move(sym_table) };
+		/*analysis::BasicTypingPass typing_check{ state, type_list, std::move(sym_table) };
 		ast::visit(typing_check, ast_stack);
-		sym_table = typing_check.finalize();
+		sym_table = typing_check.finalize();*/
 
 		analysis::VarRefPass usage_check{ state, type_list, std::move(sym_table) };
 		ast::visit(usage_check, ast_stack);

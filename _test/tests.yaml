@@ -58,19 +58,24 @@ literals:
         fail: true
         files: [ 'fail_type.spr' ]
     - desc: ""
+      exec: 'fail_type.exe'
+      compile:
+        fail: true
+        files: [ 'pass_type.spr' ]
+      tests:
+        - return: 3
+    - desc: ""
       exec: 'mut_fail.exe'
       compile:
         fail: true
         files: [ 'mut_fail.spr' ]
-      tests:
-        - return: 12
     - desc: ""
       exec: 'mut_succ.exe'
       compile:
         files: [ 'mut_succ.spr' ]
       tests:
         - return: 12
-      
+
 functions:
   desc: "calling, returning, and using functions"
   tags: ["func"]
@@ -124,4 +129,3 @@ functions:
 #       [args]: arguments to provide to the executable
 #       [return]: expected return value
 #       [output]: expected output to stdout (possibly a file/file descriptor if I add that ability in)
-

@@ -127,6 +127,10 @@ struct AdtType : public CompositeType, public TemplateType {
 
 /*
  * Represent a tuple type
+ *
+ * NOTE: A tuple should be laid out in memory as-if it were an instance
+ *   of an anonymous struct of the same types and ordering (only difference is indexing)
+ *   That is: let a = (3, 4, 5) <=> let a = Object :: { def a = 3 def b = 4 def c = 5 }()
  */
 struct TupleType : public CompositeType, public TypeList {
 

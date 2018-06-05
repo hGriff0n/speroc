@@ -16,13 +16,6 @@ Current Project Plan
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Get basic type system support up and running
 	Doing some basic work with types will be good
-	  Compiler Type Representation
-		Add in a couple of regression tests for the typing specification
-	  Memory Type Representation
-	    Perform experiments/research on how tuples/etc. should be represented in memory
-		Determine whether strings should be unicode by default or not
-	    Perform experiments/research on how custom types should be represented in memory
-		  Decide on the OOP structure for the language
 	  Redo the internal structure to have a better integration with the new type system
 	    It feels way too haphazard at the moment, I'm attaching stuff with thumb-tacks
 		I'll probably make an 'AnalysisState' structure and put all of the stuff in there (for the moment)
@@ -85,6 +78,18 @@ Current Project Plan
 	    Utilize the same analysis pass that converts `plambda` to function declaration
 	Junction typing syntax sometimes trips up common use cases (`3 :: Int + 4 :: Int` doesn't work)
 	Look at re-allowing paren-less functions
+	String should be unicode by default
+	  I am still undecided about how that should be produced to the users
+	    Provide utf-X byte points (ie. strings are arrays)
+		Grapheme Clusters (Unicode defined "characters")
+		"collation sequential primary element" (apparently a bit more natural "characters")
+	  https://manishearth.github.io/blog/2017/01/14/stop-ascribing-meaning-to-unicode-code-points/
+	For simplicity sake, I'm going to work off of the initial assumption that types are laid out like in C
+	  This assumption may change in the future, particularly to pack, so code should not depend on it
+	I'm going full-in on Rust-style impl blocks for adding type inheritance/etc.
+	  However, I want to relax the rules a bit (allow for defining traits at junction points, allow for defining traits through "this exists" [free function dispatch (can just do assignment)])
+	  I'll also maintain the usage of impl blocks only for inheritance / type fitting
+	    You can still define type specific methods inside of the declaration block
 	Work on language tutorial/introduction
 
   Convert to using a tri-code IR (ie. max two operands to any instruction)
@@ -93,6 +98,10 @@ Current Project Plan
 	  Basically current stage is "AST -> Assembly", we would change to "AST -> IR" + "IR -> Assembly"
 
   Code Quality Improvements
+    Change the test suit to have a folder-based organization structure
+	  Instead of having the yaml file differentiate between the literal and function tests, the directory structure handles that difference
+	  Each directory will have a yaml file listing out the expected results of the tests (at that level)
+	    If a specific test suite is entered (such as literal.ints) then only the tests in the "literal/ints" folder will be run
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
