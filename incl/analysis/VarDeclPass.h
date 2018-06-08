@@ -3,6 +3,7 @@
 #include "parser/AstVisitor.h"
 #include "interface/CompilationState.h"
 #include "util/analysis.h"
+#include "analysis/AnalysisState.h"
 
 namespace spero::analysis {
 
@@ -16,21 +17,19 @@ namespace spero::analysis {
 	 */
 	class VarDeclPass : public compiler::ast::AstVisitor {
 		compiler::CompilationState& state;
-		AllTypes& type_list;
+		analysis::AnalysisState& dictionary;
 
 		// Since SymTables can contain references to other symtables, the addresses need to stay relatively set
 		// For the moment, the global table is the only one that is not currently mapped to an ast node
 		// To enforce invariant addressing, this is currently implemented as a std::unique_ptr
 		// This may change once I have to integrate modules and types into this framework
-		std::unique_ptr<SymTable> globals;
 		SymTable* current = nullptr;
 
 		// Track the current scoping context to be able to tailor analysis
 		ScopingContext context = ScopingContext::GLOBAL;
 
 		public:
-			VarDeclPass(compiler::CompilationState& state, AllTypes& type_list);
-			std::unique_ptr<SymTable> finalize();
+			VarDeclPass(compiler::CompilationState& state, AnalysisState& dict);
 
 			// Decorations
 			//virtual void visitAnnotation(ast::Annotation&) final;

@@ -23,7 +23,7 @@ namespace spero::analysis {
 		bool is_mut = false;
 
 		memory::Locations storage;
-		std::shared_ptr<Type> type = nullptr;
+		Type* type = nullptr;
 
 		// TODO: Not sure about these (using too many pointers)
 		//ast::Ast* definition = nullptr;

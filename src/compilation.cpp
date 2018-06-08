@@ -30,7 +30,7 @@ namespace spero::compiler {
 
 		return parse_impl(state, [&input](Stack& ast, CompilationState& state) {
 			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::string_input<>{ input, "speroc:repl" }, ast, state);
-		});
+			});
 	}
 
 	Stack parseFile(std::string file, CompilationState& state) {
@@ -38,26 +38,23 @@ namespace spero::compiler {
 
 		return parse_impl(state, [&file](Stack& ast, CompilationState& state) {
 			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::file_input<>{ file }, ast, state);
-		});
+			});
 	}
 
+#define RUN_PASS(PassType) { auto pass = PassType(state, dictionary); ast::visit(pass, ast_stack); }
 
 	// Perform the various analysis stages
 	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state, analysis::AllTypes& type_list) {
-		analysis::VarDeclPass decl_check{ state, type_list };
-		ast::visit(decl_check, ast_stack);
-		auto sym_table = decl_check.finalize();
+		analysis::AnalysisState dictionary{ type_list };
 
-		/*analysis::BasicTypingPass typing_check{ state, type_list, std::move(sym_table) };
-		ast::visit(typing_check, ast_stack);
-		sym_table = typing_check.finalize();*/
+		RUN_PASS(analysis::VarDeclPass);
+		// RUN_PASS(analysis::BasicTypingPass);
+		RUN_PASS(analysis::VarRefPass);
 
-		analysis::VarRefPass usage_check{ state, type_list, std::move(sym_table) };
-		ast::visit(usage_check, ast_stack);
-		sym_table = usage_check.finalize();
-
-		return std::move(sym_table);
+		return std::move(dictionary.table);
 	}
+
+#undef RUN_PASS
 
 	gen::Assembler backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state) {
 		gen::AsmGenerator visitor{ std::move(globals), state };

@@ -4,38 +4,34 @@
 namespace spero::analysis {
 	using namespace compiler;
 
-	BasicTypingPass::BasicTypingPass(CompilationState& state, AllTypes& type_list, std::unique_ptr<SymTable> globals) : globals{ std::move(globals) }, state{ state }, type_list{ type_list } {
-		current = globals.get();
-	}
-
-	std::unique_ptr<SymTable> BasicTypingPass::finalize() {
-		return std::move(globals);
+	BasicTypingPass::BasicTypingPass(CompilationState& state, AnalysisState& dict) : dictionary{ dict }, state{ state } {
+		current = dictionary.table.get();
 	}
 
 
 	// Atoms
 	void BasicTypingPass::visitInt(ast::Int& i) {
-		if (type_list.count("Int") == 0) {
+		if (dictionary.type_list.count("Int") == 0) {
 			state.log(ID::err, "Installation does not define an `Int` type <at {}>", i.loc);
 		}
 
-		i.type = type_list["Int"];
+		i.type = dictionary.type_list["Int"];
 	}
 
 	void BasicTypingPass::visitString(ast::String& i) {
-		if (type_list.count("String") == 0) {
+		if (dictionary.type_list.count("String") == 0) {
 			state.log(ID::err, "Installation does not define a `String` type <at {}>", i.loc);
 		}
 
-		i.type = type_list["String"];
+		i.type = dictionary.type_list["String"];
 	}
 
 	void BasicTypingPass::visitBool(ast::Bool& i) {
-		if (type_list.count("Bool") == 0) {
+		if (dictionary.type_list.count("Bool") == 0) {
 			state.log(ID::err, "Installation does not define a `Bool` type <at {}>", i.loc);
 		}
 
-		i.type = type_list["Bool"];
+		i.type = dictionary.type_list["Bool"];
 	}
 
 	// Decorations
@@ -47,12 +43,12 @@ namespace spero::analysis {
 		if (util::is_type<ast::SourceType>(t.typ)) {
 			auto* type = util::view_as<ast::SourceType>(t.typ);
 
-			if (type_list.count(type->name->elems.back()->name) == 0) {
+			if (dictionary.type_list.count(type->name->elems.back()->name) == 0) {
 				state.log(ID::err, "Installation does not define a `<>` type <at {}>", *type->name->elems.back(), t.loc);
 			}
 
 			// TODO: This should override the expression's type (if compatible), influence the expression's type (if unsettled), or throw an error (if incompatible)
-			t.type = type_list[type->name->elems.back()->name];
+			t.type = dictionary.type_list[type->name->elems.back()->name];
 
 		} else {
 			t.type = t.expression->type;

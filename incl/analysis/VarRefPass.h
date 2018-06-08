@@ -3,6 +3,7 @@
 #include "parser/AstVisitor.h"
 #include "interface/CompilationState.h"
 #include "util/analysis.h"
+#include "analysis/AnalysisState.h"
 
 namespace spero::analysis {
 
@@ -12,17 +13,15 @@ namespace spero::analysis {
 	 */
 	class VarRefPass : public compiler::ast::AstVisitor {
 		compiler::CompilationState& state;
-		AllTypes& type_list;
+		analysis::AnalysisState& dictionary;
 
-		std::unique_ptr<SymTable> globals;
 		SymTable* current = nullptr;
 
 		// Track the current scoping context to be able to tailor analysis
 		ScopingContext context = ScopingContext::GLOBAL;
 
 		public:
-			VarRefPass(compiler::CompilationState& state, AllTypes& type_list, std::unique_ptr<SymTable> table);
-			std::unique_ptr<SymTable> finalize();
+			VarRefPass(compiler::CompilationState& state, AnalysisState& dict);
 
 			// Atoms
 			virtual void visitBlock(compiler::ast::Block&) final;

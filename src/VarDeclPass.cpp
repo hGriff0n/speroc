@@ -4,12 +4,8 @@ namespace spero::analysis {
 
 	using namespace compiler;
 
-	VarDeclPass::VarDeclPass(CompilationState& state, AllTypes& type_list) : globals{ std::make_unique<SymTable>() }, state{ state }, type_list{ type_list } {
-		current = globals.get();
-	}
-
-	std::unique_ptr<SymTable> VarDeclPass::finalize() {
-		return std::move(globals);
+	VarDeclPass::VarDeclPass(CompilationState& state, AnalysisState& dict) : dictionary{ dict }, state{ state } {
+		current = dictionary.table.get();
 	}
 
 

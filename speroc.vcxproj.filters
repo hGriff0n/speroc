@@ -833,5 +833,8 @@
     <ClInclude Include="incl\analysis\BasicTypingPass.h">
       <Filter>Header Files\analysis\types</Filter>
     </ClInclude>
+    <ClInclude Include="incl\analysis\AnalysisState.h">
+      <Filter>Header Files\analysis</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

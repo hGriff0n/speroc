@@ -17,10 +17,7 @@ Current Project Plan
   Get basic type system support up and running
 	Doing some basic work with types will be good
 	  Redo the internal structure to have a better integration with the new type system
-	    It feels way too haphazard at the moment, I'm attaching stuff with thumb-tacks
-		I'll probably make an 'AnalysisState' structure and put all of the stuff in there (for the moment)
 		Make sure there's a quick way of getting from a 'Variable' ast node to it's symbol table information
-	  Make ".3" produce an error in analysis
 	Intermediate Type Work (maybe)
 	  Add in assembly instructions specific for floats and booleans
 	    Look at generalizing the binopcall assembly generation to account for type differences
@@ -49,10 +46,14 @@ Current Project Plan
 	  Improve the process for "storing" functions across runs
 	    We can write the used functions every run, or we can write them once to the global pool (both work)
 		  However both have their drawbacks that indicate we probably want to handle functions slightly differently
+    Convert operators to method calls
+      Maybe implement asm inlining annotations if possible
+	    It'll probably be a good idea to have the `asm` annotation accept IR asm instead of x86 (for generalization)
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it
 	Figure out how to load type information into the symbol table
   Modules and Imports
+  Implement IR lowering phase
 
   Language Logic Checking
     Check if ':<var>' is (and should be) a legal typing

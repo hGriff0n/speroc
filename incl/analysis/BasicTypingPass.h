@@ -3,6 +3,7 @@
 #include "parser/AstVisitor.h"
 #include "interface/CompilationState.h"
 #include "util/analysis.h"
+#include "analysis/AnalysisState.h"
 
 namespace spero::analysis {
 
@@ -16,13 +17,12 @@ namespace spero::analysis {
 	 */
 	class BasicTypingPass : public compiler::ast::AstVisitor {
 		compiler::CompilationState& state;
-		AllTypes& type_list;
-		std::unique_ptr<SymTable> globals;
+		analysis::AnalysisState& dictionary;
+
 		SymTable* current = nullptr;
 
 		public:
-			BasicTypingPass(compiler::CompilationState& state, AllTypes& type_list, std::unique_ptr<SymTable> globals);
-			std::unique_ptr<SymTable> finalize();
+			BasicTypingPass(compiler::CompilationState& state, AnalysisState& dict);
 
 			// Atoms
 			virtual void visitInt(compiler::ast::Int&) final;

@@ -4,12 +4,8 @@ namespace spero::analysis {
 
 	using namespace compiler;
 
-	VarRefPass::VarRefPass(CompilationState& state, AllTypes& type_list, std::unique_ptr<SymTable> table) : globals{ std::move(table) }, state{ state }, type_list{ type_list } {
-		current = globals.get();
-	}
-
-	std::unique_ptr<SymTable> VarRefPass::finalize() {
-		return std::move(globals);
+	VarRefPass::VarRefPass(CompilationState& state, AnalysisState& dict) : dictionary{ dict }, state{ state } {
+		current = dictionary.table.get();
 	}
 
 
@@ -25,7 +21,7 @@ namespace spero::analysis {
 	// Expressions
 	void VarRefPass::visitVariable(ast::Variable& v) {
 		// Perform some simple variable usage checks
-		auto [nvar, iter] = lookup(*globals, current, *v.name);
+		auto [nvar, iter] = lookup(*dictionary.table, current, *v.name);
 
 		if (iter != std::end(v.name->elems)) {
 			if (testSsaLookupFailure(nvar, iter)) {
@@ -59,7 +55,7 @@ namespace spero::analysis {
 			}
 
 			// Perform all the necessary checks for reassignment
-			auto[variable, iter] = lookup(*globals, current, *lhs->name);
+			auto[variable, iter] = lookup(*dictionary.table, current, *lhs->name);
 
 			// NOTE: Do we need to check whether the variable exists here ???
 				// The error is already reported in `visitVariable` so by this point, it is guaranteed to be valid
