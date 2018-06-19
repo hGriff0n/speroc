@@ -67,6 +67,26 @@ namespace spero::compiler::gen {
 		current = parent_scope;
 	}
 
+	void AsmGenerator::visitFunction(ast::Function& f) {
+		// Setup the function
+		FuncDetail func;
+		// NOTE: We're assuming int return for now
+		func.init(FuncSignatureT<int>(CallConv::kIdHost));
+
+		FuncFrame ffi;
+		ffi.init(func);
+		ffi.setAllDirty();
+		emit.emitProlog(ffi);
+		emit.mov(x86::ebp, x86::esp);
+
+		// Perform codegen on the function
+		AstVisitor::visitFunction(f);
+
+		// Tear-down the function
+		emit.popBytes(0);
+		emit.emitEpilog(ffi);
+	}
+
 
 	//
 	// Names
@@ -113,20 +133,27 @@ namespace spero::compiler::gen {
 	// Statements
 	//
 	void AsmGenerator::visitVarAssign(ast::VarAssign& v) {
-		// if the body is a function
 		// TODO: Adding support for functions may require moving this to a separate stage
+			// I do need to abstract this assignment process a bit
 		// TODO: Type checking will definitely require additional stages
 		if (util::is_type<ast::Function>(v.expr)) {
+			if (!util::is_type<ast::AssignName>(v.name)) {
+				state.log(compiler::ID::err, "Attempt to assign a function through an assignment pattern <at {}>", v.loc);
+				return;
+			}
+
+			auto name = util::view_as<ast::AssignName>(v.name)->var->name.get();
+
 			// Print out function datace
-			emit.write(".def _main");		// main is 64-bit entrypoint
+			emit.write((".def " + name).c_str());		// main is 64-bit entrypoint
 			emit.writef(".scl %d", 2);
 			emit.writef(".type %d", 32);
 			emit.write(".endef");
-			emit.write(".globl _main");
+			emit.write((".globl " + name).c_str());
 			emit.writef(".p2align %d, %x", 4, 0x90);
 			//emit.write(".type _main, @function");
 
-			emit.bind(emit.newNamedLabel("_main"));
+			emit.bind(emit.newNamedLabel(name.c_str()));
 
 			v.expr->accept(*this);
 
@@ -156,22 +183,6 @@ namespace spero::compiler::gen {
 		// Pop off the symbol table
 		emit.popWords(current->numVariables());
 		current = parent_scope;
-	}
-
-	void AsmGenerator::visitFunction(ast::Function& f) {
-		// Print function enter code
-		// This is getting the 'main' label instead
-		emit.bind(emit.newNamedLabel("LFB0"));
-		emit.push(x86::ebp);
-		emit.mov(x86::ebp, x86::esp);
-
-		// Print the body
-		f.body->accept(*this);
-
-		// Print function tail/endlog
-		emit.leave();
-		emit.ret();
-		emit.bind(emit.newNamedLabel("LFE0"));
 	}
 
 	void AsmGenerator::visitBinOpCall(ast::BinOpCall& b) {

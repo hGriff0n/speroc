@@ -23,6 +23,9 @@ namespace spero::analysis {
 	// Names
 	void VarDeclPass::visitAssignName(ast::AssignName& n) {
 		// if (current == globals.get()) {
+		if (n.var->name == "main") {
+			n.var->name = "_main";
+		}
 
 		// Register the variable in the current scope
 		int off = -4 * (current->numVariables() + 1) - current->curr_ebp_offset;

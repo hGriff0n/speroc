@@ -14,44 +14,83 @@ Current Project Plan
   Convert all x86 touching code over to using AsmJit
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
-  Get basic type system support up and running
-	Doing some basic work with types will be good
-	  Redo the internal structure to have a better integration with the new type system
-		Make sure there's a quick way of getting from a 'Variable' ast node to it's symbol table information
+  Get functions working properly
+    Be able to define multiple functions without triggering compilation errors
+	  Generalize the assignment behavior to better follow functions
+	    This will probably entail some work with the symbol table and some ast modifications
+		  I need to consider how typing information gets transported to the naming node
+		  Splitting the case of 'AssignTuple' would also simplify a lot
+		Might want to have some basic ability to "sort" everything
+		  This is mostly for the interpreter (to simplify wrapping code)
+		  It may also make some analysis steps easier
+		    If I do this through a dependency graph, then type-checking becomes largely single pass
+	  Prevent usage of function code in the interpreter (until later stages)
+	Be able to call functions correctly within compiled code
+	  Integrate functions into the sym table in some way
+	    Currently, code fails because it tries to use an undeclared variable
+	  Figure out the procedures for setting up the stack frame, etc. and calling the code
+	    This work should be done with no-arg functions, for simplicity sake
+	  Enable returning values from function calls
+	    Be sure that automatic/inferred returns work exactly as explicit returns
+	  Add in the ability to pass in arguments to function calls
+	  Start work for generalizing based on the architecture (x86 and x86-64 have different calling conventions)
+	Look into how to support local functions/closures
+	  Figure out a better way of tracking ebp/etc. so that local variables are accessable
+	  Figure out where I would have to store the function data in order for it to be usable
+	    NOTE: I only need to consider this problem from the widest possible standpoint (any optimizations can be done later)
+		  They could be inlined in some cases (if they're never used outside of the function), but starting there would be terrible design
+	Enable function usage within the interpreter
+	  Generalize the procedure for initializing code to not automatically wrap everything in function
+		1) Only wrap global-scope code that is not in a function
+		2) Only wrap iff there is such code
+	  Allow for defining main within interpreted code
+	    To start off, automatically call `main` when it is defined (iff there is no other global code)
+	  Allow for defining multiple functions within the interpreter
+	    Be able to track where the "entrypoint" is (for both functions)
+		Be sure this works with both automatic jumping (to main) and "global" jumping
+	  Remove the automatic calling of main (if no global code is provided) within the interpreter
+	    Look at producing an error if main is defined (only in the interpreter though)
+	Enable re-entrant evaluation within the interpreter
+	  Add in the ability to allocate "global" variables into the standard compilation process
+	    Figure out how this is done in assembly files
+		  NOTE: Be sure to use the "memory location" enum I've already defined
+		NOTE: We'll probably need to hard-code in a switch for the assembly generation for the interpreter
+		  This should be a temporary thing (eventually)
+		  Maybe we could do this based on whether or not the AsmGenerator has a buffer provided to it
+	  Add in consideration of global storage location into variable allocations
+	    Modify jit-ing code to "reserve" a chunk of memory for storing global variables
+		Pass a pointer to this location into the 'AsmGenerator' structure
+		  May want to look at generalizing this a bit more (not sure of how well this interacts with compiled binaries)
+		Adapt AsmGenerator to utilize this storage space for allocating variables
+	  Improve the process for "storing" functions across runs
+	    We can write the used functions every run, or we can write them once to the global pool (both work)
+		  However both have their drawbacks that indicate we probably want to handle functions slightly differently
+    Convert operators to method calls
+	  Create a system for harcoding in spero implementations (for now)
+	    Eventually this will be replaced by spero code, but that requires asm/IR and modules to be completed first
+	  Convert operator calls to being function calls (instead of hardcoded assembly calls)
+	  Implement basic type-checking/etc. to automatically select the correct functions based on operand types
+	Integrate functions into the type system
+	  Figure out how to get function types working as distinct types
+	  Add in experimental code to the arguments to allow for restricting based on the type
+  Fix grammar and ast properties
+    Require directly affixing pointers and references to types
+    Allow anon_type to be attached after 'var_val/atom' rules
+  Type Inference and Type Checking
+    Read up on the MLsub type inference - see if I can figure out how to implement it
+	  Implement a toy algorithm inside of a smaller program (with hardcoded types, etc.)
+	  Transfer the toy algorithm over to this program
+	Figure out how to load type information into the symbol table
 	Intermediate Type Work (maybe)
+	  Come up with a quick way to get from a Variable/Binding ast node to it's symbol table information
+	    This would be quicker than running the full symbol table query
 	  Add in assembly instructions specific for floats and booleans
 	    Look at generalizing the binopcall assembly generation to account for type differences
 	  Add in assembly steps for interacting with tuples
 	    Implement AssignTuple assignment rule
 		Implement indexing in the case that the indexed type is a tuple (and the index is an int literal)
-  Fix grammar and ast properties
-    Require directly affixing pointers and references to types
-    Allow anon_type to be attached after 'var_val/atom' rules
-  Get functions working properly
-    I think the current "abort" errors are due to introducing multiple 'main' labels?
-	  That wouldn't quite explain the interpreter though
-	  Add some special interpreter checks, restrictions and handling
-	    Don't allow definition or calling of "main"
-    Figure out how to track 'ebp'/etc in order to support the usage of local functions (may be too much for the moment)
-	  Fix the issues with 'stack allocation' due to `main` (see `SymTable::setParent`)
-	Enable re-entrant evaluation within the interpreter
-	  Adapt the compiler data structures to track global definitions across "runs"
-	  Add in consideration of global storage location into variable allocations
-	    Modify jit-ing code to "reserve" a chunk of memory for storing global variables
-		Pass a pointer to this location into the 'AsmGenerator' structure
-		  May want to look at generalizing this a bit more (not sure of how well this interacts with compiled binaries)
-		Adapt AsmGenerator code to differentiate between global and local variables
-	  Modify the general compilation case to enable global variables
-	    Figure out how this is done in assembly files
-	  Improve the process for "storing" functions across runs
-	    We can write the used functions every run, or we can write them once to the global pool (both work)
-		  However both have their drawbacks that indicate we probably want to handle functions slightly differently
-    Convert operators to method calls
-      Maybe implement asm inlining annotations if possible
-	    It'll probably be a good idea to have the `asm` annotation accept IR asm instead of x86 (for generalization)
-  Type Inference and Type Checking
-    Read up on the MLsub type inference - see if I can figure out how to implement it
-	Figure out how to load type information into the symbol table
+		Abstract the assignment rules to simplify the logic
+		  For an AssignTuple pattern, split into a series of 'AssignName' (only issue is regarding when scopes come into effect)
   Modules and Imports
   Implement IR lowering phase
 
