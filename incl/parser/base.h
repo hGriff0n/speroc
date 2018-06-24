@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "analysis/SymTable.h"
+#include "parser/location.h"
 
 namespace spero::compiler {
 	// Cut down on typing for unique_ptr

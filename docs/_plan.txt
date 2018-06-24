@@ -17,9 +17,6 @@ Current Project Plan
   Get functions working properly
     Be able to define multiple functions without triggering compilation errors
 	  Generalize the assignment behavior to better follow functions
-	    This will probably entail some work with the symbol table and some ast modifications
-		  I need to consider how typing information gets transported to the naming node
-		  Splitting the case of 'AssignTuple' would also simplify a lot
 		Might want to have some basic ability to "sort" everything
 		  This is mostly for the interpreter (to simplify wrapping code)
 		  It may also make some analysis steps easier

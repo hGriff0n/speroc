@@ -5,7 +5,7 @@
 
 #include <enum.h>
 
-#include "base.h"
+#include "analysis/SymTable.h"
 #include "analysis/types.h"
 
 namespace spero::compiler {
@@ -295,6 +295,7 @@ namespace spero::compiler::ast {
 	struct Function : ValExpr {
 		ptr<Tuple> args;
 		ptr<ValExpr> body;
+		std::optional<spero::String> name;
 
 		Function(ptr<Tuple> args, ptr<ValExpr> body, Location loc);
 

@@ -73,7 +73,9 @@ namespace spero::analysis {
 	void VarRefPass::visitInAssign(ast::InAssign& in) {
 		auto* parent_scope = current;
 		current = &in.binding;
+
 		AstVisitor::visitInAssign(in);
+
 		current = parent_scope;
 	}
 

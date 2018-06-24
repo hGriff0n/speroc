@@ -49,7 +49,7 @@ namespace spero::compiler::gen {
 			// Control
 
 			// Statements
-			virtual void visitVarAssign(ast::VarAssign&) final;
+			//virtual void visitVarAssign(ast::VarAssign&) final;
 
 			// Expressions
 			virtual void visitInAssign(ast::InAssign&) final;

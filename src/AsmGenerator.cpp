@@ -67,7 +67,26 @@ namespace spero::compiler::gen {
 		current = parent_scope;
 	}
 
+	// NOTE: Doesn't work on local functions
 	void AsmGenerator::visitFunction(ast::Function& f) {
+		// Output assembly specific code
+		if (!f.name) {
+			// TODO: This is a temporary solution to prevent generation of code for local functions (in case I try it for now)
+			state.log(compiler::ID::err, "Attempt to generate assembly for function without a name <at {}>", f.loc);
+			return;
+		}
+
+		auto& name = f.name->get();
+		emit.write((".def " + name).c_str());
+		emit.writef(".scl %d", 2);
+		emit.writef(".type %d", 32);
+		emit.write(".endef");
+		emit.write((".globl " + name).c_str());
+		emit.writef(".p2align %d, %x", 4, 0x90);
+		//emit.write(".type _main, @function");
+
+		emit.bind(emit.newNamedLabel(name.c_str()));
+
 		// Setup the function
 		FuncDetail func;
 		// NOTE: We're assuming int return for now
@@ -105,11 +124,20 @@ namespace spero::compiler::gen {
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
 		std::optional<size_t> ssa_id;
-		 if (auto var = current->ssaIndex(n.var->name, ssa_id, n.var->loc)) {
-			 if (auto* v = std::get_if<ref_t<analysis::VarData>>(&*var)) {
-				 auto loc = std::get<analysis::memory::Stack>(v->get().storage);
-				 emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
-			 }
+
+		if (auto var = current->ssaIndex(n.var->name, ssa_id, n.var->loc)) {
+			if (auto* v = std::get_if<ref_t<analysis::VarData>>(&*var)) {
+				// NOTE: Global functions handle their own allocation
+				if (std::holds_alternative<analysis::memory::Global>(v->get().storage) && dynamic_cast<ast::Function*>(v->get().definition)) {
+					return;
+				}
+
+				// NOTE: A better approach for this would probably be to create an "arena" for allocating
+					// The arena would provide the interface for pushing/accessing stuff in the memory region it defines
+					// The ast/visitor/etc. only need to push/allocate bytes into the region
+				auto loc = std::get<analysis::memory::Stack>(v->get().storage);
+				emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
+			}
 		}
 	}
 
@@ -132,37 +160,6 @@ namespace spero::compiler::gen {
 	//
 	// Statements
 	//
-	void AsmGenerator::visitVarAssign(ast::VarAssign& v) {
-		// TODO: Adding support for functions may require moving this to a separate stage
-			// I do need to abstract this assignment process a bit
-		// TODO: Type checking will definitely require additional stages
-		if (util::is_type<ast::Function>(v.expr)) {
-			if (!util::is_type<ast::AssignName>(v.name)) {
-				state.log(compiler::ID::err, "Attempt to assign a function through an assignment pattern <at {}>", v.loc);
-				return;
-			}
-
-			auto name = util::view_as<ast::AssignName>(v.name)->var->name.get();
-
-			// Print out function datace
-			emit.write((".def " + name).c_str());		// main is 64-bit entrypoint
-			emit.writef(".scl %d", 2);
-			emit.writef(".type %d", 32);
-			emit.write(".endef");
-			emit.write((".globl " + name).c_str());
-			emit.writef(".p2align %d, %x", 4, 0x90);
-			//emit.write(".type _main, @function");
-
-			emit.bind(emit.newNamedLabel(name.c_str()));
-
-			v.expr->accept(*this);
-
-		} else {
-			// TODO: Figure out a way to pass the mutability of the expression on to the 'name'
-			v.expr->accept(*this);					// Push the expression value onto the stack
-			v.name->accept(*this);
-		}
-	}
 
 
 	//

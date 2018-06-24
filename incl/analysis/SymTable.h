@@ -4,7 +4,7 @@
 #include <optional>
 #include <variant>
 
-#include "parser/location.h"
+#include "parser/base.h"
 #include "util/analysis.h"
 
 template<class T>
@@ -23,10 +23,10 @@ namespace spero::analysis {
 		bool is_mut = false;
 
 		memory::Locations storage;
-		Type* type = nullptr;
+		//Type* type = nullptr;
 
 		// TODO: Not sure about these (using too many pointers)
-		//ast::Ast* definition = nullptr;
+		compiler::ast::Ast* definition = nullptr;
 		//std::vector<ast::Ast*> usages;
 
 		inline VarData(compiler::Location s, bool mut) : VarData{ s, mut, analysis::memory::Stack{} } {}

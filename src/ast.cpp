@@ -816,7 +816,12 @@ namespace spero::compiler::ast {
 	}
 
 	Interface::Interface(VisibilityType vis, ptr<AssignPattern> binding, ptr<GenericArray> gen_pattern, ptr<Type> type_bound, Location loc)
-		: Statement{ loc }, vis{ vis }, name{ std::move(binding) }, gen{ std::move(gen_pattern) }, type{ std::move(type_bound) } {}
+		: Statement{ loc }, vis{ vis }, name{ std::move(binding) }, gen{ std::move(gen_pattern) }, type{ std::move(type_bound) }
+	{
+		if (type) {
+			name->is_mut = type->is_mut;
+		}
+	}
 	void Interface::accept(AstVisitor& v) {
 		v.visitInterface(*this);
 	}
@@ -835,7 +840,10 @@ namespace spero::compiler::ast {
 	}
 
 	TypeAssign::TypeAssign(VisibilityType vis, ptr<AssignPattern> binding, ptr<GenericArray> gen_pattern, bool mut_only, ConsList constructors, ptr<Block> def, Location loc)
-		: Interface{ vis, std::move(binding), std::move(gen_pattern), nullptr, loc }, cons{ std::move(constructors) }, body{ std::move(def) }, mutable_only{ mut_only } {}
+		: Interface{ vis, std::move(binding), std::move(gen_pattern), nullptr, loc }, cons{ std::move(constructors) }, body{ std::move(def) }, mutable_only{ mut_only }
+	{
+		name->is_mut = body->is_mut;
+	}
 	void TypeAssign::accept(AstVisitor& v) {
 		v.visitTypeAssign(*this);
 	}
@@ -864,7 +872,10 @@ namespace spero::compiler::ast {
 	}
 
 	VarAssign::VarAssign(VisibilityType vis, ptr<AssignPattern> binding, ptr<GenericArray> gen_pattern, ptr<Type> type_bound, ptr<ValExpr> value, Location loc)
-		: Interface{ vis, std::move(binding), std::move(gen_pattern), std::move(type_bound), loc }, expr{ std::move(value) } {}
+		: Interface{ vis, std::move(binding), std::move(gen_pattern), std::move(type_bound), loc }, expr{ std::move(value) }
+	{
+		name->is_mut = expr->is_mut;
+	}
 	void VarAssign::accept(AstVisitor& v) {
 		v.visitVarAssign(*this);
 	}
