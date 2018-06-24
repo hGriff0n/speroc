@@ -102,6 +102,7 @@ namespace spero::compiler::gen {
 		AstVisitor::visitFunction(f);
 
 		// Tear-down the function
+		// NOTE: Currently all operations store their result in eax, so we don't need to worry about return stuff yet
 		emit.popBytes(0);
 		emit.emitEpilog(ffi);
 	}
@@ -294,6 +295,22 @@ namespace spero::compiler::gen {
 			emit.test(x86::eax, x86::eax);
 			emit.setz(x86::eax);
 		}
+	}
+
+	void AsmGenerator::visitFnCall(ast::FnCall& f) {
+		visitValExpr(f);
+
+		if (!util::is_type<ast::Variable>(f.callee)) {
+			state.log(compiler::ID::err, "Calling non-var-bound functions is currently not supported <at {}>", f.loc);
+			return;
+		}
+
+		// TODO: Push arguments to the stack
+
+		auto* fn = util::view_as<ast::Variable>(f.callee);
+
+		// TODO: This requires having the declaration before the call site
+		emit.call(emit.labelByName(fn->name->elems.back()->name.get().c_str()));
 	}
 
 }

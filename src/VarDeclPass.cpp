@@ -68,5 +68,7 @@ namespace spero::analysis {
 		current_decl = &i;
 
 		AstVisitor::visitInterface(i);
+
+		current_decl = last;
 	}
 }

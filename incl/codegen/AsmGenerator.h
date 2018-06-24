@@ -55,6 +55,7 @@ namespace spero::compiler::gen {
 			virtual void visitInAssign(ast::InAssign&) final;
 			virtual void visitBinOpCall(ast::BinOpCall&) final;
 			virtual void visitUnOpCall(ast::UnOpCall&) final;
+			virtual void visitFnCall(ast::FnCall&) final;
 	};
 
 }

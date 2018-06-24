@@ -15,24 +15,22 @@ Current Project Plan
 	Perform some more research on AsmJit
 	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
   Get functions working properly
+	Be able to call functions correctly within compiled code
+	  Make sure function calling works as expected
+	  Add in the ability to pass in arguments to function calls
+	    Add in code to perform the necessary work for setting up the callee defined stack frame and saving registers
+	  Start work for generalizing based on the architecture (x86 and x86-64 have different calling conventions)
     Be able to define multiple functions without triggering compilation errors
 	  Generalize the assignment behavior to better follow functions
 		Might want to have some basic ability to "sort" everything
 		  This is mostly for the interpreter (to simplify wrapping code)
 		  It may also make some analysis steps easier
 		    If I do this through a dependency graph, then type-checking becomes largely single pass
-	  Prevent usage of function code in the interpreter (until later stages)
-	Be able to call functions correctly within compiled code
-	  Integrate functions into the sym table in some way
-	    Currently, code fails because it tries to use an undeclared variable
-	  Figure out the procedures for setting up the stack frame, etc. and calling the code
-	    This work should be done with no-arg functions, for simplicity sake
-	  Enable returning values from function calls
-	    Be sure that automatic/inferred returns work exactly as explicit returns
-	  Add in the ability to pass in arguments to function calls
-	  Start work for generalizing based on the architecture (x86 and x86-64 have different calling conventions)
+	  Fix the issue where functions must be declared before they are used (within the global scope)
 	Look into how to support local functions/closures
 	  Figure out a better way of tracking ebp/etc. so that local variables are accessable
+	    This work would mostly be done in terms of the global functions
+		  However, I need to consider non-local functions for true generality
 	  Figure out where I would have to store the function data in order for it to be usable
 	    NOTE: I only need to consider this problem from the widest possible standpoint (any optimizations can be done later)
 		  They could be inlined in some cases (if they're never used outside of the function), but starting there would be terrible design
@@ -73,6 +71,11 @@ Current Project Plan
   Fix grammar and ast properties
     Require directly affixing pointers and references to types
     Allow anon_type to be attached after 'var_val/atom' rules
+  Reconsider the implementation of the passes/etc. to provide better generality
+    Start from the bottom-up to rework things to have better composability and fewer dependencies
+	  Things are starting to get a bit convoluted and I'm not sure about what goes where
+	Provide an "allocator" style interface for writing stuff in AsmGenerator
+	  This interface would simplify the process of handling the various ways types can be stored in memory
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it
 	  Implement a toy algorithm inside of a smaller program (with hardcoded types, etc.)
