@@ -87,6 +87,12 @@ functions:
       tests:
         - return: 7
     - desc: ""
+      exec: "func_noarg.exe"
+      compile:
+        files: [ 'func_noarg.spr' ]
+      tests:
+        - return: 3
+    - desc: ""
       exec: 'func_type_error.exe'
       compile:
         fail: true
