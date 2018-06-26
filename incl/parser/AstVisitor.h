@@ -83,9 +83,12 @@ namespace spero::compiler::ast {
 		DEF_VISIT(Function) {
 			visitValExpr(t);
 
-			if (t.args) {
-				t.args->accept(*this);
+			if (t.args.size()) {
+				for (auto&& arg : t.args) {
+					arg->accept(*this);
+				}
 			}
+
 			t.body->accept(*this);
 		}
 

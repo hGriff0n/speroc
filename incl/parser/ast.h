@@ -41,6 +41,7 @@ namespace spero::compiler::ast {
 	* Forward declarations
 	*/
 	struct LocalAnnotation;
+	struct Argument;
 
 
 	//
@@ -293,11 +294,11 @@ namespace spero::compiler::ast {
 	 * TODO: How are arguments supposed to work with/without a scope body
 	 */
 	struct Function : ValExpr {
-		ptr<Tuple> args;
-		ptr<ValExpr> body;
+		std::deque<ptr<Argument>> args;
+		ptr<Block> body;
 		std::optional<spero::String> name;
 
-		Function(ptr<Tuple> args, ptr<ValExpr> body, Location loc);
+		Function(std::deque<ptr<Argument>> args, ptr<Block> body, Location loc);
 
 		virtual void accept(AstVisitor& v);
 		virtual std::ostream& prettyPrint(std::ostream& s, size_t buf, std::string_view context = "");
@@ -818,7 +819,8 @@ namespace spero::compiler::ast {
 	struct Argument : Ast {
 		ptr<BasicBinding> name;
 		ptr<Type> typ;
-		ptr<TypeAnnotation> var;
+
+		//ptr<TypeAnnotation> var;
 
 		Argument(ptr<BasicBinding> binding, ptr<Type> type, Location loc);
 

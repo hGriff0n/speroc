@@ -188,8 +188,44 @@ namespace spero::parser::actions {
 	} END;
 	RULE(lambda) {
 		// stack: tuple expr
-		auto body = POP(ValExpr);
-		PUSH(Function, POP(Tuple), std::move(body));
+		if (!util::at_node<ast::Block>(s)) {
+			auto val = POP(Statement);
+			std::deque<ptr<ast::Statement>> vals;
+			vals.emplace_front(std::move(val));
+			PUSH(Block, std::move(vals));
+		}
+
+		auto body = POP(Block);
+		auto tuple = POP(Tuple);
+
+		// Transform the tuple into an argument list
+		std::deque<ptr<ast::Argument>> args;
+		for (auto&& arg : tuple->elems) {
+			ptr<ast::Type> type = nullptr;
+			ptr<ast::ValExpr> var = nullptr;
+
+			// Extract any type annotations
+			if (auto* annotated = util::view_as<ast::TypeAnnotation>(arg)) {
+				var = std::move(annotated->expression);
+				type = std::move(annotated->typ);
+
+			} else {
+				var = std::move(arg);
+			}
+			
+			if (auto* variable = util::view_as<ast::Variable>(var)) {
+				auto& varname = variable->name->elems.back()->name;
+				auto binding = MAKE(BasicBinding, varname, std::islower(varname.get().front()) ? ast::BindingType::VARIABLE : ast::BindingType::TYPE);
+				auto argument = MAKE(Argument, std::move(binding), std::move(type));
+				args.emplace_back(std::move(argument));
+
+			} else {
+				state.log(compiler::ID::err, "[TODO?] Attempt to declare a function with a non-named parameter <at {}>", var->loc);
+				args.push_back(nullptr);
+			}
+		}
+
+		PUSH(Function, std::move(args), std::move(body));
 		// stack: fndef
 	} END;
 	RULE(fwd_dot) {

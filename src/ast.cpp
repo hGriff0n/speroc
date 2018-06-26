@@ -201,7 +201,7 @@ namespace spero::compiler::ast {
 		return s << '}';
 	}
 
-	Function::Function(ptr<Tuple> args, ptr<ValExpr> body, Location loc)
+	Function::Function(std::deque<ptr<Argument>> args, ptr<Block> body, Location loc)
 		: ValExpr{ loc }, args{ std::move(args) }, body{ std::move(body) } {}
 	void Function::accept(AstVisitor& v) {
 		v.visitFunction(*this);
@@ -210,9 +210,16 @@ namespace spero::compiler::ast {
 		s << std::string(buf, ' ') << context << "ast.Function (";
 		ValExpr::prettyPrint(s, buf);
 
-		if (args) {
-			args->prettyPrint(s << '\n', buf + 2, "args=");
+		if (args.size()) {
+			s << '\n' << std::string(buf + 2, ' ') << "args=(";
+
+			for (auto&& arg : args) {
+				arg->prettyPrint(s << '\n', buf + 4);
+			}
+
+			s << '\n' << std::string(buf + 2, ' ') << ')';
 		}
+
 		return body->prettyPrint(s << '\n', buf + 2, "expr=");
 	}
 
