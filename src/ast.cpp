@@ -668,7 +668,7 @@ namespace spero::compiler::ast {
 	}
 
 	IfElse::IfElse(std::deque<ptr<IfBranch>> ifs, ptr<ValExpr> _else, Location loc)
-		: Sequence{ std::move(ifs), loc }, _else_{ std::move(_else) } {}
+		: Sequence{ std::move(ifs), loc }, else_{ std::move(_else) } {}
 	void IfElse::accept(AstVisitor& v) {
 		v.visitIfElse(*this);
 	}
@@ -680,8 +680,8 @@ namespace spero::compiler::ast {
 			_if_->prettyPrint(s << '\n', buf + 2);
 		}
 
-		if (_else_) {
-			_else_->prettyPrint(s << '\n', buf + 2, "else=");
+		if (else_) {
+			else_->prettyPrint(s << '\n', buf + 2, "else=");
 		}
 
 		return s;
@@ -966,7 +966,7 @@ namespace spero::compiler::ast {
 		v.visitBinOpCall(*this);
 	}
 	DEF_PRINTER(BinOpCall) {
-		s << std::string(buf, ' ') << context << "ast.BinOpCall (op=" << op;
+		s << std::string(buf, ' ') << context << "ast.BinOpCall (op=`" << op << '`';
 		//op->prettyPrint(s << std::string(buf, ' ') << context << "ast.BinOpCall (op=", 0);
 		ValExpr::prettyPrint(s << ", ", buf);
 		lhs->prettyPrint(s << '\n', buf + 2, "lhs=");

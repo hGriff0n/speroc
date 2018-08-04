@@ -52,6 +52,14 @@ namespace spero::compiler::gen {
 	//
 	// Atoms
 	//
+	void AsmGenerator::visitTuple(ast::Tuple& t) {
+		AsmGenerator::visitValExpr(t);
+
+		for (auto&& elem : t.elems) {
+			elem->accept(*this);
+			emit.push(x86::eax);
+		}
+	}
 	void AsmGenerator::visitBlock(ast::Block& b) {
 		// Initialize scope entry code
 		auto* parent_scope = current;
@@ -85,11 +93,13 @@ namespace spero::compiler::gen {
 		emit.writef(".p2align %d, %x", 4, 0x90);
 		//emit.write(".type _main, @function");
 
+		// TODO: Mangle the function label
 		emit.bind(emit.newNamedLabel(name.c_str()));
 
 		// Setup the function
 		FuncDetail func;
-		// NOTE: We're assuming int return for now
+		// NOTE: Assume that we're always returning an int for now
+		// Once we get to the assembly stage we should already have converted everyting to something like this anyways
 		func.init(FuncSignatureT<int>(CallConv::kIdHost));
 
 		FuncFrame ffi;
@@ -97,6 +107,8 @@ namespace spero::compiler::gen {
 		ffi.setAllDirty();
 		emit.emitProlog(ffi);
 		emit.mov(x86::ebp, x86::esp);
+
+		// TODO: Setup function arguments
 
 		// Perform codegen on the function
 		AstVisitor::visitFunction(f);
@@ -156,6 +168,43 @@ namespace spero::compiler::gen {
 	//
 	// Control
 	//
+	void AsmGenerator::visitIfBranch(ast::IfBranch& branch) {
+		visitBranch(branch);
+
+		branch.test->accept(*this);
+		emit.cmp(x86::al, 0);
+
+		auto after_label = emit.newLabel();
+		emit.je(after_label);
+
+		branch.body->accept(*this);
+		emit.bind(after_label);
+	}
+	void AsmGenerator::visitIfElse(ast::IfElse& branches) {
+		visitBranch(branches);
+
+		auto end_label = emit.newLabel();
+		for (auto& branch : branches.elems) {
+			visitBranch(*branch);
+
+			branch->test->accept(*this);
+			emit.cmp(x86::al, 0);
+			
+			auto next_branch = emit.newLabel();
+			emit.je(next_branch);
+
+			branch->body->accept(*this);
+			emit.jmp(end_label);
+
+			emit.bind(next_branch);
+		}
+
+		if (branches.else_) {
+			branches.else_->accept(*this);
+		}
+
+		emit.bind(end_label);
+	}
 
 
 	//
@@ -300,17 +349,24 @@ namespace spero::compiler::gen {
 	void AsmGenerator::visitFnCall(ast::FnCall& f) {
 		visitValExpr(f);
 
+		f.arguments->accept(*this);
+
+		// Push arguments on the stack
 		if (!util::is_type<ast::Variable>(f.callee)) {
 			state.log(compiler::ID::err, "Calling non-var-bound functions is currently not supported <at {}>", f.loc);
 			return;
 		}
 
-		// TODO: Push arguments to the stack
-
 		auto* fn = util::view_as<ast::Variable>(f.callee);
 
 		// TODO: This requires having the declaration before the call site
-		emit.call(emit.labelByName(fn->name->elems.back()->name.get().c_str()));
+		auto label = emit.labelByName(fn->name->elems.back()->name.get().c_str());
+		if (!label.isValid()) {
+			state.log(compiler::ID::err, "Calling function before declaration <at {}>", f.loc);
+			return;
+		}
+
+		emit.call(label);
 	}
 
 }

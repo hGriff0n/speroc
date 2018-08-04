@@ -109,6 +109,12 @@ functions:
         files: [ 'func_after.spr' ]
       tests:
         return: 7
+    - desc: ""
+      exec: 'recursion.exe'
+      compile:
+        files: [ 'recursion.spr' ]
+      tests:
+        - return: 5042
 
 
 # TODO:

@@ -21,6 +21,19 @@ namespace spero::analysis {
 		current = parent_scope;
 	}
 
+	void VarDeclPass::visitFunction(ast::Function& f) {
+		auto parent_scope = current;
+		f.body->locals.setParent(current, true);
+		current = &f.body->locals;
+
+		// TODO: Figure out how to get arguments declared in the symtable
+		for (auto&& arg : f.args) {
+			arg->accept(*this);
+		}
+		
+		current = parent_scope;
+	}
+
 
 	// Names
 	void VarDeclPass::visitAssignName(ast::AssignName& n) {

@@ -296,8 +296,8 @@ namespace spero::compiler::ast {
 				elem->accept(*this);
 			}
 
-			if (t._else_) {
-				t._else_->accept(*this);
+			if (t.else_) {
+				t.else_->accept(*this);
 			}
 		}
 		DEF_VISIT(Case) {

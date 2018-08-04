@@ -11,9 +11,18 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  Convert all x86 touching code over to using AsmJit
-	Perform some more research on AsmJit
-	  Figure out how asmjit handles the memory of deleted nodes (don't want memory leaks)
+  Get functions working with arguments
+    Be able to pass in arguments to functions
+	Be able to define and call recursive functions (implemented if branches)
+	Be able to define and call multiple functions
+	Maybe switch over operator calls into function calls
+	  This would require a lot more type work that I'm not sure about
+	  I'm not sure about whether the current architecture really handles it well
+  Rearchitect system to have better separation and control flow
+    Figure out what I mean by this (what are the current, and future, pain points)
+    Add in MIR step and convert assembly codegen to operating off of that
+	  Look at generalizing the codegen to enable switching out based on architecture
+
   Get functions working properly
 	Be able to call functions correctly within compiled code
 	  Add in the ability to pass in arguments to function calls

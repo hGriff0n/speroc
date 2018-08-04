@@ -1,0 +1,10 @@
+
+def factorial = (n :: Int) ->
+    if n == 0 {
+        1
+    } else {
+        n * factorial(n - 1)
+    }
+
+def main = () ->
+    factorial(0) + factorial(1) + factorial(7)

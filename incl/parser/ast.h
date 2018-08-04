@@ -943,7 +943,7 @@ namespace spero::compiler::ast {
 	 *   _else_ - optional fall-through case
 	 */
 	struct IfElse : Sequence<IfBranch, Branch> {
-		ptr<ValExpr> _else_;
+		ptr<ValExpr> else_;
 
 		IfElse(std::deque<ptr<IfBranch>> ifs, ptr<ValExpr> _else, Location loc);
 
