@@ -11,6 +11,22 @@ namespace spero::analysis {
 	}
 
 
+	// Decorations
+	void VarDeclPass::visitArgument(ast::Argument& arg) {
+		// TODO: Copy-pasted from visitAssignName. Doesn't handle the vagaries of arguments
+		int off = -4 * (current->numVariables() + 1) - current->curr_ebp_offset;
+
+		// Create the VarData struct
+		VarData info{ arg.loc, false, memory::Stack{ off } };
+
+		// Insert the new declaration into the table
+		current->insert(arg.name->name, info);
+	}
+
+
+	// Types
+
+
 	// Atoms
 	void VarDeclPass::visitBlock(ast::Block& b) {
 		auto* parent_scope = current;
@@ -32,6 +48,8 @@ namespace spero::analysis {
 		}
 		
 		current = parent_scope;
+
+		AstVisitor::visitFunction(f);
 	}
 
 
@@ -64,6 +82,9 @@ namespace spero::analysis {
 		// Insert the new declaration into the table
 		current->insert(n.var->name, info);
 	}
+
+
+	// Control
 
 
 	// Statements

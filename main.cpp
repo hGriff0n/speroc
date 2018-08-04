@@ -21,7 +21,7 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 	using compiler::ID;
 	
 	string::backing_type input;
-	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", true }, { "ast", true }, { "asm", true } };
+	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", false }, { "ast", true }, { "asm", true } };
 
 	GET_PERMISSIONS(state);
 	state.files().push_back("");

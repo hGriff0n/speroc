@@ -7,6 +7,19 @@
 namespace spero::compiler::gen {
 
 	/*
+	 * Report errors produced during asmjit calls
+	 */
+	struct AsmjitReporter : asmjit::ErrorHandler {
+		compiler::CompilationState& state;
+
+		inline AsmjitReporter(compiler::CompilationState& state) : state{ state } {}
+
+		inline void handleError(asmjit::Error err, const char* message, asmjit::BaseEmitter* origin) override {
+			state.log(compiler::ID::err, "asmjit error: {}", message);
+		}
+	};
+
+	/*
 	 * AstVisitor class to control basic emission of assembly code
 	 *
 	 * TODO: Rewrite to utilize different IR structure
@@ -16,6 +29,7 @@ namespace spero::compiler::gen {
 	// class AsmGenerator : public ast::AstVisitor<Assembler> {
 	class AsmGenerator : public ast::AstVisitor {
 		Assembler emit;
+		AsmjitReporter reporter;
 		CompilationState& state;
 
 		std::unique_ptr<analysis::SymTable> globals;

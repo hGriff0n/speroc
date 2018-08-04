@@ -6,8 +6,9 @@ using namespace asmjit;
 
 namespace spero::compiler::gen {
 
-	AsmGenerator::AsmGenerator(std::unique_ptr<analysis::SymTable> globals, compiler::CompilationState& state) : globals{ std::move(globals) }, state{ state } {
+	AsmGenerator::AsmGenerator(std::unique_ptr<analysis::SymTable> globals, compiler::CompilationState& state) : globals{ std::move(globals) }, state{ state }, reporter{ state } {
 		current = this->globals.get();
+		emit.setErrorHandler(&reporter);
 		
 		// TODO: Quick hack to enable 'batched' pushing of variables
 		// Because the global scope isn't a table, the batch push didn't occur

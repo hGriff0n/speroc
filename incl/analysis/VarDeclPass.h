@@ -38,7 +38,7 @@ namespace spero::analysis {
 			// Decorations
 			//virtual void visitAnnotation(compiler::ast::Annotation&) final;
 			//virtual void visitAdt(compiler::ast::Adt&) final;
-			//virtual void visitArgument(compiler::ast::Argument&) final;
+			virtual void visitArgument(compiler::ast::Argument&) final;
 			//virtual void visitGenericPart(compiler::ast::GenericPart&) final;
 			//virtual void visitTypeGeneric(compiler::ast::TypeGeneric&) final;
 			//virtual void visitValueGeneric(compiler::ast::ValueGeneric&) final;
@@ -48,7 +48,6 @@ namespace spero::analysis {
 
 			// Atoms
 			virtual void visitBlock(compiler::ast::Block&) final;
-			// NOTE: Assign the body's symbol table before visiting the arguments (should automatically scope them)
 			virtual void visitFunction(compiler::ast::Function&) final;
 
 			// Names

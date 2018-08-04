@@ -12,8 +12,8 @@ Current Project State
 
 Current Project Plan
   Get functions working with arguments
-    Be able to pass in arguments to functions
-	Be able to define and call recursive functions (implemented if branches)
+    Fix Issues with Variables and tests
+	  Get function calling with arguments working (functions currently fail compilation)
 	Be able to define and call multiple functions
 	Maybe switch over operator calls into function calls
 	  This would require a lot more type work that I'm not sure about
