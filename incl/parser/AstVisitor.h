@@ -387,9 +387,9 @@ namespace spero::compiler::ast {
 			t.body->accept(*this);
 		}
 		DEF_VISIT(VarAssign) {
-			visitInterface(t);
-
 			t.expr->accept(*this);
+
+			visitInterface(t);
 		}
 		DEF_VISIT(TypeExtension) {
 			visitValExpr(t);
