@@ -1,10 +1,16 @@
 # Current Project Status
 
-Just finished a rewrite of the grammar to allow for syntax checking and also switched over the backend to use the asmjit framework. Currently switching compilation over to using clang as the backend.
+Just got basic functions up and running. We are now able to call functions, passing arguments, and use their values in
+computations. Recursion still has some errors with the implementation but that is probably due to the branching support.
 
-Development is focused on basic variable and type interaction issues, particularly mutability tracking (and the requisite error conditions). After that we've got basic type system characteristics and function definition/calling.
+Currently supported: Basic integer arithmatic, Basic variables and functions, Variable shadowing and scoping, Mutability Restrictions (NOTE: A basic type checking pass does exist, but is not used).
 
-Currently supported: Basic integer addition and arithmatic, Basic variables and variable usage, Variable shadowing and "revealing" in the context of scopes.
+I will be taking some time to rearchitect most of the system internals to smooth over cracks that have begun to appear
+and to better target the system to future avenues and opportunities (and because I've taken a month-long break). One
+part of this rearchitecture will be the introduction of a new IR that final codegen will operate off of (instead of the
+current direct-from-AST). The other focus will be on streamlining the storage and pass system, particularly for
+accessing variable and other symbol information (ie. what we need for type and function checking).
+
 Run 'run_tests.bat' after compilation to see which systems are hooked up.
 
 Take a look at the full Spero documentation [here](https://github.com/hGriff0n/Spero)!
@@ -14,9 +20,14 @@ Take a look at the full Spero documentation [here](https://github.com/hGriff0n/S
 If you have Visual Studio, this repository includes a solution file for (hopefully) easy setup and running. If not, I would greatly appreciate any pull-requests that include a custom makefile.
 I just haven't been able to find the time to create it myself (I don't gain that much myself tbh).
 
-On it's own, speroc only serves to transform Spero code into assembly files. These files are then forwarded on to clang in order to produce the final executable. A version of clang must be
-installed and reachable through the command line in order for speroc compilation (not project) to work. It is planned, though far in the future, to eventually convert speroc to producing
-LLVM IR instead, and having that be forwarded on to the clang tool for improved optimization performance.
+On it's own, speroc only serves to transform Spero code into assembly files. These files are then forwarded on to clang
+in order to produce the final executable. A version of clang must be installed and reachable through the command line
+in order for speroc compilation (not project) to work. It is planned, though far in the future, to eventually convert
+speroc to producing LLVM IR instead, and having that be forwarded on to the clang tool for improved optimization
+performance.
+
+However, I will not be doing that for now as I still want to use this project as an avenue for exploring various forms
+of compiler optimizations.
 
 ## Contribution
 

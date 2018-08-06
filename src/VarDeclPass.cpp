@@ -46,6 +46,7 @@ namespace spero::analysis {
 		for (auto&& arg : f.args) {
 			arg->accept(*this);
 		}
+		current->setNumArgs(f.args.size());
 		
 		current = parent_scope;
 

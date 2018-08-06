@@ -1,5 +1,5 @@
 
 
-def add = (i :: Int, j :: Int) -> i + j
+def add = (i :: Int, j :: Int) -> i - j
 
-def main = () -> add(3, 4)
+def main = () -> add(4, 3)

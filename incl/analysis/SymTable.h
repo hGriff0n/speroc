@@ -59,6 +59,8 @@ namespace spero::analysis {
 			std::unordered_map<String, StorageType> vars;
 			ScopingContext rules = ScopingContext::SCOPE;
 
+			size_t num_args = 0;
+
 		public:
 			int curr_ebp_offset = 0;
 			SymTable();
@@ -88,7 +90,10 @@ namespace spero::analysis {
 			// Counting interfaces
 			size_t size() const;
 			// TODO: Need to rewrite to account for ssa (and drop scopes)
-			size_t numVariables();
+			size_t numVariables(bool count_args = false);
+			// Hack because I'm using batching to create space for local variables
+			// TODO: Need to have better insight into what variables need local memory, etc. (probably a domain of the IR)
+			void setNumArgs(size_t num_args);
 			size_t count(const String& key) const;
 	};
 

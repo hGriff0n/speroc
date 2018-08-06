@@ -11,13 +11,9 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  Get functions working with arguments
-    Fix Issues with Variables and tests
-	  Get function calling with arguments working (functions currently fail compilation)
-	Be able to define and call multiple functions
-	Maybe switch over operator calls into function calls
-	  This would require a lot more type work that I'm not sure about
-	  I'm not sure about whether the current architecture really handles it well
+  Get function recursion to work properly
+	Make sure that if branches produce working assembly
+	Figure out any problems with the recursion assembly
   Rearchitect system to have better separation and control flow
     Figure out what I mean by this (what are the current, and future, pain points)
     Add in MIR step and convert assembly codegen to operating off of that

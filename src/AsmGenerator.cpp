@@ -72,7 +72,7 @@ namespace spero::compiler::gen {
 		AstVisitor::visitBlock(b);
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
-		emit.popWords(current->numVariables());				// pop n bytes 
+		emit.popWords(current->numVariables(true));		// pop n bytes 
 		current = parent_scope;
 	}
 
@@ -109,7 +109,13 @@ namespace spero::compiler::gen {
 		emit.emitProlog(ffi);
 		emit.mov(x86::ebp, x86::esp);
 
-		// TODO: Setup function arguments
+		// Place function arguments where the function expects them to go
+		// TODO: Fix this as it's extremely inefficient
+		// NOTE: Block allocation knows how many "local" variables were function arguments
+		const auto offset = f.args.size() + 4;
+		for (auto& _ : f.args) {
+			emit.push(x86::ptr(x86::esp, offset * 4));
+		}
 
 		// Perform codegen on the function
 		AstVisitor::visitFunction(f);
@@ -368,6 +374,7 @@ namespace spero::compiler::gen {
 		}
 
 		emit.call(label);
+		emit.popWords(f.arguments->elems.size());
 	}
 
 }

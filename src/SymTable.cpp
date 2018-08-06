@@ -136,13 +136,17 @@ namespace spero::analysis {
 	size_t SymTable::size() const {
 		return vars.size();
 	}
-	size_t SymTable::numVariables() {
+	size_t SymTable::numVariables(bool count_args) {
 		return std::accumulate(vars.begin(), vars.end(), 0, [](size_t acc, auto& var) {
 			if (auto* vec = std::get_if<SsaVector>(&var.second)) {
 				acc += vec->size();
 			}
 			return acc;
-		});
+		}) - (count_args ? 0 : num_args);
+	}
+
+	void SymTable::setNumArgs(size_t num_args) {
+		this->num_args = num_args;
 	}
 	size_t SymTable::count(const String& key) const {
 		return vars.count(key);

@@ -1,0 +1,5 @@
+
+
+def iden = (i) -> i
+
+def main = () -> iden(3)

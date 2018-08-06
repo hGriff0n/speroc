@@ -85,6 +85,18 @@ functions:
       compile:
         files: [ 'func.spr' ]
       tests:
+        - return: 1
+    - desc: ""
+      exec: "iden.exe"
+      compile:
+        files: [ 'iden.spr' ]
+      tests:
+        - return: 3
+    - desc: ""
+      exec: "mult_iden.exe"
+      compile:
+        files: [ 'mult_iden.spr' ]
+      tests:
         - return: 7
     - desc: ""
       exec: "func_noarg.exe"
