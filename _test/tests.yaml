@@ -126,7 +126,7 @@ functions:
       compile:
         files: [ 'recursion.spr' ]
       tests:
-        - return: 5042
+        - return: 122
 
 
 # TODO:

@@ -7,4 +7,4 @@ def factorial = (n :: Int) ->
     }
 
 def main = () ->
-    factorial(0) + factorial(1) + factorial(7)
+    factorial(5) + factorial(1) + factorial(0)

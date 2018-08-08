@@ -60,7 +60,7 @@ yaml.each do |name, tests|
     puts "  - Testing #{group_desc}\n"
     puts "======================================================="
 
-    
+
     # Run over all the unique executables in the test group
     tests['runs'].each_with_index do |run, idx|
 
@@ -74,7 +74,7 @@ yaml.each do |name, tests|
 
         # Perform compilation if the run requires it (likely)
         unless compile[:norun]
-            
+
             # Generate strings for correctly calling the compiler from the runner
             in_files = compile['files'].map { |file| "./#{options[:dir]}/#{file}" }.join(' ')
             args = compile['args'].join(' ')
@@ -141,7 +141,6 @@ yaml.each do |name, tests|
                 exec_out = io.readlines
                 io.close
 
-
                 # Test whether the return value matches (if required)
                 if test.key?('return')
                     run_tests += 1
@@ -150,6 +149,8 @@ yaml.each do |name, tests|
                         puts " [#{idx}:#{run_tests}]: #{simple_cmd}"
                         puts "    Execution failed with incorrect return value"
                         puts "     Expected: #{test['return']}  =>  Actual: #{$?.exitstatus}"
+                        puts "   ERROR: The expected value can not fit in 8-bits" if test['return'] > 255
+                        puts "     Ruby::Process::Status::exitstatus only contains 8-bits of the errorlevel" if test['return'] > 255
                         puts " --------------------------------------------------"
 
                     elsif test['fail']
@@ -163,7 +164,7 @@ yaml.each do |name, tests|
                     end
                 end
 
-                
+
                 # Test whether the program's output matches expectations (if required)
                 if test.key?('output')
                     run_tests += 1

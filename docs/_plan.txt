@@ -12,8 +12,7 @@ Current Project State
 
 Current Project Plan
   Get function recursion to work properly
-	Make sure that if branches produce working assembly
-	Figure out any problems with the recursion assembly
+	Update all dependencies
   Rearchitect system to have better separation and control flow
     Figure out what I mean by this (what are the current, and future, pain points)
     Add in MIR step and convert assembly codegen to operating off of that
