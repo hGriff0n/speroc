@@ -5,6 +5,7 @@
 
 #include "analysis/types.h"
 #include "interface/CompilationState.h"
+#include "analysis/AnalysisState.h"
 #include "util/asmjit.h"
 
 #define WITH(x) if (auto _ = (x); true)
@@ -24,7 +25,7 @@ namespace spero::compiler {
 
 	// Perform all steps related to analysis and secondary IR creation (may abstract IR to a different function)
 	// NOTE: I don't have a second IR at the moment, so this stage just serves to prepare everything for the backend
-	using MIR_t = std::unique_ptr<analysis::SymTable>;
+	using MIR_t = decltype(std::declval<analysis::AnalysisState>().arena);
 	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state, analysis::AllTypes&);
 	
 	// Perform all steps related to backend production
@@ -74,7 +75,7 @@ namespace spero {
 		auto type_list = analysis::initTypeList();
 		auto table = (!state.failed())
 			? compiler::analyze(ast_stack, state, type_list)
-			: nullptr;
+			: analysis::SymArena{};
 
 		irHook(ast_stack);
 

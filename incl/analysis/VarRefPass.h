@@ -15,11 +15,11 @@ namespace spero::analysis {
 		compiler::CompilationState& state;
 		analysis::AnalysisState& dictionary;
 
-		SymTable* current = nullptr;
+		SymIndex current = GLOBAL_SYM_INDEX;
 
 		// Track the current scoping context to be able to tailor analysis
 		ScopingContext context = ScopingContext::GLOBAL;
-
+		
 		public:
 			VarRefPass(compiler::CompilationState& state, AnalysisState& dict);
 

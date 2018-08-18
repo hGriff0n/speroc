@@ -59,7 +59,7 @@ struct IntrinsicFunction : public virtual Type {
  */
 struct CompositeType : public virtual Type {
     bool is_abstract;
-	ref_t<spero::analysis::SymTable> interface_scope;
+	spero::analysis::SymIndex interface_scope;
     std::deque<std::unique_ptr<Type>> impls;
 
     // TODO: Implement allocator for specifying how internal details are organized

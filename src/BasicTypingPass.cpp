@@ -5,7 +5,7 @@ namespace spero::analysis {
 	using namespace compiler;
 
 	BasicTypingPass::BasicTypingPass(CompilationState& state, AnalysisState& dict) : dictionary{ dict }, state{ state } {
-		current = dictionary.table.get();
+		//current = dictionary.arena.get();
 	}
 
 

@@ -5,19 +5,20 @@
 using namespace asmjit;
 
 namespace spero::compiler::gen {
+	using analysis::GLOBAL_SYM_INDEX;
 
-	AsmGenerator::AsmGenerator(std::unique_ptr<analysis::SymTable> globals, compiler::CompilationState& state) : globals{ std::move(globals) }, state{ state }, reporter{ state } {
-		current = this->globals.get();
+	AsmGenerator::AsmGenerator(analysis::SymArena& arena, compiler::CompilationState& state) : arena{ arena }, state{ state }, reporter{ state } {
 		emit.setErrorHandler(&reporter);
 		
 		// TODO: Quick hack to enable 'batched' pushing of variables
 		// Because the global scope isn't a table, the batch push didn't occur
 		// NOTE: Will be fixed when I move to a static/global allocation scheme
-		emit.pushWords(current->numVariables());
+		emit.pushWords(numVars(arena, GLOBAL_SYM_INDEX) - arena[GLOBAL_SYM_INDEX].exists("_main"));
 	}
 
 	Assembler AsmGenerator::finalize() {
-		emit.setAllocatedStack(globals->numVariables() * 4);
+		auto num_vars = numVars(arena, GLOBAL_SYM_INDEX) - arena[GLOBAL_SYM_INDEX].exists("_main");
+		emit.setAllocatedStack(num_vars * 4);
 		return std::move(emit);
 	}
 
@@ -63,16 +64,19 @@ namespace spero::compiler::gen {
 	}
 	void AsmGenerator::visitBlock(ast::Block& b) {
 		// Initialize scope entry code
-		auto* parent_scope = current;
-		current = &b.locals;
-		emit.pushWords(current->numVariables());
+		auto parent_scope = current;
+		current = *b.locals;
+
+		// TODO: Need to reintroduce argument handling
+		auto num_vars = numVars(arena, current);
+		emit.pushWords(num_vars - numArgs(arena, current));
 		// TODO: Zero initialize the allocated stack space?
 
 		// Emit the code for the function body
 		AstVisitor::visitBlock(b);
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
-		emit.popWords(current->numVariables(true));		// pop n bytes 
+		emit.pushWords(num_vars);		// pop n bytes 
 		current = parent_scope;
 	}
 
@@ -94,8 +98,13 @@ namespace spero::compiler::gen {
 		emit.writef(".p2align %d, %x", 4, 0x90);
 		//emit.write(".type _main, @function");
 
+		// Handle cases where the label was created during `visitFnCall` (in the case of use-before-dec)
 		// TODO: Mangle the function label
-		emit.bind(emit.newNamedLabel(name.c_str()));
+		auto label = emit.labelByName(name.c_str());
+		if (!label.isValid()) {
+			label = emit.newNamedLabel(name.c_str());
+		}
+		emit.bind(label);
 
 		// Setup the function
 		FuncDetail func;
@@ -131,33 +140,44 @@ namespace spero::compiler::gen {
 	// Names
 	//
 	void AsmGenerator::visitVariable(ast::Variable& v) {
-		auto [nvar, _] = analysis::lookup(*globals, current, *v.name);
-		(void)_;
+		auto[def_table, iter] = analysis::lookup(arena, current, *v.name);
+		// TODO: This `get` doesn't work
+		auto nvar = arena[def_table].get((**iter).name, nullptr, (**iter).loc);
 
-		std::visit([&](auto&& var) {
-			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::VarData>>) {
+		if (nvar) {
+			auto var = *nvar;
+
+			if (auto sym_info = std::get_if<ref_t<analysis::SymbolInfo>>(&var)) {
+				auto loc = std::get<analysis::memory::Stack>(sym_info->get().storage);
+				emit.mov(x86::eax, x86::ptr(x86::ebp, loc.ebp_offset));
+			}
+		}
+
+		/*std::visit([&](auto&& var) {
+			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymbolInfo>>) {
 				auto loc = std::get<analysis::memory::Stack>(var.get().storage);
 				emit.mov(x86::eax, x86::ptr(x86::ebp, loc.ebp_offset));
 			}
-		}, *nvar);
+		}, *nvar);*/
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
-		std::optional<size_t> ssa_id;
+		auto nvar = arena[current].get(n.var->name, nullptr, n.var->loc);
+		if (nvar) {
+			std::visit([&](auto&& var) {
+				using VarType = std::decay_t<decltype(var)>;
+				if constexpr (std::is_same_v<VarType, ref_t<analysis::SymbolInfo>>) {
+					if (std::holds_alternative<analysis::memory::Global>(var.get().storage) && dynamic_cast<ast::Function*>(var.get().definition)) {
+						return;
+					}
 
-		if (auto var = current->ssaIndex(n.var->name, ssa_id, n.var->loc)) {
-			if (auto* v = std::get_if<ref_t<analysis::VarData>>(&*var)) {
-				// NOTE: Global functions handle their own allocation
-				if (std::holds_alternative<analysis::memory::Global>(v->get().storage) && dynamic_cast<ast::Function*>(v->get().definition)) {
-					return;
+					// NOTE: A better approach for this would probably be to create an "arena" for allocating
+						// The arena would provide the interface for pushing/accessing stuff in the memory region it defines
+						// The ast/visitor/etc. only need to push/allocate bytes into the region
+					auto loc = std::get<analysis::memory::Stack>(var.get().storage);
+					emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
 				}
-
-				// NOTE: A better approach for this would probably be to create an "arena" for allocating
-					// The arena would provide the interface for pushing/accessing stuff in the memory region it defines
-					// The ast/visitor/etc. only need to push/allocate bytes into the region
-				auto loc = std::get<analysis::memory::Stack>(v->get().storage);
-				emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
-			}
+				}, *nvar);
 		}
 	}
 
@@ -226,16 +246,18 @@ namespace spero::compiler::gen {
 		// Setup the symbol table to prevent the context from leaking
 			// TODO: Could probably get a more efficient method by just adding a temporary key in the current table
 			// TODO: Need to rewrite before 'variable pass' decoupling as this won't work in that framework
-		auto* parent_scope = current;
-		current = &in.binding;
-		emit.pushWords(current->numVariables());
+		auto parent_scope = current;
+		current = *in.binding;
+
+		auto num_vars = numVars(arena, current);
+		emit.pushWords(num_vars);
 
 		// Run through the assignment and expression
 		in.bind->accept(*this);
 		in.expr->accept(*this);
 
 		// Pop off the symbol table
-		emit.popWords(current->numVariables());
+		emit.popWords(num_vars);
 		current = parent_scope;
 	}
 
@@ -245,12 +267,12 @@ namespace spero::compiler::gen {
 			b.rhs->accept(*this);
 
 			auto* lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
-			auto [variable, _] = analysis::lookup(*globals, current, *lhs->name);
-			auto& var = std::get<ref_t<analysis::VarData>>(*variable).get();
+			auto[def_table, iter] = analysis::lookup(arena, current, *lhs->name);
+			auto variable = arena[def_table].get((**iter).name, nullptr, (**iter).loc);
+			auto& var = std::get<ref_t<analysis::SymbolInfo>>(*variable).get();
 			auto& loc = std::get<analysis::memory::Stack>(var.storage);
 
 			emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
-			(void)_;
 
 		} else {
 			// Evaluate the left side and store it on the stack
@@ -369,8 +391,7 @@ namespace spero::compiler::gen {
 		// TODO: This requires having the declaration before the call site
 		auto label = emit.labelByName(fn->name->elems.back()->name.get().c_str());
 		if (!label.isValid()) {
-			state.log(compiler::ID::err, "Calling function before declaration <at {}>", f.loc);
-			return;
+			label = emit.newNamedLabel(fn->name->elems.back()->name.get().c_str());
 		}
 
 		emit.call(label);

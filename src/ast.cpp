@@ -1039,46 +1039,49 @@ namespace spero::compiler::ast {
 
 namespace spero::analysis {
 
-	using LookupType = opt_t<SymTable::DataType>;
-	std::tuple<LookupType, compiler::ast::Path::iterator> lookup(SymTable& globals, SymTable* current, compiler::ast::Path& var_path) {
+	std::tuple<SymIndex, compiler::ast::Path::iterator> lookup(SymArena& arena, SymIndex current, compiler::ast::Path& var_path) {
 		auto[front, end] = util::range(var_path.elems);
-		LookupType value = std::nullopt;
 		bool has_next = true;
 
 		// Support forced global indexing (through ':<>') (NOTE: Undecided on inclusion in final document)
 		if (!(**front).name.get().empty()) {
-			auto* next = current->mostRecentDef((**front).name);
-			value = std::get<ref_t<SymTable>>((*(next ? next : current))["self"].get());
-			has_next = next != nullptr;
+			auto def = arena[current].mostRecentDef((**front).name, arena);
+			current = def ? def->self() : current;
+			has_next = def != nullptr;
 
 		} else {
-			value = std::get<ref_t<SymTable>>(globals["self"].get());
+			current = 0;
 			++front;
 		}
 
 		// Follow the symbol path to it's end
 		while (front != end && has_next) {
-			auto next = std::visit([&](auto&& var) -> LookupType {
-				if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<SymTable>>) {
-					return var.get().ssaIndex((**front).name, (**front).ssa_id, var_path.loc);
-				}
-
-				return std::nullopt;
-			}, *value);
-
+			// Access the symbol table for the symbol we're looking for
+			auto next = arena[current].get((**front).name);
 			if (has_next = next.has_value()) {
-				value.swap(next);
-				++front;
+
+				// TODO: We're always using null generics for the moment
+				auto resolved = next->get().resolve(nullptr);
+				if (has_next = resolved.has_value()) {
+
+					// Now check that the symbol stored is a SymIndex
+					auto index = std::get_if<SymIndex>(&*resolved);
+					if (has_next = (index != nullptr)) {
+						current = *index;
+						++front;
+					}
+				}
 			}
 		}
 
-		// Return the last accessed value and the last attempted symbol if lookup fails
-		// This should simplify the process of assigning new variables, etc.
-		return { value, front };
+		// Return the last accessed SymIndex and last attempted symbol
+		// This happens both on success and on failure of the lookup
+		// The only difference is whether the returned iterator exists in the SymTable
+		return { current, front };
 	}
 
 	// If Ssa lookup fails, then the key exists but the ssa_id was never set
-	bool testSsaLookupFailure(LookupType& lookup_result, compiler::ast::Path::iterator& iter) {
+	/*bool testSsaLookupFailure(LookupType& lookup_result, compiler::ast::Path::iterator& iter) {
 		if (lookup_result) {
 			if (auto* table = std::get_if<ref_t<SymTable>>(&*lookup_result)) {
 				return table->get().exists((**iter).name) && !(**iter).ssa_id;
@@ -1086,5 +1089,5 @@ namespace spero::analysis {
 		}
 
 		return true;
-	}
+	}*/
 }

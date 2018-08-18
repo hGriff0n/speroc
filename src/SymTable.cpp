@@ -6,77 +6,112 @@
 
 namespace spero::analysis {
 
-	SymTable::SymTable() {
-		insert("self", *this);
+	opt_t<GenericResolver::SymbolTypes> GenericResolver::resolve(GenericInstanceIndexType index) {
+		if (instances.count(index)) {
+			return std::visit([](auto&& var) -> opt_t<SymbolTypes> {
+				using VarType = std::decay_t<decltype(var)>;
+				if constexpr (std::is_same_v<VarType, SsaVector>)  {
+					return var;
+				}
+
+				if constexpr (std::is_same_v<VarType, Redirect> || std::is_same_v<VarType, SymIndex>) {
+					return var;
+				}
+
+				return std::nullopt;
+			}, instances.at(index));
+		}
+
+		return std::nullopt;
+	}
+
+	bool GenericResolver::set(GenericInstanceIndexType index, SymbolInputTypes data) {
+		if (instances.count(index)) {
+			if (instances[index].index() != data.index()) {
+				return false;
+			}
+		}
+
+		instances[index] = data;
+		return true;
+	}
+
+	bool GenericResolver::set(GenericInstanceIndexType index, SymbolInfo data) {
+		// Handle in-scope shadowing definitions
+		if (instances.count(index)) {
+			if (auto vec = std::get_if<SsaVector>(&instances[index])) {
+				vec->push_back(data);
+				return true;
+			}
+
+			// Existing definition of wrong type
+			return false;
+		}
+
+		// Otherwise make a new definition
+		SsaVector decl;
+		decl.push_back(data);
+		instances[index] = decl;
+		return true;
+	}
+
+	bool GenericResolver::exported() {
+		return has_at_least_one_exported_definition;
+	}
+	void GenericResolver::markExported() {
+		has_at_least_one_exported_definition = true;
+	}
+
+	SymTable::SymTable(SymIndex self) : self_index{ self } {
+		insert("self", self);
 	}
 
 	// Basic accessors and queries
-	ref_t<SymTable::StorageType> SymTable::operator[](const String& key) {
-		return vars[key];
+	ref_t<GenericResolver> SymTable::operator[](const String& key) {
+		return symbols[key];
 	}
 	bool SymTable::exists(const String& key) const {
-		return vars.count(key) != 0;
+		return symbols.count(key) != 0;
 	}
 
 	// Accessor interfaces
-	opt_t<ref_t<SymTable::StorageType>> SymTable::get(const String& key) {
+	opt_t<ref_t<GenericResolver>> SymTable::get(const String& key) {
 		if (exists(key)) {
-			return operator[](key);
+			return symbols.at(key);
 		}
 
 		return std::nullopt;
 	}
-	opt_t<ref_t<SymTable>> SymTable::getScope(const String& key) {
-		if (auto data = get(key)) {
-			if (auto* table = std::get_if<ref_t<SymTable>>(&data->get())) {
-				return table->get();
-			}
-		}
 
-		return std::nullopt;
-	}
-	opt_t<ref_t<SsaVector>> SymTable::getOverloadSet(const String& key) {
-		if (auto data = get(key)) {
-			if (auto* vec = std::get_if<SsaVector>(&data->get())) {
-				return *vec;
-			}
-		}
+	opt_t<SymTable::SymbolTypes> SymTable::get(const String& key, GenericInstanceIndexType index, compiler::Location loc) {
+		// Drill down to the resolved instance
+		if (auto gen = get(key)) {
+			if (auto res = gen->get().resolve(index)) {
+			// Extract out the specific `SymbolInfo` struct if it exists
+				if (auto ssa_ref = std::get_if<ref_t<SsaVector>>(&*res)) {
+					auto ssa = &ssa_ref->get();
+					auto next_dec = std::upper_bound(ssa->begin(), ssa->end(), loc,
+						[&](auto&& use_loc, auto&& dec_loc) -> bool {
+							if (use_loc.line_num == dec_loc.src.line_num) {
+								return use_loc.byte < dec_loc.src.byte;
+							}
 
-		return std::nullopt;
-	}
-	opt_t<ref_t<VarData>> SymTable::getVariable(const String& key, size_t ssa_id) {
-		if (auto ssa = getOverloadSet(key); ssa->get().size() > ssa_id) {
-			return ssa->get()[ssa_id];
-		}
+							return use_loc.line_num < dec_loc.src.line_num;
+						});
 
-		return std::nullopt;
-	}
-	opt_t<SymTable::DataType> SymTable::ssaIndex(const String& key, opt_t<size_t>& index, const compiler::Location& loc) {
-		if (auto data = get(key)) {
-			if (auto* vec = std::get_if<SsaVector>(&data->get())) {
-				if (!index) {
-					auto ssa_index = std::distance(vec->begin(), 
-						std::upper_bound(vec->begin(), vec->end(), loc,
-							[&](auto&& use_loc, auto&& dec_loc) -> bool {
-								if (use_loc.line_num == dec_loc.src.line_num) {
-									return use_loc.byte < dec_loc.src.byte;
-								}
+					if (next_dec != ssa->begin()) {
+						return *(next_dec - 1);
 
-								return use_loc.line_num < dec_loc.src.line_num;
-							}));
-
-					if (ssa_index != 0) {
-						return (*vec)[*(index = ssa_index - 1)];
-
-					} else if (getContextRules() != +ScopingContext::SCOPE) {
-						return (*vec)[*(index = ssa_index)];
+					} else if (scope_context != +ScopingContext::SCOPE) {
+						return *next_dec;
 					}
-				} else {
-					return (*vec)[*index];
-				}
 
-			} else {
-				return std::get<ref_t<SymTable>>(data->get());
+				// Otherwise, convert the expected types
+				} else if (auto redirect = std::get_if<Redirect>(&*res)) {
+					return *redirect;
+				} else if (auto index = std::get_if<SymIndex>(&*res)) {
+					return *index;
+				}
 			}
 		}
 
@@ -84,72 +119,65 @@ namespace spero::analysis {
 	}
 
 	// Mutation interfaces
-	bool SymTable::insert(const String& key, VarData value) {
-		if (!exists(key)) {
-			vars[key] = SsaVector{};
+	bool SymTable::insert(const String& key, SymbolInfo value, bool exported) {
+		if (exported) {
+			symbols[key].markExported();
 		}
 
-		if (auto var = getOverloadSet(key)) {
-			var->get().emplace_back(std::move(value));
-			return true;
+		return symbols[key].set(nullptr, value);
+	}
+	bool SymTable::insert(const String& key, GenericResolver::SymbolInputTypes value, bool exported) {
+		if (exported) {
+			symbols[key].markExported();
+		}
+
+		return symbols[key].set(nullptr, value);
+	}
+	bool SymTable::insertArg(const String& key, SymbolInfo value) {
+		if (!exists(key)) {
+			argument_set.insert(key);
+
+			return insert(key, value);
 		}
 
 		return false;
 	}
-	bool SymTable::insert(const String& key, ref_t<SymTable> value) {
+	bool SymTable::insertArg(const String& key, GenericResolver::SymbolInputTypes value) {
 		if (!exists(key)) {
-			vars[key] = value.get();
-			return true;
+			argument_set.insert(key);
+
+			return insert(key, value);
 		}
 
 		return false;
 	}
 
 	// Analysis interfaces
-	void SymTable::setParent(SymTable* p, bool offset_ebp) {
-		insert("super", *(parent = p));
-		curr_ebp_offset = offset_ebp * (p->curr_ebp_offset + (p->numVariables() * 4));
-
-		// TODO: Hack to prevent stack allocation from considering "main" as a variable
-		// This causes variables to be incorrectly offset within assembly accesses
-		if (p->exists("main")) {
-			curr_ebp_offset -= 4;
-		}
+	SymIndex SymTable::self() const {
+		return self_index;
 	}
-	SymTable* SymTable::mostRecentDef(const String& key) {
-		auto* scope = this;
+	SymTable* SymTable::mostRecentDef(const String& key, SymArena& arena) {
+		SymTable* scope = this;
 
 		while (scope && !scope->exists(key)) {
-			scope = scope->parent;
+			if (!scope->parent || (arena.size() > *scope->parent + 1)) {
+				scope = nullptr;
+			} else {
+				scope = &arena.at(*scope->parent);
+			}
 		}
 
 		return scope;
 	}
-	void SymTable::setContextRules(ScopingContext rule) {
-		rules = rule;
+	void SymTable::setParent(SymIndex p) {
+		insert("super", p);
+		parent = p;
 	}
-	ScopingContext SymTable::getContextRules() const {
-		return rules;
+	void SymTable::setContext(ScopingContext rule) {
+		scope_context = rule;
 	}
-
-	// Counting interfaces
-	size_t SymTable::size() const {
-		return vars.size();
-	}
-	size_t SymTable::numVariables(bool count_args) {
-		return std::accumulate(vars.begin(), vars.end(), 0, [](size_t acc, auto& var) {
-			if (auto* vec = std::get_if<SsaVector>(&var.second)) {
-				acc += vec->size();
-			}
-			return acc;
-		}) - (count_args ? 0 : num_args);
-	}
-
-	void SymTable::setNumArgs(size_t num_args) {
-		this->num_args = num_args;
-	}
-	size_t SymTable::count(const String& key) const {
-		return vars.count(key);
+	ScopingContext SymTable::context() const {
+		return scope_context;
 	}
 
 }

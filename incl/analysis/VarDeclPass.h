@@ -9,11 +9,6 @@ namespace spero::analysis {
 
 	/*
 	 * Ast pass that collects all symbol declarations and introductions (where is it defined)
-	 *
-	 * TODO: How will this pass handle 'after-use' declarations
-	 *   If needed, maintain a vector of all "before-declaration" usages
-	 *   Cross check that vector against all declarations before quitting the block/etc.
-	 *   May need a bit of work to handle 'SSA' renaming (but all such cases should be the first instance, so just add '0' to the name)
 	 */
 	class VarDeclPass : public compiler::ast::AstVisitor {
 		compiler::CompilationState& state;
@@ -23,7 +18,7 @@ namespace spero::analysis {
 		// For the moment, the global table is the only one that is not currently mapped to an ast node
 		// To enforce invariant addressing, this is currently implemented as a std::unique_ptr
 		// This may change once I have to integrate modules and types into this framework
-		SymTable* current = nullptr;
+		SymIndex current = GLOBAL_SYM_INDEX;
 
 		// Track the current scoping context to be able to tailor analysis
 		ScopingContext context = ScopingContext::GLOBAL;
@@ -31,6 +26,7 @@ namespace spero::analysis {
 
 		// TEMPORARY declarations
 		compiler::ast::Interface* current_decl;
+		int curr_ebp_offset = 0;
 
 		public:
 			VarDeclPass(compiler::CompilationState& state, AnalysisState& dict);

@@ -51,7 +51,7 @@ namespace spero::compiler {
 		// RUN_PASS(analysis::BasicTypingPass);
 		RUN_PASS(analysis::VarRefPass);
 
-		return std::move(dictionary.table);
+		return std::move(dictionary.arena);
 	}
 
 #undef RUN_PASS

@@ -32,12 +32,13 @@ namespace spero::compiler::gen {
 		AsmjitReporter reporter;
 		CompilationState& state;
 
-		std::unique_ptr<analysis::SymTable> globals;
-		analysis::SymTable* current = nullptr;
+		analysis::SymArena& arena;
+		static constexpr analysis::SymIndex globals = 0;
+		analysis::SymIndex current = globals;
 
 		public:
 			// The constructor should expect the data from the last pass (template parameter?)
-			AsmGenerator(std::unique_ptr<analysis::SymTable> globals, CompilationState& state);
+			AsmGenerator(analysis::SymArena& arena, CompilationState& state);
 			Assembler finalize();
 
 			// Literals

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <variant>
 #include <deque>
+#include <tuple>
+#include <variant>
 
 #include <enum.h>
 
@@ -273,7 +274,7 @@ namespace spero::compiler::ast {
 	 *   locals - a symbol table collecting analysed information about locally declared variables
 	 */
 	struct Block : Sequence<Statement, ValExpr> {
-		analysis::SymTable locals;
+		opt_t<analysis::SymIndex> locals = std::nullopt;
 
 		Block(std::deque<ptr<Statement>> vals, Location loc);
 
@@ -1219,7 +1220,7 @@ namespace spero::compiler::ast {
 	struct InAssign : ValExpr {
 		ptr<VarAssign> bind;
 		ptr<ValExpr> expr;
-		analysis::SymTable binding;
+		opt_t<analysis::SymIndex> binding = std::nullopt;
 
 		InAssign(ptr<VarAssign> binding, ptr<ValExpr> expr, Location loc);
 
@@ -1385,8 +1386,8 @@ namespace spero::compiler::ast {
 
 namespace spero::analysis {
 
-	// If lookup succeeds, then the returned iterator is equal to `std::end(var_path.elems)`
-	std::tuple<opt_t<SymTable::DataType>, compiler::ast::Path::iterator> lookup(SymTable& globals, SymTable* current, compiler::ast::Path& var_path);
-	bool testSsaLookupFailure(opt_t<SymTable::DataType>& lookup_result, compiler::ast::Path::iterator& iter);
+	// If lookup succeeds, then the returned iterator is equal to `std::end(var_path.elems) - 1`
+	std::tuple<SymIndex, compiler::ast::Path::iterator> lookup(SymArena& arena, SymIndex current, compiler::ast::Path& var_path);
+	//bool testSsaLookupFailure(opt_t<SymTable::DataType>& lookup_result, compiler::ast::Path::iterator& iter);
 
 }
