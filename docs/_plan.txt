@@ -7,34 +7,24 @@ Current Project State
     recognized => Int, Bool (literals and comparison operators)
 	...
   variables => basic shadowing and scoping
-  functions => main-only
+  functions => basically implemented, no type checking, decl before use
   annotations => ignored
 
 Current Project Plan
-  Get function recursion to work properly
-	Update all dependencies
   Rearchitect system to have better separation and control flow
+    Reworking the SymTable interface
+	  Some ast's/etc stored the ssa index, replace that (just PathPart)
+	    Look into replacing the lookup with an ssa index where possible
+	  We don't allocate enough space for inline shadowed variables (we're only counting the number of names)
+	  Run it through the regression testing
     Figure out what I mean by this (what are the current, and future, pain points)
-    Add in MIR step and convert assembly codegen to operating off of that
-	  Look at generalizing the codegen to enable switching out based on architecture
+	Add in LLVM IR production stage
+	  compilation::analyze now produces LLVM IR
+	  compilation::backend transforms the LLVM IR to assembly
+	  Look at including LLVM methods throughout the codebase
+	    I think particularly for dynamic casts, LLVM could drastically help
 
   Get functions working properly
-	Be able to call functions correctly within compiled code
-	  Add in the ability to pass in arguments to function calls
-	    Integrate function arguments with the VarRef/VarDecl passes
-		  Figure out how to get the variables registered in the symbol table
-		    Function holds a tuple, which likely holds variable nodes (hard to code a path)
-		  Look at creating an 'ArgTuple' node
-		Determine what the x86 procedure for the callee and caller when calling a functions
-		  Implement the necessary stack frame setup and register saving in the callee side
-		    NOTE: May switch out for the CodeCompiler, so this would be unnecessary
-    Be able to define multiple functions without triggering compilation errors
-	  Generalize the assignment behavior to better follow functions
-		Might want to have some basic ability to "sort" everything
-		  This is mostly for the interpreter (to simplify wrapping code)
-		  It may also make some analysis steps easier
-		    If I do this through a dependency graph, then type-checking becomes largely single pass
-	  Fix the issue where functions must be declared before they are used (within the global scope)
 	Look into how to support local functions/closures
 	  Figure out a better way of tracking ebp/etc. so that local variables are accessable
 	    This work would mostly be done in terms of the global functions
@@ -73,6 +63,8 @@ Current Project Plan
 	    Eventually this will be replaced by spero code, but that requires asm/IR and modules to be completed first
 	  Convert operator calls to being function calls (instead of hardcoded assembly calls)
 	  Implement basic type-checking/etc. to automatically select the correct functions based on operand types
+	  Implement boolean short-circuiting for && and ||
+	    Will require hard-coding these checks in the compiler (as methods automatically evaluate first)
 	Integrate functions into the type system
 	  Figure out how to get function types working as distinct types
 	  Add in experimental code to the arguments to allow for restricting based on the type
@@ -81,7 +73,6 @@ Current Project Plan
     Allow anon_type to be attached after 'var_val/atom' rules
   Reconsider the implementation of the passes/etc. to provide better generality
     Start from the bottom-up to rework things to have better composability and fewer dependencies
-	  Things are starting to get a bit convoluted and I'm not sure about what goes where
 	Provide an "allocator" style interface for writing stuff in AsmGenerator
 	  This interface would simplify the process of handling the various ways types can be stored in memory
 	Look at switching out the CodeBuilder for a CodeCompiler
@@ -155,8 +146,7 @@ Current Project Plan
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
-	Move 'compiler' exceptions from log-level to error-level
-	  Add in 'error indices' and automatic message population capbilities
+	Add in 'error indices' and automatic message population capbilities
     Add a better interaction between the ast classes and the logging system
       Improve the logging system while I'm at it (different log outputs, linked/combined loggers, etc.)
 	Add in phase timing support using a 'PhaseTimer' style interface (see `compile` for usage)
@@ -168,21 +158,8 @@ Current Project Plan
 
   Basic Function Definition
     Update x86_interpreter/codegen to be able to specify start instruction
-	Ensure compiler recognition of function defs and calls works correctly
-	Perform codgen of function definitions and ensure they do not interfere with normal compilation
-	  These initial functions should just return a value into the 'eax' register
-	Add in argument handling/setting for function definitions and calling
-	  Might just have a full stack-based solution for now
-	  Make sure each "function body" has a 'SymTable' attached to it (for argument setting)
-	  Ensure that recursive functions work
 	Handle global declarations correctly (ie. place these values in 'separate' memory)
 	  Figure out how to handle these separate addressing schemes
-	Allow for function bodies to be scopes (with their own local variables)
-      Look at possibly modifying the ast to force function wrapping (except possibly in forwarded contexts)
-	    Actually, declarations really only make sense (and are somewhat only possible) in functions that already have a scope
-	    For all functions, unless a scope is linked by a following block, assume the scope is 'current'
-	  TODO: Need to modify 'ebp_offset' setting of the symtable (particularly when accessing "global"/"parent" variables)
-        This is accounting for the effects of changing the stack pointers
 
   Type Inference
     explicit annotations within the ast

@@ -1,0 +1,4 @@
+
+def foo = ()->3
+def bar = (i)-> foo() * i
+def main = ()->bar(3)

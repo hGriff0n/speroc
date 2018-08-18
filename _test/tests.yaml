@@ -127,6 +127,12 @@ functions:
         files: [ 'recursion.spr' ]
       tests:
         - return: 122
+    - desc: ""
+      exec: 'multi_func.exe'
+      compile:
+        files: [ 'multi_func  .spr' ]
+      tests:
+        - return: 9
 
 
 # TODO:
