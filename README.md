@@ -50,6 +50,6 @@ Be sure to comment in the issue if you have any questions.
 
 Project Info:
 
-    size: 4713 sloc
+    size: 4822 sloc
     files: 12 .cpp, 25 .h, 3 .rb
 

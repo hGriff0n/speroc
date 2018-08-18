@@ -16,7 +16,6 @@ Current Project Plan
 	  Some ast's/etc stored the ssa index, replace that (just PathPart)
 	    Look into replacing the lookup with an ssa index where possible
 	  We don't allocate enough space for inline shadowed variables (we're only counting the number of names)
-	  Run it through the regression testing
     Figure out what I mean by this (what are the current, and future, pain points)
 	Add in LLVM IR production stage
 	  compilation::analyze now produces LLVM IR

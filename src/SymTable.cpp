@@ -160,7 +160,7 @@ namespace spero::analysis {
 		SymTable* scope = this;
 
 		while (scope && !scope->exists(key)) {
-			if (!scope->parent || (arena.size() > *scope->parent + 1)) {
+			if (!scope->parent.has_value()) {
 				scope = nullptr;
 			} else {
 				scope = &arena.at(*scope->parent);

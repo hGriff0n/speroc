@@ -76,7 +76,7 @@ namespace spero::compiler::gen {
 		AstVisitor::visitBlock(b);
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
-		emit.pushWords(num_vars);		// pop n bytes 
+		emit.popWords(num_vars);		// pop n bytes 
 		current = parent_scope;
 	}
 

@@ -130,7 +130,7 @@ functions:
     - desc: ""
       exec: 'multi_func.exe'
       compile:
-        files: [ 'multi_func  .spr' ]
+        files: [ 'multi_func.spr' ]
       tests:
         - return: 9
 
