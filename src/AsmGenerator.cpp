@@ -141,28 +141,19 @@ namespace spero::compiler::gen {
 	//
 	void AsmGenerator::visitVariable(ast::Variable& v) {
 		auto[def_table, iter] = analysis::lookup(arena, current, *v.name);
-		// TODO: This `get` doesn't work
-		auto nvar = arena[def_table].get((**iter).name, nullptr, (**iter).loc);
+		auto nvar = arena[def_table].get((**iter).name, nullptr, (**iter).loc, (**iter).ssa_index);
 
-		if (nvar) {
-			auto var = *nvar;
-
-			if (auto sym_info = std::get_if<ref_t<analysis::SymbolInfo>>(&var)) {
-				auto loc = std::get<analysis::memory::Stack>(sym_info->get().storage);
-				emit.mov(x86::eax, x86::ptr(x86::ebp, loc.ebp_offset));
-			}
-		}
-
-		/*std::visit([&](auto&& var) {
+		std::visit([&](auto&& var) {
 			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymbolInfo>>) {
 				auto loc = std::get<analysis::memory::Stack>(var.get().storage);
 				emit.mov(x86::eax, x86::ptr(x86::ebp, loc.ebp_offset));
 			}
-		}, *nvar);*/
+		}, *nvar);
 	}
 
 	void AsmGenerator::visitAssignName(ast::AssignName& n) {
-		auto nvar = arena[current].get(n.var->name, nullptr, n.var->loc);
+		opt_t<size_t> ssa_index = std::nullopt;
+		auto nvar = arena[current].get(n.var->name, nullptr, n.var->loc, ssa_index);
 		if (nvar) {
 			std::visit([&](auto&& var) {
 				using VarType = std::decay_t<decltype(var)>;
@@ -268,7 +259,7 @@ namespace spero::compiler::gen {
 
 			auto* lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
 			auto[def_table, iter] = analysis::lookup(arena, current, *lhs->name);
-			auto variable = arena[def_table].get((**iter).name, nullptr, (**iter).loc);
+			auto variable = arena[def_table].get((**iter).name, nullptr, (**iter).loc, (**iter).ssa_index);
 			auto& var = std::get<ref_t<analysis::SymbolInfo>>(*variable).get();
 			auto& loc = std::get<analysis::memory::Stack>(var.storage);
 

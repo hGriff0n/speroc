@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -258,21 +258,7 @@
     <None Include="x86_inter\src\view.rs" />
     <None Include="x86_inter\src\x86.rs" />
     <None Include="x86_inter\src\ximpl.rs" />
-    <None Include="_test\add.spr" />
-    <None Include="_test\bool.spr" />
-    <None Include="_test\error.spr" />
-    <None Include="_test\fail_type.spr" />
-    <None Include="_test\first.spr" />
-    <None Include="_test\func.spr" />
-    <None Include="_test\func_after.spr" />
-    <None Include="_test\func_pointless.spr" />
-    <None Include="_test\func_type_err.spr" />
-    <None Include="_test\mut_fail.spr" />
-    <None Include="_test\mut_succ.spr" />
-    <None Include="_test\orderOfOperations.spr" />
     <None Include="_test\tests.yaml" />
-    <None Include="_test\variables.spr" />
-    <None Include="_test\var_ops.spr" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="docs\_dev_plan.txt" />

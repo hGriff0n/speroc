@@ -83,12 +83,20 @@ namespace spero::analysis {
 		return std::nullopt;
 	}
 
-	opt_t<SymTable::SymbolTypes> SymTable::get(const String& key, GenericInstanceIndexType index, compiler::Location loc) {
+	opt_t<SymTable::SymbolTypes> SymTable::get(const String& key, GenericInstanceIndexType index, compiler::Location loc, opt_t<size_t>& ssa_index) {
 		// Drill down to the resolved instance
 		if (auto gen = get(key)) {
 			if (auto res = gen->get().resolve(index)) {
 			// Extract out the specific `SymbolInfo` struct if it exists
 				if (auto ssa_ref = std::get_if<ref_t<SsaVector>>(&*res)) {
+					// If we already know the ssa id, then just return it
+					if (ssa_index.has_value()) {
+						return ssa_ref->get()[*ssa_index];
+					}
+
+					// Otherwise we need to compute it by hand
+					// The easiest way being to find the first declaration that comes after the current location
+					// The referenced symbol declaration will be the vector entry before that declaration (if it exists)
 					auto ssa = &ssa_ref->get();
 					auto next_dec = std::upper_bound(ssa->begin(), ssa->end(), loc,
 						[&](auto&& use_loc, auto&& dec_loc) -> bool {
@@ -100,9 +108,11 @@ namespace spero::analysis {
 						});
 
 					if (next_dec != ssa->begin()) {
+						*ssa_index = std::distance(ssa->begin(), next_dec) - 1;
 						return *(next_dec - 1);
 
 					} else if (scope_context != +ScopingContext::SCOPE) {
+						*ssa_index = 0;
 						return *next_dec;
 					}
 
@@ -178,6 +188,21 @@ namespace spero::analysis {
 	}
 	ScopingContext SymTable::context() const {
 		return scope_context;
+	}
+
+	size_t numVars(SymArena& arena, SymIndex table) {
+		size_t num_symbols = std::accumulate(arena[table].symbols.begin(), arena[table].symbols.end(), 0,
+			[](auto acc, auto& next) {
+				if (auto res = next.second.resolve(nullptr)) {
+					if (auto ssa = std::get_if<ref_t<SsaVector>>(&*res)) {
+						acc += ssa->get().size();
+					}
+				}
+
+				return acc;
+			});
+
+		return num_symbols - arena[table].exists("self") - arena[table].exists("super");
 	}
 
 }

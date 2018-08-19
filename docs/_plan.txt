@@ -12,10 +12,6 @@ Current Project State
 
 Current Project Plan
   Rearchitect system to have better separation and control flow
-    Reworking the SymTable interface
-	  Some ast's/etc stored the ssa index, replace that (just PathPart)
-	    Look into replacing the lookup with an ssa index where possible
-	  We don't allocate enough space for inline shadowed variables (we're only counting the number of names)
     Figure out what I mean by this (what are the current, and future, pain points)
 	Add in LLVM IR production stage
 	  compilation::analyze now produces LLVM IR
@@ -31,32 +27,6 @@ Current Project Plan
 	  Figure out where I would have to store the function data in order for it to be usable
 	    NOTE: I only need to consider this problem from the widest possible standpoint (any optimizations can be done later)
 		  They could be inlined in some cases (if they're never used outside of the function), but starting there would be terrible design
-	Enable function usage within the interpreter
-	  Generalize the procedure for initializing code to not automatically wrap everything in function
-		1) Only wrap global-scope code that is not in a function
-		2) Only wrap iff there is such code
-	  Allow for defining main within interpreted code
-	    To start off, automatically call `main` when it is defined (iff there is no other global code)
-	  Allow for defining multiple functions within the interpreter
-	    Be able to track where the "entrypoint" is (for both functions)
-		Be sure this works with both automatic jumping (to main) and "global" jumping
-	  Remove the automatic calling of main (if no global code is provided) within the interpreter
-	    Look at producing an error if main is defined (only in the interpreter though)
-	Enable re-entrant evaluation within the interpreter
-	  Add in the ability to allocate "global" variables into the standard compilation process
-	    Figure out how this is done in assembly files
-		  NOTE: Be sure to use the "memory location" enum I've already defined
-		NOTE: We'll probably need to hard-code in a switch for the assembly generation for the interpreter
-		  This should be a temporary thing (eventually)
-		  Maybe we could do this based on whether or not the AsmGenerator has a buffer provided to it
-	  Add in consideration of global storage location into variable allocations
-	    Modify jit-ing code to "reserve" a chunk of memory for storing global variables
-		Pass a pointer to this location into the 'AsmGenerator' structure
-		  May want to look at generalizing this a bit more (not sure of how well this interacts with compiled binaries)
-		Adapt AsmGenerator to utilize this storage space for allocating variables
-	  Improve the process for "storing" functions across runs
-	    We can write the used functions every run, or we can write them once to the global pool (both work)
-		  However both have their drawbacks that indicate we probably want to handle functions slightly differently
     Convert operators to method calls
 	  Create a system for harcoding in spero implementations (for now)
 	    Eventually this will be replaced by spero code, but that requires asm/IR and modules to be completed first
@@ -70,12 +40,6 @@ Current Project Plan
   Fix grammar and ast properties
     Require directly affixing pointers and references to types
     Allow anon_type to be attached after 'var_val/atom' rules
-  Reconsider the implementation of the passes/etc. to provide better generality
-    Start from the bottom-up to rework things to have better composability and fewer dependencies
-	Provide an "allocator" style interface for writing stuff in AsmGenerator
-	  This interface would simplify the process of handling the various ways types can be stored in memory
-	Look at switching out the CodeBuilder for a CodeCompiler
-	  Start working on generalizing based on architecture (allow x86 and x86-64)
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it
 	  Implement a toy algorithm inside of a smaller program (with hardcoded types, etc.)
@@ -92,7 +56,6 @@ Current Project Plan
 		Abstract the assignment rules to simplify the logic
 		  For an AssignTuple pattern, split into a series of 'AssignName' (only issue is regarding when scopes come into effect)
   Modules and Imports
-  Implement IR lowering phase
 
   Language Logic Checking
     Check if ':<var>' is (and should be) a legal typing

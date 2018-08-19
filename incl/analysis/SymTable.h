@@ -112,6 +112,7 @@ namespace spero::analysis {
 	class SymTable {
 		public:
 			using SymbolTypes = std::variant<Redirect, SymIndex, ref_t<SymbolInfo>>;
+			friend size_t numVars(std::deque<SymTable>& arena, SymIndex table);
 
 		private:
 			SymIndex self_index;
@@ -129,9 +130,8 @@ namespace spero::analysis {
 			bool exists(const String& key) const;
 
 			// Accessor interfaces
-			opt_t<ref_t<GenericResolver>> get(const String& key) ;
-			// TODO: This doesn't yet implement the ssa lookup (partially because it's really messy)
-			opt_t<SymbolTypes> get(const String& key, GenericInstanceIndexType index, compiler::Location loc);
+			opt_t<ref_t<GenericResolver>> get(const String& key);
+			opt_t<SymbolTypes> get(const String& key, GenericInstanceIndexType index, compiler::Location loc, opt_t<size_t>& ssa_index);
 
  			// Mutation interfaces
 			bool insert(const String& key, SymbolInfo value, bool exported = false);
@@ -163,9 +163,7 @@ namespace spero::analysis {
 	using SymArena = std::deque<SymTable>;
 	constexpr SymIndex GLOBAL_SYM_INDEX = 0;
 	
-	inline size_t numVars(const SymArena& arena, SymIndex table) {
-		return std::distance(arena[table].begin(), arena[table].end()) - arena[table].exists("self") - arena[table].exists("super");
-	}
+	size_t numVars(SymArena& arena, SymIndex table);
 	inline size_t numArgs(const SymArena& arena, SymIndex table) {
 		auto[front, end] = arena[table].arguments();
 		return std::distance(front, end);

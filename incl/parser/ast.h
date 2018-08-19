@@ -346,9 +346,10 @@ namespace spero::compiler::ast {
 	 */
 	struct PathPart : Ast {
 		spero::String name;
-		std::optional<size_t> ssa_id = std::nullopt;
 		BindingType type;
 		ptr<Array> gens;
+		opt_t<analysis::SymIndex> sym_index = std::nullopt;
+		opt_t<size_t> ssa_index = std::nullopt;
 
 		PathPart(spero::String str, BindingType type, Location loc);
 

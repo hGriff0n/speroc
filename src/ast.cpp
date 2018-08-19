@@ -245,7 +245,8 @@ namespace spero::compiler::ast {
 	}
 	DEF_PRINTER(PathPart) {
 		s << name;
-		if (ssa_id) s << '$' << *ssa_id;
+		if (sym_index) s << '@' << *sym_index;
+		if (ssa_index) s << '$' << *ssa_index;
 		if (gens) s << "[_]";
 		return s;
 		//return s << std::string(buf, ' ') << context << "ast.PathPart (var=" << name << ", type=" << type._to_string() << ")";
@@ -1056,6 +1057,16 @@ namespace spero::analysis {
 
 		// Follow the symbol path to it's end
 		while (front != end && has_next) {
+			// If we've already figured out where this "part" points to, then we don't need to do it again
+			if (front->get()->sym_index.has_value() && current != *front->get()->sym_index) {
+				current = *front->get()->sym_index;
+				++front;
+				continue;
+			}
+			if (front->get()->ssa_index.has_value()) {
+				break;
+			}
+
 			// Access the symbol table for the symbol we're looking for
 			auto next = arena[current].get((**front).name);
 			if (has_next = next.has_value()) {
@@ -1065,10 +1076,14 @@ namespace spero::analysis {
 				if (has_next = resolved.has_value()) {
 
 					// Now check that the symbol stored is a SymIndex
-					auto index = std::get_if<SymIndex>(&*resolved);
-					if (has_next = (index != nullptr)) {
+					if (auto index = std::get_if<SymIndex>(&*resolved)) {
 						current = *index;
+						front->get()->sym_index = *index;
 						++front;
+
+					// TODO: Handle `redirect`
+					} else {
+						has_next = false;
 					}
 				}
 			}

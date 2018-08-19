@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -42,9 +42,6 @@
     </Filter>
     <Filter Include="Resource Files\test runner\default">
       <UniqueIdentifier>{5c7994ce-bd01-4a14-a901-5bbbff2d44a7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\test runner\default\files">
-      <UniqueIdentifier>{767c345a-27cc-4fb0-9bba-acd2dd7c147b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files\tools">
       <UniqueIdentifier>{f3c773b5-7ea3-4d25-814b-5914433a75a8}</UniqueIdentifier>
@@ -317,48 +314,6 @@
     </None>
     <None Include="_test\tests.yaml">
       <Filter>Resource Files\test runner\default</Filter>
-    </None>
-    <None Include="_test\variables.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\add.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\bool.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\error.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\fail_type.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\first.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\func.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\func_after.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\func_pointless.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\func_type_err.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\mut_fail.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\mut_succ.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\orderOfOperations.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
-    </None>
-    <None Include="_test\var_ops.spr">
-      <Filter>Resource Files\test runner\default\files</Filter>
     </None>
     <None Include="x86_inter\src\emu.rs">
       <Filter>Dependencies\interpreter</Filter>
