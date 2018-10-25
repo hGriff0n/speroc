@@ -1,3 +1,0 @@
-Install the following libraries using bcp
-
-  boost::flyweight
