@@ -16,3 +16,6 @@
 [submodule "dep/asmjit"]
 	path = dep/asmjit
 	url = https://github.com/hGriff0n/asmjit
+[submodule "dep/boost"]
+	path = dep/boost
+	url = https://github.com/hGriff0n/speroc-boost
