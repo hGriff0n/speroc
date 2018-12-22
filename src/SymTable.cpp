@@ -190,12 +190,12 @@ namespace spero::analysis {
 		return scope_context;
 	}
 
-	size_t numVars(SymArena& arena, SymIndex table) {
-		size_t num_symbols = std::accumulate(arena[table].symbols.begin(), arena[table].symbols.end(), 0,
+	int numVars(SymArena& arena, SymIndex table) {
+		int num_symbols = std::accumulate(arena[table].symbols.begin(), arena[table].symbols.end(), 0,
 			[](auto acc, auto& next) {
 				if (auto res = next.second.resolve(nullptr)) {
 					if (auto ssa = std::get_if<ref_t<SsaVector>>(&*res)) {
-						acc += ssa->get().size();
+						acc += static_cast<decltype(acc)>(ssa->get().size());
 					}
 				}
 

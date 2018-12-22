@@ -112,7 +112,7 @@ namespace spero::analysis {
 	class SymTable {
 		public:
 			using SymbolTypes = std::variant<Redirect, SymIndex, ref_t<SymbolInfo>>;
-			friend size_t numVars(std::deque<SymTable>& arena, SymIndex table);
+			friend int numVars(std::deque<SymTable>& arena, SymIndex table);
 
 		private:
 			SymIndex self_index;
@@ -163,7 +163,7 @@ namespace spero::analysis {
 	using SymArena = std::deque<SymTable>;
 	constexpr SymIndex GLOBAL_SYM_INDEX = 0;
 	
-	size_t numVars(SymArena& arena, SymIndex table);
+	int numVars(SymArena& arena, SymIndex table);
 	inline size_t numArgs(const SymArena& arena, SymIndex table) {
 		auto[front, end] = arena[table].arguments();
 		return std::distance(front, end);

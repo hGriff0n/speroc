@@ -49,9 +49,6 @@
     <Filter Include="Dependencies">
       <UniqueIdentifier>{7f87fe7f-be7f-4883-b4eb-d66713626b4a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\interpreter">
-      <UniqueIdentifier>{3f025008-e431-4bb0-8446-6648dd29c845}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Dependencies\spdlog">
       <UniqueIdentifier>{159d202d-da3c-4515-9b20-d8209b960744}</UniqueIdentifier>
     </Filter>
@@ -108,6 +105,9 @@
     </Filter>
     <Filter Include="Header Files\analysis\types">
       <UniqueIdentifier>{4add5039-5e28-4675-b362-4689c284d516}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\llvm">
+      <UniqueIdentifier>{a755e894-9833-4621-b94f-2b793c789c38}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -314,30 +314,6 @@
     </None>
     <None Include="_test\tests.yaml">
       <Filter>Resource Files\test runner\default</Filter>
-    </None>
-    <None Include="x86_inter\src\emu.rs">
-      <Filter>Dependencies\interpreter</Filter>
-    </None>
-    <None Include="x86_inter\src\inter.rs">
-      <Filter>Dependencies\interpreter</Filter>
-    </None>
-    <None Include="x86_inter\src\lib.rs">
-      <Filter>Dependencies\interpreter</Filter>
-    </None>
-    <None Include="x86_inter\src\main.rs">
-      <Filter>Dependencies\interpreter</Filter>
-    </None>
-    <None Include="x86_inter\src\parse.rs">
-      <Filter>Dependencies\interpreter</Filter>
-    </None>
-    <None Include="x86_inter\src\view.rs">
-      <Filter>Dependencies\interpreter</Filter>
-    </None>
-    <None Include="x86_inter\src\x86.rs">
-      <Filter>Dependencies\interpreter</Filter>
-    </None>
-    <None Include="x86_inter\src\ximpl.rs">
-      <Filter>Dependencies\interpreter</Filter>
     </None>
     <None Include="tools\test.rb">
       <Filter>Resource Files\test runner</Filter>
@@ -790,6 +766,9 @@
     </ClInclude>
     <ClInclude Include="incl\analysis\AnalysisState.h">
       <Filter>Header Files\analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\codegen\LlvmIrGenerator.h">
+      <Filter>Header Files\codegen</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

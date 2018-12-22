@@ -72,27 +72,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
+    <IncludePath>D:\repos\llvm+clang-7.0.0-win64-msvc-release\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)\dep\asmtk\src\asmtk;$(ProjectDir)\src;$(SourcePath)</SourcePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <LibraryPath>D:\repos\llvm+clang-7.0.0-win64-msvc-release\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
+    <IncludePath>D:\repos\llvm+clang-7.0.0-win64-msvc-release\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)\dep\asmtk\src\asmtk;$(ProjectDir)\src;$(SourcePath)</SourcePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <LibraryPath>D:\repos\llvm+clang-7.0.0-win64-msvc-release\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\repos\llvm+clang-7.0.0-win64-msvc-release\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\repos\llvm+clang-7.0.0-win64-msvc-release\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)\dep\asmtk\src\asmtk;$(ProjectDir)\src;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
+    <IncludePath>D:\repos\llvm+clang-7.0.0-win64-msvc-release\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)\dep\asmtk\src\asmtk;$(ProjectDir)\src;$(SourcePath)</SourcePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <LibraryPath>D:\repos\llvm+clang-7.0.0-win64-msvc-release\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -250,14 +250,6 @@
     <None Include="tools\mk_readme.rb" />
     <None Include="tools\test.rb" />
     <None Include="tools\utils.rb" />
-    <None Include="x86_inter\src\emu.rs" />
-    <None Include="x86_inter\src\inter.rs" />
-    <None Include="x86_inter\src\lib.rs" />
-    <None Include="x86_inter\src\main.rs" />
-    <None Include="x86_inter\src\parse.rs" />
-    <None Include="x86_inter\src\view.rs" />
-    <None Include="x86_inter\src\x86.rs" />
-    <None Include="x86_inter\src\ximpl.rs" />
     <None Include="_test\tests.yaml" />
   </ItemGroup>
   <ItemGroup>
@@ -388,6 +380,7 @@
     <ClInclude Include="incl\analysis\VarDeclPass.h" />
     <ClInclude Include="incl\analysis\VarRefPass.h" />
     <ClInclude Include="incl\codegen\AsmGenerator.h" />
+    <ClInclude Include="incl\codegen\LlvmIrGenerator.h" />
     <ClInclude Include="incl\compilation.h" />
     <ClInclude Include="incl\interface\cmd_line.h" />
     <ClInclude Include="incl\interface\CompilationState.h" />

@@ -37,7 +37,7 @@ namespace spero::compiler {
 	class CompilationState {
 		std::deque<std::string> input_files;
 		std::deque<std::pair<std::string, util::TimeData>> timing;
-		size_t nerrs = 0;
+		int nerrs = 0;
 
 		std::shared_ptr<spdlog::logger> logger;
 		CompilationPermissions permissions;
@@ -71,7 +71,7 @@ namespace spero::compiler {
 			virtual bool deleteTemporaryFiles() abstract;
 			virtual bool showLogs() abstract;
 			virtual bool produceExe() abstract;
-			size_t failed() const;
+			int failed() const;
 			void reset();
 
 

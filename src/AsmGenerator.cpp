@@ -123,7 +123,7 @@ namespace spero::compiler::gen {
 		// NOTE: Block allocation knows how many "local" variables were function arguments
 		const auto offset = f.args.size() + 4;
 		for (auto& _ : f.args) {
-			emit.push(x86::ptr(x86::esp, offset * 4));
+			emit.push(x86::ptr(x86::esp, static_cast<int32_t>(offset * 4)));
 		}
 
 		// Perform codegen on the function

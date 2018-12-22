@@ -45,3 +45,5 @@ Be sure to comment in the issue if you have any questions.
     clang: Executable production and linking
     boost:
       flyweight - string interning engine
+
+	Special thanks to [Zig](https://github.com/ziglang/zig/wiki/Building-Zig-on-Windows) for prebuilt llvm libraries

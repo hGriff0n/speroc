@@ -42,7 +42,7 @@ namespace spero::compiler {
 		return *logger;
 	}
 
-	size_t CompilationState::failed() const {
+	int CompilationState::failed() const {
 		return nerrs;
 	}
 

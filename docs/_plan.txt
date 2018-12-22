@@ -11,13 +11,44 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  Rearchitect system to have better separation and control flow
-    Figure out what I mean by this (what are the current, and future, pain points)
-	Add in LLVM IR production stage
-	  compilation::analyze now produces LLVM IR
-	  compilation::backend transforms the LLVM IR to assembly
-	  Look at including LLVM methods throughout the codebase
-	    I think particularly for dynamic casts, LLVM could drastically help
+  Add in LLVM IR production stage
+    Add in MACRO to disable all warnings from llvm includes
+	  https://blogs.msdn.microsoft.com/vcblog/2017/12/13/broken-warnings-theory/
+	Follow http://releases.llvm.org/6.0.1/docs/tutorial/index.html
+	  Fill in LlvmIrGenerator to match the production of AsmGenerator
+	Figure out how to take LlvmIrGenerator results and produce the assembly code we expect
+	  NOTE: This will likely entail removing AsmJIT from the project
+	Modify the compilation pipeline to accomodate the llvm ir changes
+	  `compilation::frontend` takes the file/string input and produces the ast
+	  `compilation::analyze` takes the ast and produces llvm ir
+		The actual llvm ir construction will be relegated to the last pass
+	  `compilation::backend` takes the llvm ir and produces the assembly "writer"
+	  What we do with the "writer" object will depend on the desired output
+	  Look at reorganizing the file structure
+		We'll also need to integrate llvm into the "normal" file structure
+	Look at including LLVM methods throughout the codebase
+	  I think particularly for dynamic casts, LLVM could drastically help
+	  There may also be pre-implemented `CompilationState` and `SymTable` style structures
+	Look at changing analysis framework to automatically translate 'reassignments' into 'ssa assignments'
+	  This is mostly to simplify the translation to llvm ir
+	  The downside would be a slight complication with the type inference engine
+		The type of a "reassigned" variable may be inferred as different than the original variable
+		
+  Type Inference and Type Checking
+    Read up on the MLsub type inference - see if I can figure out how to implement it
+	  Implement a toy algorithm inside of a smaller program (with hardcoded types, etc.)
+	  Transfer the toy algorithm over to this program
+	Figure out how to load type information into the symbol table
+	Intermediate Type Work (maybe)
+	  Come up with a quick way to get from a Variable/Binding ast node to it's symbol table information
+	    This would be quicker than running the full symbol table query
+	  Add in assembly instructions specific for floats and booleans
+	    Look at generalizing the binopcall assembly generation to account for type differences
+	  Add in assembly steps for interacting with tuples
+	    Implement AssignTuple assignment rule
+		Implement indexing in the case that the indexed type is a tuple (and the index is an int literal)
+		Abstract the assignment rules to simplify the logic
+		  For an AssignTuple pattern, split into a series of 'AssignName' (only issue is regarding when scopes come into effect)
 
   Get functions working properly
 	Look into how to support local functions/closures
@@ -40,21 +71,6 @@ Current Project Plan
   Fix grammar and ast properties
     Require directly affixing pointers and references to types
     Allow anon_type to be attached after 'var_val/atom' rules
-  Type Inference and Type Checking
-    Read up on the MLsub type inference - see if I can figure out how to implement it
-	  Implement a toy algorithm inside of a smaller program (with hardcoded types, etc.)
-	  Transfer the toy algorithm over to this program
-	Figure out how to load type information into the symbol table
-	Intermediate Type Work (maybe)
-	  Come up with a quick way to get from a Variable/Binding ast node to it's symbol table information
-	    This would be quicker than running the full symbol table query
-	  Add in assembly instructions specific for floats and booleans
-	    Look at generalizing the binopcall assembly generation to account for type differences
-	  Add in assembly steps for interacting with tuples
-	    Implement AssignTuple assignment rule
-		Implement indexing in the case that the indexed type is a tuple (and the index is an int literal)
-		Abstract the assignment rules to simplify the logic
-		  For an AssignTuple pattern, split into a series of 'AssignName' (only issue is regarding when scopes come into effect)
   Modules and Imports
 
   Language Logic Checking

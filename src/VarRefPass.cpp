@@ -64,7 +64,8 @@ namespace spero::analysis {
 				// The error is already reported in `visitVariable` so by this point, it is guaranteed to be valid
 				// We do need to perform this check, because it is done in the same pass as `visitVariable` (we can't determine whether it succeeded)
 			if (iter + 1 == std::end(lhs->name->elems)) {
-				if (auto nvar = dictionary.arena[def_table].get((**iter).name, nullptr, (**iter).loc, (**iter).ssa_index)) {
+				auto& pathPart = **iter;
+				if (auto nvar = dictionary.arena[def_table].get(pathPart.name, nullptr, pathPart.loc, pathPart.ssa_index)) {
 					if (auto* var = std::get_if<ref_t<SymbolInfo>>(&*nvar); !var->get().is_mut) {
 						state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", *lhs->name, lhs->loc);
 					}
