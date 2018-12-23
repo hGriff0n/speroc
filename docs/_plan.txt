@@ -12,9 +12,17 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-    Add in MACRO to disable all warnings from llvm includes
-	  https://blogs.msdn.microsoft.com/vcblog/2017/12/13/broken-warnings-theory/
+	Set up llvm specific testing path
+	  Move the llvm ir to only accept ints for now
+	  Only run the initial parser, nothing else
+	  Add in a jit interpreter loop
+	  Replace the existing code with this llvm-specific handler
+		Remove the asmjit dependency
+		Figure out how to produce compiled code from the llvm-ir
 	Follow http://releases.llvm.org/6.0.1/docs/tutorial/index.html
+	  It might be a good idea to have an "llvm-specific Ast" stage?
+		This would just translate a lot of typing/etc. into the llvm specific representations
+		Particularly with the function types
 	  Fill in LlvmIrGenerator to match the production of AsmGenerator
 	Figure out how to take LlvmIrGenerator results and produce the assembly code we expect
 	  NOTE: This will likely entail removing AsmJIT from the project
