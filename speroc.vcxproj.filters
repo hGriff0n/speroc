@@ -347,6 +347,9 @@
     <Text Include="docs\_todo.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="llvmlibs.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="incl\parser\ast.h">

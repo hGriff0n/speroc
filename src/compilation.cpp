@@ -41,7 +41,8 @@ namespace spero::compiler {
 			});
 	}
 
-#define RUN_PASS(PassType) { auto pass = PassType(state, dictionary); ast::visit(pass, ast_stack); }
+#define RUN_PASS_ARGS(PassType, ...) { PassType pass{ __VA_ARGS__ }; ast::visit(pass, ast_stack); }
+#define RUN_PASS(PassType) RUN_PASS_ARGS(PassType, state, dictionary)
 
 	// Perform the various analysis stages
 	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state, analysis::AllTypes& type_list) {

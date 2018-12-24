@@ -11,3 +11,5 @@ _test/*.s
 
 dep/boost/*
 !dep/boost/dependencies.txt
+
+x64/Release/

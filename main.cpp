@@ -8,11 +8,118 @@
 #include "interface/cmd_line.h"
 #include "util/strings.h"
 
+#include "codegen/LlvmIrGenerator.h"
+
 template<class Stream>
 Stream& getMultiline(Stream& in, spero::string::backing_type& s);
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
 void printAssembly(std::ostream&, spero::compiler::gen::Assembler& asm_code);
 
+
+// Temporary function to run interpreter while I'm busy building up the llvm ir integration
+void run_llvm_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& state, int& argc, char** argv) {
+	using namespace spero;
+	using namespace spero::parser;
+	using compiler::ID;
+
+	string::backing_type input;
+	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", false }, { "ast", true }, { "asm", true } };
+	
+	GET_PERMISSIONS(state);
+	state.files().push_back("");
+
+	while (std::cout << "> " && getMultiline(std::cin, input)) {
+		parser::Stack res;
+
+		// compile file
+		if (auto command = input.substr(0, 2); command == ":c") {
+			state.files()[0] = input.substr(3);
+
+			parser_mode = ParsingMode::FILE;	link = true;
+			do_compile = true;				interpret = false;
+
+		// load file
+		} else if (command == ":l") {
+			state.files()[0] = input.substr(3);
+
+			parser_mode = ParsingMode::FILE;
+			do_compile = false;
+
+		// set flag
+		} else if (command == ":s") {
+			for (auto flag : util::split(input.substr(3), ',')) {
+				flags[flag] = !flags[flag];
+			}
+
+			continue;
+
+		// quit
+		} else if (command == ":q") {
+			break;
+
+		// handle string input
+		} else {
+			state.files()[0] = input;
+
+			parser_mode = ParsingMode::STRING;	link = false;
+			do_compile = flags["compile"];	interpret = flags["interpret"];
+		}
+
+		// Run the input through the internal compilation loop (printing the ast and assembler)
+		switch (parser_mode) {
+			case ParsingMode::FILE:
+				res = compiler::parseFile(state.files()[0], state);
+				break;
+			case ParsingMode::STRING:
+				res = compiler::parse(state.files()[0], state);
+			default:
+				break;
+		}
+
+		if (do_compile && !state.failed()) {
+			auto type_list = analysis::initTypeList();
+			analysis::AnalysisState dictionary{ type_list };
+
+			if (flags["ast"]) {
+				printAST(std::cout << '\n', res);
+			}
+
+			if (!state.failed()) {
+				compiler::gen::LlvmIrGenerator gen{ state };
+
+				// Setup the jit function (TODO: Figure out how to handle this)
+				// You have to have a function in order for llvm to keep around the instructions
+				// TODO: How does llvm handle statics?
+				// The example jit puts all functions into a separate module
+				// And then any "interpreted" code gets put into an automatic analysis module
+				// Consisting of a single "anon" function, that is then cast to a callable object
+				std::vector<llvm::Type*> args{};
+				auto ft = llvm::FunctionType::get(llvm::Type::getInt1Ty(gen.getContext()), args, false);
+				auto fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "jitfunc", gen.finalize());
+
+				// You also have to have a `BasicBlock` to insert into for instructions to be placed into the function
+				gen.getBuilder().SetInsertPoint(llvm::BasicBlock::Create(gen.getContext(), "entry", fn));
+
+				compiler::ast::visit(gen, res);
+
+				// Finalize the jit function (TODO: above)
+				gen.createDefaultRetInst();
+
+				if (flags["asm"]) {
+					// `llvm::Module::dump` doesn't exist in release library
+					gen.finalize()->print(llvm::outs(), nullptr);
+				}
+
+				if (interpret) {
+					// TODO: llvm jit
+				}
+			}
+		}
+
+		std::cout << std::endl;
+		state.reset();
+	}
+}
 
 // Helper function to run the interactive mode
 void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& state, int& argc, char** argv) {
@@ -110,7 +217,8 @@ int main(int argc, char* argv[]) {
 	// Interactive mode
 	} else {
 		state.setPermissions(parser::ParsingMode::STRING, true, false, true);
-		return run_interpreter(opts, state, argc, argv), 0;
+		//return run_interpreter(opts, state, argc, argv), 0;
+		return run_llvm_interpreter(opts, state, argc, argv), 0;
 	}
 }
 

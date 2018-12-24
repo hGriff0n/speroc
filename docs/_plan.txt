@@ -12,28 +12,34 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
+    Might need to find debug builds of the libraries
+	  The versions I have from the ziglang people are release
+	    I can still work on the llvm ir work in the meantime if I have a separate console open
 	Set up llvm specific testing path
-	  Move the llvm ir to only accept ints for now
-	  Only run the initial parser, nothing else
-	  Add in a jit interpreter loop
+	  Add in the code to run a jit from llvm
+	    Figure out how to produce compiled code from the llvm-ir
 	  Replace the existing code with this llvm-specific handler
-		Remove the asmjit dependency
-		Figure out how to produce compiled code from the llvm-ir
+	    The only remaining asmjit code should be in `utils/asmjit.h` and `AsmGenerator.h`
+		NOTE: Don't remove the dependency just yet
+	Transform the ast to fit llvm a bit better
+	  Functions automatically have a "ast::Block" member
+	  All leftover instructions are collected into `__anon_jit_fn` (or some other name)
+	    This function will initially have the signature `() -> Int`
 	Follow http://releases.llvm.org/6.0.1/docs/tutorial/index.html
-	  It might be a good idea to have an "llvm-specific Ast" stage?
-		This would just translate a lot of typing/etc. into the llvm specific representations
-		Particularly with the function types
+      Look into the feasibility of maintaining the "llvm transform" pass into the final product
+	    Would help a bit with translating typings/etc. into the llvm representations
+		But otherwise may be somewhat unnecessary (how much can we do in the translation pass)
 	  Fill in LlvmIrGenerator to match the production of AsmGenerator
-	Figure out how to take LlvmIrGenerator results and produce the assembly code we expect
-	  NOTE: This will likely entail removing AsmJIT from the project
-	Modify the compilation pipeline to accomodate the llvm ir changes
+	    Adapt and modify the variable passes to produce information better suited for the IrGenerator to process
+		Finally remove the asmjit dependency
+	Look at modifying the compilation pipeline to accomodate the llvm ir changes
 	  `compilation::frontend` takes the file/string input and produces the ast
-	  `compilation::analyze` takes the ast and produces llvm ir
-		The actual llvm ir construction will be relegated to the last pass
-	  `compilation::backend` takes the llvm ir and produces the assembly "writer"
+	  `compilation::analyze` takes the ast and produces analysed ast
+	  `compilation::translate` takes the final ast and produces llvm ir
+	  `compilation::backend` takes the llvm ir and produces the final output
 	  What we do with the "writer" object will depend on the desired output
-	  Look at reorganizing the file structure
-		We'll also need to integrate llvm into the "normal" file structure
+	Look at reorganizing the file structure
+	  We'll also need to integrate llvm into the "normal" file structure
 	Look at including LLVM methods throughout the codebase
 	  I think particularly for dynamic casts, LLVM could drastically help
 	  There may also be pre-implemented `CompilationState` and `SymTable` style structures
