@@ -11,25 +11,21 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  Build LLVM from source
-    Figure out how to produce llvm as a a submodule (and retarget all the include paths appropriately)
-	Experiment a bit more on how to "handle" the build
-	  Can I build in the same directory (ie. would everything just merge)
   Add in LLVM IR production stage
-	Utilize `llvm::Interpreter` to run the produced llvm ir (#include "ExecutionEngine/Interpreter/Interpreter.h")
-	  Figure out whether I still need the "transforms" necessary to display everything in the module
-	    It may be beneficial to put off the "module" assembly to a separate pass (depending on how the interpreter works)
-	Set up llvm specific testing path
-	  Add in interpretation of the llvm ir code
-	    See if I can avoid the need to perform all of the function transformation necessary for printing
-		Although I'll still have to produce those transforms in order to "print" the whole thing
-	  Figure out how to produce compiled code from the llvm-ir
-	  Replace the existing code with this llvm-specific handler
+	Set up llvm
+	  Replace the existing code with the llvm-specific code
 	    The only remaining asmjit code should be in `utils/asmjit.h` and `AsmGenerator.h/cpp`
 		NOTE: Don't remove the dependency just yet
+		Add in data layout/target triple getters to `CompilationState` (not configurable just yet)
+	  Test the replacement work
 	Transform the ast to fit llvm a bit better
 	  All leftover instructions are collected into `__anon_jit_fn` (or some other name)
 	    This function will initially have the signature `() -> Int`
+	  Look into optimizing the llvm interpretation process
+	    WANT: Define function in one line, use in the next line
+		  Only issue is with the default "jitfunc" which we need to put everything in
+		See if we don't need to put everything in a function for interpretation
+		  Do need to do this for printing however (is there an alternate path?)
 	Follow http://releases.llvm.org/6.0.1/docs/tutorial/index.html
 	  https://eli.thegreenplace.net/2017/adventures-in-jit-compilation-part-3-llvm/
       Look into the feasibility of maintaining the "llvm transform" pass into the final product

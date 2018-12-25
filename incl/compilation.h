@@ -13,6 +13,7 @@
 // Because AsmJit somehow decides my computers architecture is 32-bit (x86) and I've currently hardcoded assembly generation,
 // Since my installation of clang is 64-bit (x86-64), we have to force compilation under 32-bit mode
 #define ASM_COMPILER "clang -masm=intel -m32"
+#define ASM_TEMP_OUTPUT_FILE "out.s"
 
 
 namespace spero::compiler {
@@ -99,7 +100,8 @@ namespace spero {
 		 */
 		if (link && !state.failed()) {
 			auto _ = state.timer("codegen");
-			compiler::codegen(asm_code, state.files()[0], "out.s", state);
+			// TODO: Should change to `out.ll` (cause we're producing llvm ir)
+			compiler::codegen(asm_code, state.files()[0], ASM_TEMP_OUTPUT_FILE, state);
 		}
 
 		irHook(asm_code);
@@ -109,13 +111,15 @@ namespace spero {
 		 * Send the boundary ir off to the final compilation phase
 		 */
 		if (!state.failed() && state.produceExe() && link) {
-			if (auto _ = state.timer("assembly"); system((ASM_COMPILER" out.s -o " + state.output()).c_str())) {
+			if (auto _ = state.timer("assembly");
+				system((ASM_COMPILER " " ASM_TEMP_OUTPUT_FILE " -o " + state.output()).c_str()))
+			{
 				state.log(compiler::ID::err, "Compilation of `{}` failed", state.output());
 			}
 
 			// Delete the temporary file
 			if (state.deleteTemporaryFiles()) {
-				std::remove("out.s");
+				std::remove(ASM_TEMP_OUTPUT_FILE);
 			}
 		}
 

@@ -10,6 +10,11 @@
 
 #include "codegen/LlvmIrGenerator.h"
 
+#pragma warning(push, 0)
+#pragma warning(disable:4996)
+#include <ExecutionEngine/Interpreter/Interpreter.h>
+#pragma warning(pop)
+
 template<class Stream>
 Stream& getMultiline(Stream& in, spero::string::backing_type& s);
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
@@ -108,10 +113,23 @@ void run_llvm_interpreter(cxxopts::Options& opts, spero::compiler::CompilationSt
 				if (flags["asm"]) {
 					// `llvm::Module::dump` doesn't exist in release library
 					gen.finalize()->print(llvm::outs(), nullptr);
+					llvm::outs() << '\n';
 				}
 
 				if (interpret) {
-					// TODO: llvm jit
+					// Create this with a "null" module, call `AddModule`
+					// I think we still need to combine everything in a function though
+					llvm::Interpreter inter(std::unique_ptr<llvm::Module>(gen.finalize()));
+
+					// Extract the "runtime" function from the module
+					auto jitfn = gen.finalize()->getFunction("jitfunc");
+					std::vector<llvm::GenericValue> params;
+
+					// Call the "runtime" function
+					auto res = inter.runFunction(jitfn, params);
+
+					// Assume the result is an int and print it out (TODO: Generalize?)
+					llvm::outs() << "result: " << res.IntVal << '\n';
 				}
 			}
 		}
