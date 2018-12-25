@@ -1,6 +1,10 @@
 #pragma once
 
+// NOTE: Always surround llvm includes with these commands to disable warning reporting
+// As they are both very numerous, not our concern, and actually prevent compilation (due to -werror)
 #pragma warning(push, 0)
+#pragma warning(disable:4996)
+//#pragma warning(pop)
 //#include <llvm/ADT/APFloat.h>
 //#include <llvm/ADT/STLExtras.h>
 //#include <llvm/IR/BasicBlock.h>

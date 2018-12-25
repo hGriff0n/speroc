@@ -11,21 +11,27 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
+  Build LLVM from source
+    Figure out how to produce llvm as a a submodule (and retarget all the include paths appropriately)
+	Experiment a bit more on how to "handle" the build
+	  Can I build in the same directory (ie. would everything just merge)
   Add in LLVM IR production stage
-    Might need to find debug builds of the libraries
-	  The versions I have from the ziglang people are release
-	    I can still work on the llvm ir work in the meantime if I have a separate console open
+	Utilize `llvm::Interpreter` to run the produced llvm ir (#include "ExecutionEngine/Interpreter/Interpreter.h")
+	  Figure out whether I still need the "transforms" necessary to display everything in the module
+	    It may be beneficial to put off the "module" assembly to a separate pass (depending on how the interpreter works)
 	Set up llvm specific testing path
-	  Add in the code to run a jit from llvm
-	    Figure out how to produce compiled code from the llvm-ir
+	  Add in interpretation of the llvm ir code
+	    See if I can avoid the need to perform all of the function transformation necessary for printing
+		Although I'll still have to produce those transforms in order to "print" the whole thing
+	  Figure out how to produce compiled code from the llvm-ir
 	  Replace the existing code with this llvm-specific handler
-	    The only remaining asmjit code should be in `utils/asmjit.h` and `AsmGenerator.h`
+	    The only remaining asmjit code should be in `utils/asmjit.h` and `AsmGenerator.h/cpp`
 		NOTE: Don't remove the dependency just yet
 	Transform the ast to fit llvm a bit better
-	  Functions automatically have a "ast::Block" member
 	  All leftover instructions are collected into `__anon_jit_fn` (or some other name)
 	    This function will initially have the signature `() -> Int`
 	Follow http://releases.llvm.org/6.0.1/docs/tutorial/index.html
+	  https://eli.thegreenplace.net/2017/adventures-in-jit-compilation-part-3-llvm/
       Look into the feasibility of maintaining the "llvm transform" pass into the final product
 	    Would help a bit with translating typings/etc. into the llvm representations
 		But otherwise may be somewhat unnecessary (how much can we do in the translation pass)

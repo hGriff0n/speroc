@@ -19,3 +19,6 @@
 [submodule "dep/boost"]
 	path = dep/boost
 	url = https://github.com/hGriff0n/speroc-boost
+[submodule "dep/llvm"]
+	path = dep/llvm
+	url = https://github.com/llvm-mirror/llvm
