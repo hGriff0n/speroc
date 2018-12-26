@@ -2,7 +2,8 @@
 
 namespace spero::compiler {
 	CompilationState::CompilationState(char** fst, char** snd)
-		: input_files{ fst, snd }, logger{ spdlog::stdout_color_mt("console") } {}
+		: input_files{ fst, snd }, logger{ spdlog::stdout_color_mt("console") },
+		  context{ std::make_unique<llvm::LLVMContext>() } {}
 
 
 	// Input/Output files
@@ -24,6 +25,9 @@ namespace spero::compiler {
 	// Basic state querying
 	bool CompilationState::deleteTemporaryFiles() {
 		return true;
+	}
+	llvm::LLVMContext& CompilationState::getContext() {
+		return *context;
 	}
 
 	/* Example code on how to create a "multi-sink" logger

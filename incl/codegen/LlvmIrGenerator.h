@@ -5,16 +5,8 @@
 #pragma warning(push, 0)
 #pragma warning(disable:4996)
 //#pragma warning(pop)
-//#include <llvm/ADT/APFloat.h>
-//#include <llvm/ADT/STLExtras.h>
-//#include <llvm/IR/BasicBlock.h>
-//#include <llvm/IR/Constants.h>
-//#include <llvm/IR/DerivedTypes.h>
-//#include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
-//#include <llvm/IR/Type.h>
 #include <llvm/IR/Verifier.h>
 #pragma warning(pop)
 
@@ -36,9 +28,9 @@ namespace spero::compiler::gen {
 	 *   This would basically be a vector of `AST*`, so we could declare functions first (maybe split out all declarations instead?)
 	 */
 	class LlvmIrGenerator : public ast::AstVisitor {
-		llvm::LLVMContext context;
 		llvm::IRBuilder<> builder;
 		llvm::Module* translationUnit = nullptr;
+		//std::unique_ptr<llvm::Module*>
 
 		CompilationState& state;
 
@@ -64,19 +56,19 @@ namespace spero::compiler::gen {
 				: state{ state }, arena{ arena }, translationUnit{ new llvm::Module("speroc", context) }, builder{ context }
 			{}*/
 			LlvmIrGenerator(CompilationState& state)
-				: state{ state }, translationUnit{ new llvm::Module("speroc", context) }, builder{ context }
+				: state{ state }, translationUnit{ new llvm::Module("speroc", state.getContext()) }, builder{ state.getContext() }
 			{}
 
 			llvm::Module* finalize() {
 				return translationUnit;
 			}
 
-			llvm::LLVMContext& getContext() {
-				return context;
-			}
-
 			llvm::IRBuilder<>& getBuilder() {
 				return builder;
+			}
+
+			llvm::LLVMContext& getContext() {
+				return state.getContext();
 			}
 
 			void createDefaultRetInst() {
@@ -86,7 +78,7 @@ namespace spero::compiler::gen {
 
 			// Literals
 			virtual void visitInt(ast::Int& i) final {
-				codegen = llvm::ConstantInt::get(context, llvm::APInt(sizeof(i.val), i.val, true));
+				codegen = llvm::ConstantInt::get(state.getContext(), llvm::APInt(sizeof(i.val) * 8, i.val, true));
 			}
 
 			// Expressions

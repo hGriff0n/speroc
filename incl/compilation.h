@@ -3,17 +3,20 @@
 #include <fstream>
 #include <string>
 
-#include "analysis/types.h"
+#pragma warning(push, 0)
+#pragma warning(disable:4996)
+#include <llvm/IR/Module.h>
+#pragma warning(pop)
+
 #include "interface/CompilationState.h"
 #include "analysis/AnalysisState.h"
-#include "util/asmjit.h"
 
 #define WITH(x) if (auto _ = (x); true)
 
 // Because AsmJit somehow decides my computers architecture is 32-bit (x86) and I've currently hardcoded assembly generation,
 // Since my installation of clang is 64-bit (x86-64), we have to force compilation under 32-bit mode
 #define ASM_COMPILER "clang -masm=intel -m32"
-#define ASM_TEMP_OUTPUT_FILE "out.s"
+#define ASM_TEMP_OUTPUT_FILE "out.ll"
 
 
 namespace spero::compiler {
@@ -30,13 +33,14 @@ namespace spero::compiler {
 	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state, analysis::AllTypes&);
 	
 	// Perform all steps related to backend production
-	gen::Assembler backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state);
+	// TODO: `will_be_interpreted` is a temporary solution for repl compilation (requires everything in a function atm)
+	llvm::Module* backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state, bool using_repl);
 
 	// Perform all steps related to final codegen stages (produces assembly code)
-	void codegen(gen::Assembler& emit, const std::string& input_file, const std::string& output_file, CompilationState& state, bool output_header=true);
+	void codegen(llvm::Module* ir, const std::string& input_file, const std::string& output_file, CompilationState& state);
 
 	// Run a JIT interpretation environment
-	void interpret(gen::Assembler& asm_code);
+	void interpret(llvm::Module* llvm_code, CompilationState& state);
 }
 
 
@@ -87,9 +91,9 @@ namespace spero {
 		 * Don't mark this as a separate "phase" for timing purposes
 		 * The sub-phases perform their own timing passes
 		 */
-		auto asm_code = (!state.failed())
-			? compiler::backend(std::move(table), ast_stack, state)
-			: spero::compiler::gen::Assembler{};
+		auto llvm_code = (!state.failed())
+			? compiler::backend(std::move(table), ast_stack, state, parser_mode == ParsingMode::STRING)
+			: new llvm::Module("speroc_error_state", state.getContext());
 
 		/*
 		 * Generate the boundary ir for the external tools
@@ -100,11 +104,10 @@ namespace spero {
 		 */
 		if (link && !state.failed()) {
 			auto _ = state.timer("codegen");
-			// TODO: Should change to `out.ll` (cause we're producing llvm ir)
-			compiler::codegen(asm_code, state.files()[0], ASM_TEMP_OUTPUT_FILE, state);
+			compiler::codegen(llvm_code, state.files()[0], ASM_TEMP_OUTPUT_FILE, state);
 		}
 
-		irHook(asm_code);
+		irHook(llvm_code);
 
 
 		/*
@@ -124,7 +127,7 @@ namespace spero {
 		}
 
 		if (!state.failed() && interpret) {
-			compiler::interpret(asm_code);
+			compiler::interpret(llvm_code, state);
 		}
 
 		return state.failed();

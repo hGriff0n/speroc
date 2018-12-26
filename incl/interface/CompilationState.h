@@ -7,6 +7,11 @@
 #include <logger.h>
 #include <fmt/ostr.h>
 
+#pragma warning(push, 0)
+#pragma warning(disable:4996)
+#include <llvm/IR/LLVMContext.h>
+#pragma warning(pop)
+
 #include "parser/base.h"
 #include "util/time.h"
 
@@ -42,6 +47,8 @@ namespace spero::compiler {
 		std::shared_ptr<spdlog::logger> logger;
 		CompilationPermissions permissions;
 
+		std::unique_ptr<llvm::LLVMContext> context;
+
 		spdlog::logger& getLogger(ID msg_id);
 
 		public:
@@ -71,6 +78,9 @@ namespace spero::compiler {
 			virtual bool deleteTemporaryFiles() abstract;
 			virtual bool showLogs() abstract;
 			virtual bool produceExe() abstract;
+			virtual std::string targetTriple() abstract;
+			virtual std::string targetDataLayout() abstract;
+			llvm::LLVMContext& getContext();
 			int failed() const;
 			void reset();
 
@@ -110,6 +120,14 @@ namespace spero::compiler {
 
 		bool produceExe() {
 			return !opts["stop"].as<bool>();
+		}
+
+		std::string targetTriple() {
+			return "x86_64-pc-windows-msvc19.16.27025";
+		}
+
+		std::string targetDataLayout() {
+			return "e-m:w-i64:64-f80:128-n8:16:32:64-S128";
 		}
 	};
 }

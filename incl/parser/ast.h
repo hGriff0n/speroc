@@ -942,7 +942,7 @@ namespace spero::compiler::ast {
 	 * Extends: Sequence<IfBranch, Branch>
 	 *
 	 * Exports:
-	 *   _else_ - optional fall-through case
+	 *   else_ - optional fall-through case
 	 */
 	struct IfElse : Sequence<IfBranch, Branch> {
 		ptr<ValExpr> else_;

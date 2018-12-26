@@ -12,12 +12,14 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-	Set up llvm
-	  Replace the existing code with the llvm-specific code
-	    The only remaining asmjit code should be in `utils/asmjit.h` and `AsmGenerator.h/cpp`
-		NOTE: Don't remove the dependency just yet
-		Add in data layout/target triple getters to `CompilationState` (not configurable just yet)
-	  Test the replacement work
+	Test and Fix the LLVM replacement code
+	  Formalize `LlvmIrGenerator` to produce the correct output (ie. put everything in a unique_ptr/etc.)
+	  Fix memory leakage with the interpreter
+		Currently using raw pointers because `unique_ptr` attempts to remove the context too quickly
+		Also can't make the `Interpreter` static because of the context
+		  Would probably be better to not run the interpreter through the `compile` method (would allow passing it in as a parameter)
+			Remove the `compile` function entirely if I do this
+		  On the other hand, we can just add modules in, the "jitfunc" will get overwritten (I think)
 	Transform the ast to fit llvm a bit better
 	  All leftover instructions are collected into `__anon_jit_fn` (or some other name)
 	    This function will initially have the signature `() -> Int`
@@ -38,13 +40,14 @@ Current Project Plan
 	  `compilation::frontend` takes the file/string input and produces the ast
 	  `compilation::analyze` takes the ast and produces analysed ast
 	  `compilation::translate` takes the final ast and produces llvm ir
-	  `compilation::backend` takes the llvm ir and produces the final output
+	  `compilation::backend` takes the llvm ir and produces the final output (after optimizations/etc)
 	  What we do with the "writer" object will depend on the desired output
 	Look at reorganizing the file structure
 	  We'll also need to integrate llvm into the "normal" file structure
 	Look at including LLVM methods throughout the codebase
 	  I think particularly for dynamic casts, LLVM could drastically help
 	  There may also be pre-implemented `CompilationState` and `SymTable` style structures
+	    Although I think we'll still have to make subclasses to be specific
 	Look at changing analysis framework to automatically translate 'reassignments' into 'ssa assignments'
 	  This is mostly to simplify the translation to llvm ir
 	  The downside would be a slight complication with the type inference engine

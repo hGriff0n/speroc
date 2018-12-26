@@ -1,11 +1,16 @@
 #include "compilation.h"
-#include "parser/actions.h"
 
+#pragma warning(push, 0)
+#pragma warning(disable:4996)
+#include <llvm/Support/FileSystem.h>
+#pragma warning(pop)
+
+#include "parser/actions.h"
 #include "analysis/VarDeclPass.h"
 #include "analysis/VarRefPass.h"
 #include "analysis/BasicTypingPass.h"
 
-#include "codegen/AsmGenerator.h"
+#include "codegen/LlvmIrGenerator.h"
 
 namespace spero::compiler {
 	using namespace parser;
@@ -30,7 +35,7 @@ namespace spero::compiler {
 
 		return parse_impl(state, [&input](Stack& ast, CompilationState& state) {
 			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::string_input<>{ input, "speroc:repl" }, ast, state);
-			});
+		});
 	}
 
 	Stack parseFile(std::string file, CompilationState& state) {
@@ -38,7 +43,7 @@ namespace spero::compiler {
 
 		return parse_impl(state, [&file](Stack& ast, CompilationState& state) {
 			return tao::pegtl::parse<grammar::program, actions::action>(tao::pegtl::file_input<>{ file }, ast, state);
-			});
+		});
 	}
 
 #define RUN_PASS_ARGS(PassType, ...) { PassType pass{ __VA_ARGS__ }; ast::visit(pass, ast_stack); }
@@ -57,35 +62,40 @@ namespace spero::compiler {
 
 #undef RUN_PASS
 
-	gen::Assembler backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state) {
-		gen::AsmGenerator visitor{ std::move(globals), state };
+	llvm::Module* backend(MIR_t, parser::Stack& ast_stack, CompilationState& state, bool using_repl) {
+		gen::LlvmIrGenerator visitor{ state };
+
+		// Temporary hack since we have to put stuff in a function to see it in the repl
+		if (using_repl) {
+			std::vector<llvm::Type*> args;
+			auto ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(state.getContext()), args, false);
+			auto fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "jitfunc", visitor.finalize());
+			visitor.getBuilder().SetInsertPoint(llvm::BasicBlock::Create(state.getContext(), "entry", fn));
+		}
+
 		ast::visit(visitor, ast_stack);
+
+		if (using_repl) {
+			visitor.createDefaultRetInst();
+		}
+
 		return visitor.finalize();
 	}
 
-	// Perform the final compilation stages (produces direct assembly code)
-	void codegen(gen::Assembler& emit, const std::string& input_file, const std::string& output_file, CompilationState& state, bool output_header) {
-		// Open the output file
-		std::ofstream o{ output_file };
+	// Perform the final compilation stages (produces llvm ir file)
+	void codegen(llvm::Module* ir, const std::string& input_file, const std::string& output_file, spero::compiler::CompilationState& state) {
+		std::error_code ec;
+		llvm::raw_fd_ostream output{ output_file, ec, llvm::sys::fs::F_None };
 
-		// Output file header information
-		if (output_header) {
-			o << ".text\n.intel_syntax noprefix\n.file \"" << input_file << "\"\n";
-		}
-
-		asmjit::StringBuilder sb;
-		emit.dump(sb);
-		o << sb.data() << '\n';
-
-		// Output file footer information
-		if (output_header) {
-			//o << ".ident \"speroc\"\n";
-		}
+		// TODO: The target layout/triple strings should be configurable (ie. get them from CompilationState)
+		ir->setDataLayout(state.targetDataLayout());
+		ir->setTargetTriple(state.targetTriple());
+		ir->print(output, nullptr);
 	}
 }
 
 
 // Full compilation implementation
 bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& ast_stack) {
-	return spero::compile(state, ast_stack, [](auto&&){});
+	return spero::compile(state, ast_stack, [](auto&&) {});
 }

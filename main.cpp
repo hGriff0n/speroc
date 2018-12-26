@@ -18,126 +18,8 @@
 template<class Stream>
 Stream& getMultiline(Stream& in, spero::string::backing_type& s);
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
-void printAssembly(std::ostream&, spero::compiler::gen::Assembler& asm_code);
+void printAssembly(std::ostream&, llvm::Module* llvm_code);
 
-
-// Temporary function to run interpreter while I'm busy building up the llvm ir integration
-void run_llvm_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& state, int& argc, char** argv) {
-	using namespace spero;
-	using namespace spero::parser;
-	using compiler::ID;
-
-	string::backing_type input;
-	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", false }, { "ast", true }, { "asm", true } };
-	
-	GET_PERMISSIONS(state);
-	state.files().push_back("");
-
-	while (std::cout << "> " && getMultiline(std::cin, input)) {
-		parser::Stack res;
-
-		// compile file
-		if (auto command = input.substr(0, 2); command == ":c") {
-			state.files()[0] = input.substr(3);
-
-			parser_mode = ParsingMode::FILE;	link = true;
-			do_compile = true;				interpret = false;
-
-		// load file
-		} else if (command == ":l") {
-			state.files()[0] = input.substr(3);
-
-			parser_mode = ParsingMode::FILE;
-			do_compile = false;
-
-		// set flag
-		} else if (command == ":s") {
-			for (auto flag : util::split(input.substr(3), ',')) {
-				flags[flag] = !flags[flag];
-			}
-
-			continue;
-
-		// quit
-		} else if (command == ":q") {
-			break;
-
-		// handle string input
-		} else {
-			state.files()[0] = input;
-
-			parser_mode = ParsingMode::STRING;	link = false;
-			do_compile = flags["compile"];	interpret = flags["interpret"];
-		}
-
-		// Run the input through the internal compilation loop (printing the ast and assembler)
-		switch (parser_mode) {
-			case ParsingMode::FILE:
-				res = compiler::parseFile(state.files()[0], state);
-				break;
-			case ParsingMode::STRING:
-				res = compiler::parse(state.files()[0], state);
-			default:
-				break;
-		}
-
-		if (do_compile && !state.failed()) {
-			auto type_list = analysis::initTypeList();
-			analysis::AnalysisState dictionary{ type_list };
-
-			if (flags["ast"]) {
-				printAST(std::cout << '\n', res);
-			}
-
-			if (!state.failed()) {
-				compiler::gen::LlvmIrGenerator gen{ state };
-
-				// Setup the jit function (TODO: Figure out how to handle this)
-				// You have to have a function in order for llvm to keep around the instructions
-				// TODO: How does llvm handle statics?
-				// The example jit puts all functions into a separate module
-				// And then any "interpreted" code gets put into an automatic analysis module
-				// Consisting of a single "anon" function, that is then cast to a callable object
-				std::vector<llvm::Type*> args{};
-				auto ft = llvm::FunctionType::get(llvm::Type::getInt1Ty(gen.getContext()), args, false);
-				auto fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "jitfunc", gen.finalize());
-
-				// You also have to have a `BasicBlock` to insert into for instructions to be placed into the function
-				gen.getBuilder().SetInsertPoint(llvm::BasicBlock::Create(gen.getContext(), "entry", fn));
-
-				compiler::ast::visit(gen, res);
-
-				// Finalize the jit function (TODO: above)
-				gen.createDefaultRetInst();
-
-				if (flags["asm"]) {
-					// `llvm::Module::dump` doesn't exist in release library
-					gen.finalize()->print(llvm::outs(), nullptr);
-					llvm::outs() << '\n';
-				}
-
-				if (interpret) {
-					// Create this with a "null" module, call `AddModule`
-					// I think we still need to combine everything in a function though
-					llvm::Interpreter inter(std::unique_ptr<llvm::Module>(gen.finalize()));
-
-					// Extract the "runtime" function from the module
-					auto jitfn = gen.finalize()->getFunction("jitfunc");
-					std::vector<llvm::GenericValue> params;
-
-					// Call the "runtime" function
-					auto res = inter.runFunction(jitfn, params);
-
-					// Assume the result is an int and print it out (TODO: Generalize?)
-					llvm::outs() << "result: " << res.IntVal << '\n';
-				}
-			}
-		}
-
-		std::cout << std::endl;
-		state.reset();
-	}
-}
 
 // Helper function to run the interactive mode
 void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& state, int& argc, char** argv) {
@@ -146,7 +28,7 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 	using compiler::ID;
 	
 	string::backing_type input;
-	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", false }, { "ast", true }, { "asm", true } };
+	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", true }, { "ast", true }, { "asm", true } };
 
 	GET_PERMISSIONS(state);
 	state.files().push_back("");
@@ -197,7 +79,7 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 				}
 			}
 
-			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, compiler::gen::Assembler>) {
+			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, llvm::Module*>) {
 				if (flags["asm"]) {
 					printAssembly(std::cout, ir);
 				}
@@ -235,8 +117,7 @@ int main(int argc, char* argv[]) {
 	// Interactive mode
 	} else {
 		state.setPermissions(parser::ParsingMode::STRING, true, false, true);
-		//return run_interpreter(opts, state, argc, argv), 0;
-		return run_llvm_interpreter(opts, state, argc, argv), 0;
+		return run_interpreter(opts, state, argc, argv), 0;
 	}
 }
 
@@ -280,38 +161,39 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& ast_stack) {
 	return s << '\n';
 }
 
-void printAssembly(std::ostream& s, spero::compiler::gen::Assembler& asm_code) {
-	asmjit::StringBuilder sb;
-	asm_code.dump(sb);
-	s << sb.data() << '\n';
+void printAssembly(std::ostream& s, llvm::Module* llvm_code) {
+	llvm_code->print(llvm::outs(), nullptr);
+	llvm::outs() << '\n';
 }
 
 
-// Interpret the produced assembly code (this doesn't produce any code. "CodeHolder" is apparently completely empty
-void spero::compiler::interpret(gen::Assembler& asm_code) {
-	// Setup the runtime environment
-	static asmjit::JitRuntime jt;
+// Interpret the produced llvm ir code
+void spero::compiler::interpret(llvm::Module* llvm_code, spero::compiler::CompilationState& state) {
+	// Setup the runtime interpreter
+	llvm::Interpreter inter{ std::make_unique<llvm::Module>("repl", state.getContext()) };
 
-	// Prepare the assembly code for interpretation
-	// I don't think this is quite accurate enough just yet (not sure what though)
-	asm_code.makeIFunction();
+	// Add the next "layer" of interpreted code to the interpreter state
+	// I think we still need to combine everything in a function though
+	// And I'm not sure how this handles name clashes
+	inter.addModule(std::unique_ptr<llvm::Module>(llvm_code));
 
-	// Print the interpreted code
-	//printAssembly(std::cout, asm_code);
+	// Extract the "runtime" function and params from the module
+	// NOTE: We currently only produce `jitfunc` to have type `() -> Int`
+	auto jitfn = llvm_code->getFunction("jitfunc");
+	std::vector<llvm::GenericValue> params;
 
-	// Register the assembly code as an `int()` function
-	gen::Assembler::Function fn;
-	asmjit::Error err = jt.add(&fn, asm_code.get());
+	// Call the "runtime" function
+	auto res = inter.runFunction(jitfn, params);
 
-	if (err) {
-		std::cout << err << ':' << asmjit::kErrorNoCodeGenerated << '\n';
-	} else {
-		int i = fn();
-		std::cout << "result: " << i << '\n';
+	// Print the output
+	auto& output = llvm::outs() << "result: ";
+	switch (jitfn->getReturnType()->getTypeID()) {
+		case llvm::Type::IntegerTyID:
+			output << res.IntVal << '\n';
+			break;
+		default:
+			output << "Unimplemented type\n";
 	}
-
-	// TODO: Add printing of all other registers
-	// TODO: Add re-entrant evaluation
-
-	jt.release(fn);
+	
+	//inter.removeModule(llvm_code);
 }
