@@ -10,15 +10,10 @@
 
 #include "codegen/LlvmIrGenerator.h"
 
-#pragma warning(push, 0)
-#pragma warning(disable:4996)
-#include <ExecutionEngine/Interpreter/Interpreter.h>
-#pragma warning(pop)
-
 template<class Stream>
 Stream& getMultiline(Stream& in, spero::string::backing_type& s);
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
-void printAssembly(std::ostream&, llvm::Module* llvm_code);
+void printAssembly(std::ostream&, std::unique_ptr<llvm::Module>& llvm_code);
 
 
 // Helper function to run the interactive mode
@@ -33,24 +28,34 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 	GET_PERMISSIONS(state);
 	state.files().push_back("");
 
-	while (std::cout << "> " && getMultiline(std::cin, input)) {
-		parser::Stack res;
+	llvm::Interpreter interpreter{ std::make_unique<llvm::Module>("speroc-repl", state.getContext()) };
 
-		// compile file
-		if (auto command = input.substr(0, 2); command == ":c") {
+	// Run the repl loop
+	while (std::cout << "> " && getMultiline(std::cin, input)) {
+		/**
+		 * Handle repl-specific commands
+		 *  :c - compile the given file (NOTE: currently not added to interpreter)
+		 *  :l - load the given file into the interpreter context
+		 *  :s - set repl flag (controlling what gets printed/etc)
+		 *  :q - quit out of the repl
+		 *  
+		 *  Defaults to receiving and running a multiline spero string
+		 */
+		if (auto command = input.substr(0, 2); command == ":q") {
+			break;
+
+		} else if (command == ":c") {
 			state.files()[0] = input.substr(3);
 
 			parser_mode = ParsingMode::FILE;	link = true;
 			do_compile = true;				interpret = false;
 
-		// load file
 		} else if (command == ":l") {
 			state.files()[0] = input.substr(3);
 
 			parser_mode = ParsingMode::FILE;
 			do_compile = false;
 
-		// set flag
 		} else if (command == ":s") {
 			for (auto flag : util::split(input.substr(3), ',')) {
 				flags[flag] = !flags[flag];
@@ -58,11 +63,6 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 
 			continue;
 
-		// quit
-		} else if (command == ":q") {
-			break;
-
-		// handle string input
 		} else {
 			state.files()[0] = input;
 
@@ -72,14 +72,15 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 
 
 		// Run the input through the internal compilation loop (printing the ast and assembler)
-		compile(state, res, [&](auto&& ir) {
+		parser::Stack ast_stack;
+		compile(state, ast_stack, &interpreter, [&](auto&& ir) {
 			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, parser::Stack>) {
 				if (flags["ast"]) {
 					printAST(std::cout << '\n', ir);
 				}
 			}
 
-			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, llvm::Module*>) {
+			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, std::unique_ptr<llvm::Module>>) {
 				if (flags["asm"]) {
 					printAssembly(std::cout, ir);
 				}
@@ -161,39 +162,61 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& ast_stack) {
 	return s << '\n';
 }
 
-void printAssembly(std::ostream& s, llvm::Module* llvm_code) {
+void printAssembly(std::ostream& s, std::unique_ptr<llvm::Module>& llvm_code) {
 	llvm_code->print(llvm::outs(), nullptr);
 	llvm::outs() << '\n';
 }
 
 
 // Interpret the produced llvm ir code
-void spero::compiler::interpret(llvm::Module* llvm_code, spero::compiler::CompilationState& state) {
-	// Setup the runtime interpreter
-	llvm::Interpreter inter{ std::make_unique<llvm::Module>("repl", state.getContext()) };
+void spero::compiler::interpret(llvm::Interpreter* inter, std::unique_ptr<llvm::Module> llvm_code, spero::compiler::CompilationState& state) {
+	// Extract the "runtime" function and params from the module to ensure we run our expected code
+	// NOTE: We currently only produce `jitfunc` to have type `() -> Int`
+	auto jitfn = llvm_code->getFunction("jitfunc");
 
 	// Add the next "layer" of interpreted code to the interpreter state
 	// I think we still need to combine everything in a function though
 	// And I'm not sure how this handles name clashes
-	inter.addModule(std::unique_ptr<llvm::Module>(llvm_code));
+	inter->addModule(std::move(llvm_code));
 
-	// Extract the "runtime" function and params from the module
-	// NOTE: We currently only produce `jitfunc` to have type `() -> Int`
-	auto jitfn = llvm_code->getFunction("jitfunc");
-	std::vector<llvm::GenericValue> params;
+	if (jitfn) {
 
-	// Call the "runtime" function
-	auto res = inter.runFunction(jitfn, params);
+		// Call the "runtime" function
+		std::vector<llvm::GenericValue> params;
+		auto res = inter->runFunction(jitfn, params);
 
-	// Print the output
-	auto& output = llvm::outs() << "result: ";
-	switch (jitfn->getReturnType()->getTypeID()) {
-		case llvm::Type::IntegerTyID:
-			output << res.IntVal << '\n';
-			break;
-		default:
-			output << "Unimplemented type\n";
+		// Print the output
+		auto& output = llvm::outs() << "result: ";
+#define TYPE(x) case llvm::Type::x##TyID
+		switch (jitfn->getReturnType()->getTypeID()) {
+			TYPE(Integer):
+				output << res.IntVal << '\n';
+				break;
+			TYPE(Void):
+			TYPE(Half):
+			TYPE(Float):
+			TYPE(Double):
+			TYPE(X86_FP80):
+			TYPE(FP128):
+			TYPE(PPC_FP128):
+			TYPE(Label):
+			TYPE(Metadata):
+			TYPE(X86_MMX):
+			TYPE(Token):
+			TYPE(Function):
+			TYPE(Struct):
+			TYPE(Array):
+			TYPE(Pointer):
+			TYPE(Vector):
+			default:
+				output << "Unimplemented type\n";
+		}
+
+		// Delete the `jit` function from the parent module so we always use the most recent one
+		jitfn->eraseFromParent();
 	}
+}
+
+void spero::compiler::transformAstForInterpretation(parser::Stack& ast_stack, CompilationState& state) {
 	
-	//inter.removeModule(llvm_code);
 }

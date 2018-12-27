@@ -6,6 +6,7 @@
 #pragma warning(push, 0)
 #pragma warning(disable:4996)
 #include <llvm/IR/Module.h>
+#include <ExecutionEngine/Interpreter/Interpreter.h>
 #pragma warning(pop)
 
 #include "interface/CompilationState.h"
@@ -33,14 +34,16 @@ namespace spero::compiler {
 	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state, analysis::AllTypes&);
 	
 	// Perform all steps related to backend production
-	// TODO: `will_be_interpreted` is a temporary solution for repl compilation (requires everything in a function atm)
-	llvm::Module* backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state, bool using_repl);
+	// TODO: `using_repl` is a temporary solution for repl compilation (requires everything in a function atm)
+	// Will be eventually replaced by just modifying the ast in `transformAstForInterpretation` (or by statics?)
+	std::unique_ptr<llvm::Module> backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state, bool using_repl);
 
 	// Perform all steps related to final codegen stages (produces assembly code)
-	void codegen(llvm::Module* ir, const std::string& input_file, const std::string& output_file, CompilationState& state);
+	void codegen(std::unique_ptr<llvm::Module>& ir, const std::string& input_file, const std::string& output_file, CompilationState& state);
 
 	// Run a JIT interpretation environment
-	void interpret(llvm::Module* llvm_code, CompilationState& state);
+	void interpret(llvm::Interpreter* inter, std::unique_ptr<llvm::Module> llvm_code, CompilationState& state);
+	void transformAstForInterpretation(parser::Stack& ast_stack, CompilationState& state);
 }
 
 
@@ -49,7 +52,7 @@ namespace spero {
 
 	// TODO: This will likely be subsumed once I get around to fixing the logging system
 	template<class Fn>
-	bool compile(compiler::CompilationState& state, parser::Stack& ast_stack, Fn&& irHook) try {
+	bool compile(compiler::CompilationState& state, parser::Stack& ast_stack, llvm::Interpreter* inter, Fn&& irHook) try {
 		using namespace spero;
 		using parser::ParsingMode;
 
@@ -68,7 +71,15 @@ namespace spero {
 		}
 
 		if (!do_compile) {
+			irHook(ast_stack);
 			return true;
+		}
+
+		// In order to run/show code in the repl, we have to store everything inside of a function
+		// We currently, perform this wrapping in `codegen` but it may be beneficial to instead do it here
+		auto using_repl = inter != nullptr;
+		if (using_repl) {
+			transformAstForInterpretation(ast_stack, state);
 		}
 
 		/*
@@ -92,8 +103,8 @@ namespace spero {
 		 * The sub-phases perform their own timing passes
 		 */
 		auto llvm_code = (!state.failed())
-			? compiler::backend(std::move(table), ast_stack, state, parser_mode == ParsingMode::STRING)
-			: new llvm::Module("speroc_error_state", state.getContext());
+			? compiler::backend(std::move(table), ast_stack, state, using_repl)
+			: std::make_unique<llvm::Module>("speroc_error_state", state.getContext());
 
 		/*
 		 * Generate the boundary ir for the external tools
@@ -126,8 +137,9 @@ namespace spero {
 			}
 		}
 
-		if (!state.failed() && interpret) {
-			compiler::interpret(llvm_code, state);
+		// Run the interpreter on the final llvm code if requested
+		if (!state.failed() && interpret && using_repl) {
+			compiler::interpret(inter, std::move(llvm_code), state);
 		}
 
 		return state.failed();

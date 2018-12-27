@@ -62,14 +62,21 @@ namespace spero::compiler {
 
 #undef RUN_PASS
 
-	llvm::Module* backend(MIR_t, parser::Stack& ast_stack, CompilationState& state, bool using_repl) {
+	std::unique_ptr<llvm::Module> backend(MIR_t, parser::Stack& ast_stack, CompilationState& state, bool using_repl) {
 		gen::LlvmIrGenerator visitor{ state };
 
 		// Temporary hack since we have to put stuff in a function to see it in the repl
+		// Replace it with the following algorithm:
+		//   Collect all nodes that are not an "AssignNode" whose value is a function or a type
+		//   Move all these nodes into a new Function with type signature `() -> Int`
+		//   Assign this function to the global symbol "jitfunc"
+		//   TODO: Handle user defining jitfunc
+		//   TODO: It would be great if we could allow for different types of "jitfunc"
+		//     This would probably require performing the collection before the analysis phase (transformAstForInterpretation)
 		if (using_repl) {
 			std::vector<llvm::Type*> args;
 			auto ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(state.getContext()), args, false);
-			auto fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "jitfunc", visitor.finalize());
+			auto fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "jitfunc", visitor.getTempModulePtr());
 			visitor.getBuilder().SetInsertPoint(llvm::BasicBlock::Create(state.getContext(), "entry", fn));
 		}
 
@@ -83,7 +90,7 @@ namespace spero::compiler {
 	}
 
 	// Perform the final compilation stages (produces llvm ir file)
-	void codegen(llvm::Module* ir, const std::string& input_file, const std::string& output_file, spero::compiler::CompilationState& state) {
+	void codegen(std::unique_ptr<llvm::Module>& ir, const std::string& input_file, const std::string& output_file, spero::compiler::CompilationState& state) {
 		std::error_code ec;
 		llvm::raw_fd_ostream output{ output_file, ec, llvm::sys::fs::F_None };
 
@@ -97,5 +104,5 @@ namespace spero::compiler {
 
 // Full compilation implementation
 bool spero::compile(spero::compiler::CompilationState& state, spero::parser::Stack& ast_stack) {
-	return spero::compile(state, ast_stack, [](auto&&) {});
+	return spero::compile(state, ast_stack, nullptr, [](auto&&) {});
 }

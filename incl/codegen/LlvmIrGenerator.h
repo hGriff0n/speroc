@@ -23,14 +23,12 @@ namespace spero::compiler::gen {
 	 * AstVisitor class to control translation into llvm ir
 	 *
 	 * TODO: Need to come up with a better "translation" for this (the visitor pattern doesn't seem helpful)
-	 * TODO: How do the `IRBuilder`, `Module*`, and `LLVMContext` classes interoperate?
 	 * TODO: Need to investigate whether I should transform the results into a separate "IR" first?
 	 *   This would basically be a vector of `AST*`, so we could declare functions first (maybe split out all declarations instead?)
 	 */
 	class LlvmIrGenerator : public ast::AstVisitor {
 		llvm::IRBuilder<> builder;
-		llvm::Module* translationUnit = nullptr;
-		//std::unique_ptr<llvm::Module*>
+		std::unique_ptr<llvm::Module> translationUnit;
 
 		CompilationState& state;
 
@@ -56,11 +54,15 @@ namespace spero::compiler::gen {
 				: state{ state }, arena{ arena }, translationUnit{ new llvm::Module("speroc", context) }, builder{ context }
 			{}*/
 			LlvmIrGenerator(CompilationState& state)
-				: state{ state }, translationUnit{ new llvm::Module("speroc", state.getContext()) }, builder{ state.getContext() }
+				: state{ state }, translationUnit{ std::make_unique<llvm::Module>("speroc", state.getContext()) }, builder{ state.getContext() }
 			{}
 
-			llvm::Module* finalize() {
-				return translationUnit;
+			std::unique_ptr<llvm::Module> finalize() {
+				return std::move(translationUnit);
+			}
+
+			llvm::Module* getTempModulePtr() {
+				return translationUnit.get();
 			}
 
 			llvm::IRBuilder<>& getBuilder() {

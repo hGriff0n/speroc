@@ -12,22 +12,18 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-	Test and Fix the LLVM replacement code
-	  Formalize `LlvmIrGenerator` to produce the correct output (ie. put everything in a unique_ptr/etc.)
-	  Fix memory leakage with the interpreter
-		Currently using raw pointers because `unique_ptr` attempts to remove the context too quickly
-		Also can't make the `Interpreter` static because of the context
-		  Would probably be better to not run the interpreter through the `compile` method (would allow passing it in as a parameter)
-			Remove the `compile` function entirely if I do this
-		  On the other hand, we can just add modules in, the "jitfunc" will get overwritten (I think)
 	Transform the ast to fit llvm a bit better
 	  All leftover instructions are collected into `__anon_jit_fn` (or some other name)
 	    This function will initially have the signature `() -> Int`
+		Add a signal into the ast to not mangle the name
+		  NOTE: Transform this to a `no_mangle` annotation when I implement them
+		Implement the framework in `transformAstForInterpretation` for when we implement functions
 	  Look into optimizing the llvm interpretation process
 	    WANT: Define function in one line, use in the next line
 		  Only issue is with the default "jitfunc" which we need to put everything in
 		See if we don't need to put everything in a function for interpretation
 		  Do need to do this for printing however (is there an alternate path?)
+		  This has the unfortunate effect of removing "variables" across runs
 	Follow http://releases.llvm.org/6.0.1/docs/tutorial/index.html
 	  https://eli.thegreenplace.net/2017/adventures-in-jit-compilation-part-3-llvm/
       Look into the feasibility of maintaining the "llvm transform" pass into the final product
@@ -41,7 +37,9 @@ Current Project Plan
 	  `compilation::analyze` takes the ast and produces analysed ast
 	  `compilation::translate` takes the final ast and produces llvm ir
 	  `compilation::backend` takes the llvm ir and produces the final output (after optimizations/etc)
-	  What we do with the "writer" object will depend on the desired output
+	  Figure out how I'll maintain spero state in the intepreter
+	    I can easily maintain what functions are defined within the llvm Interpreter, but using those functions will throw errors in Spero analysis
+		  This will require major work with the "compile" interface (maybe even removal if the interpreter strays too far)
 	Look at reorganizing the file structure
 	  We'll also need to integrate llvm into the "normal" file structure
 	Look at including LLVM methods throughout the codebase
