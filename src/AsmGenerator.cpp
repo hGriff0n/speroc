@@ -1,4 +1,5 @@
 #include "codegen/AsmGenerator.h"
+
 #include "util/parser.h"
 #include "util/ranges.h"
 
@@ -13,12 +14,12 @@ namespace spero::compiler::gen {
 		// TODO: Quick hack to enable 'batched' pushing of variables
 		// Because the global scope isn't a table, the batch push didn't occur
 		// NOTE: Will be fixed when I move to a static/global allocation scheme
-		emit.pushWords(numVars(arena, GLOBAL_SYM_INDEX) - arena[GLOBAL_SYM_INDEX].exists("_main"));
+		//emit.pushWords(numVars(arena, GLOBAL_SYM_INDEX) - arena[GLOBAL_SYM_INDEX].exists("_main"));
 	}
 
 	Assembler AsmGenerator::finalize() {
-		auto num_vars = numVars(arena, GLOBAL_SYM_INDEX) - arena[GLOBAL_SYM_INDEX].exists("_main");
-		emit.setAllocatedStack(num_vars * 4);
+		//auto num_vars = numVars(arena, GLOBAL_SYM_INDEX) - arena[GLOBAL_SYM_INDEX].exists("_main");
+		//emit.setAllocatedStack(num_vars * 4);
 		return std::move(emit);
 	}
 
@@ -68,15 +69,15 @@ namespace spero::compiler::gen {
 		current = *b.locals;
 
 		// TODO: Need to reintroduce argument handling
-		auto num_vars = numVars(arena, current);
-		emit.pushWords(num_vars - numArgs(arena, current));
+		//auto num_vars = numVars(arena, current);
+		//emit.pushWords(num_vars - numArgs(arena, current));
 		// TODO: Zero initialize the allocated stack space?
 
 		// Emit the code for the function body
 		AstVisitor::visitBlock(b);
 
 		// Very basic stack cleanup code (just pop all the variables off the stack)
-		emit.popWords(num_vars);		// pop n bytes 
+		//emit.popWords(num_vars);		// pop n bytes 
 		current = parent_scope;
 	}
 
@@ -145,8 +146,8 @@ namespace spero::compiler::gen {
 
 		std::visit([&](auto&& var) {
 			if constexpr (std::is_same_v<std::decay_t<decltype(var)>, ref_t<analysis::SymbolInfo>>) {
-				auto loc = std::get<analysis::memory::Stack>(var.get().storage);
-				emit.mov(x86::eax, x86::ptr(x86::ebp, loc.ebp_offset));
+				//auto loc = std::get<analysis::memory::Stack>(var.get().storage);
+				//emit.mov(x86::eax, x86::ptr(x86::ebp, loc.ebp_offset));
 			}
 		}, *nvar);
 	}
@@ -158,15 +159,15 @@ namespace spero::compiler::gen {
 			std::visit([&](auto&& var) {
 				using VarType = std::decay_t<decltype(var)>;
 				if constexpr (std::is_same_v<VarType, ref_t<analysis::SymbolInfo>>) {
-					if (std::holds_alternative<analysis::memory::Global>(var.get().storage) && dynamic_cast<ast::Function*>(var.get().definition)) {
-						return;
-					}
+					//if (std::holds_alternative<analysis::memory::Global>(var.get().storage) && dynamic_cast<ast::Function*>(var.get().definition)) {
+						//return;
+					//}
 
 					// NOTE: A better approach for this would probably be to create an "arena" for allocating
 						// The arena would provide the interface for pushing/accessing stuff in the memory region it defines
 						// The ast/visitor/etc. only need to push/allocate bytes into the region
-					auto loc = std::get<analysis::memory::Stack>(var.get().storage);
-					emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
+					//auto loc = std::get<analysis::memory::Stack>(var.get().storage);
+					//emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
 				}
 				}, *nvar);
 		}
@@ -240,15 +241,15 @@ namespace spero::compiler::gen {
 		auto parent_scope = current;
 		current = *in.binding;
 
-		auto num_vars = numVars(arena, current);
-		emit.pushWords(num_vars);
+		/*auto num_vars = numVars(arena, current);
+		emit.pushWords(num_vars);*/
 
 		// Run through the assignment and expression
 		in.bind->accept(*this);
 		in.expr->accept(*this);
 
 		// Pop off the symbol table
-		emit.popWords(num_vars);
+		//emit.popWords(num_vars);
 		current = parent_scope;
 	}
 
@@ -261,9 +262,9 @@ namespace spero::compiler::gen {
 			auto[def_table, iter] = analysis::lookup(arena, current, *lhs->name);
 			auto variable = arena[def_table].get((**iter).name, nullptr, (**iter).loc, (**iter).ssa_index);
 			auto& var = std::get<ref_t<analysis::SymbolInfo>>(*variable).get();
-			auto& loc = std::get<analysis::memory::Stack>(var.storage);
+			//auto& loc = std::get<analysis::memory::Stack>(var.storage);
 
-			emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
+			//emit.mov(x86::ptr(x86::ebp, loc.ebp_offset), x86::eax);
 
 		} else {
 			// Evaluate the left side and store it on the stack

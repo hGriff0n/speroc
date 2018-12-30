@@ -72,25 +72,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\dep\llvm\lib;$(ProjectDir)\dep\llvm\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\incl;$(ProjectDir)\dep\llvm\lib;$(ProjectDir)\dep\llvm\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)\dep\asmtk\src\asmtk;$(ProjectDir)\src;$(SourcePath)</SourcePath>
     <LibraryPath>$(ProjectDir)\dep\llvm\Debug\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\dep\llvm\lib;$(ProjectDir)\dep\llvm\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\incl;$(ProjectDir)\dep\llvm\lib;$(ProjectDir)\dep\llvm\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)\dep\asmtk\src\asmtk;$(ProjectDir)\src;$(SourcePath)</SourcePath>
     <LibraryPath>$(ProjectDir)\dep\llvm\Debug\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>$(ProjectDir)\dep\llvm\Debug\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)\dep\llvm\lib;$(ProjectDir)\dep\llvm\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\incl;$(ProjectDir)\dep\llvm\lib;$(ProjectDir)\dep\llvm\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)\dep\asmtk\src\asmtk;$(ProjectDir)\src;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)\dep\llvm\lib;$(ProjectDir)\dep\llvm\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(ProjectDir)\incl;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\incl;$(ProjectDir)\dep\llvm\lib;$(ProjectDir)\dep\llvm\include;$(ProjectDir)\dep\asmtk\src;$(ProjectDir)\dep\asmjit\src;$(ProjectDir)\dep\spdlog\include;$(ProjectDir)\dep\signals\wink;$(ProjectDir)\dep\spdlog\include\spdlog;$(ProjectDir)\dep\pegtl\include\tao;$(ProjectDir)\dep\cxxopts\include;$(ProjectDir)\dep\better-enums;$(ProjectDir)\dep;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir)\dep\asmtk\src\asmtk;$(ProjectDir)\src;$(SourcePath)</SourcePath>
     <LibraryPath>$(ProjectDir)\dep\llvm\Debug\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>

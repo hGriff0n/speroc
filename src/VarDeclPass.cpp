@@ -11,11 +11,8 @@ namespace spero::analysis {
 
 	// Decorations
 	void VarDeclPass::visitArgument(ast::Argument& arg) {
-		// TODO: Copy-pasted from visitAssignName. Doesn't handle the vagaries of arguments
-		int off = -4 * (numVars(dictionary.arena, current) + 1) - curr_ebp_offset;
-
 		// Create the VarData struct
-		SymbolInfo info{ arg.loc, false, memory::Stack{ off } };
+		SymbolInfo info{ arg.loc, false };
 
 		// Insert the new declaration into the table
 		if (!dictionary.arena[current].insertArg(arg.name->name, info)) {
@@ -30,15 +27,13 @@ namespace spero::analysis {
 	// Atoms
 	void VarDeclPass::visitBlock(ast::Block& b) {
 		auto parent_scope = current;
-		auto num_vars = numVars(dictionary.arena, parent_scope) - dictionary.arena[parent_scope].exists("_main");
-		curr_ebp_offset += num_vars * 4;
 
 		if (!b.locals.has_value()) {
 			b.locals = dictionary.arena.size();
 			current = *b.locals;
 
 			// Create the new SymTable in the arena
-			dictionary.arena.push_back(SymTable{ current });
+			dictionary.arena.push_back(SymTable{ current, context });
 			dictionary.arena.back().setParent(parent_scope);
 
 		} else {
@@ -48,44 +43,37 @@ namespace spero::analysis {
 		AstVisitor::visitBlock(b);
 
 		current = parent_scope;
-		curr_ebp_offset -= num_vars * 4;
 
 	}
 
 	void VarDeclPass::visitFunction(ast::Function& f) {
 		auto parent_scope = current;
 		f.body->locals = dictionary.arena.size();
-		current = *f.body->locals;
+
+		auto parent_context = context;
+		context = ScopingContext::SCOPE;
 
 		// Create the SymTable in the arena
-		dictionary.arena.push_back(SymTable{ current });
+		dictionary.arena.push_back(SymTable{ current, context });
 		dictionary.arena.back().setParent(parent_scope);
 
 		AstVisitor::visitFunction(f);
 
+		context = parent_context;
 		current = parent_scope;
 	}
 
 
 	// Names
 	void VarDeclPass::visitAssignName(ast::AssignName& n) {
-		// TODO: Move this to after the typing stage (for monomorphism, etc.)
-		if (n.var->name == "main") {
-			n.var->name = "_main";
-		}
-
-		// Register the variable in the current scope
-		int off = -4 * (numVars(dictionary.arena, current) + 1) - curr_ebp_offset;
-
 		// Create the VarData struct
-		SymbolInfo info{ n.loc, n.is_mut, memory::Stack{ off } };
+		SymbolInfo info{ n.loc, n.is_mut };
 		if (auto* var = dynamic_cast<ast::VarAssign*>(current_decl)) {
 			info.definition = var->expr.get();
 
 			// Tell the function what it's name is (for analysis/assembly generation)
 			if (auto* fn = dynamic_cast<ast::Function*>(var->expr.get())) {
 				fn->name = n.var->name;
-				info.storage = analysis::memory::Global{ 0, false };
 			}
 			
 		} else if (auto* type = dynamic_cast<ast::TypeAssign*>(current_decl)) {
@@ -106,20 +94,20 @@ namespace spero::analysis {
 	// Statements
 	void VarDeclPass::visitInAssign(ast::InAssign& in) {
 		auto parent_scope = current;
-		auto num_vars = numVars(dictionary.arena, parent_scope) - dictionary.arena[parent_scope].exists("_main");
-		curr_ebp_offset += num_vars * 4;
-
 		in.binding = dictionary.arena.size();
 		current = *in.binding;
 
+		auto parent_context = context;
+		context = ScopingContext::SCOPE;
+
 		// Create the new SymTable in the arena
-		dictionary.arena.push_back(SymTable{ current });
+		dictionary.arena.push_back(SymTable{ current, context });
 		dictionary.arena.back().setParent(parent_scope);
 		
 		AstVisitor::visitInAssign(in);
 
+		context = parent_context;
 		current = parent_scope;
-		curr_ebp_offset -= num_vars * 4;
 	}
 
 	void VarDeclPass::visitInterface(ast::Interface& i) {
@@ -129,5 +117,14 @@ namespace spero::analysis {
 		AstVisitor::visitInterface(i);
 
 		current_decl = last;
+	}
+
+	void VarDeclPass::visitTypeAssign(ast::TypeAssign& t) {
+		auto parent_context = context;
+		context = ScopingContext::TYPE;
+
+		AstVisitor::visitTypeAssign(t);
+
+		context = parent_context;
 	}
 }

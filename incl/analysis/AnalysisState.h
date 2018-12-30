@@ -9,7 +9,7 @@ namespace spero::analysis {
 		AllTypes& type_list;
 
 		inline AnalysisState(AllTypes& types) : type_list{ types } {
-			arena.emplace_back(GLOBAL_SYM_INDEX);
+			arena.emplace_back(GLOBAL_SYM_INDEX, ScopingContext::GLOBAL);
 		}
 	};
 

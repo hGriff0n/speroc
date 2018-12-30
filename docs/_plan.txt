@@ -12,25 +12,26 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-	Transform the ast to fit llvm a bit better
-	  All leftover instructions are collected into `__anon_jit_fn` (or some other name)
-	    This function will initially have the signature `() -> Int`
-		Add a signal into the ast to not mangle the name
-		  NOTE: Transform this to a `no_mangle` annotation when I implement them
-		Implement the framework in `transformAstForInterpretation` for when we implement functions
-	  Look into optimizing the llvm interpretation process
-	    WANT: Define function in one line, use in the next line
-		  Only issue is with the default "jitfunc" which we need to put everything in
-		See if we don't need to put everything in a function for interpretation
-		  Do need to do this for printing however (is there an alternate path?)
-		  This has the unfortunate effect of removing "variables" across runs
 	Follow http://releases.llvm.org/6.0.1/docs/tutorial/index.html
 	  https://eli.thegreenplace.net/2017/adventures-in-jit-compilation-part-3-llvm/
-      Look into the feasibility of maintaining the "llvm transform" pass into the final product
-	    Would help a bit with translating typings/etc. into the llvm representations
-		But otherwise may be somewhat unnecessary (how much can we do in the translation pass)
+	  https://the-ravi-programming-language.readthedocs.io/en/latest/ravi-jit-initial.html
 	  Fill in LlvmIrGenerator to match the production of AsmGenerator
-	    Adapt and modify the variable passes to produce information better suited for the IrGenerator to process
+	    Variables
+		  Look into whether I should map the variables into the llvm symbol table
+		    I may also already be doing it
+		  Decide about how to handle variables (using AllocInst* or Value*)
+		    Using `Value*` in 'SymbolInfo' allows for handling global and local variables in the same method
+		  Figure out why `visitBinOpCall` doesn't work properly
+		Function Definitions
+		  Add in variable/argument handling
+		  Figure out how to handle "cleanup" sections (probably separate ast pass)
+		  Remove the `using_repl` blocks in 'compilation::backend' and instead add "translation" code to 
+		Function Calling
+		  I think this code works, we just need some functions to test it with
+		IfBranch
+		  Determine how to handle phi nodes
+		  Determine how to "assign" a value to a if statement, that doesn't have an else branch
+		    I think, from a language standpoint, this should have no value (so don't produce the "retval" code)
 		Finally remove the asmjit dependency
 	Look at modifying the compilation pipeline to accomodate the llvm ir changes
 	  `compilation::frontend` takes the file/string input and produces the ast
@@ -38,14 +39,19 @@ Current Project Plan
 	  `compilation::translate` takes the final ast and produces llvm ir
 	  `compilation::backend` takes the llvm ir and produces the final output (after optimizations/etc)
 	  Figure out how I'll maintain spero state in the intepreter
-	    I can easily maintain what functions are defined within the llvm Interpreter, but using those functions will throw errors in Spero analysis
+	    We can easily maintain functions/globals across different repl lines
+		However, old code won't be able to use those definitions as the spero state won't remember them
 		  This will require major work with the "compile" interface (maybe even removal if the interpreter strays too far)
+	Produce "levelling" pass to transform initial ast into a more workable version
+	  All symbols will map into a flat structure, with each entry having a unique id
+	    All symbol references will, after this pass, operate through this "flat" index
+	  See what other structures we should "flatten"
 	Look at reorganizing the file structure
-	  We'll also need to integrate llvm into the "normal" file structure
 	Look at including LLVM methods throughout the codebase
 	  I think particularly for dynamic casts, LLVM could drastically help
 	  There may also be pre-implemented `CompilationState` and `SymTable` style structures
 	    Although I think we'll still have to make subclasses to be specific
+	  Implement automatic converstion from spero::String to llvm::StringRef
 	Look at changing analysis framework to automatically translate 'reassignments' into 'ssa assignments'
 	  This is mostly to simplify the translation to llvm ir
 	  The downside would be a slight complication with the type inference engine

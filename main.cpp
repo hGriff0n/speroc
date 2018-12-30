@@ -179,6 +179,7 @@ void spero::compiler::interpret(llvm::Interpreter* inter, std::unique_ptr<llvm::
 	// And I'm not sure how this handles name clashes
 	inter->addModule(std::move(llvm_code));
 
+	// The repl line may just define values for future usage, so the jitfn may not be created
 	if (jitfn) {
 
 		// Call the "runtime" function
@@ -218,5 +219,15 @@ void spero::compiler::interpret(llvm::Interpreter* inter, std::unique_ptr<llvm::
 }
 
 void spero::compiler::transformAstForInterpretation(parser::Stack& ast_stack, CompilationState& state) {
-	
+	// Collect all non-function definitions and move them into a new function, "jitfunc"
+	// Set the `mangle` flag of jitfunc to be false and then insert into the stack
+
+	// NOTE: We currently take this approach because llvm seemingly works only at the function layer
+	// TODO: This approach can't maintain variables across repl lines
+
+	// IDEA:
+	// Take all functions as is
+	// All other variable declarations will be performed as global assignments (no re-organization)?
+	// Anything that is not a `*Assign` node (or Interface/etc.) is wrapped inside of a jit function
+	// TODO: If all nodes are `*Assign`, do ...
 }

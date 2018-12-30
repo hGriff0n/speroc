@@ -42,7 +42,7 @@ Be sure to comment in the issue if you have any questions.
 	spdlog: Logging and error reporting
     asmjit: Assembly interaction framework (codegen)
 	  NOTE: Currently using a custom fork that adds move semantics
-    clang: Executable production and linking
+    llvm/clang: Produce llvm ir, ir optimization passes, final compilation stage through clang
     boost:
       flyweight - string interning engine
 

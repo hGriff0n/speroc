@@ -11,8 +11,18 @@ namespace spero::analysis {
 	void VarRefPass::visitBlock(ast::Block& b) {
 		auto parent_scope = current;
 		current = *b.locals;
+
 		AstVisitor::visitBlock(b);
+
 		current = parent_scope;
+	}
+	void VarRefPass::visitFunction(ast::Function& f) {
+		auto parent_context = context;
+		context = ScopingContext::SCOPE;
+
+		AstVisitor::visitFunction(f);
+
+		context = parent_context;
 	}
 
 
@@ -80,9 +90,22 @@ namespace spero::analysis {
 		auto parent_scope = current;
 		current = *in.binding;
 
+		auto parent_context = context;
+		context = ScopingContext::SCOPE;
+
 		AstVisitor::visitInAssign(in);
 
+		context = parent_context;
 		current = parent_scope;
+	}
+
+	void VarRefPass::visitTypeAssign(ast::TypeAssign& t) {
+		auto parent_context = context;
+		context = ScopingContext::TYPE;
+
+		AstVisitor::visitTypeAssign(t);
+
+		context = parent_context;
 	}
 
 
