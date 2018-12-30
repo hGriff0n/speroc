@@ -60,17 +60,19 @@ namespace spero::compiler::gen {
 		auto fn = translationUnit->getFunction(f.name->get());
 		if (!fn) {
 			// TODO: Introduce a translation from spero::Type to llvm::Type (requires spero::Type)
-			std::vector<Type*> arg_types{ f.args.size(), Type::getInt32Ty(state.getContext()) };
+			std::vector<Type*> arg_types(f.args.size(), Type::getInt32Ty(state.getContext()));
 			auto fn_type = FunctionType::get(Type::getInt32Ty(state.getContext()), arg_types, false);
 
 			fn = Function::Create(fn_type, Function::ExternalLinkage, f.name->get(), translationUnit.get());
 
 			// TODO: This introduces bugs if the defining code, uses different names
 			// However, I feel we should already handle this during the initial language checks
-			auto idx = 0u;
+			auto old_codegen = codegen;
 			for (auto& arg : fn->args()) {
-				arg.setName(f.args[idx]->name->name.get());
+				codegen = &arg;
+				visitArgument(*f.args[arg.getArgNo()]);
 			}
+			codegen = old_codegen;
 		}
 
 		if (!fn->empty()) {
@@ -82,9 +84,12 @@ namespace spero::compiler::gen {
 		auto entry_block = BasicBlock::Create(state.getContext(), "entry", fn);
 		builder.SetInsertPoint(entry_block);
 
+		// TODO: Codegen initialisation code
+		// Particularly for arguments which are marked as "mut"
+
 		// TODO: Map function argument to symbol table
 		if (auto retval = visitNode(*f.body)) {
-			// TODO: Codegen cleanup code
+			// TODO: Codegen cleanup code (this'll probably be pushed into the block)
 			builder.CreateRet(retval);
 
 			verifyFunction(*fn);
@@ -104,14 +109,17 @@ namespace spero::compiler::gen {
 	//
 	void LlvmIrGenerator::visitVariable(ast::Variable& v) {
 		// TODO: Reduce the variable access at this stage to a flat map lookup
-
 		auto[def_table, iter] = analysis::lookup(arena, current, *v.name);
 		auto& path_part = **iter;
 		auto nvar = arena[def_table].get(path_part.name, nullptr, path_part.loc, path_part.ssa_index);
 
-		if (auto symbol = std::get_if<ref_t<analysis::SymbolInfo>>(&*nvar)) {
-			if (symbol && symbol->get().storage) {
-				codegen = builder.CreateLoad(symbol->get().storage);
+		auto& symbol = std::get<ref_t<analysis::SymbolInfo>>(*nvar);
+		if (symbol.get().storage) {
+			auto storage = symbol.get().storage;
+			if (!isa<Argument>(storage)) {
+				codegen = builder.CreateLoad(storage);
+			} else {
+				codegen = storage;
 			}
 		}
 	}
@@ -150,6 +158,26 @@ namespace spero::compiler::gen {
 			// TODO: Can we push the name assignment of the function to here?? (would simplify a lot)
 			// However, we don't get the "already defined" check...
 			//dyn_cast<Function>(codegen)->setName(a.var->name.get());
+		}
+	}
+
+	//
+	// Decorations
+	//
+	void LlvmIrGenerator::visitArgument(ast::Argument& a) {
+		// This function is expected to be called only in the context of `visitFunction`
+		// Where the `codegen` member is set to the `llvm::Argument` of this variable
+		if (auto arg = dyn_cast_or_null<Argument>(codegen)) {
+			arg->setName(a.name->name.get());
+
+			opt_t<size_t> ssa_index = std::nullopt;
+			auto nvar = arena[current].get(a.name->name, nullptr, a.loc, ssa_index);
+
+			// We can assume that the symbol exists if we get to this point (VarDeclPass would automatically insert it)
+			std::get<ref_t<analysis::SymbolInfo>>(*nvar).get().storage = arg;
+
+		} else {
+			state.log(ID::err, "Attempt to visit arg {} with a non llvm::Argument* previous value <at {}>", a.name->name, a.loc);
 		}
 	}
 
@@ -323,6 +351,7 @@ namespace spero::compiler::gen {
 		}
 
 		// Evaluate all of the arguments
+		// TODO: How do I handle "self" arguments (for OOP) when they are needed?
 		std::vector<Value*> args;
 		for (auto& arg : f.arguments->elems) {
 			args.push_back(visitNode(*arg));

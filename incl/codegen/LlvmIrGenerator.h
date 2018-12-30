@@ -76,6 +76,9 @@ namespace spero::compiler::gen {
 			virtual void visitVariable(ast::Variable&) final;
 			virtual void visitAssignName(ast::AssignName&) final;
 
+			// Decorations
+			virtual void visitArgument(ast::Argument&) final;
+
 			// Control
 			virtual void visitIfBranch(ast::IfBranch&) final;
 			virtual void visitIfElse(ast::IfElse&) final;

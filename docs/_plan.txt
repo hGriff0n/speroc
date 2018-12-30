@@ -17,11 +17,6 @@ Current Project Plan
 	  https://the-ravi-programming-language.readthedocs.io/en/latest/ravi-jit-initial.html
 	  https://llvm.org/docs/ProgrammersManual.html#the-c-standard-template-library
 	  Fill in LlvmIrGenerator to match the production of AsmGenerator
-		Function Definitions
-		  Add in variable/argument handling
-		  Figure out how to handle "cleanup" sections (probably separate ast pass)
-		Function Calling
-		  Test that function calling works with arguments (works with no-args)
 		IfBranch
 		  Determine how to handle phi nodes
 		    We might not even need to explicitly have phi nodes (if we just put all variables on the stack)
@@ -36,9 +31,12 @@ Current Project Plan
 	  `compilation::translate` takes the final ast and produces llvm ir
 	  `compilation::backend` takes the llvm ir and produces the final output (after optimizations/etc)
 	  Figure out how I'll maintain spero state in the intepreter
-	    We can easily maintain functions/globals across different repl lines
+	    We can easily maintain functions/globals across different repl lines within llvm
 		However, old code won't be able to use those definitions as the spero state won't remember them
 		  This will require major work with the "compile" interface (maybe even removal if the interpreter strays too far)
+		  We could automatically "populate" the ast with the interfaces of the previous declarations
+		    This should be enough to type/variable check until we get to llvm, where the interpreter will handle it
+			Still need to manually modify this "pre-existing" declaration list (and create the interfaces)
 	Produce "levelling" pass to transform initial ast into a more workable version
 	  All symbols will map into a flat structure, with each entry having a unique id
 	    All symbol references will, after this pass, operate through this "flat" index
@@ -55,6 +53,7 @@ Current Project Plan
 	  The downside would be a slight complication with the type inference engine
 		The type of a "reassigned" variable may be inferred as different than the original variable
     Merge the llvm-ir branch into master
+	  Improve documentation and update readme
 		
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it

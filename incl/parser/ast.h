@@ -1145,6 +1145,9 @@ namespace spero::compiler::ast {
 	 * Exports:
 	 *   cons - list of adt and primary constructors
 	 *   body - type body
+	 *
+	 * NOTE: This class will need to be translated into a (member_list, method_list, mut_only) tuple
+	 *   before the llvm ir generation passes (with the ConsList + nonAssign expr going into a constructor fn)
 	 */
 	struct TypeAssign : Interface {
 		using ConsList = std::deque<ptr<Constructor>>;
