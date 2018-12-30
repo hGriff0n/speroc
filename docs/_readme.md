@@ -5,12 +5,6 @@ computations. Recursion still has some errors with the implementation but that i
 
 Currently supported: Basic integer arithmatic, Basic variables and functions, Variable shadowing and scoping, Mutability Restrictions (NOTE: A basic type checking pass does exist, but is not used).
 
-I will be taking some time to rearchitect most of the system internals to smooth over cracks that have begun to appear
-and to better target the system to future avenues and opportunities (and because I've taken a month-long break). One
-part of this rearchitecture will be the introduction of a new IR that final codegen will operate off of (instead of the
-current direct-from-AST). The other focus will be on streamlining the storage and pass system, particularly for
-accessing variable and other symbol information (ie. what we need for type and function checking).
-
 Run 'run_tests.bat' after compilation to see which systems are hooked up.
 
 Take a look at the full Spero documentation [here](https://github.com/hGriff0n/Spero)!
@@ -40,10 +34,6 @@ Be sure to comment in the issue if you have any questions.
     better-enums: Extended enum support
     cxxopts: Cmd-line parsing
 	spdlog: Logging and error reporting
-    asmjit: Assembly interaction framework (codegen)
-	  NOTE: Currently using a custom fork that adds move semantics
     llvm/clang: Produce llvm ir, ir optimization passes, final compilation stage through clang
     boost:
       flyweight - string interning engine
-
-	Special thanks to [Zig](https://github.com/ziglang/zig/wiki/Building-Zig-on-Windows) for prebuilt llvm libraries

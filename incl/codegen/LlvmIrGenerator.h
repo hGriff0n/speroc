@@ -29,6 +29,7 @@ namespace spero::compiler::gen {
 	class LlvmIrGenerator : public ast::AstVisitor {
 		llvm::IRBuilder<> builder;
 		std::unique_ptr<llvm::Module> translationUnit;
+		llvm::LLVMContext& context;
 
 		CompilationState& state;
 
@@ -65,7 +66,11 @@ namespace spero::compiler::gen {
 			}
 
 			// Literals
-			virtual void visitInt(ast::Int& i) final;
+			virtual void visitBool(ast::Bool&) final;
+			virtual void visitByte(ast::Byte&) final;
+			virtual void visitFloat(ast::Float&) final;
+			virtual void visitInt(ast::Int&) final;
+			virtual void visitChar(ast::Char&) final;
 
 			// Atoms
 			virtual void visitTuple(ast::Tuple&) final;

@@ -7,7 +7,7 @@ namespace spero::compiler::gen {
 	using namespace llvm;
 
 	LlvmIrGenerator::LlvmIrGenerator(analysis::SymArena& arena, CompilationState& state)
-		: state{ state }, arena{ arena }, translationUnit{ std::make_unique<llvm::Module>("speroc", state.getContext()) }, builder{ state.getContext() }
+		: state{ state }, context{ state.getContext() }, arena{ arena }, translationUnit{ std::make_unique<llvm::Module>("speroc", state.getContext()) }, builder{ state.getContext() }
 	{}
 
 	Value* LlvmIrGenerator::visitNode(ast::Ast& a) {
@@ -24,8 +24,22 @@ namespace spero::compiler::gen {
 	//
 	// Literals
 	//
+	void LlvmIrGenerator::visitBool(ast::Bool& b) {
+		// TODO: How to effectively represent boolean values in llvm ir ???
+		int llvm_bool_val = b.val ? -1 : 0;
+		codegen = llvm::ConstantInt::get(context, APInt(sizeof(llvm_bool_val) * 8, llvm_bool_val, true));
+	}
+	void LlvmIrGenerator::visitByte(ast::Byte& b) {
+		codegen = ConstantInt::get(context, APInt(sizeof(b.val) * 8, b.val, false));
+	}
+	void LlvmIrGenerator::visitFloat(ast::Float& f) {
+		codegen = ConstantFP::get(context, APFloat(f.val));
+	}
 	void LlvmIrGenerator::visitInt(ast::Int& i) {
-		codegen = ConstantInt::get(state.getContext(), APInt(sizeof(i.val) * 8, i.val, true));
+		codegen = ConstantInt::get(context, APInt(sizeof(i.val) * 8, i.val, true));
+	}
+	void LlvmIrGenerator::visitChar(ast::Char& c) {
+		codegen = ConstantInt::get(context, APInt(8, c.val, false));
 	}
 
 	//
@@ -60,8 +74,8 @@ namespace spero::compiler::gen {
 		auto fn = translationUnit->getFunction(f.name->get());
 		if (!fn) {
 			// TODO: Introduce a translation from spero::Type to llvm::Type (requires spero::Type)
-			std::vector<Type*> arg_types(f.args.size(), Type::getInt32Ty(state.getContext()));
-			auto fn_type = FunctionType::get(Type::getInt32Ty(state.getContext()), arg_types, false);
+			std::vector<Type*> arg_types(f.args.size(), Type::getInt32Ty(context));
+			auto fn_type = FunctionType::get(Type::getInt32Ty(context), arg_types, false);
 
 			fn = Function::Create(fn_type, Function::ExternalLinkage, f.name->get(), translationUnit.get());
 
@@ -81,7 +95,7 @@ namespace spero::compiler::gen {
 		}
 
 		// Create the basic blocks
-		auto entry_block = BasicBlock::Create(state.getContext(), "entry", fn);
+		auto entry_block = BasicBlock::Create(context, "entry", fn);
 		builder.SetInsertPoint(entry_block);
 
 		// TODO: Codegen initialisation code
@@ -137,7 +151,7 @@ namespace spero::compiler::gen {
 				case analysis::ScopingContext::GLOBAL: {
 					auto initializer = dyn_cast<Constant>(codegen);
 					auto storage = new GlobalVariable(
-						*translationUnit, Type::getInt32Ty(state.getContext()), a.is_mut,
+						*translationUnit, Type::getInt32Ty(context), a.is_mut,
 						GlobalVariable::ExternalLinkage, initializer, a.var->name.get()
 					);
 					// TODO: What do I do if the "initializer" isn't considered to be constant?
@@ -145,7 +159,7 @@ namespace spero::compiler::gen {
 					//break;
 				}
 				case analysis::ScopingContext::SCOPE: {
-					auto storage = builder.CreateAlloca(Type::getInt32Ty(state.getContext()), nullptr, a.var->name.get());
+					auto storage = builder.CreateAlloca(Type::getInt32Ty(context), nullptr, a.var->name.get());
 					codegen = builder.CreateStore(codegen, symbol.storage = storage);
 					break;
 				}
@@ -196,11 +210,17 @@ namespace spero::compiler::gen {
 
 		// TODO: The Kaleidoscope tutorial explicitly adds all of the basic blocks to the function's BB list. Why?
 		auto curr_fn = builder.GetInsertBlock()->getParent();
-		auto& context = state.getContext();
 
 		auto merge_point = BasicBlock::Create(context, "merge", curr_fn);
-		auto branch_value_storage = builder.CreateAlloca(Type::getInt32Ty(context));
 		std::vector<BasicBlock*> bbs;
+
+		// Create the location to save the branch value
+		// NOTE: We only create a value if there is an else branch
+		// TODO: Only create this value if some code utilizes the value of the branch???s
+		AllocaInst* branch_value_storage = nullptr;
+		if (e.else_) {
+			branch_value_storage = builder.CreateAlloca(Type::getInt32Ty(context));
+		}
 
 		// TODO: How do I handle if branches with no else (for the purpose of the value)
 		// TODO: I want to push this portion into the `visitIfBranch` code but it doesn't type right now
@@ -213,8 +233,10 @@ namespace spero::compiler::gen {
 			
 			// Visit the conditional's body, storing the body's value on the stack
 			builder.SetInsertPoint(then_block);
-			// TODO: Should the storage be volatile or not
-			builder.CreateStore(visitNode(*branch->body), branch_value_storage, false);
+			if (branch_value_storage) {
+				// TODO: Should the storage be volatile or not
+				builder.CreateStore(visitNode(*branch->body), branch_value_storage, false);
+			}
 			builder.CreateBr(merge_point);
 
 			bbs.push_back(builder.GetInsertBlock());
@@ -233,10 +255,12 @@ namespace spero::compiler::gen {
 		builder.SetInsertPoint(merge_point);
 
 		// TODO: Create all the phi nodes
-		// Looks like I'll have to know which values need "phi" before-hand
+		// TODO: Figure out whether I need phi nodes (variables are just pushed on the stack)
 		
 		// Load the value of the executed branch for future use
-		codegen = builder.CreateLoad(branch_value_storage);
+		if (branch_value_storage) {
+			codegen = builder.CreateLoad(branch_value_storage);
+		}
 	}
 
 	//
@@ -251,8 +275,14 @@ namespace spero::compiler::gen {
 	//
 	// Expressions
 	//
-	void LlvmIrGenerator::visitInAssign(ast::InAssign& a) {
-		// TODO: Figure out how to handle variables in llvm ir
+	void LlvmIrGenerator::visitInAssign(ast::InAssign& in) {
+		auto parent_scope = current;
+		current = *in.binding;
+
+		visitVarAssign(*in.bind);
+		in.expr->accept(*this);
+
+		current = parent_scope;
 	}
 	void LlvmIrGenerator::visitBinOpCall(ast::BinOpCall& b) {
 		if (b.op == "=") {
@@ -325,6 +355,7 @@ namespace spero::compiler::gen {
 			codegen = builder.CreateNeg(expr);
 
 		} else if (op == "!") {
+			// TODO: Implement this correctly (but how?)
 			//auto comp_val = builder.CreateICmp(ICmpInst::ICMP_SGT, expr, Zero)
 			codegen = builder.CreateNot(expr);
 		}

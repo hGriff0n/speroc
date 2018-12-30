@@ -1,0 +1,4 @@
+http://releases.llvm.org/6.0.1/docs/tutorial/index.html
+https://eli.thegreenplace.net/2017/adventures-in-jit-compilation-part-3-llvm/
+https://the-ravi-programming-language.readthedocs.io/en/latest/ravi-jit-initial.html
+https://llvm.org/docs/ProgrammersManual.html#the-c-standard-template-library

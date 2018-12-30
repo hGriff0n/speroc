@@ -12,19 +12,6 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-	Follow http://releases.llvm.org/6.0.1/docs/tutorial/index.html
-	  https://eli.thegreenplace.net/2017/adventures-in-jit-compilation-part-3-llvm/
-	  https://the-ravi-programming-language.readthedocs.io/en/latest/ravi-jit-initial.html
-	  https://llvm.org/docs/ProgrammersManual.html#the-c-standard-template-library
-	  Fill in LlvmIrGenerator to match the production of AsmGenerator
-		IfBranch
-		  Determine how to handle phi nodes
-		    We might not even need to explicitly have phi nodes (if we just put all variables on the stack)
-			  Maybe for mutable global variables (or type members? they're both far away)
-			  I can come up with a format for how I "would" handle phi variables though
-		  Determine how to "assign" a value to a if statement, that doesn't have an else branch
-		    I think, from a language standpoint, this should have no value (so don't produce the "retval" code)
-		Finally remove the asmjit dependency
 	Look at modifying the compilation pipeline to accomodate the llvm ir changes
 	  `compilation::frontend` takes the file/string input and produces the ast
 	  `compilation::analyze` takes the ast and produces analysed ast
@@ -52,8 +39,12 @@ Current Project Plan
 	  This is mostly to simplify the translation to llvm ir
 	  The downside would be a slight complication with the type inference engine
 		The type of a "reassigned" variable may be inferred as different than the original variable
+	Setup basic llvm optimization pass structure on the produced ir
+	  Only run `mem2reg` for the moment
+	  Add a "permissions" flag to enable interpreter to control whether optimiazations are run or not
     Merge the llvm-ir branch into master
 	  Improve documentation and update readme
+	  Run all tests and ensure they pass
 		
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it
@@ -94,6 +85,14 @@ Current Project Plan
     Allow anon_type to be attached after 'var_val/atom' rules
   Modules and Imports
 
+  Tester Improvements
+    Move to utilizing a directory based test system
+	  Test "collections" will be determined by the folder they are in
+	    Inside these folders is the yaml specifying expected behavior
+		Individual tests may be able to run (ie. only run tests associated with collection.file)
+    Have tester produce an output file specifying how many tests have passed
+    Integrate this project with Jenkins CI
+
   Language Logic Checking
     Check if ':<var>' is (and should be) a legal typing
 	  Another option is to reserve a keyword (such as "__global__")
@@ -132,16 +131,15 @@ Current Project Plan
 	    You can still define type specific methods inside of the declaration block
 	Work on language tutorial/introduction
 
-  Convert to using a tri-code IR (ie. max two operands to any instruction)
-	Backend stage would take this IR and optimize it to produce the final assembly
-	The current 'assembly' stage would be replaced with an IR-generation stage
-	  Basically current stage is "AST -> Assembly", we would change to "AST -> IR" + "IR -> Assembly"
-
   Code Quality Improvements
     Change the test suit to have a folder-based organization structure
 	  Instead of having the yaml file differentiate between the literal and function tests, the directory structure handles that difference
 	  Each directory will have a yaml file listing out the expected results of the tests (at that level)
 	    If a specific test suite is entered (such as literal.ints) then only the tests in the "literal/ints" folder will be run
+	Look at introducing an intermediate IR in between the AST and the llvm ir production
+	  Definitely need to flatten the symbol table to improve lookup behavior
+	  There's also a couple pieces of information that we may want to add in, but can't fit into the existing AST structure
+	    ie. TypeAssign will need to be translated to a `member + methods + mutable` tuple instead of the `conslist + body + mutable` tuple we have
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
@@ -155,14 +153,8 @@ Current Project Plan
   Improve "help" support
     Look into adding "code of conduct"
 
-  Basic Function Definition
-    Update x86_interpreter/codegen to be able to specify start instruction
-	Handle global declarations correctly (ie. place these values in 'separate' memory)
-	  Figure out how to handle these separate addressing schemes
-
   Type Inference
     explicit annotations within the ast
-  Basic Function Calling
   Custom type definition
   Improve system benchmark collection
   Improve command line interface collection
@@ -170,11 +162,3 @@ Current Project Plan
   ...
   Converting Operators into function calls [ <- Needs mutability checking and references
   Allow for unicode variable names
-
-  Tester Improvements
-    Move to utilizing a directory based test system
-	  Test "collections" will be determined by the folder they are in
-	    Inside these folders is the yaml specifying expected behavior
-		Individual tests may be able to run (ie. only run tests associated with collection.file)
-    Have tester produce an output file specifying how many tests have passed
-    Integrate this project with Jenkins CI
