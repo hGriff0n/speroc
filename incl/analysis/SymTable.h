@@ -16,7 +16,6 @@ using ref_t = std::reference_wrapper<T>;
 //TODO: Create `opt_ref` struct to wrap 'ref_t' in 'opt_t' ???
 
 namespace llvm {
-	class AllocaInst;
 	class Value;
 }
 
@@ -46,9 +45,7 @@ namespace spero::analysis {
 		compiler::ast::Ast* definition = nullptr;
 
 		// Llvm allocated storage location
-		llvm::AllocaInst* storage = nullptr;
-
-		// llvm::Value* storage = nullptr; // We might need this to handle global variables
+		llvm::Value* storage = nullptr;
 		// TODO: How would types be handled? 
 	};
 

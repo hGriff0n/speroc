@@ -116,13 +116,13 @@ namespace spero::compiler::gen {
 				auto& symbol = std::get<ref_t<analysis::SymbolInfo>>(*nvar).get();
 				switch (arena[current].context()) {
 					case analysis::ScopingContext::GLOBAL: {
-						/*auto initializer = dyn_cast_or_null<Constant>(codegen);
+						auto initializer = dyn_cast<Constant>(codegen);
 						auto storage = new GlobalVariable(
 							*translationUnit, Type::getInt32Ty(state.getContext()), a.is_mut,
 							GlobalVariable::ExternalLinkage, initializer, a.var->name.get()
 						);
 						// TODO: What do I do if the "initializer" isn't considered to be constant?
-						symbol.storage = storage;*/
+						symbol.storage = storage;
 						//break;
 					}
 					case analysis::ScopingContext::SCOPE: {
@@ -228,7 +228,7 @@ namespace spero::compiler::gen {
 
 			auto& var = std::get<ref_t<analysis::SymbolInfo>>(*variable).get();
 			if (var.storage) {
-				codegen = builder.CreateStore(codegen, var.storage);
+				codegen = builder.CreateStore(rhs, var.storage);
 			}
 
 			return;

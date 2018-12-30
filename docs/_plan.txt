@@ -16,15 +16,14 @@ Current Project Plan
 	  https://eli.thegreenplace.net/2017/adventures-in-jit-compilation-part-3-llvm/
 	  https://the-ravi-programming-language.readthedocs.io/en/latest/ravi-jit-initial.html
 	  Fill in LlvmIrGenerator to match the production of AsmGenerator
-	    Variables
-		  Look into whether I should map the variables into the llvm symbol table
-		    I may also already be doing it
-		  Decide about how to handle variables (using AllocInst* or Value*)
-		    Using `Value*` in 'SymbolInfo' allows for handling global and local variables in the same method
-		  Figure out why `visitBinOpCall` doesn't work properly
 		Function Definitions
 		  Add in variable/argument handling
 		  Figure out how to handle "cleanup" sections (probably separate ast pass)
+		  Fix the codegen to not automatically wrap everything in a function
+			We may actually still be able to define everything inside of the "function"
+			Only test with pure function definitions (ie. no other assignments)
+			Once this is tested to "work", implement transformAstForInterpretation to perform the wrapping
+			  Check that it produces the same code
 		  Remove the `using_repl` blocks in 'compilation::backend' and instead add "translation" code to 
 		Function Calling
 		  I think this code works, we just need some functions to test it with
@@ -56,6 +55,7 @@ Current Project Plan
 	  This is mostly to simplify the translation to llvm ir
 	  The downside would be a slight complication with the type inference engine
 		The type of a "reassigned" variable may be inferred as different than the original variable
+    Merge the llvm-ir branch into master
 		
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it
