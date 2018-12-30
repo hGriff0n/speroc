@@ -28,7 +28,7 @@ namespace spero::compiler::gen {
 	 */
 	class LlvmIrGenerator : public ast::AstVisitor {
 		llvm::IRBuilder<> builder;
-		std::unique_ptr<llvm::Module> translationUnit;
+		std::unique_ptr<llvm::Module> translation_unit;
 		llvm::LLVMContext& context;
 
 		CompilationState& state;
@@ -43,27 +43,8 @@ namespace spero::compiler::gen {
 
 		public:
 			LlvmIrGenerator(analysis::SymArena& arena, CompilationState& state);
+			std::unique_ptr<llvm::Module> finalize();
 
-			std::unique_ptr<llvm::Module> finalize() {
-				return std::move(translationUnit);
-			}
-
-			llvm::Module* getTempModulePtr() {
-				return translationUnit.get();
-			}
-
-			llvm::IRBuilder<>& getBuilder() {
-				return builder;
-			}
-
-			llvm::LLVMContext& getContext() {
-				return state.getContext();
-			}
-
-			void createDefaultRetInst() {
-				builder.CreateRet(codegen);
-				codegen = nullptr;
-			}
 
 			// Literals
 			virtual void visitBool(ast::Bool&) final;

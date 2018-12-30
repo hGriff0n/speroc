@@ -204,6 +204,7 @@
     <Text Include="docs\_plan.txt" />
     <Text Include="docs\_todo.txt" />
     <Text Include="llvmlibs.txt" />
+    <Text Include="llvm_resources.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\better-enums\enum.h" />
@@ -267,12 +268,10 @@
     <ClInclude Include="incl\parser\AstVisitor.h" />
     <ClInclude Include="incl\spero_string.h" />
     <ClInclude Include="incl\type_rep_notes.h" />
-    <ClInclude Include="incl\util\analysis.h" />
     <ClInclude Include="incl\util\parser.h" />
     <ClInclude Include="incl\util\ranges.h" />
     <ClInclude Include="incl\util\strings.h" />
     <ClInclude Include="incl\util\time.h" />
-    <ClInclude Include="incl\util\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -7,8 +7,12 @@ namespace spero::compiler::gen {
 	using namespace llvm;
 
 	LlvmIrGenerator::LlvmIrGenerator(analysis::SymArena& arena, CompilationState& state)
-		: state{ state }, context{ state.getContext() }, arena{ arena }, translationUnit{ std::make_unique<llvm::Module>("speroc", state.getContext()) }, builder{ state.getContext() }
+		: state{ state }, context{ state.getContext() }, arena{ arena }, translation_unit{ std::make_unique<llvm::Module>("speroc", state.getContext()) }, builder{ state.getContext() }
 	{}
+
+	std::unique_ptr<llvm::Module> LlvmIrGenerator::finalize() {
+		return std::move(translation_unit);
+	}
 
 	Value* LlvmIrGenerator::visitNode(ast::Ast& a) {
 		auto last = codegen;
@@ -71,13 +75,13 @@ namespace spero::compiler::gen {
 		auto old_insert_point = builder.GetInsertBlock();
 
 		// Handle the case where the function was already "declared" earlier
-		auto fn = translationUnit->getFunction(f.name->get());
+		auto fn = translation_unit->getFunction(f.name->get());
 		if (!fn) {
 			// TODO: Introduce a translation from spero::Type to llvm::Type (requires spero::Type)
-			std::vector<Type*> arg_types(f.args.size(), Type::getInt32Ty(context));
+			std::vector<Type*> arg_types{ f.args.size(), Type::getInt32Ty(context) };
 			auto fn_type = FunctionType::get(Type::getInt32Ty(context), arg_types, false);
 
-			fn = Function::Create(fn_type, Function::ExternalLinkage, f.name->get(), translationUnit.get());
+			fn = Function::Create(fn_type, Function::ExternalLinkage, f.name->get(), translation_unit.get());
 
 			// TODO: This introduces bugs if the defining code, uses different names
 			// However, I feel we should already handle this during the initial language checks
@@ -151,7 +155,7 @@ namespace spero::compiler::gen {
 				case analysis::ScopingContext::GLOBAL: {
 					auto initializer = dyn_cast<Constant>(codegen);
 					auto storage = new GlobalVariable(
-						*translationUnit, Type::getInt32Ty(context), a.is_mut,
+						*translation_unit, Type::getInt32Ty(context), a.is_mut,
 						GlobalVariable::ExternalLinkage, initializer, a.var->name.get()
 					);
 					// TODO: What do I do if the "initializer" isn't considered to be constant?
@@ -369,7 +373,7 @@ namespace spero::compiler::gen {
 
 		// Extract the function object from llvm and perform some basic checking
 		auto& func_name = fn_name->name->elems.back()->name.get();
-		auto fn = translationUnit->getFunction(func_name);
+		auto fn = translation_unit->getFunction(func_name);
 		if (!fn) {
 			state.log(compiler::ID::err, "Attempt to call unknown function {} <at {}>", func_name, f.loc);
 			return;

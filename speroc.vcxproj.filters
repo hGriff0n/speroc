@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\parser">
-      <UniqueIdentifier>{ee331ba1-3129-4fc0-bf3c-5a135de94c1e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\utils">
       <UniqueIdentifier>{c4f25476-3d6e-4bb0-924f-b27776952f6a}</UniqueIdentifier>
     </Filter>
@@ -27,9 +24,6 @@
     </Filter>
     <Filter Include="Source Files\codegen">
       <UniqueIdentifier>{d6e02f0b-5f06-44f7-9aeb-c590e8ea0495}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\parser">
-      <UniqueIdentifier>{de70d3d5-d595-451e-b995-c97f445877df}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\interface">
       <UniqueIdentifier>{f5f2743f-ebed-4e1f-8d73-3a9d97e31089}</UniqueIdentifier>
@@ -91,18 +85,24 @@
     <Filter Include="Dependencies\boost\flyweight">
       <UniqueIdentifier>{83447d2d-afbd-40f6-ba42-a380dcf413db}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\analysis\types">
-      <UniqueIdentifier>{4add5039-5e28-4675-b362-4689c284d516}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Dependencies\llvm">
       <UniqueIdentifier>{a755e894-9833-4621-b94f-2b793c789c38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\driver">
+      <UniqueIdentifier>{02a497b2-09bf-4f50-a500-ac8c905eca5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\passes">
+      <UniqueIdentifier>{aabccc26-8df5-49e9-88fe-a35f5f8f5e05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\passes">
+      <UniqueIdentifier>{aaac53df-96fe-4b6b-ae01-2506140fb21f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\frontend">
+      <UniqueIdentifier>{ee331ba1-3129-4fc0-bf3c-5a135de94c1e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="src\ast.cpp">
-      <Filter>Source Files\parser</Filter>
-    </ClCompile>
     <ClCompile Include="src\cmd_line.cpp">
       <Filter>Source Files\interface</Filter>
     </ClCompile>
@@ -118,17 +118,20 @@
     <ClCompile Include="src\strings.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\VarDeclPass.cpp">
-      <Filter>Source Files\analysis</Filter>
-    </ClCompile>
-    <ClCompile Include="src\VarRefPass.cpp">
-      <Filter>Source Files\analysis</Filter>
-    </ClCompile>
-    <ClCompile Include="src\BasicTypingPass.cpp">
-      <Filter>Source Files\analysis</Filter>
-    </ClCompile>
     <ClCompile Include="src\LlvmIrGenerator.cpp">
       <Filter>Source Files\codegen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VarDeclPass.cpp">
+      <Filter>Source Files\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VarRefPass.cpp">
+      <Filter>Source Files\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BasicTypingPass.cpp">
+      <Filter>Source Files\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ast.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -170,16 +173,19 @@
     <Text Include="llvmlibs.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="llvm_resources.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="incl\parser\ast.h">
-      <Filter>Header Files\parser</Filter>
+      <Filter>Header Files\frontend</Filter>
     </ClInclude>
     <ClInclude Include="incl\parser\actions.h">
-      <Filter>Header Files\parser</Filter>
+      <Filter>Header Files\frontend</Filter>
     </ClInclude>
     <ClInclude Include="incl\parser\grammar.h">
-      <Filter>Header Files\parser</Filter>
+      <Filter>Header Files\frontend</Filter>
     </ClInclude>
     <ClInclude Include="incl\util\parser.h">
       <Filter>Header Files\utils</Filter>
@@ -194,22 +200,19 @@
       <Filter>Header Files\interface</Filter>
     </ClInclude>
     <ClInclude Include="incl\parser\base.h">
-      <Filter>Header Files\parser</Filter>
+      <Filter>Header Files\frontend</Filter>
     </ClInclude>
     <ClInclude Include="incl\util\strings.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="incl\parser\location.h">
-      <Filter>Header Files\parser</Filter>
+      <Filter>Header Files\frontend</Filter>
     </ClInclude>
     <ClInclude Include="dep\better-enums\enum.h">
       <Filter>Dependencies\better-enums</Filter>
     </ClInclude>
     <ClInclude Include="dep\cxxopts\include\cxxopts.hpp">
       <Filter>Dependencies\cxxopts</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\util\utils.h">
-      <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="incl\compilation.h">
       <Filter>Header Files</Filter>
@@ -323,16 +326,7 @@
       <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="incl\parser\AstVisitor.h">
-      <Filter>Header Files\parser</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\analysis\VarDeclPass.h">
-      <Filter>Header Files\analysis</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\analysis\VarRefPass.h">
-      <Filter>Header Files\analysis</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\util\analysis.h">
-      <Filter>Header Files\utils</Filter>
+      <Filter>Header Files\frontend</Filter>
     </ClInclude>
     <ClInclude Include="dep\boost\flyweight.hpp">
       <Filter>Dependencies\boost</Filter>
@@ -359,17 +353,23 @@
       <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="incl\type_rep_notes.h" />
-    <ClInclude Include="incl\analysis\types.h">
-      <Filter>Header Files\analysis\types</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\analysis\BasicTypingPass.h">
-      <Filter>Header Files\analysis\types</Filter>
-    </ClInclude>
     <ClInclude Include="incl\analysis\AnalysisState.h">
       <Filter>Header Files\analysis</Filter>
     </ClInclude>
     <ClInclude Include="incl\codegen\LlvmIrGenerator.h">
       <Filter>Header Files\codegen</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\analysis\VarDeclPass.h">
+      <Filter>Header Files\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\analysis\VarRefPass.h">
+      <Filter>Header Files\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\analysis\types.h">
+      <Filter>Header Files\analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\analysis\BasicTypingPass.h">
+      <Filter>Header Files\passes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

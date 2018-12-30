@@ -12,18 +12,19 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
+    Fix error with "let a = 3; a" not compiling
+	  `VarRefPass::visitVariable` says that 'a' is not in any SymTable, but that is wrong
 	Look at modifying the compilation pipeline to accomodate the llvm ir changes
-	  `compilation::frontend` takes the file/string input and produces the ast
-	  `compilation::analyze` takes the ast and produces analysed ast
-	  `compilation::translate` takes the final ast and produces llvm ir
-	  `compilation::backend` takes the llvm ir and produces the final output (after optimizations/etc)
+	  Clean up and perform some preliminary implementation of the "*Driver" interfaces
+	    Finalize on whether the "step" methods should be static or not
+		Draw up initial ideas for a replacement of `CompilationState`
+		Test how well we can maintain variables across runs
+		Split them into separate files if it looks good
 	  Figure out how I'll maintain spero state in the intepreter
 	    We can easily maintain functions/globals across different repl lines within llvm
 		However, old code won't be able to use those definitions as the spero state won't remember them
 		  This will require major work with the "compile" interface (maybe even removal if the interpreter strays too far)
-		  We could automatically "populate" the ast with the interfaces of the previous declarations
-		    This should be enough to type/variable check until we get to llvm, where the interpreter will handle it
-			Still need to manually modify this "pre-existing" declaration list (and create the interfaces)
+		Reorganize the compilation "passes" to have a better organization
 	Produce "levelling" pass to transform initial ast into a more workable version
 	  All symbols will map into a flat structure, with each entry having a unique id
 	    All symbol references will, after this pass, operate through this "flat" index
@@ -41,7 +42,8 @@ Current Project Plan
 		The type of a "reassigned" variable may be inferred as different than the original variable
 	Setup basic llvm optimization pass structure on the produced ir
 	  Only run `mem2reg` for the moment
-	  Add a "permissions" flag to enable interpreter to control whether optimiazations are run or not
+	  Add an "optimization level" argument to the compilation state
+	    Make this argument settable in the repl loop		
     Merge the llvm-ir branch into master
 	  Improve documentation and update readme
 	  Run all tests and ensure they pass

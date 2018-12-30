@@ -6,8 +6,9 @@
 #include <unordered_map>
 #include <variant>
 
+#include <enum.h>
+
 #include "parser/base.h"
-#include "util/analysis.h"
 
 template<class T>
 using opt_t = std::optional<T>;
@@ -22,6 +23,13 @@ namespace llvm {
 namespace spero::analysis {
 	class Type;
 	using SymIndex = size_t;
+
+	/*
+	 * Enum class for specifying the scoping context of the current analysis focus
+	 *   Scoping context is important in determining locationn/manner of variable allocation
+	 *   along with other semantic contextual considerations (particularly allowance of "forward usage")
+	 */
+	BETTER_ENUM(ScopingContext, char, GLOBAL, SCOPE, TYPE);
 
 	/*
      * Specifies the data relevant for analysis of Spero variables

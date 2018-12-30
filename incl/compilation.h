@@ -20,6 +20,8 @@
 #define ASM_TEMP_OUTPUT_FILE "out.ll"
 
 
+// TODO: A restructuring of these interfaces is in order sometime in the near future
+// However, I'm still uncertain of how the new interfaces will look
 namespace spero::compiler {
 	// Structure for specifying what stages should be run
 	using Permissions = std::tuple<int, int, bool, bool>;
@@ -34,8 +36,7 @@ namespace spero::compiler {
 	MIR_t analyze(parser::Stack& ast_stack, CompilationState& state, analysis::AllTypes&);
 	
 	// Perform all steps related to backend production
-	// TODO: `using_repl` is a temporary solution for repl compilation (requires everything in a function atm)
-	// Will be eventually replaced by just modifying the ast in `transformAstForInterpretation` (or by statics?)
+	void optimizeLlvmIr(std::unique_ptr<llvm::Module>& ir, CompilationState& state);
 	std::unique_ptr<llvm::Module> backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state);
 
 	// Perform all steps related to final codegen stages (produces assembly code)
@@ -57,17 +58,15 @@ namespace spero {
 		using parser::ParsingMode;
 
 		const GET_PERMISSIONS(state);
-		WITH(state.timer("parsing")) {
-			switch (parser_mode) {
-				case ParsingMode::FILE:
-					ast_stack = compiler::parseFile(state.files()[0], state);
-					break;
-				case ParsingMode::STRING:
-					ast_stack = compiler::parse(state.files()[0], state);
-					break;
-				default:
-					return true;
-			}
+		switch (parser_mode) {
+			case ParsingMode::FILE:
+				ast_stack = compiler::parseFile(state.files()[0], state);
+				break;
+			case ParsingMode::STRING:
+				ast_stack = compiler::parse(state.files()[0], state);
+				break;
+			default:
+				return true;
 		}
 
 		if (!do_compile) {
@@ -97,14 +96,23 @@ namespace spero {
 
 
 		/*
-		 * Run through the backend optimizations
+		 * Translate the analysed spero code into llvm ir
 		 *
-		 * Don't mark this as a separate "phase" for timing purposes
-		 * The sub-phases perform their own timing passes
+		 * NOTE: Timing is handled inside of the function
 		 */
 		auto llvm_code = (!state.failed())
 			? compiler::backend(std::move(table), ast_stack, state)
 			: std::make_unique<llvm::Module>("speroc_error_state", state.getContext());
+
+		irHook(llvm_code);
+		
+		/*
+		 * Optimize the llvm ir code
+		 */
+		bool do_optimize = false;
+		if (do_optimize && !state.failed()) {
+			compiler::optimizeLlvmIr(llvm_code, state);
+		}
 
 		/*
 		 * Generate the boundary ir for the external tools
@@ -114,20 +122,16 @@ namespace spero {
 		 * off to some system tool that is guaranteed to work
 		 */
 		if (link && !state.failed()) {
-			auto _ = state.timer("codegen");
 			compiler::codegen(llvm_code, state.files()[0], ASM_TEMP_OUTPUT_FILE, state);
 		}
-
-		irHook(llvm_code);
 
 
 		/*
 		 * Send the boundary ir off to the final compilation phase
 		 */
 		if (!state.failed() && state.produceExe() && link) {
-			if (auto _ = state.timer("assembly");
-				system((ASM_COMPILER " " ASM_TEMP_OUTPUT_FILE " -o " + state.output()).c_str()))
-			{
+			auto _ = state.timer("clang_compilation");
+			if (system((ASM_COMPILER " " ASM_TEMP_OUTPUT_FILE " -o " + state.output()).c_str())) {
 				state.log(compiler::ID::err, "Compilation of `{}` failed", state.output());
 			}
 

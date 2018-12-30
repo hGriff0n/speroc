@@ -17,6 +17,8 @@ namespace spero::compiler {
 
 	template<class Fn>
 	Stack parse_impl(CompilationState& state, Fn&& parse) {
+		auto _ = state.timer("parsing");
+
 		// Setup parser state
 		Stack ast;
 
@@ -62,16 +64,22 @@ namespace spero::compiler {
 
 #undef RUN_PASS
 
+	void optimizeLlvmIr(std::unique_ptr<llvm::Module>& ir, CompilationState& state) {
+		auto _ = state.timer("ir_optimizations");
+	}
+
 	std::unique_ptr<llvm::Module> backend(MIR_t table, parser::Stack& ast_stack, CompilationState& state) {
+		auto _ = state.timer("ir_generation");
+
 		gen::LlvmIrGenerator visitor{ table, state };
-
 		ast::visit(visitor, ast_stack);
-
 		return visitor.finalize();
 	}
 
 	// Perform the final compilation stages (produces llvm ir file)
 	void codegen(std::unique_ptr<llvm::Module>& ir, const std::string& input_file, const std::string& output_file, spero::compiler::CompilationState& state) {
+		auto _ = state.timer("assembly_codegen");
+
 		std::error_code ec;
 		llvm::raw_fd_ostream output{ output_file, ec, llvm::sys::fs::F_None };
 

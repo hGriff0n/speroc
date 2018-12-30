@@ -2,7 +2,6 @@
 
 #include "parser/AstVisitor.h"
 #include "interface/CompilationState.h"
-#include "util/analysis.h"
 #include "analysis/AnalysisState.h"
 
 namespace spero::analysis {
