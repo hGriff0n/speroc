@@ -62,29 +62,10 @@ namespace spero::compiler {
 
 #undef RUN_PASS
 
-	std::unique_ptr<llvm::Module> backend(MIR_t table, parser::Stack& ast_stack, CompilationState& state, bool using_repl) {
+	std::unique_ptr<llvm::Module> backend(MIR_t table, parser::Stack& ast_stack, CompilationState& state) {
 		gen::LlvmIrGenerator visitor{ table, state };
 
-		// Temporary hack since we have to put stuff in a function to see it in the repl
-		// Replace it with the following algorithm:
-		//   Collect all nodes that are not an "AssignNode" whose value is a function or a type
-		//   Move all these nodes into a new Function with type signature `() -> Int`
-		//   Assign this function to the global symbol "jitfunc"
-		//   TODO: Handle user defining jitfunc
-		//   TODO: It would be great if we could allow for different types of "jitfunc"
-		//     This would probably require performing the collection before the analysis phase (transformAstForInterpretation)
-		if (using_repl) {
-			std::vector<llvm::Type*> args;
-			auto ft = llvm::FunctionType::get(llvm::Type::getInt32Ty(state.getContext()), args, false);
-			auto fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "jitfunc", visitor.getTempModulePtr());
-			visitor.getBuilder().SetInsertPoint(llvm::BasicBlock::Create(state.getContext(), "entry", fn));
-		}
-
 		ast::visit(visitor, ast_stack);
-
-		if (using_repl) {
-			visitor.createDefaultRetInst();
-		}
 
 		return visitor.finalize();
 	}

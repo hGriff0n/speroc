@@ -51,6 +51,11 @@ namespace spero::compiler::gen {
 	void LlvmIrGenerator::visitFunction(ast::Function& f) {
 		// TODO: How will we handle cleanup code (maybe an ast transform would handle this?)
 
+		// Retreive the existing insertion block as the function is automatically defined at the module level
+		// This allows for defining functions inside of other functions within llvm ir
+		// TODO: Is this what I actually want to have in spero?
+		auto old_insert_point = builder.GetInsertBlock();
+
 		// Handle the case where the function was already "declared" earlier
 		auto fn = translationUnit->getFunction(f.name->get());
 		if (!fn) {
@@ -69,7 +74,7 @@ namespace spero::compiler::gen {
 		}
 
 		if (!fn->empty()) {
-			state.log(ID::err, "Attempt to redefine function {} <at {}>", f.name->get(), f.loc);
+			state.log(ID::err, "Function {} already has llvm definition <at {}>", f.name->get(), f.loc);
 			return;
 		}
 
@@ -83,10 +88,15 @@ namespace spero::compiler::gen {
 			builder.CreateRet(retval);
 
 			verifyFunction(*fn);
+			codegen = fn;
 
 		} else {
 			fn->eraseFromParent();
+			codegen = nullptr;
 		}
+
+		// Restore the old insertion point
+		builder.SetInsertPoint(old_insert_point);
 	}
 
 	//
@@ -109,31 +119,31 @@ namespace spero::compiler::gen {
 		if (!isa<Function>(codegen)) {
 			// TODO: By this stage we should probably reduce the scope tables to a flatter map
 			// And not require the usage of "generic" type value information
+			// This would also "validate" the assumptions we make about the symbol existing
 			opt_t<size_t> ssa_index = std::nullopt;
 			auto nvar = arena[current].get(a.var->name, nullptr, a.var->loc, ssa_index);
 
-			if (nvar) {
-				auto& symbol = std::get<ref_t<analysis::SymbolInfo>>(*nvar).get();
-				switch (arena[current].context()) {
-					case analysis::ScopingContext::GLOBAL: {
-						auto initializer = dyn_cast<Constant>(codegen);
-						auto storage = new GlobalVariable(
-							*translationUnit, Type::getInt32Ty(state.getContext()), a.is_mut,
-							GlobalVariable::ExternalLinkage, initializer, a.var->name.get()
-						);
-						// TODO: What do I do if the "initializer" isn't considered to be constant?
-						symbol.storage = storage;
-						//break;
-					}
-					case analysis::ScopingContext::SCOPE: {
-						auto storage = builder.CreateAlloca(Type::getInt32Ty(state.getContext()), nullptr, a.var->name.get());
-						codegen = builder.CreateStore(codegen, symbol.storage = storage);
-						break;
-					}
-					case analysis::ScopingContext::TYPE:
-					default:
-						break;
+			// We can assume that the symbol exists if we get to this point (VarDeclPass would automatically insert it)
+			auto& symbol = std::get<ref_t<analysis::SymbolInfo>>(*nvar).get();
+			switch (arena[current].context()) {
+				case analysis::ScopingContext::GLOBAL: {
+					auto initializer = dyn_cast<Constant>(codegen);
+					auto storage = new GlobalVariable(
+						*translationUnit, Type::getInt32Ty(state.getContext()), a.is_mut,
+						GlobalVariable::ExternalLinkage, initializer, a.var->name.get()
+					);
+					// TODO: What do I do if the "initializer" isn't considered to be constant?
+					symbol.storage = storage;
+					//break;
 				}
+				case analysis::ScopingContext::SCOPE: {
+					auto storage = builder.CreateAlloca(Type::getInt32Ty(state.getContext()), nullptr, a.var->name.get());
+					codegen = builder.CreateStore(codegen, symbol.storage = storage);
+					break;
+				}
+				case analysis::ScopingContext::TYPE:
+				default:
+					break;
 			}
 
 		} else {

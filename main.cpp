@@ -222,12 +222,41 @@ void spero::compiler::transformAstForInterpretation(parser::Stack& ast_stack, Co
 	// Collect all non-function definitions and move them into a new function, "jitfunc"
 	// Set the `mangle` flag of jitfunc to be false and then insert into the stack
 
-	// NOTE: We currently take this approach because llvm seemingly works only at the function layer
-	// TODO: This approach can't maintain variables across repl lines
-
 	// IDEA:
 	// Take all functions as is
 	// All other variable declarations will be performed as global assignments (no re-organization)?
+	// Blocks can only take `ast::Statement` nodes, so any non-Statements keep in the stack
 	// Anything that is not a `*Assign` node (or Interface/etc.) is wrapped inside of a jit function
 	// TODO: If all nodes are `*Assign`, do ...
+
+	// There's apparently no `take_if` std method
+	std::deque<ptr<ast::Statement>> exprs;
+	for (auto i = 0u; i != ast_stack.size();) {
+		// TODO: What would I be "losing" with this?
+		if (!util::is_type<ast::Statement>(ast_stack[i])) {
+			++i;
+			continue;
+		}
+
+		if (auto var_assign = util::view_as<ast::VarAssign>(ast_stack[i])) {
+			// TODO: Implement global variables. Only then can we remove this check
+			if (util::is_type<ast::Function>(var_assign->expr)) {
+				++i;
+				continue;
+			}
+		}
+
+		exprs.push_back(util::dyn_cast<ast::Statement>(std::move(ast_stack[i])));
+		
+		auto iter = std::begin(ast_stack);
+		std::advance(iter, i);
+		ast_stack.erase(iter);
+	}
+
+	if (exprs.size() > 0) {
+		auto location = exprs[0]->loc;
+		auto fn = std::make_unique<ast::Function>(std::deque<ptr<ast::Argument>>{}, std::make_unique<ast::Block>(std::move(exprs), location), location);
+		auto assign_name = std::make_unique<ast::AssignName>(std::make_unique<ast::BasicBinding>("jitfunc", ast::BindingType::VARIABLE, location), location);
+		ast_stack.push_back(std::make_unique<ast::VarAssign>(ast::VisibilityType::PUBLIC, std::move(assign_name), nullptr, nullptr, std::move(fn), location));
+	}
 }

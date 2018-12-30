@@ -15,20 +15,18 @@ Current Project Plan
 	Follow http://releases.llvm.org/6.0.1/docs/tutorial/index.html
 	  https://eli.thegreenplace.net/2017/adventures-in-jit-compilation-part-3-llvm/
 	  https://the-ravi-programming-language.readthedocs.io/en/latest/ravi-jit-initial.html
+	  https://llvm.org/docs/ProgrammersManual.html#the-c-standard-template-library
 	  Fill in LlvmIrGenerator to match the production of AsmGenerator
 		Function Definitions
 		  Add in variable/argument handling
 		  Figure out how to handle "cleanup" sections (probably separate ast pass)
-		  Fix the codegen to not automatically wrap everything in a function
-			We may actually still be able to define everything inside of the "function"
-			Only test with pure function definitions (ie. no other assignments)
-			Once this is tested to "work", implement transformAstForInterpretation to perform the wrapping
-			  Check that it produces the same code
-		  Remove the `using_repl` blocks in 'compilation::backend' and instead add "translation" code to 
 		Function Calling
-		  I think this code works, we just need some functions to test it with
+		  Test that function calling works with arguments (works with no-args)
 		IfBranch
 		  Determine how to handle phi nodes
+		    We might not even need to explicitly have phi nodes (if we just put all variables on the stack)
+			  Maybe for mutable global variables (or type members? they're both far away)
+			  I can come up with a format for how I "would" handle phi variables though
 		  Determine how to "assign" a value to a if statement, that doesn't have an else branch
 		    I think, from a language standpoint, this should have no value (so don't produce the "retval" code)
 		Finally remove the asmjit dependency
@@ -44,6 +42,7 @@ Current Project Plan
 	Produce "levelling" pass to transform initial ast into a more workable version
 	  All symbols will map into a flat structure, with each entry having a unique id
 	    All symbol references will, after this pass, operate through this "flat" index
+		The symbol table at this pass will have no need to return `opt_t<...>` as the symbol can be assumed to exist
 	  See what other structures we should "flatten"
 	Look at reorganizing the file structure
 	Look at including LLVM methods throughout the codebase

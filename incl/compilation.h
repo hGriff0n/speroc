@@ -36,7 +36,7 @@ namespace spero::compiler {
 	// Perform all steps related to backend production
 	// TODO: `using_repl` is a temporary solution for repl compilation (requires everything in a function atm)
 	// Will be eventually replaced by just modifying the ast in `transformAstForInterpretation` (or by statics?)
-	std::unique_ptr<llvm::Module> backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state, bool using_repl);
+	std::unique_ptr<llvm::Module> backend(MIR_t globals, parser::Stack& ast_stack, CompilationState& state);
 
 	// Perform all steps related to final codegen stages (produces assembly code)
 	void codegen(std::unique_ptr<llvm::Module>& ir, const std::string& input_file, const std::string& output_file, CompilationState& state);
@@ -103,7 +103,7 @@ namespace spero {
 		 * The sub-phases perform their own timing passes
 		 */
 		auto llvm_code = (!state.failed())
-			? compiler::backend(std::move(table), ast_stack, state, using_repl)
+			? compiler::backend(std::move(table), ast_stack, state)
 			: std::make_unique<llvm::Module>("speroc_error_state", state.getContext());
 
 		/*
