@@ -62,8 +62,8 @@ namespace spero::compiler {
 
 #undef RUN_PASS
 
-	std::unique_ptr<llvm::Module> backend(MIR_t, parser::Stack& ast_stack, CompilationState& state, bool using_repl) {
-		gen::LlvmIrGenerator visitor{ state };
+	std::unique_ptr<llvm::Module> backend(MIR_t table, parser::Stack& ast_stack, CompilationState& state, bool using_repl) {
+		gen::LlvmIrGenerator visitor{ table, state };
 
 		// Temporary hack since we have to put stuff in a function to see it in the repl
 		// Replace it with the following algorithm:

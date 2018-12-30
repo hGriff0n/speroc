@@ -239,6 +239,7 @@
     <ClCompile Include="src\cmd_line.cpp" />
     <ClCompile Include="src\CompilationState.cpp" />
     <ClCompile Include="src\compilation.cpp" />
+    <ClCompile Include="src\LlvmIrGenerator.cpp" />
     <ClCompile Include="src\strings.cpp" />
     <ClCompile Include="src\SymTable.cpp" />
     <ClCompile Include="src\VarDeclPass.cpp" />

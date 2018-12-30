@@ -32,30 +32,16 @@ namespace spero::compiler::gen {
 
 		CompilationState& state;
 
-		//analysis::SymArena& arena;
-		//static constexpr analysis::SymIndex globals = 0;
-		//analysis::SymIndex current = globals;
+		analysis::SymArena& arena;
+		static constexpr analysis::SymIndex globals = 0;
+		analysis::SymIndex current = globals;
 
 		protected:
 			llvm::Value* codegen = nullptr;
-			llvm::Value* visitNode(ast::Ast& a) {
-				llvm::Value* last = codegen;
-				codegen = nullptr;
-
-				a.accept(*this);
-
-				llvm::Value* ret = codegen;
-				codegen = last;
-				return ret;
-			}
+			llvm::Value* visitNode(ast::Ast&);
 
 		public:
-			/*LlvmIrGenerator(analysis::SymArena& arena, CompilationState& state)
-				: state{ state }, arena{ arena }, translationUnit{ new llvm::Module("speroc", context) }, builder{ context }
-			{}*/
-			LlvmIrGenerator(CompilationState& state)
-				: state{ state }, translationUnit{ std::make_unique<llvm::Module>("speroc", state.getContext()) }, builder{ state.getContext() }
-			{}
+			LlvmIrGenerator(analysis::SymArena& arena, CompilationState& state);
 
 			std::unique_ptr<llvm::Module> finalize() {
 				return std::move(translationUnit);
@@ -79,29 +65,29 @@ namespace spero::compiler::gen {
 			}
 
 			// Literals
-			virtual void visitInt(ast::Int& i) final {
-				codegen = llvm::ConstantInt::get(state.getContext(), llvm::APInt(sizeof(i.val) * 8, i.val, true));
-			}
+			virtual void visitInt(ast::Int& i) final;
+
+			// Atoms
+			virtual void visitTuple(ast::Tuple&) final;
+			virtual void visitBlock(ast::Block&) final;
+			virtual void visitFunction(ast::Function&) final;
+
+			// Names
+			virtual void visitVariable(ast::Variable&) final;
+			virtual void visitAssignName(ast::AssignName&) final;
+
+			// Control
+			virtual void visitIfBranch(ast::IfBranch&) final;
+			virtual void visitIfElse(ast::IfElse&) final;
+			
+			// Statements
+			virtual void visitVarAssign(ast::VarAssign& v) final;
 
 			// Expressions
-			virtual void visitBinOpCall(ast::BinOpCall& b) final {
-				if (b.op == "=") {
-					// TODO: Not sure how to handle this in llvm ir (due to ssa)
-					// We sort of mimic ssa assignments in the current var passes
-					// But it doesn't get reduced to one "name" (probably should do that)
-					return;
-				}
-
-				auto lhs = visitNode(*b.lhs);
-				auto rhs = visitNode(*b.rhs);
-
-				if (b.op == "+") {
-					codegen = builder.CreateAdd(lhs, rhs);
-
-				} else if (b.op == "-") {
-					codegen = builder.CreateSub(lhs, rhs);
-				}
-			}
+			virtual void visitInAssign(ast::InAssign&) final;
+			virtual void visitBinOpCall(ast::BinOpCall&) final;
+			virtual void visitUnOpCall(ast::UnOpCall&) final;
+			virtual void visitFnCall(ast::FnCall&) final;
 	};
 
 }

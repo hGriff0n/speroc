@@ -307,6 +307,9 @@
     <ClCompile Include="src\BasicTypingPass.cpp">
       <Filter>Source Files\analysis</Filter>
     </ClCompile>
+    <ClCompile Include="src\LlvmIrGenerator.cpp">
+      <Filter>Source Files\codegen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
