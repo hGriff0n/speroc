@@ -15,22 +15,17 @@ Current Project Plan
     Fix error with "let a = 3; a" not compiling
 	  `VarRefPass::visitVariable` says that 'a' is not in any SymTable, but that is wrong
 	Look at modifying the compilation pipeline to accomodate the llvm ir changes
-	  Clean up and perform some preliminary implementation of the "*Driver" interfaces
-	    Finalize on whether the "step" methods should be static or not
-		Draw up initial ideas for a replacement of `CompilationState`
-		Test how well we can maintain variables across runs
-		Split them into separate files if it looks good
-	  Figure out how I'll maintain spero state in the intepreter
-	    We can easily maintain functions/globals across different repl lines within llvm
-		However, old code won't be able to use those definitions as the spero state won't remember them
-		  This will require major work with the "compile" interface (maybe even removal if the interpreter strays too far)
-		Reorganize the compilation "passes" to have a better organization
+	  Draw up initial ideas for a replacement of `CompilationState`
+	  Test suitability for maintaining functions accross runs
+	    NOTE: Variables should follow once we start producing globals
 	Produce "levelling" pass to transform initial ast into a more workable version
 	  All symbols will map into a flat structure, with each entry having a unique id
 	    All symbol references will, after this pass, operate through this "flat" index
 		The symbol table at this pass will have no need to return `opt_t<...>` as the symbol can be assumed to exist
 	  See what other structures we should "flatten"
 	Look at reorganizing the file structure
+	Look into reorganizing the 'AnalysisState' structure
+	  Particularly the 'AllTypes&' memer
 	Look at including LLVM methods throughout the codebase
 	  I think particularly for dynamic casts, LLVM could drastically help
 	  There may also be pre-implemented `CompilationState` and `SymTable` style structures

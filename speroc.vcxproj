@@ -181,9 +181,11 @@
     <ClCompile Include="src\ast.cpp" />
     <ClCompile Include="src\BasicTypingPass.cpp" />
     <ClCompile Include="src\cmd_line.cpp" />
+    <ClCompile Include="src\CompilationDriver.cpp" />
     <ClCompile Include="src\CompilationState.cpp" />
-    <ClCompile Include="src\compilation.cpp" />
     <ClCompile Include="src\LlvmIrGenerator.cpp" />
+    <ClCompile Include="src\AnalysisDriver.cpp" />
+    <ClCompile Include="src\ReplDriver.cpp" />
     <ClCompile Include="src\strings.cpp" />
     <ClCompile Include="src\SymTable.cpp" />
     <ClCompile Include="src\VarDeclPass.cpp" />
@@ -257,7 +259,9 @@
     <ClInclude Include="incl\analysis\VarDeclPass.h" />
     <ClInclude Include="incl\analysis\VarRefPass.h" />
     <ClInclude Include="incl\codegen\LlvmIrGenerator.h" />
-    <ClInclude Include="incl\compilation.h" />
+    <ClInclude Include="incl\driver\AnalysisDriver.h" />
+    <ClInclude Include="incl\driver\CompilationDriver.h" />
+    <ClInclude Include="incl\driver\ReplDriver.h" />
     <ClInclude Include="incl\interface\cmd_line.h" />
     <ClInclude Include="incl\interface\CompilationState.h" />
     <ClInclude Include="incl\parser\actions.h" />

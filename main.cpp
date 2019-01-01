@@ -3,12 +3,11 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "compilation.h"
-#include "parser/base.h"
 #include "interface/cmd_line.h"
 #include "util/strings.h"
 
-#include "codegen/LlvmIrGenerator.h"
+#include "driver/CompilationDriver.h"
+#include "driver/ReplDriver.h"
 
 template<class Stream>
 Stream& getMultiline(Stream& in, spero::string::backing_type& s);
@@ -17,20 +16,17 @@ void printAssembly(std::ostream&, std::unique_ptr<llvm::Module>& llvm_code);
 
 
 // Helper function to run the interactive mode
-void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& state, int& argc, char** argv) {
+void run_interpreter(spero::compiler::ReplDriver& repl) {
 	using namespace spero;
 	using namespace spero::parser;
-	using compiler::ID;
-	
+
 	string::backing_type input;
 	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", true }, { "ast", true }, { "asm", true } };
 
+	auto& state = repl.getState();
 	GET_PERMISSIONS(state);
 	state.files().push_back("");
 
-	llvm::Interpreter interpreter{ std::make_unique<llvm::Module>("speroc-repl", state.getContext()) };
-
-	// Run the repl loop
 	while (std::cout << "> " && getMultiline(std::cin, input)) {
 		/**
 		 * Handle repl-specific commands
@@ -38,7 +34,7 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 		 *  :l - load the given file into the interpreter context
 		 *  :s - set repl flag (controlling what gets printed/etc)
 		 *  :q - quit out of the repl
-		 *  
+		 *
 		 *  Defaults to receiving and running a multiline spero string
 		 */
 		if (auto command = input.substr(0, 2); command == ":q") {
@@ -70,10 +66,7 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 			do_compile = flags["compile"];	interpret = flags["interpret"];
 		}
 
-
-		// Run the input through the internal compilation loop (printing the ast and assembler)
-		parser::Stack ast_stack;
-		compile(state, ast_stack, &interpreter, [&](auto&& ir) {
+		repl.interpret([&](auto&& ir) {
 			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, parser::Stack>) {
 				if (flags["ast"]) {
 					printAST(std::cout << '\n', ir);
@@ -88,10 +81,8 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 		});
 
 		std::cout << std::endl;
-		state.reset();
 	}
 }
-
 
 /*
  * Run the compiler and it's command-line interface
@@ -105,20 +96,19 @@ int main(int argc, char* argv[]) {
 	// Parse the command line arguments
 	auto opts = cmd::getOptions();
 	auto state = cmd::parse(opts, argc, argv);
+	auto type_list = analysis::initTypeList();
 
 	// Compiler run
 	if (!state.opts["interactive"].as<bool>()) {
 		state.setPermissions(parser::ParsingMode::FILE, true, true, false);
-
-		parser::Stack res;
-		compile(state, res);
-
-		return state.failed();
+		return compiler::CompilationDriver{ state, type_list }.compile();
 
 	// Interactive mode
 	} else {
 		state.setPermissions(parser::ParsingMode::STRING, true, false, true);
-		return run_interpreter(opts, state, argc, argv), 0;
+		auto repl = compiler::ReplDriver{ state, type_list };
+
+		return run_interpreter(repl), 0;
 	}
 }
 
@@ -165,98 +155,4 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& ast_stack) {
 void printAssembly(std::ostream& s, std::unique_ptr<llvm::Module>& llvm_code) {
 	llvm_code->print(llvm::outs(), nullptr);
 	llvm::outs() << '\n';
-}
-
-
-// Interpret the produced llvm ir code
-void spero::compiler::interpret(llvm::Interpreter* inter, std::unique_ptr<llvm::Module> llvm_code, spero::compiler::CompilationState& state) {
-	// Extract the "runtime" function and params from the module to ensure we run our expected code
-	// NOTE: We currently only produce `jitfunc` to have type `() -> Int`
-	auto jitfn = llvm_code->getFunction("jitfunc");
-
-	// Add the next "layer" of interpreted code to the interpreter state
-	// I think we still need to combine everything in a function though
-	// And I'm not sure how this handles name clashes
-	inter->addModule(std::move(llvm_code));
-
-	// The repl line may just define values for future usage, so the jitfn may not be created
-	if (jitfn) {
-
-		// Call the "runtime" function
-		std::vector<llvm::GenericValue> params;
-		auto res = inter->runFunction(jitfn, params);
-
-		// Print the output
-		auto& output = llvm::outs() << "result: ";
-#define TYPE(x) case llvm::Type::x##TyID
-		switch (jitfn->getReturnType()->getTypeID()) {
-			TYPE(Integer):
-				output << res.IntVal << '\n';
-				break;
-			TYPE(Void):
-			TYPE(Half):
-			TYPE(Float):
-			TYPE(Double):
-			TYPE(X86_FP80):
-			TYPE(FP128):
-			TYPE(PPC_FP128):
-			TYPE(Label):
-			TYPE(Metadata):
-			TYPE(X86_MMX):
-			TYPE(Token):
-			TYPE(Function):
-			TYPE(Struct):
-			TYPE(Array):
-			TYPE(Pointer):
-			TYPE(Vector):
-			default:
-				output << "Unimplemented type\n";
-		}
-
-		// Delete the `jit` function from the parent module so we always use the most recent one
-		jitfn->eraseFromParent();
-	}
-}
-
-void spero::compiler::transformAstForInterpretation(parser::Stack& ast_stack, CompilationState& state) {
-	// Collect all non-function definitions and move them into a new function, "jitfunc"
-	// Set the `mangle` flag of jitfunc to be false and then insert into the stack
-
-	// IDEA:
-	// Take all functions as is
-	// All other variable declarations will be performed as global assignments (no re-organization)?
-	// Blocks can only take `ast::Statement` nodes, so any non-Statements keep in the stack
-	// Anything that is not a `*Assign` node (or Interface/etc.) is wrapped inside of a jit function
-	// TODO: If all nodes are `*Assign`, do ...
-
-	// There's apparently no `take_if` std method
-	std::deque<ptr<ast::Statement>> exprs;
-	for (auto i = 0u; i != ast_stack.size();) {
-		// TODO: What would I be "losing" with this?
-		if (!util::is_type<ast::Statement>(ast_stack[i])) {
-			++i;
-			continue;
-		}
-
-		if (auto var_assign = util::view_as<ast::VarAssign>(ast_stack[i])) {
-			// TODO: Implement global variables. Only then can we remove this check
-			if (util::is_type<ast::Function>(var_assign->expr)) {
-				++i;
-				continue;
-			}
-		}
-
-		exprs.push_back(util::dyn_cast<ast::Statement>(std::move(ast_stack[i])));
-		
-		auto iter = std::begin(ast_stack);
-		std::advance(iter, i);
-		ast_stack.erase(iter);
-	}
-
-	if (exprs.size() > 0) {
-		auto location = exprs[0]->loc;
-		auto fn = std::make_unique<ast::Function>(std::deque<ptr<ast::Argument>>{}, std::make_unique<ast::Block>(std::move(exprs), location), location);
-		auto assign_name = std::make_unique<ast::AssignName>(std::make_unique<ast::BasicBinding>("jitfunc", ast::BindingType::VARIABLE, location), location);
-		ast_stack.push_back(std::make_unique<ast::VarAssign>(ast::VisibilityType::PUBLIC, std::move(assign_name), nullptr, nullptr, std::move(fn), location));
-	}
 }

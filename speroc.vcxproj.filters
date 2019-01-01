@@ -16,14 +16,8 @@
     <Filter Include="Header Files\utils">
       <UniqueIdentifier>{c4f25476-3d6e-4bb0-924f-b27776952f6a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\codegen">
-      <UniqueIdentifier>{4f8af7c7-fd55-477c-b049-b63289dc4cba}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\interface">
       <UniqueIdentifier>{dcc9221b-6b30-4bf5-a6c9-2e9f9fe6bfba}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\codegen">
-      <UniqueIdentifier>{d6e02f0b-5f06-44f7-9aeb-c590e8ea0495}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\interface">
       <UniqueIdentifier>{f5f2743f-ebed-4e1f-8d73-3a9d97e31089}</UniqueIdentifier>
@@ -100,6 +94,9 @@
     <Filter Include="Header Files\frontend">
       <UniqueIdentifier>{ee331ba1-3129-4fc0-bf3c-5a135de94c1e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\driver">
+      <UniqueIdentifier>{1214ee32-d516-4932-ba3d-c83ad5d8f396}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -112,14 +109,8 @@
     <ClCompile Include="src\SymTable.cpp">
       <Filter>Source Files\analysis</Filter>
     </ClCompile>
-    <ClCompile Include="src\compilation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\strings.cpp">
       <Filter>Source Files\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\LlvmIrGenerator.cpp">
-      <Filter>Source Files\codegen</Filter>
     </ClCompile>
     <ClCompile Include="src\VarDeclPass.cpp">
       <Filter>Source Files\passes</Filter>
@@ -132,6 +123,18 @@
     </ClCompile>
     <ClCompile Include="src\ast.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AnalysisDriver.cpp">
+      <Filter>Source Files\driver</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CompilationDriver.cpp">
+      <Filter>Source Files\driver</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ReplDriver.cpp">
+      <Filter>Source Files\driver</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LlvmIrGenerator.cpp">
+      <Filter>Source Files\passes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -213,9 +216,6 @@
     </ClInclude>
     <ClInclude Include="dep\cxxopts\include\cxxopts.hpp">
       <Filter>Dependencies\cxxopts</Filter>
-    </ClInclude>
-    <ClInclude Include="incl\compilation.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="dep\spdlog\include\spdlog\async_logger.h">
       <Filter>Dependencies\spdlog</Filter>
@@ -356,8 +356,8 @@
     <ClInclude Include="incl\analysis\AnalysisState.h">
       <Filter>Header Files\analysis</Filter>
     </ClInclude>
-    <ClInclude Include="incl\codegen\LlvmIrGenerator.h">
-      <Filter>Header Files\codegen</Filter>
+    <ClInclude Include="incl\driver\CompilationDriver.h">
+      <Filter>Header Files\driver</Filter>
     </ClInclude>
     <ClInclude Include="incl\analysis\VarDeclPass.h">
       <Filter>Header Files\passes</Filter>
@@ -369,6 +369,15 @@
       <Filter>Header Files\analysis</Filter>
     </ClInclude>
     <ClInclude Include="incl\analysis\BasicTypingPass.h">
+      <Filter>Header Files\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\driver\AnalysisDriver.h">
+      <Filter>Header Files\driver</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\driver\ReplDriver.h">
+      <Filter>Header Files\driver</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\codegen\LlvmIrGenerator.h">
       <Filter>Header Files\passes</Filter>
     </ClInclude>
   </ItemGroup>
