@@ -22,6 +22,7 @@ namespace spero::cmd {
 			("A,allow", "Turn compilation warnings into logs", value<std::vector<std::string>>())
 			("L,showlog", "Display log messages along with warnings and errors")
 			("target", "Set the compilation target", value<std::string>()->default_value("win10"))
+			("O", "Specify the optimization level", value<char>()->default_value("0"))
 			("o,out", "Specify output file", value<std::string>()->default_value("out.exe"));
 
 

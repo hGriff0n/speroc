@@ -62,8 +62,7 @@ void AnalysisDriver::translateAstToLlvm() {
 
 void AnalysisDriver::optimizeLlvm() {
 	// TODO: Implement llvm ir optimization
-	bool do_optimize = false;
-	if (!state.failed() && do_optimize) {
+	if (!state.failed() && state.optimizationLevel() == OptimizationLevel::ALL) {
 		TIMER("llvm_ir_optimization");
 	}
 }

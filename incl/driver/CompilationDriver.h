@@ -7,8 +7,8 @@ namespace spero::compiler {
 	class CompilationDriver : public AnalysisDriver {
 		protected:
 			// Backend: LLVM IR -> Executable
-			void writeLlvmToFile(bool perform_compilation);
-			void triggerClangCompile(bool perform_compilation);
+			void writeLlvmToFile();
+			void triggerClangCompile();
 
 		public:
 			CompilationDriver(CompilationState& state, analysis::AllTypes& types);

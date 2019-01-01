@@ -12,8 +12,8 @@ using namespace spero::compiler;
 CompilationDriver::CompilationDriver(CompilationState& state, analysis::AllTypes& types) : AnalysisDriver{ state, types } {}
 
 #define TIMER(name) auto _ = state.timer(name)
-void CompilationDriver::writeLlvmToFile(bool perform_compilation) {
-	if (!state.failed() && perform_compilation) {
+void CompilationDriver::writeLlvmToFile() {
+	if (!state.failed()) {
 		TIMER("assembly_output");
 
 		std::error_code ec;
@@ -27,8 +27,8 @@ void CompilationDriver::writeLlvmToFile(bool perform_compilation) {
 
 #define ASM_COMPILER "clang"
 #define ASM_TEMP_OUTPUT_FILE "out.ll"
-void CompilationDriver::triggerClangCompile(bool perform_compilation) {
-	if (!state.failed() && state.produceExe() && perform_compilation) {
+void CompilationDriver::triggerClangCompile() {
+	if (!state.failed() && state.produceExe()) {
 		TIMER("clang_compilation");
 
 		auto clang_command = ASM_COMPILER " " ASM_TEMP_OUTPUT_FILE " -o " + state.output();
@@ -49,18 +49,16 @@ bool CompilationDriver::compile() try {
 	// frontend
 	parseInput(parser_mode, state.files()[0]);
 
-	if (do_compile) {
-		// analysis
-		analyzeAst();
+	// analysis
+	analyzeAst();
 
-		// backend
-		translateAstToLlvm();
-		optimizeLlvm();
+	// backend
+	translateAstToLlvm();
+	optimizeLlvm();
 
-		// compilation
-		writeLlvmToFile(link);
-		triggerClangCompile(link);
-	}
+	// compilation
+	writeLlvmToFile();
+	triggerClangCompile();
 
 	return state.failed();
 

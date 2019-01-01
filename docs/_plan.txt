@@ -13,7 +13,6 @@ Current Project State
 Current Project Plan
   Add in LLVM IR production stage
 	Look at modifying the compilation pipeline to accomodate the llvm ir changes
-	  Draw up initial ideas for a replacement of `CompilationState`
 	  Still can't access "external" modules because of LlvmIrGenerator
 	    All accesses (such as for fncall) goes through the current translation_unit
 		  However, that unit has no sense that the functions already exist externally
@@ -26,7 +25,7 @@ Current Project Plan
 	  See what other structures we should "flatten"
 	Look at reorganizing the file structure
 	Look into reorganizing the 'AnalysisState' structure
-	  Particularly the 'AllTypes&' memer
+	  Particularly the 'AllTypes&' member
 	Look at including LLVM methods throughout the codebase
 	  I think particularly for dynamic casts, LLVM could drastically help
 	  There may also be pre-implemented `CompilationState` and `SymTable` style structures
@@ -38,8 +37,7 @@ Current Project Plan
 		The type of a "reassigned" variable may be inferred as different than the original variable
 	Setup basic llvm optimization pass structure on the produced ir
 	  Only run `mem2reg` for the moment
-	  Add an "optimization level" argument to the compilation state
-	    Make this argument settable in the repl loop		
+	  Make the optimization level settable in the repl loop
     Merge the llvm-ir branch into master
 	  Improve documentation and update readme
 	  Run all tests and ensure they pass
@@ -138,6 +136,7 @@ Current Project Plan
 	  Definitely need to flatten the symbol table to improve lookup behavior
 	  There's also a couple pieces of information that we may want to add in, but can't fit into the existing AST structure
 	    ie. TypeAssign will need to be translated to a `member + methods + mutable` tuple instead of the `conslist + body + mutable` tuple we have
+	LLVM has a pre-existing optimization level interface, use that instead of my enum hack
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)

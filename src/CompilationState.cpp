@@ -29,6 +29,9 @@ namespace spero::compiler {
 	llvm::LLVMContext& CompilationState::getContext() {
 		return *context;
 	}
+	OptimizationLevel CompilationState::optimizationLevel() {
+		return opt_level;
+	}
 
 	/* Example code on how to create a "multi-sink" logger
 	std::vector<spdlog::sink_ptr> sinks;
