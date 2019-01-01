@@ -41,9 +41,7 @@ namespace spero::compiler {
 			// analysis
 			addInterpreterAstTransformations();
 			analyzeAst();
-			if (!state.failed()) {
-				ir_hook(ast);
-			}
+			ir_hook(ast);
 
 			// backend
 			translateAstToLlvm();

@@ -54,7 +54,7 @@ namespace spero::analysis {
 		context = ScopingContext::SCOPE;
 
 		// Create the SymTable in the arena
-		dictionary.arena.push_back(SymTable{ current, context });
+		dictionary.arena.push_back(SymTable{ *f.body->locals, context });
 		dictionary.arena.back().setParent(parent_scope);
 
 		AstVisitor::visitFunction(f);

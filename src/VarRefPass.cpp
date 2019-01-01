@@ -37,7 +37,8 @@ namespace spero::analysis {
 			return;
 		}
 
-		auto nvar = dictionary.arena[def_table].get((**iter).name, nullptr, (**iter).loc, (**iter).ssa_index);
+		auto& path_part = **iter;
+		auto nvar = dictionary.arena[def_table].get(path_part.name, nullptr, path_part.loc, path_part.ssa_index);
 		if (nvar) {
 			if (!std::holds_alternative<ref_t<SymbolInfo>>(*nvar)) {
 				state.log(ID::err, "Attempt to use non-variable symbol `{}` as a variable <at {}>", *v.name, v.loc);

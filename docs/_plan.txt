@@ -12,12 +12,13 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-    Fix error with "let a = 3; a" not compiling
-	  `VarRefPass::visitVariable` says that 'a' is not in any SymTable, but that is wrong
 	Look at modifying the compilation pipeline to accomodate the llvm ir changes
 	  Draw up initial ideas for a replacement of `CompilationState`
-	  Test suitability for maintaining functions accross runs
-	    NOTE: Variables should follow once we start producing globals
+	  Still can't access "external" modules because of LlvmIrGenerator
+	    All accesses (such as for fncall) goes through the current translation_unit
+		  However, that unit has no sense that the functions already exist externally
+		  Need to export all prototypes of the functions into the "new" module, somehow
+	  Try to stop the production of "empty" symbol tables in the arena
 	Produce "levelling" pass to transform initial ast into a more workable version
 	  All symbols will map into a flat structure, with each entry having a unique id
 	    All symbol references will, after this pass, operate through this "flat" index
