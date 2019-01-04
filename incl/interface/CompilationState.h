@@ -53,9 +53,11 @@ namespace spero::compiler {
 		CompilationPermissions permissions;
 
 		std::unique_ptr<llvm::LLVMContext> context;
-		OptimizationLevel opt_level = OptimizationLevel::NONE;
 
 		spdlog::logger& getLogger(ID msg_id);
+
+		protected:
+			OptimizationLevel opt_level = OptimizationLevel::NONE;
 
 		public:
 			CompilationState(char** fst, char** snd);
@@ -87,6 +89,7 @@ namespace spero::compiler {
 			virtual std::string targetTriple() abstract;
 			virtual std::string targetDataLayout() abstract;
 			OptimizationLevel optimizationLevel();
+			void flipOptimization();
 
 			llvm::LLVMContext& getContext();
 			int failed() const;

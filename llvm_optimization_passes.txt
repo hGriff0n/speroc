@@ -1,0 +1,183 @@
+Running analysis: PassInstrumentationAnalysis on speroc
+Starting llvm::Module pass manager run.
+Running pass: ForceFunctionAttrsPass on speroc
+Running pass: PassManager<class llvm::Module,class llvm::AnalysisManager<class llvm::Module> > on speroc
+Starting llvm::Module pass manager run.
+Running pass: InferFunctionAttrsPass on speroc
+Running analysis: TargetLibraryAnalysis on speroc
+Running pass: ModuleToFunctionPassAdaptor<class llvm::PassManager<class llvm::Function,class llvm::AnalysisManager<class llvm::Function> > > on speroc
+Running analysis: InnerAnalysisManagerProxy<class llvm::AnalysisManager<class llvm::Function>,class llvm::Module> on speroc
+Running analysis: PassInstrumentationAnalysis on jitfunc
+Starting llvm::Function pass manager run.
+Running pass: SimplifyCFGPass on jitfunc
+Running analysis: TargetIRAnalysis on jitfunc
+Running analysis: AssumptionAnalysis on jitfunc
+Running pass: SROA on jitfunc
+Running analysis: DominatorTreeAnalysis on jitfunc
+Running pass: EarlyCSEPass on jitfunc
+Running analysis: TargetLibraryAnalysis on jitfunc
+Running pass: LowerExpectIntrinsicPass on jitfunc
+Finished llvm::Function pass manager run.
+Running pass: IPSCCPPass on speroc
+Running pass: CalledValuePropagationPass on speroc
+Running pass: GlobalOptPass on speroc
+Invalidating all non-preserved analyses for: speroc
+Invalidating analysis: InnerAnalysisManagerProxy<class llvm::AnalysisManager<class llvm::Function>,class llvm::Module> on speroc
+Running pass: ModuleToFunctionPassAdaptor<class llvm::PromotePass> on speroc
+Running analysis: InnerAnalysisManagerProxy<class llvm::AnalysisManager<class llvm::Function>,class llvm::Module> on speroc
+Running analysis: DominatorTreeAnalysis on jitfunc
+Running analysis: PassInstrumentationAnalysis on jitfunc
+Running analysis: AssumptionAnalysis on jitfunc
+Running pass: DeadArgumentEliminationPass on speroc
+Running pass: ModuleToFunctionPassAdaptor<class llvm::PassManager<class llvm::Function,class llvm::AnalysisManager<class llvm::Function> > > on speroc
+Starting llvm::Function pass manager run.
+Running pass: InstCombinePass on jitfunc
+Running analysis: TargetLibraryAnalysis on jitfunc
+Running analysis: OptimizationRemarkEmitterAnalysis on jitfunc
+Running analysis: AAManager on jitfunc
+Running pass: SimplifyCFGPass on jitfunc
+Running analysis: TargetIRAnalysis on jitfunc
+Finished llvm::Function pass manager run.
+Running pass: RequireAnalysisPass<class llvm::GlobalsAA,class llvm::Module,class llvm::AnalysisManager<class llvm::Module> > on speroc
+Running analysis: GlobalsAA on speroc
+Running analysis: CallGraphAnalysis on speroc
+Running pass: RequireAnalysisPass<class llvm::ProfileSummaryAnalysis,class llvm::Module,class llvm::AnalysisManager<class llvm::Module> > on speroc
+Running analysis: ProfileSummaryAnalysis on speroc
+Running pass: ModuleToPostOrderCGSCCPassAdaptor<class llvm::DevirtSCCRepeatedPass<class llvm::PassManager<class llvm::LazyCallGraph::SCC,class llvm::AnalysisManager<class llvm::LazyCallGraph::SCC,class llvm::LazyCallGraph &>,class llvm::LazyCallGraph &,struct llvm::CGSCCUpdateResult &> > > on speroc
+Running analysis: InnerAnalysisManagerProxy<class llvm::AnalysisManager<class llvm::LazyCallGraph::SCC,class llvm::LazyCallGraph &>,class llvm::Module> on speroc
+Running analysis: LazyCallGraphAnalysis on speroc
+Running analysis: PassInstrumentationAnalysis on (jitfunc)
+Starting CGSCC pass manager run.
+Running pass: InlinerPass on (jitfunc)
+Running analysis: OuterAnalysisManagerProxy<class llvm::AnalysisManager<class llvm::Module>,class llvm::LazyCallGraph::SCC,class llvm::LazyCallGraph &> on (jitfunc)
+Running analysis: FunctionAnalysisManagerCGSCCProxy on (jitfunc)
+Running pass: PostOrderFunctionAttrsPass on (jitfunc)
+Invalidating all non-preserved analyses for: (jitfunc)
+Clearing all analysis results for: jitfunc
+Invalidating analysis: FunctionAnalysisManagerCGSCCProxy on (jitfunc)
+Running pass: CGSCCToFunctionPassAdaptor<class llvm::PassManager<class llvm::Function,class llvm::AnalysisManager<class llvm::Function> > > on (jitfunc)
+Running analysis: FunctionAnalysisManagerCGSCCProxy on (jitfunc)
+Running analysis: PassInstrumentationAnalysis on jitfunc
+Starting llvm::Function pass manager run.
+Running pass: SROA on jitfunc
+Running analysis: AssumptionAnalysis on jitfunc
+Running analysis: DominatorTreeAnalysis on jitfunc
+Running pass: EarlyCSEPass on jitfunc
+Running analysis: TargetLibraryAnalysis on jitfunc
+Running analysis: TargetIRAnalysis on jitfunc
+Running analysis: MemorySSAAnalysis on jitfunc
+Running analysis: AAManager on jitfunc
+Running pass: SpeculativeExecutionPass on jitfunc
+Running pass: JumpThreadingPass on jitfunc
+Running analysis: LazyValueAnalysis on jitfunc
+Running pass: CorrelatedValuePropagationPass on jitfunc
+Running pass: SimplifyCFGPass on jitfunc
+Running pass: InstCombinePass on jitfunc
+Running analysis: OptimizationRemarkEmitterAnalysis on jitfunc
+Running pass: LibCallsShrinkWrapPass on jitfunc
+Running pass: TailCallElimPass on jitfunc
+Running pass: SimplifyCFGPass on jitfunc
+Running pass: ReassociatePass on jitfunc
+Running pass: RequireAnalysisPass<class llvm::OptimizationRemarkEmitterAnalysis,class llvm::Function,class llvm::AnalysisManager<class llvm::Function> > on jitfunc
+Running pass: FunctionToLoopPassAdaptor<class llvm::PassManager<class llvm::Loop,class llvm::AnalysisManager<class llvm::Loop,struct llvm::LoopStandardAnalysisResults &>,struct llvm::LoopStandardAnalysisResults &,class llvm::LPMUpdater &> > on jitfunc
+Starting llvm::Function pass manager run.
+Running pass: LoopSimplifyPass on jitfunc
+Running analysis: LoopAnalysis on jitfunc
+Running pass: LCSSAPass on jitfunc
+Finished llvm::Function pass manager run.
+Running pass: SimplifyCFGPass on jitfunc
+Running pass: InstCombinePass on jitfunc
+Running pass: FunctionToLoopPassAdaptor<class llvm::PassManager<class llvm::Loop,class llvm::AnalysisManager<class llvm::Loop,struct llvm::LoopStandardAnalysisResults &>,struct llvm::LoopStandardAnalysisResults &,class llvm::LPMUpdater &> > on jitfunc
+Starting llvm::Function pass manager run.
+Running pass: LoopSimplifyPass on jitfunc
+Running pass: LCSSAPass on jitfunc
+Finished llvm::Function pass manager run.
+Running pass: MemCpyOptPass on jitfunc
+Running analysis: MemoryDependenceAnalysis on jitfunc
+Running analysis: PhiValuesAnalysis on jitfunc
+Running pass: SCCPPass on jitfunc
+Running pass: BDCEPass on jitfunc
+Running analysis: DemandedBitsAnalysis on jitfunc
+Running pass: InstCombinePass on jitfunc
+Running pass: JumpThreadingPass on jitfunc
+Running pass: CorrelatedValuePropagationPass on jitfunc
+Running pass: DSEPass on jitfunc
+Running pass: FunctionToLoopPassAdaptor<class llvm::LICMPass> on jitfunc
+Starting llvm::Function pass manager run.
+Running pass: LoopSimplifyPass on jitfunc
+Running pass: LCSSAPass on jitfunc
+Finished llvm::Function pass manager run.
+Running pass: ADCEPass on jitfunc
+Running analysis: PostDominatorTreeAnalysis on jitfunc
+Running pass: SimplifyCFGPass on jitfunc
+Running pass: InstCombinePass on jitfunc
+Finished llvm::Function pass manager run.
+Finished CGSCC pass manager run.
+Invalidating all non-preserved analyses for: speroc
+Invalidating all non-preserved analyses for: jitfunc
+Invalidating analysis: DominatorTreeAnalysis on jitfunc
+Invalidating analysis: AAManager on jitfunc
+Invalidating analysis: MemorySSAAnalysis on jitfunc
+Invalidating analysis: LazyValueAnalysis on jitfunc
+Invalidating analysis: LoopAnalysis on jitfunc
+Invalidating analysis: PhiValuesAnalysis on jitfunc
+Invalidating analysis: MemoryDependenceAnalysis on jitfunc
+Invalidating analysis: DemandedBitsAnalysis on jitfunc
+Invalidating analysis: PostDominatorTreeAnalysis on jitfunc
+Invalidating analysis: CallGraphAnalysis on speroc
+Invalidating analysis: GlobalsAA on speroc
+Finished llvm::Module pass manager run.
+Running pass: PassManager<class llvm::Module,class llvm::AnalysisManager<class llvm::Module> > on speroc
+Starting llvm::Module pass manager run.
+Running pass: GlobalOptPass on speroc
+Running pass: GlobalDCEPass on speroc
+Running pass: EliminateAvailableExternallyPass on speroc
+Running pass: ReversePostOrderFunctionAttrsPass on speroc
+Running analysis: CallGraphAnalysis on speroc
+Running pass: RequireAnalysisPass<class llvm::GlobalsAA,class llvm::Module,class llvm::AnalysisManager<class llvm::Module> > on speroc
+Running analysis: GlobalsAA on speroc
+Running pass: ModuleToFunctionPassAdaptor<class llvm::PassManager<class llvm::Function,class llvm::AnalysisManager<class llvm::Function> > > on speroc
+Starting llvm::Function pass manager run.
+Running pass: Float2IntPass on jitfunc
+Running pass: FunctionToLoopPassAdaptor<class llvm::LoopRotatePass> on jitfunc
+Starting llvm::Function pass manager run.
+Running pass: LoopSimplifyPass on jitfunc
+Running analysis: LoopAnalysis on jitfunc
+Running analysis: DominatorTreeAnalysis on jitfunc
+Running pass: LCSSAPass on jitfunc
+Finished llvm::Function pass manager run.
+Running pass: LoopDistributePass on jitfunc
+Running analysis: ScalarEvolutionAnalysis on jitfunc
+Running analysis: AAManager on jitfunc
+Running analysis: InnerAnalysisManagerProxy<class llvm::AnalysisManager<class llvm::Loop,struct llvm::LoopStandardAnalysisResults &>,class llvm::Function> on jitfunc
+Running pass: LoopVectorizePass on jitfunc
+Running analysis: BlockFrequencyAnalysis on jitfunc
+Running analysis: BranchProbabilityAnalysis on jitfunc
+Running analysis: DemandedBitsAnalysis on jitfunc
+Running pass: LoopLoadEliminationPass on jitfunc
+Running pass: InstCombinePass on jitfunc
+Running pass: SimplifyCFGPass on jitfunc
+Running pass: SLPVectorizerPass on jitfunc
+Running pass: InstCombinePass on jitfunc
+Running pass: LoopUnrollPass on jitfunc
+Running analysis: OuterAnalysisManagerProxy<class llvm::AnalysisManager<class llvm::Module>,class llvm::Function> on jitfunc
+Running pass: WarnMissedTransformationsPass on jitfunc
+Running pass: InstCombinePass on jitfunc
+Running pass: RequireAnalysisPass<class llvm::OptimizationRemarkEmitterAnalysis,class llvm::Function,class llvm::AnalysisManager<class llvm::Function> > on jitfunc
+Running pass: FunctionToLoopPassAdaptor<class llvm::LICMPass> on jitfunc
+Starting llvm::Function pass manager run.
+Running pass: LoopSimplifyPass on jitfunc
+Running pass: LCSSAPass on jitfunc
+Finished llvm::Function pass manager run.
+Running pass: AlignmentFromAssumptionsPass on jitfunc
+Running pass: LoopSinkPass on jitfunc
+Running pass: InstSimplifyPass on jitfunc
+Running pass: DivRemPairsPass on jitfunc
+Running pass: SimplifyCFGPass on jitfunc
+Running pass: SpeculateAroundPHIsPass on jitfunc
+Finished llvm::Function pass manager run.
+Running pass: CGProfilePass on speroc
+Running pass: GlobalDCEPass on speroc
+Running pass: ConstantMergePass on speroc
+Finished llvm::Module pass manager run.
+Finished llvm::Module pass manager run.

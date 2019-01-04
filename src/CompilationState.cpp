@@ -32,6 +32,9 @@ namespace spero::compiler {
 	OptimizationLevel CompilationState::optimizationLevel() {
 		return opt_level;
 	}
+	void CompilationState::flipOptimization() {
+		opt_level = (opt_level == OptimizationLevel::NONE) ? OptimizationLevel::ALL : OptimizationLevel::NONE;
+	}
 
 	/* Example code on how to create a "multi-sink" logger
 	std::vector<spdlog::sink_ptr> sinks;

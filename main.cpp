@@ -54,7 +54,11 @@ void run_interpreter(spero::compiler::ReplDriver& repl) {
 
 		} else if (command == ":s") {
 			for (auto flag : util::split(input.substr(3), ',')) {
-				flags[flag] = !flags[flag];
+				if (flag == "opt") {
+					state.flipOptimization();
+				} else {
+					flags[flag] = !flags[flag];
+				}
 			}
 
 			continue;

@@ -4,40 +4,46 @@
 #include "analysis/AnalysisState.h"
 
 namespace llvm {
-	class Module;
 	class LLVMContext;
+	class Module;
 }
 
 namespace spero::compiler {
 
 	using SperoModule = std::unique_ptr<llvm::Module>;
+	struct Optimizer;
 
 	class AnalysisDriver {
-	protected:
-		CompilationState& state;
-		llvm::LLVMContext& context;
+		protected:
+			CompilationState& state;
+			llvm::LLVMContext& context;
 
-		parser::Stack ast;
-		analysis::AnalysisState decls;
-		SperoModule translation_unit = nullptr;
+			// TODO: Not sure if pimpl is a good idea
+			// Depends on whether the downstream code benefits from llvm or not
+			Optimizer* opt = nullptr;
 
-	protected:
-		// Frontend: source -> AST
-		void parseInput(parser::ParsingMode parser_mode, const std::string& input);
+			parser::Stack ast;
+			analysis::AnalysisState decls;
+			SperoModule translation_unit = nullptr;
 
-		// Analysis: AST -> MIR (LLVM IR)
-		void analyzeAst();
+		protected:
+			// Frontend: source -> AST
+			void parseInput(parser::ParsingMode parser_mode, const std::string& input);
 
-		// Backend: MIR (LLVM IR) -> LLVM IR
-		void translateAstToLlvm();
-		void optimizeLlvm();
+			// Analysis: AST -> MIR (LLVM IR)
+			void analyzeAst();
 
-	public:
-		AnalysisDriver(CompilationState& state, analysis::AllTypes& types);
+			// Backend: MIR (LLVM IR) -> LLVM IR
+			virtual void translateAstToLlvm();
+			void optimizeLlvm();
+			//void updateOptimizationLevel();
 
-		inline CompilationState& getState() {
-			return state;
-		}
+		public:
+			AnalysisDriver(CompilationState& state, analysis::AllTypes& types);
+
+			inline CompilationState& getState() {
+				return state;
+			}
 	};
 
 }

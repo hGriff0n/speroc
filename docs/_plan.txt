@@ -12,35 +12,25 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-	Look at modifying the compilation pipeline to accomodate the llvm ir changes
-	  Still can't access "external" modules because of LlvmIrGenerator
-	    All accesses (such as for fncall) goes through the current translation_unit
-		  However, that unit has no sense that the functions already exist externally
-		  Need to export all prototypes of the functions into the "new" module, somehow
-	  Try to stop the production of "empty" symbol tables in the arena
+	Maintain the optimization structures across multiple passes
 	Produce "levelling" pass to transform initial ast into a more workable version
 	  All symbols will map into a flat structure, with each entry having a unique id
 	    All symbol references will, after this pass, operate through this "flat" index
 		The symbol table at this pass will have no need to return `opt_t<...>` as the symbol can be assumed to exist
 	  See what other structures we should "flatten"
-	Look at reorganizing the file structure
 	Look into reorganizing the 'AnalysisState' structure
 	  Particularly the 'AllTypes&' member
 	Look at including LLVM methods throughout the codebase
 	  I think particularly for dynamic casts, LLVM could drastically help
-	  There may also be pre-implemented `CompilationState` and `SymTable` style structures
-	    Although I think we'll still have to make subclasses to be specific
 	  Implement automatic converstion from spero::String to llvm::StringRef
-	Look at changing analysis framework to automatically translate 'reassignments' into 'ssa assignments'
-	  This is mostly to simplify the translation to llvm ir
-	  The downside would be a slight complication with the type inference engine
-		The type of a "reassigned" variable may be inferred as different than the original variable
-	Setup basic llvm optimization pass structure on the produced ir
-	  Only run `mem2reg` for the moment
-	  Make the optimization level settable in the repl loop
+	Figure Out Why I Can't Call External Functions in Repl
+	  We can track prototypes, but apparently, when we call them from the Interpreter, llvm fails
+	    Calling "FindFunctionNamed" finds the function though ???
+	    There's no documentation on llvm::Interpreter, might have to change to one of the JITs
     Merge the llvm-ir branch into master
 	  Improve documentation and update readme
 	  Run all tests and ensure they pass
+	    This basically amounts to checking whether the compilation process works
 		
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it
@@ -76,6 +66,7 @@ Current Project Plan
 	Integrate functions into the type system
 	  Figure out how to get function types working as distinct types
 	  Add in experimental code to the arguments to allow for restricting based on the type
+
   Fix grammar and ast properties
     Require directly affixing pointers and references to types
     Allow anon_type to be attached after 'var_val/atom' rules
@@ -137,6 +128,7 @@ Current Project Plan
 	  There's also a couple pieces of information that we may want to add in, but can't fit into the existing AST structure
 	    ie. TypeAssign will need to be translated to a `member + methods + mutable` tuple instead of the `conslist + body + mutable` tuple we have
 	LLVM has a pre-existing optimization level interface, use that instead of my enum hack
+	  This is what we have in the `optimizeLlvm` code
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
@@ -150,12 +142,10 @@ Current Project Plan
   Improve "help" support
     Look into adding "code of conduct"
 
-  Type Inference
-    explicit annotations within the ast
   Custom type definition
   Improve system benchmark collection
   Improve command line interface collection
     Improve the handling of "flags" within the interpreter
   ...
-  Converting Operators into function calls [ <- Needs mutability checking and references
+  Converting Operators into function calls <- Needs mutability checking and references
   Allow for unicode variable names
