@@ -32,20 +32,20 @@ void ReplDriver::addInterpreterAstTransformations() {
 	std::deque<ptr<ast::Statement>> exprs;
 	for (auto i = 0u; i != ast.size();) {
 		// TODO: What would I be "losing" with this?
-		if (!util::is_type<ast::Statement>(ast[i])) {
+		if (!util::isType<ast::Statement>(ast[i])) {
 			++i;
 			continue;
 		}
 
-		if (auto var_assign = util::view_as<ast::VarAssign>(ast[i])) {
+		if (auto var_assign = util::viewAs<ast::VarAssign>(ast[i])) {
 			// TODO: Implement global variables. Only then can we remove this check
-			if (util::is_type<ast::Function>(var_assign->expr)) {
+			if (util::isType<ast::Function>(var_assign->expr)) {
 				++i;
 				continue;
 			}
 		}
 
-		exprs.push_back(util::dyn_cast<ast::Statement>(std::move(ast[i])));
+		exprs.push_back(util::dynCast<ast::Statement>(std::move(ast[i])));
 
 		auto iter = std::begin(ast);
 		std::advance(iter, i);

@@ -365,7 +365,7 @@ namespace spero::compiler::gen {
 		}
 	}
 	void LlvmIrGenerator::visitFnCall(ast::FnCall& f) {
-		auto fn_name = util::view_as<ast::Variable>(f.callee);
+		auto fn_name = util::viewAs<ast::Variable>(f.callee);
 		if (!fn_name) {
 			state.log(compiler::ID::err, "Calling non-var-bound functions is currently not supported <at {}>", f.loc);
 			return;

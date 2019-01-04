@@ -179,6 +179,9 @@
     <Text Include="llvm_resources.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="llvm_optimization_passes.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="incl\parser\ast.h">

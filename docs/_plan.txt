@@ -12,7 +12,9 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-	Maintain the optimization structures across multiple passes
+    Get tests passing
+	  All of them currently seem to fail on 'no such file or directory "out.ll"' (which is wierd)
+	  Looks like something crashes internally (which doesn't get reported ???)
 	Produce "levelling" pass to transform initial ast into a more workable version
 	  All symbols will map into a flat structure, with each entry having a unique id
 	    All symbol references will, after this pass, operate through this "flat" index
@@ -20,17 +22,12 @@ Current Project Plan
 	  See what other structures we should "flatten"
 	Look into reorganizing the 'AnalysisState' structure
 	  Particularly the 'AllTypes&' member
-	Look at including LLVM methods throughout the codebase
-	  I think particularly for dynamic casts, LLVM could drastically help
-	  Implement automatic converstion from spero::String to llvm::StringRef
 	Figure Out Why I Can't Call External Functions in Repl
 	  We can track prototypes, but apparently, when we call them from the Interpreter, llvm fails
 	    Calling "FindFunctionNamed" finds the function though ???
 	    There's no documentation on llvm::Interpreter, might have to change to one of the JITs
     Merge the llvm-ir branch into master
 	  Improve documentation and update readme
-	  Run all tests and ensure they pass
-	    This basically amounts to checking whether the compilation process works
 		
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it
