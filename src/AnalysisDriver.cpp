@@ -34,10 +34,15 @@ struct spero::compiler::Optimizer {
 	llvm::ModulePassManager driver;
 };
 
-AnalysisDriver::AnalysisDriver(CompilationState& state, analysis::AllTypes& types)
-	: context{ state.getContext() }, state{ state }, decls{ types }, opt{ new Optimizer() }
+AnalysisDriver::AnalysisDriver(CompilationState& state)
+	: context{ state.getContext() }, state{ state }, opt{ new Optimizer() }
 {
+	// Register the core spero types/etc.
+	// TODO: Replace with more generalized registration code
+	decls.loadModuleTypes(analysis::getCoreTypeList());
+
 	// Link and register all of the optimization passes
+	// TODO: Clean this up a bit
 	auto&[builder, loop_analysis, function_analysis, cGSCC_analysis, module_analysis, driver] = *opt;
 	builder.registerModuleAnalyses(module_analysis);
 	builder.registerCGSCCAnalyses(cGSCC_analysis);

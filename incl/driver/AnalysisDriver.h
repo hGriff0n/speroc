@@ -39,7 +39,7 @@ namespace spero::compiler {
 			//void updateOptimizationLevel();
 
 		public:
-			AnalysisDriver(CompilationState& state, analysis::AllTypes& types);
+			AnalysisDriver(CompilationState& state);
 
 			inline CompilationState& getState() {
 				return state;

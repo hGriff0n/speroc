@@ -6,8 +6,8 @@
 using namespace spero;
 using namespace spero::compiler;
 
-ReplDriver::ReplDriver(CompilationState& state, analysis::AllTypes& types)
-	: AnalysisDriver(state, types), interpreter{ std::make_unique<llvm::Module>("seproc-repl", context) }
+ReplDriver::ReplDriver(CompilationState& state)
+	: AnalysisDriver{ state }, interpreter{ std::make_unique<llvm::Module>("seproc-repl", context) }
 {}
 
 #define TIMER(name) auto _ = state.timer(name)

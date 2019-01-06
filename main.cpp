@@ -100,17 +100,16 @@ int main(int argc, char* argv[]) {
 	// Parse the command line arguments
 	auto opts = cmd::getOptions();
 	auto state = cmd::parse(opts, argc, argv);
-	auto type_list = analysis::initTypeList();
 
 	// Compiler run
 	if (!state.opts["interactive"].as<bool>()) {
 		state.setPermissions(parser::ParsingMode::FILE, true, true, false);
-		return compiler::CompilationDriver{ state, type_list }.compile();
+		return compiler::CompilationDriver{ state }.compile();
 
 	// Interactive mode
 	} else {
 		state.setPermissions(parser::ParsingMode::STRING, true, false, true);
-		auto repl = compiler::ReplDriver{ state, type_list };
+		auto repl = compiler::ReplDriver{ state };
 
 		return run_interpreter(repl), 0;
 	}

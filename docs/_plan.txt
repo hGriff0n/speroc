@@ -7,18 +7,16 @@ Current Project State
     recognized => Int, Bool (literals and comparison operators)
 	...
   variables => basic shadowing and scoping
-  functions => basically implemented, no type checking, decl before use
+  functions => recursion support, no type checking, decl before use, no OOP
   annotations => ignored
 
 Current Project Plan
   Add in LLVM IR production stage
-	Produce "levelling" pass to transform initial ast into a more workable version
-	  All symbols will map into a flat structure, with each entry having a unique id
-	    All symbol references will, after this pass, operate through this "flat" index
-		The symbol table at this pass will have no need to return `opt_t<...>` as the symbol can be assumed to exist
-	  See what other structures we should "flatten"
-	Look into reorganizing the 'AnalysisState' structure
-	  Particularly the 'AllTypes&' member
+	Improve ast-llvm interaction code
+	  Look at creating an "LlvmBuilderHelper" class to abstract some llvm-specific operations
+	  Look at changing the symbol table interfaces to allow for "known indexing"
+	    If we know which symtable the symbol was declared in, we should be able to get it in O(1)
+		NOTE: This may require some modification of the "Variable" storage (probably to a std::variant or a custom struct)
 	Figure Out Why I Can't Call External Functions in Repl
 	  We can track prototypes, but apparently, when we call them from the Interpreter, llvm fails
 	    Calling "FindFunctionNamed" finds the function though ???
@@ -31,6 +29,10 @@ Current Project Plan
 	  Implement a toy algorithm inside of a smaller program (with hardcoded types, etc.)
 	  Transfer the toy algorithm over to this program
 	Figure out how to load type information into the symbol table
+	  Look at modifying the symbol table implementation to instead have a "flattened" approach
+	    Particularly after the initial parsing and variable mapping work, we can create a unique name for every variable
+		There's may also be some benefit in translating everything into a more "LLVM"-esque ast/ir
+		  Pre-handling type conversions/etc where necessary, unravelling tuples and other non-llvm constructs
 	Intermediate Type Work (maybe)
 	  Come up with a quick way to get from a Variable/Binding ast node to it's symbol table information
 	    This would be quicker than running the full symbol table query
@@ -41,6 +43,8 @@ Current Project Plan
 		Implement indexing in the case that the indexed type is a tuple (and the index is an int literal)
 		Abstract the assignment rules to simplify the logic
 		  For an AssignTuple pattern, split into a series of 'AssignName' (only issue is regarding when scopes come into effect)
+	  Allow for the creation and usage of custom types
+	    Would need to create constructors, automatic destructor insertion, OOP function translation, struct typing
 
   Get functions working properly
 	Look into how to support local functions/closures

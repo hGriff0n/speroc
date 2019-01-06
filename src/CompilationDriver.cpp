@@ -9,7 +9,7 @@
 using namespace spero;
 using namespace spero::compiler;
 
-CompilationDriver::CompilationDriver(CompilationState& state, analysis::AllTypes& types) : AnalysisDriver{ state, types } {}
+CompilationDriver::CompilationDriver(CompilationState& state) : AnalysisDriver{ state } {}
 
 #define ASM_COMPILER "clang"
 #define ASM_TEMP_OUTPUT_FILE "out.ll"

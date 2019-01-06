@@ -27,7 +27,7 @@ namespace spero::compiler {
 			bool reset();
 
 		public:
-			ReplDriver(CompilationState& state, analysis::AllTypes& types);
+			ReplDriver(CompilationState& state);
 
 			template<class IrHookFn>
 			bool interpret(IrHookFn&& ir_hook) try {

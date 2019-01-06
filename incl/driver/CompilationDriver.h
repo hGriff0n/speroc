@@ -11,7 +11,7 @@ namespace spero::compiler {
 			void triggerClangCompile();
 
 		public:
-			CompilationDriver(CompilationState& state, analysis::AllTypes& types);
+			CompilationDriver(CompilationState& state);
 
 			bool compile();
 	};

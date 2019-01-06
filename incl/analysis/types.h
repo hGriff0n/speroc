@@ -7,6 +7,10 @@
 #include "spero_string.h"
 #include "analysis/SymTable.h"
 
+namespace llvm {
+	class Type;
+}
+
 namespace spero::analysis {
 
 	class Type;
@@ -19,6 +23,10 @@ namespace spero::analysis {
 		const Type* cannonical_type = this;
 		const SymTable* def = nullptr;			// This may have to be moved to a subtype (is there a type that doesn't need this - it doesn't have to use it)
 		String name;
+
+		// llvm translation helpers
+		// TODO: Needed ???
+		const llvm::Type* llvm_translation = nullptr;
 
 		bool is_mutable = false;
 		bool is_view = false;
@@ -44,7 +52,7 @@ namespace spero::analysis {
 	 *
 	 * TODO: This is eventually going to be handled through automatic module loading
 	 */
-	inline AllTypes initTypeList() {
+	inline const AllTypes& getCoreTypeList() {
 		static AllTypes types {
 			{ "Int", std::make_shared<Type>("Int") },
 			{ "Bool", std::make_shared<Type>("Bool") }
