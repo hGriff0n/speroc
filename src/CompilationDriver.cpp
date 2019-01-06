@@ -11,22 +11,25 @@ using namespace spero::compiler;
 
 CompilationDriver::CompilationDriver(CompilationState& state, analysis::AllTypes& types) : AnalysisDriver{ state, types } {}
 
+#define ASM_COMPILER "clang"
+#define ASM_TEMP_OUTPUT_FILE "out.ll"
 #define TIMER(name) auto _ = state.timer(name)
+
 void CompilationDriver::writeLlvmToFile() {
 	if (!state.failed()) {
 		TIMER("assembly_output");
 
 		std::error_code ec;
-		llvm::raw_fd_ostream out_stream{ state.output(), ec, llvm::sys::fs::F_None };
+		llvm::raw_fd_ostream out_stream{ ASM_TEMP_OUTPUT_FILE, ec, llvm::sys::fs::F_None };
 
 		translation_unit->setDataLayout(state.targetDataLayout());
 		translation_unit->setTargetTriple(state.targetTriple());
 		translation_unit->print(out_stream, nullptr);
+
+		out_stream.close();
 	}
 }
 
-#define ASM_COMPILER "clang"
-#define ASM_TEMP_OUTPUT_FILE "out.ll"
 void CompilationDriver::triggerClangCompile() {
 	if (!state.failed() && state.produceExe()) {
 		TIMER("clang_compilation");

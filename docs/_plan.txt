@@ -12,9 +12,6 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-    Get tests passing
-	  All of them currently seem to fail on 'no such file or directory "out.ll"' (which is wierd)
-	  Looks like something crashes internally (which doesn't get reported ???)
 	Produce "levelling" pass to transform initial ast into a more workable version
 	  All symbols will map into a flat structure, with each entry having a unique id
 	    All symbol references will, after this pass, operate through this "flat" index
@@ -60,6 +57,7 @@ Current Project Plan
 	  Implement basic type-checking/etc. to automatically select the correct functions based on operand types
 	  Implement boolean short-circuiting for && and ||
 	    Will require hard-coding these checks in the compiler (as methods automatically evaluate first)
+	Enable declaring functions after usage
 	Integrate functions into the type system
 	  Figure out how to get function types working as distinct types
 	  Add in experimental code to the arguments to allow for restricting based on the type
@@ -74,6 +72,8 @@ Current Project Plan
 	  Test "collections" will be determined by the folder they are in
 	    Inside these folders is the yaml specifying expected behavior
 		Individual tests may be able to run (ie. only run tests associated with collection.file)
+	Have specific error messages for when an input file doesn't exist/etc
+	  Generalize this to all "preconditions" (and postconditions)
     Have tester produce an output file specifying how many tests have passed
     Integrate this project with Jenkins CI
 

@@ -2,3 +2,9 @@ http://releases.llvm.org/6.0.1/docs/tutorial/index.html
 https://eli.thegreenplace.net/2017/adventures-in-jit-compilation-part-3-llvm/
 https://the-ravi-programming-language.readthedocs.io/en/latest/ravi-jit-initial.html
 https://llvm.org/docs/ProgrammersManual.html#the-c-standard-template-library
+
+https://llvm.org/docs/ProgrammersManual.html#the-c-standard-template-library
+http://llvm.org/doxygen/
+https://mapping-high-level-constructs-to-llvm-ir.readthedocs.io/en/latest/README.html
+https://medium.com/@mshockwave/writing-llvm-pass-in-2018-part-i-531c700e85eb
+https://blog.regehr.org/archives/1603

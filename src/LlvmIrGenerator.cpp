@@ -109,8 +109,6 @@ namespace spero::compiler::gen {
 		if (auto retval = visitNode(*f.body)) {
 			// TODO: Codegen cleanup code (this'll probably be pushed into the block)
 			builder.CreateRet(retval);
-
-			verifyFunction(*fn);
 			codegen = fn;
 
 		} else {
@@ -309,6 +307,16 @@ namespace spero::compiler::gen {
 		auto lhs = visitNode(*b.lhs);
 		auto rhs = visitNode(*b.rhs);
 
+		// Ensure the llvm values have the same types
+		// TODO: Come up with a better system for this
+		auto int32_type = Type::getInt32Ty(context);
+		if (lhs->getType() != int32_type) {
+			lhs = builder.CreateIntCast(lhs, int32_type, true);
+		}
+		if (rhs->getType() != int32_type) {
+			rhs = builder.CreateIntCast(rhs, int32_type, true);
+		}
+
 		if (b.op == "+") {
 			codegen = builder.CreateAdd(lhs, rhs);
 
@@ -321,6 +329,9 @@ namespace spero::compiler::gen {
 		} else if (b.op == "/") {
 			// I'm assuming this means "create signed division"
 			codegen = builder.CreateSDiv(lhs, rhs);
+
+		} else if (b.op == "%") {
+			codegen = builder.CreateSRem(lhs, rhs);
 
 		} else if (b.op == "==") {
 			codegen = builder.CreateICmpEQ(lhs, rhs);
