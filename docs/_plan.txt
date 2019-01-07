@@ -12,17 +12,13 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-	Improve ast-llvm interaction code
-	  Look at creating an "LlvmBuilderHelper" class to abstract some llvm-specific operations
-	  Look at changing the symbol table interfaces to allow for "known indexing"
-	    If we know which symtable the symbol was declared in, we should be able to get it in O(1)
-		NOTE: This may require some modification of the "Variable" storage (probably to a std::variant or a custom struct)
 	Figure Out Why I Can't Call External Functions in Repl
 	  We can track prototypes, but apparently, when we call them from the Interpreter, llvm fails
 	    Calling "FindFunctionNamed" finds the function though ???
 	    There's no documentation on llvm::Interpreter, might have to change to one of the JITs
     Merge the llvm-ir branch into master
 	  Improve documentation and update readme
+	  Unify _todo.txt and _plan.txt/_dev_plan.txt
 		
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it
@@ -45,6 +41,8 @@ Current Project Plan
 		  For an AssignTuple pattern, split into a series of 'AssignName' (only issue is regarding when scopes come into effect)
 	  Allow for the creation and usage of custom types
 	    Would need to create constructors, automatic destructor insertion, OOP function translation, struct typing
+	  Implement generalized code for translating spero types into llvm types
+	    Also implement a way of properly resolving int/float/etc. typing difficulties when selecting llvm ir instructions
 
   Get functions working properly
 	Look into how to support local functions/closures

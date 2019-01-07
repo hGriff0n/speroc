@@ -179,9 +179,6 @@
     <Text Include="llvm_resources.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="llvm_optimization_passes.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="incl\parser\ast.h">
@@ -328,9 +325,6 @@
     <ClInclude Include="incl\util\ranges.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
-    <ClInclude Include="incl\parser\AstVisitor.h">
-      <Filter>Header Files\frontend</Filter>
-    </ClInclude>
     <ClInclude Include="dep\boost\flyweight.hpp">
       <Filter>Dependencies\boost</Filter>
     </ClInclude>
@@ -381,6 +375,9 @@
       <Filter>Header Files\driver</Filter>
     </ClInclude>
     <ClInclude Include="incl\codegen\LlvmIrGenerator.h">
+      <Filter>Header Files\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\parser\AstVisitor.h">
       <Filter>Header Files\passes</Filter>
     </ClInclude>
   </ItemGroup>

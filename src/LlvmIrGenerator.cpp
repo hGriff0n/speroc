@@ -125,9 +125,8 @@ namespace spero::compiler::gen {
 	//
 	void LlvmIrGenerator::visitVariable(ast::Variable& v) {
 		// TODO: Reduce the variable access at this stage to a flat map lookup
-		auto[def_table, iter] = analysis::lookup(arena, current, *v.name);
-		auto& path_part = **iter;
-		auto nvar = arena[def_table].get(path_part.name, nullptr, path_part.loc, path_part.ssa_index);
+		auto& path_part = v.name->elems.back();
+		auto nvar = arena[*v.def_table].get(path_part->name, nullptr, path_part->loc, path_part->ssa_index);
 
 		auto& symbol = std::get<ref_t<analysis::SymbolInfo>>(*nvar);
 		if (symbol.get().storage) {
@@ -292,9 +291,8 @@ namespace spero::compiler::gen {
 
 			// TODO: Rewrite with a flat symbol table
 			auto lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
-			auto[def_table, iter] = analysis::lookup(arena, current, *lhs->name);
-			auto& path_part = **iter;
-			auto variable = arena[def_table].get(path_part.name, nullptr, path_part.loc, path_part.ssa_index);
+			auto& path_part = lhs->name->elems.back();
+			auto variable = arena[*lhs->def_table].get(path_part->name, nullptr, path_part->loc, path_part->ssa_index);
 
 			auto& var = std::get<ref_t<analysis::SymbolInfo>>(*variable).get();
 			if (var.storage) {

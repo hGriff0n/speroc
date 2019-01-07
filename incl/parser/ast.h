@@ -1239,9 +1239,11 @@ namespace spero::compiler::ast {
 	 *
 	 * Exports:
 	 *   name - qualified binding that represents the variable
+	 *   def_table - the symbol table which holds the symbol informaton
 	 */
 	struct Variable : ValExpr {
 		ptr<Path> name;
+		opt_t<analysis::SymIndex> def_table = std::nullopt;
 
 		Variable(ptr<Path> symbol, Location loc);
 

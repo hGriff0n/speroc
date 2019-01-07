@@ -33,7 +33,6 @@ namespace spero::analysis {
 
 		if (iter + 1 != std::end(v.name->elems)) {
 			state.log(ID::err, "Attempt to use undeclared variable `{}` <at {}>", *v.name, v.loc);
-
 			return;
 		}
 
@@ -42,6 +41,10 @@ namespace spero::analysis {
 		if (nvar) {
 			if (!std::holds_alternative<ref_t<SymbolInfo>>(*nvar)) {
 				state.log(ID::err, "Attempt to use non-variable symbol `{}` as a variable <at {}>", *v.name, v.loc);
+
+			// If the lookup succeeded to find a declaration, set the `def_table` member to point to the definition table to speed up future lookups
+			} else {
+				v.def_table = def_table;
 			}
 
 		// If the variable is bound, but 'get' gives nullopt, then declaration must happen after the use
@@ -55,6 +58,7 @@ namespace spero::analysis {
 	void VarRefPass::visitBinOpCall(ast::BinOpCall& b) {
 		AstVisitor::visitBinOpCall(b);
 
+		// Handle variable reassignment issues
 		if (b.op == "=") {
 			auto* lhs = dynamic_cast<ast::Variable*>(b.lhs.get());
 			if (!lhs) {
@@ -62,24 +66,21 @@ namespace spero::analysis {
 				return;
 			}
 
-			auto& most_qualified_part = lhs->name->elems.back()->name;
-			if (most_qualified_part == "self" || most_qualified_part == "super") {
+			// Make sure to disallow assignment to language "keywords"
+			auto& most_qualified_part = lhs->name->elems.back();
+			if (most_qualified_part->name == "self" || most_qualified_part->name == "super") {
 				state.log(ID::err, "Attempt to reassign `{}` keyword <at {}>", most_qualified_part, lhs->loc);
 				return;
 			}
+			if (!lhs->def_table.has_value()) {
+				state.log(ID::err, "Attempt to reassign unknown variable `{}` <at {}>", most_qualified_part->name, lhs->loc);
+				return;
+			}
 
-			// Perform all the necessary checks for reassignment
-			auto[def_table, iter] = lookup(dictionary.arena, current, *lhs->name);
-
-			// NOTE: Do we need to check whether the variable exists here ???
-				// The error is already reported in `visitVariable` so by this point, it is guaranteed to be valid
-				// We do need to perform this check, because it is done in the same pass as `visitVariable` (we can't determine whether it succeeded)
-			if (iter + 1 == std::end(lhs->name->elems)) {
-				auto& pathPart = **iter;
-				if (auto nvar = dictionary.arena[def_table].get(pathPart.name, nullptr, pathPart.loc, pathPart.ssa_index)) {
-					if (auto* var = std::get_if<ref_t<SymbolInfo>>(&*nvar); !var->get().is_mut) {
-						state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", *lhs->name, lhs->loc);
-					}
+			// Check whether the variable was declared as immutable
+			if (auto nvar = dictionary.arena[*lhs->def_table].get(most_qualified_part->name, nullptr, most_qualified_part->loc, most_qualified_part->ssa_index)) {
+				if (auto* var = std::get_if<ref_t<SymbolInfo>>(&*nvar); !var->get().is_mut) {
+					state.log(ID::err, "Attempt to reassign immutable variable `{}` <at {}>", *lhs->name, lhs->loc);
 				}
 			}
 		}

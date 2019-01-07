@@ -206,7 +206,6 @@
     <Text Include="docs\_plan.txt" />
     <Text Include="docs\_todo.txt" />
     <Text Include="llvmlibs.txt" />
-    <Text Include="llvm_optimization_passes.txt" />
     <Text Include="llvm_resources.txt" />
   </ItemGroup>
   <ItemGroup>
