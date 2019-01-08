@@ -1,14 +1,19 @@
 #include "driver/ReplDriver.h"
 
+#pragma warning(push, 0)
+#pragma warning(disable:4996)
+#include <ExecutionEngine/Interpreter/Interpreter.h>
+#include <llvm/Transforms/Utils/Cloning.h>
+#pragma warning(pop)
+
 #include "parser/ast.h"
 #include "util/parser.h"
+#include "codegen/LlvmIrGenerator.h"
 
 using namespace spero;
 using namespace spero::compiler;
 
-ReplDriver::ReplDriver(CompilationState& state)
-	: AnalysisDriver{ state }, interpreter{ std::make_unique<llvm::Module>("seproc-repl", context) }
-{}
+ReplDriver::ReplDriver(CompilationState& state) : AnalysisDriver{ state } {}
 
 #define TIMER(name) auto _ = state.timer(name)
 void ReplDriver::addInterpreterAstTransformations() {
@@ -65,15 +70,15 @@ void ReplDriver::interpretLlvm() {
 		return;
 	}
 
+	// Clone the module and construct the interpreter from it
+	// NOTE: We do this because llvm::Interpreter is apparently not designed with modules in mind
+	// A function in one module can not be called by code in a second module, even with the correct declarations
+	// Even then, attempting to run more than "2" contexts causes the declaration approach to cause errors
+	llvm::Interpreter interpreter{ llvm::CloneModule(*translation_unit) };
+
 	// Extract the "runtime" function and params from the module to ensure we run our expected code
 	// NOTE: We currently only produce `jitfunc` to have type `() -> Int`
-	auto jitfn = translation_unit->getFunction("jitfunc");
-
-	// Add the next "layer" of interpreted code to the interpreter state
-	// I think we still need to combine everything in a function though
-	// And I'm not sure how this handles name clashes
-	interpreter.addModule(std::move(translation_unit));
-	translation_unit = nullptr;
+	auto jitfn = interpreter.FindFunctionNamed("jitfunc");
 
 	// The repl line may just define values for future usage, so the jitfn may not be created
 	if (jitfn) {
@@ -112,6 +117,10 @@ void ReplDriver::interpretLlvm() {
 
 		// Delete the `jit` function from the parent module so we always use the most recent one
 		jitfn->eraseFromParent();
+
+		// Also erase it from the translation_unit as we'll never call it (and just in case)
+		auto old_jitfn = translation_unit->getFunction("jitfunc");
+		old_jitfn->eraseFromParent();
 	}
 }
 

@@ -12,10 +12,6 @@ Current Project State
 
 Current Project Plan
   Add in LLVM IR production stage
-	Figure Out Why I Can't Call External Functions in Repl
-	  We can track prototypes, but apparently, when we call them from the Interpreter, llvm fails
-	    Calling "FindFunctionNamed" finds the function though ???
-	    There's no documentation on llvm::Interpreter, might have to change to one of the JITs
     Merge the llvm-ir branch into master
 	  Improve documentation and update readme
 	  Unify _todo.txt and _plan.txt/_dev_plan.txt

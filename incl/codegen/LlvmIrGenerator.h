@@ -43,8 +43,9 @@ namespace spero::compiler::gen {
 
 		public:
 			LlvmIrGenerator(analysis::SymArena& arena, CompilationState& state);
-			std::unique_ptr<llvm::Module> finalize();
+			LlvmIrGenerator(std::unique_ptr<llvm::Module> mod, analysis::SymArena& arena, CompilationState& state);
 
+			std::unique_ptr<llvm::Module> finalize();
 
 			// Literals
 			virtual void visitBool(ast::Bool&) final;

@@ -5,10 +5,12 @@
 
 namespace spero::compiler::gen {
 	using namespace llvm;
-
-	LlvmIrGenerator::LlvmIrGenerator(analysis::SymArena& arena, CompilationState& state)
-		: state{ state }, context{ state.getContext() }, arena{ arena }, translation_unit{ std::make_unique<llvm::Module>("speroc", state.getContext()) }, builder{ state.getContext() }
+	
+	LlvmIrGenerator::LlvmIrGenerator(std::unique_ptr<llvm::Module> mod, analysis::SymArena& arena, CompilationState& state)
+		: state{ state }, context{ state.getContext() }, arena{ arena }, translation_unit{ mod ? std::move(mod) : std::make_unique<llvm::Module>("speroc", state.getContext()) }, builder{ state.getContext() }
 	{}
+
+	LlvmIrGenerator::LlvmIrGenerator(analysis::SymArena& arena, CompilationState& state) : LlvmIrGenerator{ nullptr, arena, state } {}
 
 	std::unique_ptr<llvm::Module> LlvmIrGenerator::finalize() {
 		return std::move(translation_unit);

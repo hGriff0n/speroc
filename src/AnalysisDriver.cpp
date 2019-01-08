@@ -94,7 +94,7 @@ void AnalysisDriver::translateAstToLlvm() {
 	if (!state.failed()) {
 		TIMER("llvm_ir_translation");
 
-		gen::LlvmIrGenerator visitor{ decls.arena, state };
+		gen::LlvmIrGenerator visitor{ std::move(translation_unit), decls.arena, state };
 		ast::visit(visitor, ast);
 		translation_unit = std::move(visitor.finalize());
 	}

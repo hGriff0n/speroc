@@ -3,6 +3,11 @@
 #include <iostream>
 #include <unordered_map>
 
+#pragma warning(push, 0)
+#pragma warning(disable:4996)
+#include <llvm/IR/Module.h>
+#pragma warning(pop)
+
 #include "interface/cmd_line.h"
 #include "util/strings.h"
 
