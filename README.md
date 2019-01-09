@@ -1,35 +1,25 @@
-speroc v0.4.2 - The reference compiler for the spero language
+speroc v0.5.0 - The reference compiler for the spero language
 
 # Current Project Status
 
-Just got basic functions up and running. We are now able to call functions, passing arguments, and use their values in
-computations. Recursion still has some errors with the implementation but that is probably due to the branching support.
+Just finished porting the internal backend stages over to producing llvm ir. A big benefit of this work is that we automatically get access to a lot of optimizations and target architectures. This also
+vastly simplifies the problem of backend code generation, as we now only need to target 1 language that we know produces correct assembly.
 
-Currently supported: Basic integer arithmatic, Basic variables and functions, Variable shadowing and scoping, Mutability Restrictions (NOTE: A basic type checking pass does exist, but is not used).
+As of now, the compiler supports basic function and variable usage. We can call and declare functions, passing arguments, and using their values in computations - recursion fully supported. Variables can
+be declared with full shadowing support (though the corner cases are not well tested) and mutability restrictions. Basic if-then-else branching is supported, but no other codeflow constructs have been implemented.
+More advanced types then `Int` and `Bool` are not fully supported and will likely cause llvm assertion errors when using. Functions also must be declared before usage, even in the global scope
 
-I will be taking some time to rearchitect most of the system internals to smooth over cracks that have begun to appear
-and to better target the system to future avenues and opportunities (and because I've taken a month-long break). One
-part of this rearchitecture will be the introduction of a new IR that final codegen will operate off of (instead of the
-current direct-from-AST). The other focus will be on streamlining the storage and pass system, particularly for
-accessing variable and other symbol information (ie. what we need for type and function checking).
-
-Run 'run_tests.bat' after compilation to see which systems are hooked up.
+Next work will be on implementing a type inference system and "liberalizing" the amount of type work that may be done internally (such as allowing for defining custom types).
 
 Take a look at the full Spero documentation [here](https://github.com/hGriff0n/Spero)!
 
 ## Usage
 
 If you have Visual Studio, this repository includes a solution file for (hopefully) easy setup and running. If not, I would greatly appreciate any pull-requests that include a custom makefile.
-I just haven't been able to find the time to create it myself (I don't gain that much myself tbh).
+I just haven't been able to find the time to create it myself (as I use Visual Studio for heavy C++ dev-work).
 
-On it's own, speroc only serves to transform Spero code into assembly files. These files are then forwarded on to clang
-in order to produce the final executable. A version of clang must be installed and reachable through the command line
-in order for speroc compilation (not project) to work. It is planned, though far in the future, to eventually convert
-speroc to producing LLVM IR instead, and having that be forwarded on to the clang tool for improved optimization
-performance.
-
-However, I will not be doing that for now as I still want to use this project as an avenue for exploring various forms
-of compiler optimizations.
+On it's own, speroc only serves to transform Spero code into llvm-ir files. These files are then forwarded on to clang in order to produce the final executable. A version of clang must be
+installed and reachable through the command line in order for speroc compilation (not project) to work.
 
 ## Contribution
 
@@ -42,14 +32,12 @@ Be sure to comment in the issue if you have any questions.
     better-enums: Extended enum support
     cxxopts: Cmd-line parsing
 	spdlog: Logging and error reporting
-    asmjit: Assembly interaction framework (codegen)
-	  NOTE: Currently using a custom fork that adds move semantics
-    clang: Executable production and linking
+    llvm: Produce llvm ir, ir optimization passes, final compilation (clang)
     boost:
       flyweight - string interning engine
 
 Project Info:
 
-    size: 4822 sloc
-    files: 12 .cpp, 25 .h, 3 .rb
+    size: 4948 sloc
+    files: 13 .cpp, 24 .h, 3 .rb
 

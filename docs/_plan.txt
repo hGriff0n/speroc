@@ -11,11 +11,6 @@ Current Project State
   annotations => ignored
 
 Current Project Plan
-  Add in LLVM IR production stage
-    Merge the llvm-ir branch into master
-	  Improve documentation and update readme
-	  Unify _todo.txt and _plan.txt/_dev_plan.txt
-		
   Type Inference and Type Checking
     Read up on the MLsub type inference - see if I can figure out how to implement it
 	  Implement a toy algorithm inside of a smaller program (with hardcoded types, etc.)
@@ -60,11 +55,6 @@ Current Project Plan
 	  Figure out how to get function types working as distinct types
 	  Add in experimental code to the arguments to allow for restricting based on the type
 
-  Fix grammar and ast properties
-    Require directly affixing pointers and references to types
-    Allow anon_type to be attached after 'var_val/atom' rules
-  Modules and Imports
-
   Tester Improvements
     Move to utilizing a directory based test system
 	  Test "collections" will be determined by the folder they are in
@@ -73,7 +63,28 @@ Current Project Plan
 	Have specific error messages for when an input file doesn't exist/etc
 	  Generalize this to all "preconditions" (and postconditions)
     Have tester produce an output file specifying how many tests have passed
-    Integrate this project with Jenkins CI
+    Integrate with Jenkins CI
+
+  Timing Benchmarks and Stats
+    Improve logging interface/information
+	Collect timing information about all stages
+	  Link stages to timers in a usable way
+	  Actually report the timing information in some way
+	Collect statistics on memory usage
+	  Improve collection and memory usage of location data
+
+  Fix grammar and ast properties
+    Require directly affixing pointers and references to types
+    Allow anon_type to be attached after 'var_val/atom' rules
+	FnCall node may have too much responsibility
+	Determine a distinction between semantic and syntactic typing in the ast
+	Look at moving pretty printing to the visitor model
+
+  Analysis Stages
+    Add transformation pass to produce lambdas with the '_' character
+	Implement tuples into the llvm ir
+
+  Modules and Imports
 
   Language Logic Checking
     Check if ':<var>' is (and should be) a legal typing
@@ -124,6 +135,7 @@ Current Project Plan
 	    ie. TypeAssign will need to be translated to a `member + methods + mutable` tuple instead of the `conslist + body + mutable` tuple we have
 	LLVM has a pre-existing optimization level interface, use that instead of my enum hack
 	  This is what we have in the `optimizeLlvm` code
+	Use C++ attributes where possible
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
@@ -144,3 +156,5 @@ Current Project Plan
   ...
   Converting Operators into function calls <- Needs mutability checking and references
   Allow for unicode variable names
+  
+Icon at www.iconfinder.com/icons/606025/ancient_antique_historic_roman_rome_helmet_vintage_warrior_icon

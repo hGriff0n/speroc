@@ -170,9 +170,6 @@
     <Text Include="docs\_plan.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="docs\_todo.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
     <Text Include="llvmlibs.txt">
       <Filter>Resource Files</Filter>
     </Text>
