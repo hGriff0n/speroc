@@ -2,13 +2,14 @@
 
 #include "parser/AstVisitor.h"
 #include "interface/CompilationState.h"
-#include "util/analysis.h"
 #include "analysis/AnalysisState.h"
 
 namespace spero::analysis {
 
 	/*
 	 * Ast pass that collects all symbol declarations and introductions (where is it defined)
+	 *
+	 * NOTE: This pass is run before `VarRefPass` and creates all of the symbol tables
 	 */
 	class VarDeclPass : public compiler::ast::AstVisitor {
 		compiler::CompilationState& state;
@@ -26,7 +27,6 @@ namespace spero::analysis {
 
 		// TEMPORARY declarations
 		compiler::ast::Interface* current_decl;
-		int curr_ebp_offset = 0;
 
 		public:
 			VarDeclPass(compiler::CompilationState& state, AnalysisState& dict);
@@ -65,7 +65,7 @@ namespace spero::analysis {
 			//virtual void visitMultipleImport(compiler::ast::MultipleImport&) final;
 			//virtual void visitRebind(compiler::ast::Rebind&) final;
 			virtual void visitInterface(compiler::ast::Interface&) final;
-			//virtual void visitTypeAssign(compiler::ast::TypeAssign&) final;
+			virtual void visitTypeAssign(compiler::ast::TypeAssign&) final;
 			//virtual void visitVarAssign(compiler::ast::VarAssign&) final;
 			//virtual void visitTypeExtension(compiler::ast::TypeExtension&) final;
 	};

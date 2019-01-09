@@ -3,59 +3,71 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "compilation.h"
-#include "parser/base.h"
+#pragma warning(push, 0)
+#pragma warning(disable:4996)
+#include <llvm/IR/Module.h>
+#pragma warning(pop)
+
 #include "interface/cmd_line.h"
 #include "util/strings.h"
+
+#include "driver/CompilationDriver.h"
+#include "driver/ReplDriver.h"
 
 template<class Stream>
 Stream& getMultiline(Stream& in, spero::string::backing_type& s);
 std::ostream& printAST(std::ostream& s, const spero::parser::Stack& stack);
-void printAssembly(std::ostream&, spero::compiler::gen::Assembler& asm_code);
+void printAssembly(std::ostream&, std::unique_ptr<llvm::Module>& llvm_code);
 
 
 // Helper function to run the interactive mode
-void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& state, int& argc, char** argv) {
+void run_interpreter(spero::compiler::ReplDriver& repl) {
 	using namespace spero;
 	using namespace spero::parser;
-	using compiler::ID;
-	
-	string::backing_type input;
-	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", false }, { "ast", true }, { "asm", true } };
 
+	string::backing_type input;
+	std::unordered_map<String, bool> flags{ { "compile", true }, { "interpret", true }, { "ast", true }, { "asm", true } };
+
+	auto& state = repl.getState();
 	GET_PERMISSIONS(state);
 	state.files().push_back("");
 
 	while (std::cout << "> " && getMultiline(std::cin, input)) {
-		parser::Stack res;
+		/**
+		 * Handle repl-specific commands
+		 *  :c - compile the given file (NOTE: currently not added to interpreter)
+		 *  :l - load the given file into the interpreter context
+		 *  :s - set repl flag (controlling what gets printed/etc)
+		 *  :q - quit out of the repl
+		 *
+		 *  Defaults to receiving and running a multiline spero string
+		 */
+		if (auto command = input.substr(0, 2); command == ":q") {
+			break;
 
-		// compile file
-		if (auto command = input.substr(0, 2); command == ":c") {
+		} else if (command == ":c") {
 			state.files()[0] = input.substr(3);
 
 			parser_mode = ParsingMode::FILE;	link = true;
 			do_compile = true;				interpret = false;
 
-		// load file
 		} else if (command == ":l") {
 			state.files()[0] = input.substr(3);
 
 			parser_mode = ParsingMode::FILE;
 			do_compile = false;
 
-		// set flag
 		} else if (command == ":s") {
 			for (auto flag : util::split(input.substr(3), ',')) {
-				flags[flag] = !flags[flag];
+				if (flag == "opt") {
+					state.flipOptimization();
+				} else {
+					flags[flag] = !flags[flag];
+				}
 			}
 
 			continue;
 
-		// quit
-		} else if (command == ":q") {
-			break;
-
-		// handle string input
 		} else {
 			state.files()[0] = input;
 
@@ -63,16 +75,14 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 			do_compile = flags["compile"];	interpret = flags["interpret"];
 		}
 
-
-		// Run the input through the internal compilation loop (printing the ast and assembler)
-		compile(state, res, [&](auto&& ir) {
+		repl.interpret([&](auto&& ir) {
 			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, parser::Stack>) {
 				if (flags["ast"]) {
 					printAST(std::cout << '\n', ir);
 				}
 			}
 
-			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, compiler::gen::Assembler>) {
+			if constexpr (std::is_same_v<std::decay_t<decltype(ir)>, std::unique_ptr<llvm::Module>>) {
 				if (flags["asm"]) {
 					printAssembly(std::cout, ir);
 				}
@@ -80,10 +90,8 @@ void run_interpreter(cxxopts::Options& opts, spero::compiler::CompilationState& 
 		});
 
 		std::cout << std::endl;
-		state.reset();
 	}
 }
-
 
 /*
  * Run the compiler and it's command-line interface
@@ -101,16 +109,14 @@ int main(int argc, char* argv[]) {
 	// Compiler run
 	if (!state.opts["interactive"].as<bool>()) {
 		state.setPermissions(parser::ParsingMode::FILE, true, true, false);
-
-		parser::Stack res;
-		compile(state, res);
-
-		return state.failed();
+		return compiler::CompilationDriver{ state }.compile();
 
 	// Interactive mode
 	} else {
 		state.setPermissions(parser::ParsingMode::STRING, true, false, true);
-		return run_interpreter(opts, state, argc, argv), 0;
+		auto repl = compiler::ReplDriver{ state };
+
+		return run_interpreter(repl), 0;
 	}
 }
 
@@ -154,38 +160,7 @@ std::ostream& printAST(std::ostream& s, const spero::parser::Stack& ast_stack) {
 	return s << '\n';
 }
 
-void printAssembly(std::ostream& s, spero::compiler::gen::Assembler& asm_code) {
-	asmjit::StringBuilder sb;
-	asm_code.dump(sb);
-	s << sb.data() << '\n';
-}
-
-
-// Interpret the produced assembly code (this doesn't produce any code. "CodeHolder" is apparently completely empty
-void spero::compiler::interpret(gen::Assembler& asm_code) {
-	// Setup the runtime environment
-	static asmjit::JitRuntime jt;
-
-	// Prepare the assembly code for interpretation
-	// I don't think this is quite accurate enough just yet (not sure what though)
-	asm_code.makeIFunction();
-
-	// Print the interpreted code
-	//printAssembly(std::cout, asm_code);
-
-	// Register the assembly code as an `int()` function
-	gen::Assembler::Function fn;
-	asmjit::Error err = jt.add(&fn, asm_code.get());
-
-	if (err) {
-		std::cout << err << ':' << asmjit::kErrorNoCodeGenerated << '\n';
-	} else {
-		int i = fn();
-		std::cout << "result: " << i << '\n';
-	}
-
-	// TODO: Add printing of all other registers
-	// TODO: Add re-entrant evaluation
-
-	jt.release(fn);
+void printAssembly(std::ostream& s, std::unique_ptr<llvm::Module>& llvm_code) {
+	llvm_code->print(llvm::outs(), nullptr);
+	llvm::outs() << '\n';
 }

@@ -6,8 +6,9 @@
 #include <unordered_map>
 #include <variant>
 
+#include <enum.h>
+
 #include "parser/base.h"
-#include "util/analysis.h"
 
 template<class T>
 using opt_t = std::optional<T>;
@@ -15,29 +16,45 @@ template<class T>
 using ref_t = std::reference_wrapper<T>;
 //TODO: Create `opt_ref` struct to wrap 'ref_t' in 'opt_t' ???
 
+namespace llvm {
+	class Value;
+}
+
 namespace spero::analysis {
 	class Type;
 	using SymIndex = size_t;
 
 	/*
+	 * Enum class for specifying the scoping context of the current analysis focus
+	 *   Scoping context is important in determining locationn/manner of variable allocation
+	 *   along with other semantic contextual considerations (particularly allowance of "forward usage")
+	 */
+	BETTER_ENUM(ScopingContext, char, GLOBAL, SCOPE, TYPE);
+
+	/*
      * Specifies the data relevant for analysis of Spero variables
 	 */
 	struct SymbolInfo {
+		// Location of the variable's definition in the source code
 		compiler::Location src;
-		bool is_mut = false;
 
-		memory::Locations storage;
-		std::shared_ptr<Type> type = nullptr;
+		// Whether the variable was declared mutable or not
+		// NOTE: This is a constant, but that deletes the `operator=` which is needed by `std::deque`
+		bool is_mut;
 
 		// Index into the SymTable arena that stores the type's definition
 		// NOTE: This is only not `std::nullopt` when the symbol defines a spero type
 		opt_t<SymIndex> type_def_index = std::nullopt;
 
+		// The symbol's inferred type scheme
+		std::shared_ptr<Type> type = nullptr;
+
 		// TODO: Not sure if we should have this
 		compiler::ast::Ast* definition = nullptr;
 
-		//inline SymbolInfo(compiler::Location s, bool mut) : SymbolInfo{ s, mut, analysis::memory::Stack{} } {}
-		//inline SymbolInfo(compiler::Location s, bool mut, memory::Locations loc) : src{ s }, is_mut{ mut }, storage{ loc } {}
+		// Llvm allocated storage location
+		llvm::Value* storage = nullptr;
+		// TODO: How would types be handled? 
 	};
 
 	/*
@@ -57,6 +74,7 @@ namespace spero::analysis {
 	 */
 	struct Redirect {
 		SymIndex lookup;
+		//bool glob = false;
 	};
 
 	/*
@@ -112,7 +130,6 @@ namespace spero::analysis {
 	class SymTable {
 		public:
 			using SymbolTypes = std::variant<Redirect, SymIndex, ref_t<SymbolInfo>>;
-			friend size_t numVars(std::deque<SymTable>& arena, SymIndex table);
 
 		private:
 			SymIndex self_index;
@@ -120,10 +137,10 @@ namespace spero::analysis {
 			std::unordered_map<String, GenericResolver> symbols;
 			std::set<String> argument_set;
 
-			analysis::ScopingContext scope_context = analysis::ScopingContext::SCOPE;
+			analysis::ScopingContext scope_context;
 
 		public:
-			SymTable(SymIndex self);
+			SymTable(SymIndex self, analysis::ScopingContext context=analysis::ScopingContext::SCOPE);
 			
 			// Basic accessors and queries
 			ref_t<GenericResolver> operator[](const String& key);
@@ -162,8 +179,7 @@ namespace spero::analysis {
 	// Helper functions
 	using SymArena = std::deque<SymTable>;
 	constexpr SymIndex GLOBAL_SYM_INDEX = 0;
-	
-	size_t numVars(SymArena& arena, SymIndex table);
+
 	inline size_t numArgs(const SymArena& arena, SymIndex table) {
 		auto[front, end] = arena[table].arguments();
 		return std::distance(front, end);

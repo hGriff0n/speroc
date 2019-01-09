@@ -14,7 +14,7 @@ namespace spero::compiler::ast {
 	 *   visit* - accept method that is called within the visit function to invoke
 	 */
 	struct AstVisitor {
-		virtual ~AstVisitor() abstract;
+		virtual ~AstVisitor() {}
 
 		// Base Nodes
 		DEF_VISIT(Ast) {}

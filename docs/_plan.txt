@@ -7,17 +7,33 @@ Current Project State
     recognized => Int, Bool (literals and comparison operators)
 	...
   variables => basic shadowing and scoping
-  functions => basically implemented, no type checking, decl before use
+  functions => recursion support, no type checking, decl before use, no OOP
   annotations => ignored
 
 Current Project Plan
-  Rearchitect system to have better separation and control flow
-    Figure out what I mean by this (what are the current, and future, pain points)
-	Add in LLVM IR production stage
-	  compilation::analyze now produces LLVM IR
-	  compilation::backend transforms the LLVM IR to assembly
-	  Look at including LLVM methods throughout the codebase
-	    I think particularly for dynamic casts, LLVM could drastically help
+  Type Inference and Type Checking
+    Read up on the MLsub type inference - see if I can figure out how to implement it
+	  Implement a toy algorithm inside of a smaller program (with hardcoded types, etc.)
+	  Transfer the toy algorithm over to this program
+	Figure out how to load type information into the symbol table
+	  Look at modifying the symbol table implementation to instead have a "flattened" approach
+	    Particularly after the initial parsing and variable mapping work, we can create a unique name for every variable
+		There's may also be some benefit in translating everything into a more "LLVM"-esque ast/ir
+		  Pre-handling type conversions/etc where necessary, unravelling tuples and other non-llvm constructs
+	Intermediate Type Work (maybe)
+	  Come up with a quick way to get from a Variable/Binding ast node to it's symbol table information
+	    This would be quicker than running the full symbol table query
+	  Add in assembly instructions specific for floats and booleans
+	    Look at generalizing the binopcall assembly generation to account for type differences
+	  Add in assembly steps for interacting with tuples
+	    Implement AssignTuple assignment rule
+		Implement indexing in the case that the indexed type is a tuple (and the index is an int literal)
+		Abstract the assignment rules to simplify the logic
+		  For an AssignTuple pattern, split into a series of 'AssignName' (only issue is regarding when scopes come into effect)
+	  Allow for the creation and usage of custom types
+	    Would need to create constructors, automatic destructor insertion, OOP function translation, struct typing
+	  Implement generalized code for translating spero types into llvm types
+	    Also implement a way of properly resolving int/float/etc. typing difficulties when selecting llvm ir instructions
 
   Get functions working properly
 	Look into how to support local functions/closures
@@ -34,27 +50,40 @@ Current Project Plan
 	  Implement basic type-checking/etc. to automatically select the correct functions based on operand types
 	  Implement boolean short-circuiting for && and ||
 	    Will require hard-coding these checks in the compiler (as methods automatically evaluate first)
+	Enable declaring functions after usage
 	Integrate functions into the type system
 	  Figure out how to get function types working as distinct types
 	  Add in experimental code to the arguments to allow for restricting based on the type
+
+  Tester Improvements
+    Move to utilizing a directory based test system
+	  Test "collections" will be determined by the folder they are in
+	    Inside these folders is the yaml specifying expected behavior
+		Individual tests may be able to run (ie. only run tests associated with collection.file)
+	Have specific error messages for when an input file doesn't exist/etc
+	  Generalize this to all "preconditions" (and postconditions)
+    Have tester produce an output file specifying how many tests have passed
+    Integrate with Jenkins CI
+
+  Timing Benchmarks and Stats
+    Improve logging interface/information
+	Collect timing information about all stages
+	  Link stages to timers in a usable way
+	  Actually report the timing information in some way
+	Collect statistics on memory usage
+	  Improve collection and memory usage of location data
+
   Fix grammar and ast properties
     Require directly affixing pointers and references to types
     Allow anon_type to be attached after 'var_val/atom' rules
-  Type Inference and Type Checking
-    Read up on the MLsub type inference - see if I can figure out how to implement it
-	  Implement a toy algorithm inside of a smaller program (with hardcoded types, etc.)
-	  Transfer the toy algorithm over to this program
-	Figure out how to load type information into the symbol table
-	Intermediate Type Work (maybe)
-	  Come up with a quick way to get from a Variable/Binding ast node to it's symbol table information
-	    This would be quicker than running the full symbol table query
-	  Add in assembly instructions specific for floats and booleans
-	    Look at generalizing the binopcall assembly generation to account for type differences
-	  Add in assembly steps for interacting with tuples
-	    Implement AssignTuple assignment rule
-		Implement indexing in the case that the indexed type is a tuple (and the index is an int literal)
-		Abstract the assignment rules to simplify the logic
-		  For an AssignTuple pattern, split into a series of 'AssignName' (only issue is regarding when scopes come into effect)
+	FnCall node may have too much responsibility
+	Determine a distinction between semantic and syntactic typing in the ast
+	Look at moving pretty printing to the visitor model
+
+  Analysis Stages
+    Add transformation pass to produce lambdas with the '_' character
+	Implement tuples into the llvm ir
+
   Modules and Imports
 
   Language Logic Checking
@@ -95,16 +124,18 @@ Current Project Plan
 	    You can still define type specific methods inside of the declaration block
 	Work on language tutorial/introduction
 
-  Convert to using a tri-code IR (ie. max two operands to any instruction)
-	Backend stage would take this IR and optimize it to produce the final assembly
-	The current 'assembly' stage would be replaced with an IR-generation stage
-	  Basically current stage is "AST -> Assembly", we would change to "AST -> IR" + "IR -> Assembly"
-
   Code Quality Improvements
     Change the test suit to have a folder-based organization structure
 	  Instead of having the yaml file differentiate between the literal and function tests, the directory structure handles that difference
 	  Each directory will have a yaml file listing out the expected results of the tests (at that level)
 	    If a specific test suite is entered (such as literal.ints) then only the tests in the "literal/ints" folder will be run
+	Look at introducing an intermediate IR in between the AST and the llvm ir production
+	  Definitely need to flatten the symbol table to improve lookup behavior
+	  There's also a couple pieces of information that we may want to add in, but can't fit into the existing AST structure
+	    ie. TypeAssign will need to be translated to a `member + methods + mutable` tuple instead of the `conslist + body + mutable` tuple we have
+	LLVM has a pre-existing optimization level interface, use that instead of my enum hack
+	  This is what we have in the `optimizeLlvm` code
+	Use C++ attributes where possible
 
   Improve error/exception handling and reporting
     Move around logging statements (when combined with push) to reuse location data (see if that makes an improvement first)
@@ -118,26 +149,12 @@ Current Project Plan
   Improve "help" support
     Look into adding "code of conduct"
 
-  Basic Function Definition
-    Update x86_interpreter/codegen to be able to specify start instruction
-	Handle global declarations correctly (ie. place these values in 'separate' memory)
-	  Figure out how to handle these separate addressing schemes
-
-  Type Inference
-    explicit annotations within the ast
-  Basic Function Calling
   Custom type definition
   Improve system benchmark collection
   Improve command line interface collection
     Improve the handling of "flags" within the interpreter
   ...
-  Converting Operators into function calls [ <- Needs mutability checking and references
+  Converting Operators into function calls <- Needs mutability checking and references
   Allow for unicode variable names
-
-  Tester Improvements
-    Move to utilizing a directory based test system
-	  Test "collections" will be determined by the folder they are in
-	    Inside these folders is the yaml specifying expected behavior
-		Individual tests may be able to run (ie. only run tests associated with collection.file)
-    Have tester produce an output file specifying how many tests have passed
-    Integrate this project with Jenkins CI
+  
+Icon at www.iconfinder.com/icons/606025/ancient_antique_historic_roman_rome_helmet_vintage_warrior_icon

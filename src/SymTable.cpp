@@ -62,7 +62,9 @@ namespace spero::analysis {
 		has_at_least_one_exported_definition = true;
 	}
 
-	SymTable::SymTable(SymIndex self) : self_index{ self } {
+	SymTable::SymTable(SymIndex self, analysis::ScopingContext context)
+		: self_index{ self }, scope_context{ context }
+	{
 		insert("self", self);
 	}
 
@@ -189,20 +191,5 @@ namespace spero::analysis {
 	ScopingContext SymTable::context() const {
 		return scope_context;
 	}
-
-	size_t numVars(SymArena& arena, SymIndex table) {
-		size_t num_symbols = std::accumulate(arena[table].symbols.begin(), arena[table].symbols.end(), 0,
-			[](auto acc, auto& next) {
-				if (auto res = next.second.resolve(nullptr)) {
-					if (auto ssa = std::get_if<ref_t<SsaVector>>(&*res)) {
-						acc += ssa->get().size();
-					}
-				}
-
-				return acc;
-			});
-
-		return num_symbols - arena[table].exists("self") - arena[table].exists("super");
-	}
-
+	
 }

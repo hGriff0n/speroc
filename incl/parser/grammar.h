@@ -75,7 +75,7 @@ namespace spero::parser::grammar {
 	struct endc : punct<';'> {};
 	struct equals : punct<'='> {};
 	struct bar : punct<'|'> {};
-	struct and : punct<'+'> {};
+	struct and_ : punct<'+'> {};
 	struct dot : punct<'.'> {};
 	struct ochar : one<'\''> {};
 	struct oquote : one<'"'> {};
@@ -171,7 +171,7 @@ namespace spero::parser::grammar {
 	struct mut_type : seq<opt<kmut>, sor<tuple_fn_type, ref_type>> {};
 	struct braced_type : seq<obrace, type, sor<cbrace, errorbrace>> {};													// Immediate error if no closing '}'
 	struct ntype : sor<mut_type, braced_type> {};
-	struct and_cont : seq<and, sor<ntype, errortype>> {};
+	struct and_cont : seq<and_, sor<ntype, errortype>> {};
 	struct and_type : seq<ntype, star<and_cont>> {};
 	struct or_cont : seq<bar, sor<and_type, errortype>> {};
 	struct or_type : seq<and_type, star<or_cont>> {};

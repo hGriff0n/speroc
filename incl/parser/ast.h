@@ -942,7 +942,7 @@ namespace spero::compiler::ast {
 	 * Extends: Sequence<IfBranch, Branch>
 	 *
 	 * Exports:
-	 *   _else_ - optional fall-through case
+	 *   else_ - optional fall-through case
 	 */
 	struct IfElse : Sequence<IfBranch, Branch> {
 		ptr<ValExpr> else_;
@@ -1145,6 +1145,9 @@ namespace spero::compiler::ast {
 	 * Exports:
 	 *   cons - list of adt and primary constructors
 	 *   body - type body
+	 *
+	 * NOTE: This class will need to be translated into a (member_list, method_list, mut_only) tuple
+	 *   before the llvm ir generation passes (with the ConsList + nonAssign expr going into a constructor fn)
 	 */
 	struct TypeAssign : Interface {
 		using ConsList = std::deque<ptr<Constructor>>;
@@ -1236,9 +1239,11 @@ namespace spero::compiler::ast {
 	 *
 	 * Exports:
 	 *   name - qualified binding that represents the variable
+	 *   def_table - the symbol table which holds the symbol informaton
 	 */
 	struct Variable : ValExpr {
 		ptr<Path> name;
+		opt_t<analysis::SymIndex> def_table = std::nullopt;
 
 		Variable(ptr<Path> symbol, Location loc);
 

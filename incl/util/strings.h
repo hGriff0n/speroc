@@ -1,7 +1,8 @@
 #pragma once
 
 #include <deque>
-#include <string>
+
+#include "spero_string.h"
 
 namespace spero::util {
 

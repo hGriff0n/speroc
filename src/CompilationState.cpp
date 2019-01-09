@@ -2,7 +2,8 @@
 
 namespace spero::compiler {
 	CompilationState::CompilationState(char** fst, char** snd)
-		: input_files{ fst, snd }, logger{ spdlog::stdout_color_mt("console") } {}
+		: input_files{ fst, snd }, logger{ spdlog::stdout_color_mt("console") },
+		  context{ std::make_unique<llvm::LLVMContext>() } {}
 
 
 	// Input/Output files
@@ -25,6 +26,15 @@ namespace spero::compiler {
 	bool CompilationState::deleteTemporaryFiles() {
 		return true;
 	}
+	llvm::LLVMContext& CompilationState::getContext() {
+		return *context;
+	}
+	OptimizationLevel CompilationState::optimizationLevel() {
+		return opt_level;
+	}
+	void CompilationState::flipOptimization() {
+		opt_level = (opt_level == OptimizationLevel::NONE) ? OptimizationLevel::ALL : OptimizationLevel::NONE;
+	}
 
 	/* Example code on how to create a "multi-sink" logger
 	std::vector<spdlog::sink_ptr> sinks;
@@ -42,7 +52,7 @@ namespace spero::compiler {
 		return *logger;
 	}
 
-	size_t CompilationState::failed() const {
+	int CompilationState::failed() const {
 		return nerrs;
 	}
 

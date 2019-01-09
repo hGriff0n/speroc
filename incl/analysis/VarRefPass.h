@@ -2,7 +2,6 @@
 
 #include "parser/AstVisitor.h"
 #include "interface/CompilationState.h"
-#include "util/analysis.h"
 #include "analysis/AnalysisState.h"
 
 namespace spero::analysis {
@@ -25,6 +24,7 @@ namespace spero::analysis {
 
 			// Atoms
 			virtual void visitBlock(compiler::ast::Block&) final;
+			virtual void visitFunction(compiler::ast::Function&) final;
 
 			// Expressions
 			virtual void visitVariable(compiler::ast::Variable&) final;
@@ -32,6 +32,7 @@ namespace spero::analysis {
 
 			// Statements
 			virtual void visitInAssign(compiler::ast::InAssign&) final;
+			virtual void visitTypeAssign(compiler::ast::TypeAssign&) final;
 	};
 
 }

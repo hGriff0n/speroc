@@ -23,9 +23,9 @@ literals:
       tests:
         - return: 7
     - desc: ""
-      exec: 'orderOfOperations.exe'
+      exec: 'order_of_operations.exe'
       compile:
-        files: [ 'orderOfOperations.spr' ]
+        files: [ 'order_of_operations.spr' ]
       tests:
         - return: 15
     - desc: ""
@@ -57,13 +57,12 @@ literals:
       compile:
         fail: true
         files: [ 'fail_type.spr' ]
-    - desc: ""
-      exec: 'fail_type.exe'
-      compile:
-        fail: true
-        files: [ 'pass_type.spr' ]
-      tests:
-        - return: 3
+    # - desc: ""
+    #   exec: 'pass_type.exe'
+    #   compile:
+    #     files: [ 'pass_type.spr' ]
+    #   tests:
+    #     - return: 3
     - desc: ""
       exec: 'mut_fail.exe'
       compile:

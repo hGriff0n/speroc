@@ -40,8 +40,8 @@ namespace spero::analysis {
 
 		// TODO: The actual handling of type annotations is a lot more subtle than I've used here
 			// But I need a better way of converting an 'ast::Type' into a 'analysis::Type'
-		if (util::is_type<ast::SourceType>(t.typ)) {
-			auto* type = util::view_as<ast::SourceType>(t.typ);
+		if (util::isType<ast::SourceType>(t.typ)) {
+			auto* type = util::viewAs<ast::SourceType>(t.typ);
 
 			if (dictionary.type_list.count(type->name->elems.back()->name) == 0) {
 				state.log(ID::err, "Installation does not define a `<>` type <at {}>", *type->name->elems.back(), t.loc);

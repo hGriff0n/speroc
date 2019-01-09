@@ -188,7 +188,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(lambda) {
 		// stack: tuple expr
-		if (!util::at_node<ast::Block>(s)) {
+		if (!util::atNode<ast::Block>(s)) {
 			auto val = POP(Statement);
 			std::deque<ptr<ast::Statement>> vals;
 			vals.emplace_front(std::move(val));
@@ -205,7 +205,7 @@ namespace spero::parser::actions {
 			ptr<ast::ValExpr> var = nullptr;
 
 			// Extract any type annotations
-			if (auto* annotated = util::view_as<ast::TypeAnnotation>(arg)) {
+			if (auto* annotated = util::viewAs<ast::TypeAnnotation>(arg)) {
 				var = std::move(annotated->expression);
 				type = std::move(annotated->typ);
 
@@ -213,7 +213,7 @@ namespace spero::parser::actions {
 				var = std::move(arg);
 			}
 			
-			if (auto* variable = util::view_as<ast::Variable>(var)) {
+			if (auto* variable = util::viewAs<ast::Variable>(var)) {
 				auto& varname = variable->name->elems.back()->name;
 				auto binding = MAKE(BasicBinding, varname, std::islower(varname.get().front()) ? ast::BindingType::VARIABLE : ast::BindingType::TYPE);
 				auto argument = MAKE(Argument, std::move(binding), std::move(type));
@@ -277,16 +277,16 @@ namespace spero::parser::actions {
 		auto part = POP(PathPart);
 		part->gens = std::move(gens);
 
-		if (!util::at_node<ast::Path>(s)) {
+		if (!util::atNode<ast::Path>(s)) {
 			PUSH(Path, std::move(part));
 		} else {
-			util::view_as<ast::Path>(s.back())->elems.push_back(std::move(part));
+			util::viewAs<ast::Path>(s.back())->elems.push_back(std::move(part));
 		}
 		// stack: Path
 	} END;
 	RULE(typname) {
 		// stack: Path
-		if (auto* node = util::view_as<ast::Path>(s.back()); node) {
+		if (auto* node = util::viewAs<ast::Path>(s.back()); node) {
 			if (node->elems.back()->type != +ast::BindingType::TYPE) {
 				state.log(compiler::ID::err, "Expected type name, found something else <qualtyp at {}>", node->loc);
 			}
@@ -318,7 +318,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(pat_missing) {
 		// stack: cap?
-		if (util::at_node<ast::Token>(s) && util::view_as<ast::Token>(s.back())->holds<ast::CaptureType>()) {
+		if (util::atNode<ast::Token>(s) && util::viewAs<ast::Token>(s.back())->holds<ast::CaptureType>()) {
 			state.log(compiler::ID::err, "Missing pattern to match specified capture declaration <pattern at {}>", LOCATION);
 		} else {
 			state.log(compiler::ID::err, "Unexpected Input: Could not match Spero expression \"{}\" <pattern at {}>", in.string(), LOCATION);
@@ -336,7 +336,7 @@ namespace spero::parser::actions {
 		bool is_ref = (in.string()[0] == '&');
 		bool is_mut = false;
 
-		if (auto* node = util::view_as<ast::Token>(s.back()); node) {
+		if (auto* node = util::viewAs<ast::Token>(s.back()); node) {
 			is_mut = node->holds<ast::KeywordType>() && node->get<ast::KeywordType>() == +ast::KeywordType::MUT;
 		}
 
@@ -364,8 +364,8 @@ namespace spero::parser::actions {
 	} END;
 	RULE(resolve_constants) {
 		// stack: path
-		if (util::at_node<ast::Path>(s)) {
-			if (util::view_as<ast::Path>(s.back())->elems.back()->type == +ast::BindingType::TYPE) {
+		if (util::atNode<ast::Path>(s)) {
+			if (util::viewAs<ast::Path>(s.back())->elems.back()->type == +ast::BindingType::TYPE) {
 				return action<grammar::pat_adt>::apply(in, s, state);
 			}
 
@@ -424,7 +424,7 @@ namespace spero::parser::actions {
 		// stack: type ptrStyle?
 		if (auto tkn = POP(Token); tkn) {
 			if (tkn->holds<ast::PtrStyling>()) {
-				util::view_as<ast::SourceType>(s.back())->_ptr = tkn->get<ast::PtrStyling>();
+				util::viewAs<ast::SourceType>(s.back())->_ptr = tkn->get<ast::PtrStyling>();
 			}
 		}
 		// stack: type
@@ -457,7 +457,7 @@ namespace spero::parser::actions {
 			state.log(compiler::ID::err, "Missing required return type information <fn_type at {}>", LOCATION);
 		}
 
-		if (!util::at_node<ast::TupleType>(s)) {
+		if (!util::atNode<ast::TupleType>(s)) {
 			PUSH(TupleType, std::deque<ptr<ast::Type>>{});
 			state.log(compiler::ID::err, "Missing required argument type information <fn_type at {}>", LOCATION);
 		}
@@ -501,11 +501,11 @@ namespace spero::parser::actions {
 			state.log(compiler::ID::err, "Missing required type information <and_type at {}>", LOCATION);
 		}
 
-		if (!util::at_node<ast::AndType>(s)) {
+		if (!util::atNode<ast::AndType>(s)) {
 			PUSH(AndType, POP(Type));
 		}
 
-		util::view_as<ast::AndType>(s.back())->elems.push_back(std::move(typ));
+		util::viewAs<ast::AndType>(s.back())->elems.push_back(std::move(typ));
 		// stack: and_type
 	} END;
 	RULE(or_cont) {
@@ -517,11 +517,11 @@ namespace spero::parser::actions {
 			state.log(compiler::ID::err, "Missing required type information <and_type at {}>", LOCATION);
 		}
 
-		if (!util::at_node<ast::OrType>(s)) {
+		if (!util::atNode<ast::OrType>(s)) {
 			PUSH(OrType, POP(Type));
 		}
 
-		util::view_as<ast::OrType>(s.back())->elems.push_back(std::move(typ));
+		util::viewAs<ast::OrType>(s.back())->elems.push_back(std::move(typ));
 		// stack: or_type
 	} END;
 
@@ -582,8 +582,8 @@ namespace spero::parser::actions {
 		}
 
 		PUSH(TypeGeneric, POP(BasicBinding), std::move(def_type));
-		util::view_as<ast::TypeGeneric>(s.back())->variance = variance->get<ast::VarianceType>();
-		util::view_as<ast::TypeGeneric>(s.back())->variadic = (bool)variadic;
+		util::viewAs<ast::TypeGeneric>(s.back())->variance = variance->get<ast::VarianceType>();
+		util::viewAs<ast::TypeGeneric>(s.back())->variadic = (bool)variadic;
 		// stack: type_gen
 	} END;
 	RULE(related_type) {
@@ -741,7 +741,7 @@ namespace spero::parser::actions {
 		POP(Token);
 
 		// Push the completed for loop only if every sub-part completed successfully
-		if (!util::is_type<ast::ValError>(body) && !util::is_type<ast::ValError>(generator)) {
+		if (!util::isType<ast::ValError>(body) && !util::isType<ast::ValError>(generator)) {
 			PUSH(For, std::move(pat), std::move(generator), std::move(body));
 		} else {
 			PUSH_NODE(ValError);
@@ -766,7 +766,7 @@ namespace spero::parser::actions {
 		auto body = POP(ValExpr);
 		auto test = POP(ValExpr);
 
-		if (!util::is_type<ast::ValError>(body) && !util::is_type<ast::ValError>(test)) {
+		if (!util::isType<ast::ValError>(body) && !util::isType<ast::ValError>(test)) {
 			PUSH(While, std::move(test), std::move(body));
 		} else {
 			PUSH_NODE(ValError);
@@ -782,7 +782,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(loop) {
 		// stack: valexpr | error
-		if (!util::at_node<ast::ValError>(s)) {
+		if (!util::atNode<ast::ValError>(s)) {
 			PUSH(Loop, POP(ValExpr));
 		}
 		// stack: loop | error
@@ -824,7 +824,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(branch) {
 		// stack: IfBranch* (valexpr | error)?
-		auto _else_ = (util::at_node<ast::IfBranch>(s) ? nullptr : POP(ValExpr));
+		auto _else_ = (util::atNode<ast::IfBranch>(s) ? nullptr : POP(ValExpr));
 		auto ifs = util::popSeq<ast::IfBranch>(s);
 		PUSH(IfElse, std::move(ifs), std::move(_else_));
 		// stack: IfElse
@@ -901,7 +901,7 @@ namespace spero::parser::actions {
 		// stack: body (test | error)
 		auto test = POP(ValExpr);
 
-		if (!util::is_type<ast::ValError>(test)) {
+		if (!util::isType<ast::ValError>(test)) {
 			PUSH(While, std::move(test), POP(ValExpr));
 		} else {
 			s.pop_back();
@@ -924,7 +924,7 @@ namespace spero::parser::actions {
 		auto pattern = POP(Pattern);
 		POP(Token);
 
-		if (!util::is_type<ast::ValError>(generator)) {
+		if (!util::isType<ast::ValError>(generator)) {
 			PUSH(For, std::move(pattern), std::move(generator), POP(ValExpr));
 		} else {
 			s.pop_back();
@@ -959,7 +959,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(pathed_var) {
 		// stack: path | var
-		if (util::at_node<ast::Path>(s)) {
+		if (util::atNode<ast::Path>(s)) {
 			auto loc = s.back()->loc;
 			s.emplace_back(std::make_unique<ast::Variable>(POP(Path), loc));
 		}
@@ -1094,9 +1094,9 @@ namespace spero::parser::actions {
 	RULE(err_rebind) {
 		// stack: Path {}
 		POP(Token);
-		auto loc = util::view_as<ast::Path>(s.back())->loc;
+		auto loc = util::viewAs<ast::Path>(s.back())->loc;
 
-		state.log(compiler::ID::err, "Cannot rebind symbol as `{}` <at {}>", *util::view_as<ast::Path>(s.back()), loc);
+		state.log(compiler::ID::err, "Cannot rebind symbol as `{}` <at {}>", *util::viewAs<ast::Path>(s.back()), loc);
 		PUSH(SingleImport, POP(Path));
 		// stack: Path
 	} END;
@@ -1137,7 +1137,7 @@ namespace spero::parser::actions {
 	} END;
 	RULE(asgn_val) {
 		// stack: (vis pat gen? type? val) | in
-		if (!util::at_node<ast::InAssign>(s)) {
+		if (!util::atNode<ast::InAssign>(s)) {
 			auto val = POP(ValExpr);
 			auto typ = POP(Type);
 			auto gen = POP(GenericArray);
@@ -1192,7 +1192,7 @@ namespace spero::parser::actions {
 	INHERIT(asgn_in, _in_assign);
 	RULE(_interface) {
 		// stack: (vis pat gen? type) | varasgn
-		if (!util::at_node<ast::VarAssign>(s)) {
+		if (!util::atNode<ast::VarAssign>(s)) {
 			auto typ = POP(Type);
 			auto gen = POP(GenericArray);
 			auto pat = POP(AssignPattern);
