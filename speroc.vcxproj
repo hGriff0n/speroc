@@ -202,10 +202,11 @@
     <None Include="_test\tests.yaml" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="docs\llvmlibs.txt" />
+    <Text Include="docs\llvm_optimization_passes.txt" />
+    <Text Include="docs\llvm_resources.txt" />
     <Text Include="docs\_dev_plan.txt" />
     <Text Include="docs\_plan.txt" />
-    <Text Include="llvmlibs.txt" />
-    <Text Include="llvm_resources.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\better-enums\enum.h" />

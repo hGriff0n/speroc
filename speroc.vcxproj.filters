@@ -97,6 +97,9 @@
     <Filter Include="Source Files\driver">
       <UniqueIdentifier>{1214ee32-d516-4932-ba3d-c83ad5d8f396}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\llvm">
+      <UniqueIdentifier>{b6973622-1a8c-4c38-aa2a-27314c6d2dbb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -170,11 +173,14 @@
     <Text Include="docs\_plan.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="llvmlibs.txt">
-      <Filter>Resource Files</Filter>
+    <Text Include="docs\llvm_optimization_passes.txt">
+      <Filter>Resource Files\llvm</Filter>
     </Text>
-    <Text Include="llvm_resources.txt">
-      <Filter>Resource Files</Filter>
+    <Text Include="docs\llvm_resources.txt">
+      <Filter>Resource Files\llvm</Filter>
+    </Text>
+    <Text Include="docs\llvmlibs.txt">
+      <Filter>Resource Files\llvm</Filter>
     </Text>
   </ItemGroup>
   <ItemGroup>
